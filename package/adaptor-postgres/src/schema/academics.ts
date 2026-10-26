@@ -45,6 +45,7 @@ export const periodDefinitions = pgTable('period_definitions', {
 // 5. Grade Level Table
 
 export const gradeLevels = pgTable('grade_levels', {
+  reportSettings: jsonb('report_settings').notNull().default([]),
   gradingPolicies: jsonb('grading_policies').notNull().default([]),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
@@ -73,6 +74,8 @@ export const subjects = pgTable('subjects', {
   gradeLevelId: text('grade_level_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   shortName: text('short_name'),
+  reportModuleId: text('report_module_id'),
+  reportOrder: integer('report_order').notNull().default(0),
   coefficient: doublePrecision('coefficient'),
   periodsPerWeek: integer('periods_per_week'),
   minPeriodSpan: integer('min_period_span'),

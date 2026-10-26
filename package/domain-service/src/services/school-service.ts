@@ -14,8 +14,8 @@ import { getActivityRoster } from './queries/activity-roster'
 import { getAssessmentEditorContext } from './queries/assessment-editor-context'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
-
 import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
+
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
@@ -28,6 +28,7 @@ import { DocumentsServiceWorkflow } from './workflows/documents'
 import { FamilyFeedbackServiceWorkflow } from './workflows/family-feedback'
 import { FinanceServiceWorkflow } from './workflows/finance'
 import { NotificationTemplatesServiceWorkflow } from './workflows/notification-templates'
+import { ReportConfigurationWorkflow } from './workflows/report-configuration'
 import { SchedulingServiceWorkflow } from './workflows/scheduling'
 import { SetupServiceWorkflow } from './workflows/setup'
 import { StudentServiceWorkflow } from './workflows/student'
@@ -99,6 +100,8 @@ export class SchoolService {
       familyFeedback: this.familyFeedbackWorkflow,
     })
   }
+
+  getReportConfiguration(input: Parameters<ReportConfigurationWorkflow['read']>[0]) { return new ReportConfigurationWorkflow(this.baseService).read(input) }
 
   getStudentSubjectEnrollments(input: Parameters<typeof getStudentSubjectEnrollments>[1]) { return getStudentSubjectEnrollments(this.baseService, input) }
   getClassSubjectRoster(input: Parameters<typeof getClassSubjectRoster>[1]) { return getClassSubjectRoster(this.baseService, input) }

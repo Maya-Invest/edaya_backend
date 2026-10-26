@@ -15,7 +15,9 @@ const student = MessageDeliveryRecipientKind.Student
 describe('delayed notification dispatch uses current business facts', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   let base: BaseSchoolService
+  let contactReads: number
   beforeEach(async () => {
+    contactReads = 0
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec(`UPDATE students SET subject_id = 'person-a' WHERE id = 'student-a';
@@ -27,6 +29,10 @@ describe('delayed notification dispatch uses current business facts', () => {
       atomicExecution: fixture.atomic,
       notificationGateway: new RecordingNotificationGateway(),
       fileStorage: testFileStorage,
+      authContactResolver: { resolveBySubjectId: async () => {
+        contactReads++
+        return { email: 'login@example.test' }
+      } },
     })
     await fixture.repositories.announcements.save(new Announcement({ id: 'notice', schoolId: 'school-a', title: 'Private', content: 'Class news', status: AnnouncementStatus.Published, publishedAt: new Date() }))
     await fixture.repositories.announcementTargets.save(new AnnouncementTarget({ id: 'target', announcementId: 'notice', targetKind: AnnouncementTargetKind.ClassGroup, targetId: 'class-a' }))
@@ -50,6 +56,14 @@ describe('delayed notification dispatch uses current business facts', () => {
     return { deliveryId, schoolId: 'school-a', subjectId: 'person-a', eventKey, metadata }
   }
   const resolve = (input: NotificationDispatchRequest) => resolveNotificationDispatchRecipient(base, input)
+
+  test('guardian canonical contacts avoid login-contact resolution; staff behavior is preserved', async () => {
+    expect((await resolve(await request(guardian)))?.email).toBe('guardian@example.test')
+    expect(contactReads).toBe(0)
+    await fixture.db.exec('UPDATE announcement_targets SET target_kind = \'school\', target_id = NULL WHERE id = \'target\'')
+    expect((await resolve(await request(staff)))?.email).toBe('staff@example.test')
+    expect(contactReads).toBe(1)
+  })
 
   test.each([true, false])('shared login keeps exact profile contact and preference (guardian: %s)', async (guardianEnabled) => {
     await fixture.db.exec('UPDATE announcement_targets SET target_kind = \'school\', target_id = NULL WHERE id = \'target\'')
@@ -109,9 +123,8 @@ describe('delayed notification dispatch uses current business facts', () => {
     await fixture.db.exec('UPDATE assessments SET marks_status = \'submitted\' WHERE id = \'assessment-math\'')
     await fixture.db.exec(`
       INSERT INTO grade_scales (id, school_id, name, min_score, max_score, ranges, is_default, created_at) VALUES ('scale', 'school-a', 'Scale', 0, 20, '[]', true, NOW());
-      INSERT INTO report_card_definitions (id, school_id, academic_year_id, grade_level_id, grade_scale_id, name, kind, status, is_default, created_at) VALUES ('definition', 'school-a', 'year-a', 'level-a', 'scale', 'Report', 'default', 'published', true, NOW());
-      INSERT INTO report_card_results (id, student_id, class_group_id, period_id, report_card_definition_id, section_results, attendance_summary, assessment_result_count, status, generated_at, published_at)
-        VALUES ('report', 'student-a', 'class-a', 'period-a', 'definition', '[]', '{"presentCount":0,"absenceCount":0,"excusedAbsenceCount":0,"lateCount":0}', 1, 'published', NOW(), NOW());
+      INSERT INTO report_card_results (id, student_id, class_group_id, period_id, grade_level_id, academic_year_id, report_configuration_revision, section_results, attendance_summary, assessment_result_count, status, generated_at, published_at)
+        VALUES ('report', 'student-a', 'class-a', 'period-a', 'level-a', 'year-a', 0, '[]', '{"presentCount":0,"absenceCount":0,"excusedAbsenceCount":0,"lateCount":0}', 1, 'published', NOW(), NOW());
       INSERT INTO calendar_events (id, school_id, academic_year_id, title, start_date, end_date, kind, is_non_school_day, scope_kind, scope_id, created_at)
         VALUES ('calendar', 'school-a', 'year-a', 'Class event', NOW() + INTERVAL '1 day', NOW() + INTERVAL '2 days', 'event', false, 'class_group', 'class-a', NOW());
       INSERT INTO activities (id, school_id, name, category, coach, schedule, participants, capacity, description, start_date, end_date, created_at)

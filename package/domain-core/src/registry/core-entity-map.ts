@@ -33,9 +33,8 @@ import type {
   Payment,
   PeriodDefinition,
   PlacementStatus,
-  ReportCardDefinition,
-  ReportCardDefinitionSection,
   ReportCardResult,
+  ReportModule,
   Resource,
   ResourceAssignment,
   Schedule,
@@ -122,8 +121,7 @@ export interface CoreEntityMap {
   assessments: Assessment
   assessmentResults: AssessmentResult
   gradeScales: GradeScale
-  definitions: ReportCardDefinition
-  sections: ReportCardDefinitionSection
+  reportModules: ReportModule
   results: ReportCardResult
   students: Student
   subjectEnrollments: StudentSubjectEnrollment
@@ -205,8 +203,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'assessments',
   'assessmentResults',
   'gradeScales',
-  'definitions',
-  'sections',
+  'reportModules',
   'results',
   'students',
   'subjectEnrollments',

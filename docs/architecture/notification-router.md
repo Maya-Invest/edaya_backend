@@ -67,3 +67,5 @@ Status lookups and delivery events map held SMS to `failed` with `SMS_DELIVERY_U
 ## Guardian destinations
 
 Guardian notifications use only the profile email and main phone. The alternative phone is for manual contact. Independent email, SMS and push switches gate outgoing channels; in-app messages remain available under existing source, relationship and account access rules. Guardian routing does not fall back to login identifiers or accept delivery-only contact overrides.
+
+Guardian audience expansion reads student relationships and guardian profiles in school-scoped groups of 500 IDs. It applies each child's relationship preferences before deduplicating guardian IDs, so one child's opt-out does not suppress another eligible child's notice. Dispatch still rechecks current source and relationship access for each delivery. Guardian destination resolution skips central-identity contact lookup entirely; other profile kinds retain their existing contact resolution.

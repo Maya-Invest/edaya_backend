@@ -11,6 +11,15 @@ export class ReportCardAccessPolicy {
     return this.access.assertSave(Permission.REPORT_CARD_CONFIGURE, 'gradeLevels', level, existing)
   }
 
+  async configurationScopes(gradeLevelId: string) {
+    const actions = [Permission.ACADEMIC_CATALOG_READ, Permission.ACADEMIC_CATALOG_MANAGE, Permission.REPORT_CARD_CONFIGURE, Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_MANAGE, Permission.REPORT_CARD_GENERATE]
+    await this.access.assertResources(actions, 'gradeLevels', [gradeLevelId])
+    return {
+      subjects: await this.access.scope(actions, 'subjects'),
+      modules: await this.access.scope(actions, 'reportModules'),
+    }
+  }
+
   assertGenerate(studentId: string) {
     return this.access.assertResources(Permission.REPORT_CARD_GENERATE, 'students', [studentId])
   }
@@ -39,15 +48,14 @@ export class ReportCardAccessPolicy {
     const period = await facts.one('academicPeriods', result.periodId)
     const classGroup = await facts.one('classGroups', result.classGroupId)
     const academicYear = await facts.one('academicYears', period.academicYearId)
-    const definition = await facts.one('definitions', result.reportCardDefinitionId)
-    if (classGroup.academicYearId !== academicYear.id || definition.academicYearId !== academicYear.id || definition.gradeLevelId !== classGroup.gradeLevelId)
+    if (classGroup.academicYearId !== academicYear.id || result.academicYearId !== academicYear.id || result.gradeLevelId !== classGroup.gradeLevelId)
       return denied('Report card placement is inconsistent')
 
-    return { scope, facts, result, student, school, period, classGroup, academicYear, definition }
+    return { scope, facts, result, student, school, period, classGroup, academicYear }
   }
 
   async documentContext(resultId: string, publication = false) {
-    const { scope, facts, result, student, school, period, classGroup, academicYear, definition } = await this.documentTarget(resultId, publication)
+    const { scope, facts, result, student, school, period, classGroup, academicYear } = await this.documentTarget(resultId, publication)
     const subjectIds = new Set<string>()
     function collect(sections: readonly ReportCardResultSection[]) {
       for (const section of sections) {
@@ -75,7 +83,7 @@ export class ReportCardAccessPolicy {
 
     const homeroomTeacherName = [...new Set(homeroomTeachers.map(teacher => teacher.name))].join(', ') || undefined
 
-    const peerResults = await this.access.repositories.results.forAccess(scope).list({ classGroupId: classGroup.id, periodId: period.id, reportCardDefinitionId: definition.id, status: ReportCardResultStatus.Published })
+    const peerResults = await this.access.repositories.results.forAccess(scope).list({ classGroupId: classGroup.id, periodId: period.id, reportConfigurationRevision: result.reportConfigurationRevision, gradingPolicyRevision: result.gradingPolicyRevision, status: ReportCardResultStatus.Published })
     const attachments = await this.access.repositories.attachments.forAccess(await this.access.scope(publication ? Permission.REPORT_CARD_PUBLISH : Permission.REPORT_CARD_EXPORT, 'attachments')).list({ ownerKind: AttachmentOwnerKind.ReportCard, ownerId: result.id })
     return { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, teachersByClassSubjectId, homeroomTeacherName, homeroomTeachers, peerResults, attachments }
   }

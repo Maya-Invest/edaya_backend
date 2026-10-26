@@ -240,7 +240,7 @@ function parseCycleReportCard(
       name: period.name,
       weight: period.weight,
     })),
-    ...(sections ? { sections } : {}),
+    ...(sections ? { modules: sections.filter(section => section.role === 'subjects').map(section => ({ name: section.label, order: section.order, subjectCodes: section.subjectCodes ?? [], weightingMode: 'subject_coefficients' as const })) } : {}),
     ...(cycle.include_summary !== undefined ? { includeSummary: cycle.include_summary } : {}),
     ...(cycle.include_comments !== undefined ? { includeComments: cycle.include_comments } : {}),
     ...(level ? { domainCategories: deriveDomainCategories([level]) } : {}),

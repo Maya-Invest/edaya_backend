@@ -1,10 +1,10 @@
 import type { GradeScaleInput } from '@edaya/core'
 import type {
-  FixtureReportCardDefinition,
   FixtureReportCardGradeScale,
   FixtureReportCardResult,
+  FixtureReportConfiguration,
 } from '../../types'
-import { rangesFromThresholds, ReportCardDefinitionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
+import { rangesFromThresholds } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 import { demoCiClassRosters } from '../rosters'
 import { demoCiSubjectId } from '../school'
@@ -36,147 +36,17 @@ export const demoCiReportCardGradeScaleFixtures = [
   },
 ] as const satisfies readonly FixtureReportCardGradeScale[]
 
-function buildSections(
-  prefix: string,
-  includeEdhc: boolean,
-): readonly {
-  id: string
-  name: string
-  role: ReportCardDefinitionSectionRole
-  order: number
-  weight: number
-  coefficient?: number
-  subjectIds: readonly string[]
-}[] {
-  const sciSubjects = includeEdhc
-    ? ['ci-subj-svt', 'ci-subj-ang', 'ci-subj-edhc']
-    : ['ci-subj-pc', 'ci-subj-svt', 'ci-subj-ang']
-
-  return [
-    {
-      id: `${prefix}-fond`,
-      name: 'Matières fondamentales',
-      role: ReportCardDefinitionSectionRole.Subjects,
-      order: 1,
-      weight: 2,
-      coefficient: 2,
-      subjectIds: ['ci-subj-fr', 'ci-subj-math', 'ci-subj-hg'],
-    },
-    {
-      id: `${prefix}-sci`,
-      name: 'Sciences & langues',
-      role: ReportCardDefinitionSectionRole.Subjects,
-      order: 2,
-      weight: 2,
-      coefficient: 1.5,
-      subjectIds: sciSubjects,
-    },
-    {
-      id: `${prefix}-eps`,
-      name: 'EPS',
-      role: ReportCardDefinitionSectionRole.Subjects,
-      order: 3,
-      weight: 1,
-      coefficient: 1,
-      subjectIds: ['ci-subj-eps'],
-    },
-    {
-      id: `${prefix}-synth`,
-      name: 'Synthèse trimestrielle',
-      role: ReportCardDefinitionSectionRole.Summary,
-      order: 4,
-      weight: 0,
-      subjectIds: [],
-    },
-    {
-      id: `${prefix}-appr`,
-      name: 'Appréciations',
-      role: ReportCardDefinitionSectionRole.Comments,
-      order: 5,
-      weight: 0,
-      subjectIds: [],
-    },
-  ].map(section => ({ ...section, subjectIds: section.subjectIds.map(id => demoCiSubjectId(id, `ci-gl-${prefix.split('-').at(-1)}`)) }))
-}
-
-export const demoCiReportCardDefinitionFixtures = [
-  {
-    narrativeStatus: 'published',
-    definition: {
-      id: 'ci-rcd-6',
-      schoolId: DEMO_CI_SCHOOL_ID,
-      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-      gradeLevelId: 'ci-gl-6',
-      gradeScaleId: 'ci-gs-20',
-      passThreshold: 10,
-      name: 'Bulletin trimestriel — 6ème',
-      kind: ReportCardDefinitionKind.Default,
-      status: ReportCardDefinitionStatus.Published,
-      isDefault: true,
-      description: 'Bulletin trimestriel — 6ème',
-    },
-    sections: buildSections('ci-rcs-6', true),
-  },
-  {
-    narrativeStatus: 'published',
-    definition: {
-      id: 'ci-rcd-5',
-      schoolId: DEMO_CI_SCHOOL_ID,
-      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-      gradeLevelId: 'ci-gl-5',
-      gradeScaleId: 'ci-gs-20',
-      passThreshold: 10,
-      name: 'Bulletin trimestriel — 5ème',
-      kind: ReportCardDefinitionKind.Default,
-      status: ReportCardDefinitionStatus.Published,
-      isDefault: true,
-      description: 'Bulletin trimestriel — 5ème',
-    },
-    sections: buildSections('ci-rcs-5', false),
-  },
-  {
-    narrativeStatus: 'published',
-    definition: {
-      id: 'ci-rcd-4',
-      schoolId: DEMO_CI_SCHOOL_ID,
-      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-      gradeLevelId: 'ci-gl-4',
-      gradeScaleId: 'ci-gs-20',
-      passThreshold: 10,
-      name: 'Bulletin trimestriel — 4ème',
-      kind: ReportCardDefinitionKind.Default,
-      status: ReportCardDefinitionStatus.Published,
-      isDefault: true,
-      description: 'Bulletin trimestriel — 4ème',
-    },
-    sections: buildSections('ci-rcs-4', false),
-  },
-  {
-    narrativeStatus: 'published',
-    definition: {
-      id: 'ci-rcd-3',
-      schoolId: DEMO_CI_SCHOOL_ID,
-      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-      gradeLevelId: 'ci-gl-3',
-      gradeScaleId: 'ci-gs-20',
-      passThreshold: 10,
-      name: 'Bulletin trimestriel — 3ème',
-      kind: ReportCardDefinitionKind.Default,
-      status: ReportCardDefinitionStatus.Published,
-      isDefault: true,
-      description: 'Bulletin trimestriel — 3ème',
-    },
-    sections: buildSections('ci-rcs-3', false),
-  },
-] as const satisfies readonly FixtureReportCardDefinition[]
-
-const classReportCardDefinition: Record<string, string> = {
-  'ci-6a': 'ci-rcd-6',
-  'ci-6b': 'ci-rcd-6',
-  'ci-5a': 'ci-rcd-5',
-  'ci-4a': 'ci-rcd-4',
-  'ci-3a': 'ci-rcd-3',
-}
+export const demoCiReportConfigurationFixtures = ['6', '5', '4', '3'].map(level => ({
+  schoolId: DEMO_CI_SCHOOL_ID,
+  academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
+  gradeLevelId: `ci-gl-${level}`,
+  gradeScaleId: 'ci-gs-20',
+  passThreshold: 10,
+  modules: [
+    { id: `ci-module-${level}-fundamental`, name: 'Matières fondamentales', order: 1, weightingMode: 'subject_coefficients' as const, subjectIds: ['ci-subj-fr', 'ci-subj-math', 'ci-subj-hg'] },
+    { id: `ci-module-${level}-science`, name: 'Sciences & langues', order: 2, weightingMode: 'explicit' as const, explicitWeight: 2, subjectIds: level === '6' ? ['ci-subj-svt', 'ci-subj-ang', 'ci-subj-edhc'] : ['ci-subj-pc', 'ci-subj-svt', 'ci-subj-ang'] },
+  ].map(module => ({ ...module, subjectIds: module.subjectIds.map(id => demoCiSubjectId(id, `ci-gl-${level}`)) })),
+})) satisfies readonly FixtureReportConfiguration[]
 
 const homeroomComments: Partial<Record<string, string>> = {
   'ci-s1': 'Bon début d\'année.',
@@ -197,7 +67,6 @@ function buildTrimesterResults(
 
   for (const [classGroupId, studentIds] of Object.entries(demoCiClassRosters)) {
     const classSize = studentIds.length
-    const reportCardDefinitionId = classReportCardDefinition[classGroupId]!
 
     for (const [index, studentId] of studentIds.entries()) {
       const classRank = index + 1
@@ -208,7 +77,6 @@ function buildTrimesterResults(
         studentId,
         classGroupId,
         periodId,
-        reportCardDefinitionId,
         gradeScaleId: 'ci-gs-20',
         narrativeStatus,
         overallAverage: 12 + classRank,

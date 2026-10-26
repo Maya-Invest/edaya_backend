@@ -20,7 +20,6 @@ import {
   classGroupResponseSchema,
   classSubjectProgressResponseSchema,
   classSubjectResponseSchema,
-  definitionResponseSchema,
   disciplinaryActionResponseSchema,
   enrollmentResponseSchema,
   gradeLevelResponseSchema,
@@ -39,7 +38,6 @@ import {
   scheduleResponseSchema,
   schoolNotificationTemplatesResponseSchema,
   schoolResponseSchema,
-  sectionResponseSchema,
   staffAssignmentResponseSchema,
   staffManualPermissionAssignmentResponseSchema,
   staffMemberResponseSchema,
@@ -62,6 +60,7 @@ import {
   teacherResponseSchema,
 } from "./entities";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
+import { reportConfigurationResponseSchema } from "./report-modules";
 import { manageSubjectEnrollmentsResponseSchema } from "./subject-enrollment";
 import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from "./teacher-corrections";
 
@@ -383,10 +382,9 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   configureGrading: gradeLevelResponseSchema,
   retryGrading: gradeLevelResponseSchema,
   configureGradeScale: gradeScaleResponseSchema,
-  configureReportCardDefinition: definitionResponseSchema,
+  configureReportModules: reportConfigurationResponseSchema,
   createGradeScale: gradeScaleResponseSchema,
-  createReportCardDefinition: definitionResponseSchema,
-  createReportCardDefinitionSection: sectionResponseSchema,
+  configureReportSettings: reportConfigurationResponseSchema,
   createAssessment: assessmentResponseSchema,
   submitAssessmentMarks: assessmentResponseSchema,
   saveTeacherAttendanceDraft: teacherWorkflowStateResponseSchema,

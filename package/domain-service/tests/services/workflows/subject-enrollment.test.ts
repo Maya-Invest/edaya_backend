@@ -1,4 +1,4 @@
-import { AcademicDiscipline, AcademicPeriod, AcademicYear, Assessment, AssessmentKind, AssessmentResult, AttendanceRecord, AttendanceStatus, ClassGroup, ClassSubject, GradeLevel, LessonSession, OccurrenceStatus, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, Student, StudentSubjectEnrollment, Subject } from '@edaya/core'
+import { AcademicDiscipline, AcademicPeriod, AcademicYear, Assessment, AssessmentKind, AssessmentResult, AttendanceRecord, AttendanceStatus, ClassGroup, ClassSubject, GradeLevel, LessonSession, OccurrenceStatus, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, Student, StudentSubjectEnrollment, Subject } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, it, setSystemTime, spyOn } from 'bun:test'
 import { reconcilePlacement } from '../../../src/capabilities/subject-enrollment/reconcile'
 import { createTestApp } from '../../support/create-test-app'
@@ -79,6 +79,9 @@ describe('current subject selections', () => {
       spyOn(ctx.repositories.subjectEnrollments, 'list'),
       spyOn(ctx.repositories.assessments, 'list'),
       spyOn(ctx.repositories.academicPeriods, 'list'),
+      spyOn(ctx.repositories.subjectEnrollments, 'batchSave'),
+      spyOn(ctx.repositories.classSubjects, 'batchSave'),
+      spyOn(ctx.repositories.classSubjects, 'findByIds'),
     ]
     try {
       await ctx.atomicExecution.execute(() => reconcilePlacement(ctx.repositories, placement, undefined, createTestStaffActor('sch1', 'user1')))
@@ -90,6 +93,24 @@ describe('current subject selections', () => {
     expect(await ctx.repositories.subjectEnrollments.count({ studentClassEnrollmentId: 'placement' })).toBe(11)
     for (let index = 0; index < 10; index++)
       expect((await ctx.repositories.classSubjects.findById(`offering-${index}`))?.participationRevision).toBe(1)
+  })
+
+  it('rolls back compulsory selections and invalidations if offering revision persistence fails', async () => {
+    const ctx = await context()
+    await ctx.repositories.subjects.save(new Subject({ id: 'extra', schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: 'Extra' }))
+    await ctx.repositories.classSubjects.save(new ClassSubject({ id: 'extra-offering', classGroupId: 'class', subjectId: 'extra' }))
+    const placement = (await ctx.repositories.enrollments.findById('placement'))!
+    const before = await ctx.repositories.subjectEnrollments.list({ studentClassEnrollmentId: placement.id })
+    const failure = spyOn(ctx.repositories.classSubjects, 'batchSave').mockRejectedValueOnce(new Error('revision persistence failed'))
+    try {
+      await expect(ctx.atomicExecution.execute(() => reconcilePlacement(ctx.repositories, placement, undefined, createTestStaffActor('sch1', 'user1')))).rejects.toThrow('revision persistence failed')
+    }
+    finally { failure.mockRestore() }
+    expect(await ctx.repositories.subjectEnrollments.list({ studentClassEnrollmentId: placement.id })).toEqual(before)
+    expect((await ctx.repositories.classSubjects.findById('extra-offering'))?.participationRevision).toBe(0)
+    await ctx.atomicExecution.execute(() => reconcilePlacement(ctx.repositories, placement, undefined, createTestStaffActor('sch1', 'user1')))
+    expect(await ctx.repositories.subjectEnrollments.count({ studentClassEnrollmentId: placement.id })).toBe(2)
+    expect((await ctx.repositories.classSubjects.findById('extra-offering'))?.participationRevision).toBe(1)
   })
 
   it('hard deletes unused enrollment, replays deletion, and re-enrolls with a new identity', async () => {
@@ -196,7 +217,7 @@ describe('conditional withdrawal', () => {
     await select(ctx)
     await period(ctx)
     const old = await current(ctx)
-    const report = new ReportCardResult({ id: 'published', assessmentResultCount: 0, studentId: 'student', classGroupId: 'class', periodId: 'term', reportCardDefinitionId: 'definition', status: ReportCardResultStatus.Published, publishedAt: new Date(), sectionResults: [new ReportCardResultSection({ sectionId: 'art-section', classSubjectId: ctx.offering.id, name: 'Art', sectionKind: ReportCardDefinitionSectionKind.Subject, weight: 1, subResults: [] })], attendanceSummary: { presentCount: 0, absenceCount: 0, lateCount: 0 } })
+    const report = new ReportCardResult({ id: 'published', assessmentResultCount: 0, studentId: 'student', classGroupId: 'class', periodId: 'term', gradeLevelId: 'grade1', academicYearId: 'ay1', reportConfigurationRevision: 0, status: ReportCardResultStatus.Published, publishedAt: new Date(), sectionResults: [new ReportCardResultSection({ sectionId: 'art-section', classSubjectId: ctx.offering.id, name: 'Art', sectionKind: ReportCardResultSectionKind.Subject, weight: 1, subResults: [] })], attendanceSummary: { presentCount: 0, absenceCount: 0, lateCount: 0 } })
     await ctx.repositories.results.save(report)
     await select(ctx, { scope: 'none' })
     expect((await ctx.repositories.subjectEnrollments.findById(old.id))?.deletedAt).toBeDefined()

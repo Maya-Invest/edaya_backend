@@ -181,6 +181,17 @@ export class PostgresImportStore implements ImportPersistencePort {
       FROM school_import_identities WHERE school_id = ${schoolId} AND type = ${type} AND source_key = ${sourceKey}`))[0]
   }
 
+  async getIdentities(schoolId: string, type: ImportType, sourceKeys: readonly string[]) {
+    const keys = [...new Set(sourceKeys)]
+    const identities: ImportIdentity[] = []
+    for (let offset = 0; offset < keys.length; offset += 200) {
+      identities.push(...await this.query<ImportIdentity>(sql`SELECT school_id AS "schoolId", type, source_key AS "sourceKey", target_id AS "targetId", generated_code AS "generatedCode", bound
+        FROM school_import_identities WHERE school_id = ${schoolId} AND type = ${type}
+        AND source_key IN (${sql.join(keys.slice(offset, offset + 200).map(key => sql`${key}`), sql`, `)})`))
+    }
+    return identities
+  }
+
   async saveIdentity(identity: ImportIdentity) {
     await this.saveIdentities([identity])
   }
@@ -203,6 +214,18 @@ export class PostgresImportStore implements ImportPersistencePort {
       data: ImportExecutionOutcome
     }>(sql`SELECT data FROM school_import_outcomes
       WHERE school_id = ${schoolId} AND batch_id = ${batchId} AND row_id = ${rowId} AND input_digest = ${inputDigest}`))[0]?.data
+  }
+
+  async findOutcomes(schoolId: string, batchId: string, requests: readonly { rowId: string, inputDigest: string }[]) {
+    const outcomes: ImportExecutionOutcome[] = []
+    const unique = [...new Map(requests.map(request => [JSON.stringify([request.rowId, request.inputDigest]), request])).values()]
+    for (let offset = 0; offset < unique.length; offset += 200) {
+      outcomes.push(...(await this.query<{ data: ImportExecutionOutcome }>(sql`SELECT o.data FROM school_import_outcomes o
+        JOIN jsonb_array_elements(${JSON.stringify(unique.slice(offset, offset + 200))}::jsonb) request(value)
+          ON o.row_id = request.value->>'rowId' AND o.input_digest = request.value->>'inputDigest'
+        WHERE o.school_id = ${schoolId} AND o.batch_id = ${batchId}`)).map(row => row.data))
+    }
+    return outcomes
   }
 
   async addOutcome(outcome: ImportExecutionOutcome) {

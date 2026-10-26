@@ -7,6 +7,12 @@ import { ReportCardResultSection } from './report-card-result-section'
 /** Deterministic academic provenance. Includes values as well as revisions to detect changed sources. */
 export async function reportCardAcademicVersion(result: ReportCardResult): Promise<string> {
   const sections = (nodes: readonly ReportCardResultSection[]): unknown[] => nodes.map(node => [
+    node.subjectId,
+    node.moduleId,
+    node.coefficient,
+    node.weightingMode,
+    node.explicitWeight,
+    node.grading,
     node.sectionId,
     node.classSubjectId,
     node.sectionKind,
@@ -21,7 +27,9 @@ export async function reportCardAcademicVersion(result: ReportCardResult): Promi
     result.studentId,
     result.classGroupId,
     result.periodId,
-    result.reportCardDefinitionId,
+    result.gradeLevelId,
+    result.academicYearId,
+    result.reportConfigurationRevision,
     result.generatedAt.toISOString(),
     result.publishedAt?.toISOString(),
     result.overallAverage,

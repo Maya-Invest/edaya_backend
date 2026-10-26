@@ -61,16 +61,15 @@ export async function loadReportAssessmentContext(
   }
 }
 
-/** Only curriculum subjects offered by the destination class and present in the report contribute sources. */
+/** Resolve the report curriculum independently of display grouping. */
 export async function scopeReportAssessmentContext(
   repositories: AssessmentsWorkflowRepositories,
   context: ReportAssessmentContext,
-  definitionId: string,
-  _classGroupId: string,
+  gradeLevelId: string,
+  academicYearId: string,
 ): Promise<ReportAssessmentContext> {
-  const sections = await repositories.sections.list({ reportCardDefinitionId: definitionId })
-  const offered = new Set(context.classSubjects.map(row => row.subjectId))
-  const subjects = new Set(sections.filter(row => row.kind === 'subject' && row.subjectId && offered.has(row.subjectId)).map(row => row.subjectId))
-  const includes = (assessment: Assessment) => subjects.has(context.subjectByClassSubject.get(assessment.classSubjectId))
-  return { ...context, assessments: context.assessments.filter(includes), results: context.results.filter(row => includes(row.assessment)) }
+  const curriculum = await repositories.subjects.list({ gradeLevelId, academicYearId })
+  const subjects = new Set(curriculum.map(row => row.id))
+  const includes = (assessment: Assessment) => subjects.has(context.subjectByClassSubject.get(assessment.classSubjectId) ?? '')
+  return { ...context, classSubjects: context.classSubjects.filter(row => subjects.has(row.subjectId)), assessments: context.assessments.filter(includes), results: context.results.filter(row => includes(row.assessment)) }
 }

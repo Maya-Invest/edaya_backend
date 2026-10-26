@@ -25,12 +25,12 @@ export function formatReportAverage(value: number, grading: CalculatedGrade | un
   return `${new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(reported)} / ${grading?.maximum ?? 20}`
 }
 
-/** Class statistics must never combine two grading revisions or units. */
+/** Class statistics use published snapshots with matching grading and module configuration. */
 export function gradingPeerAverages(result: ReportCardResult, peers: readonly ReportCardResult[]): number[] {
   const values: number[] = []
   for (const peer of [...peers].sort((a, b) => a.id.localeCompare(b.id))) {
-    const candidates = [peer, ...(peer.revisedDraft ? [peer.revisedDraft] : []), ...peer.publicationHistory]
-    const sameRevision = candidates.find(candidate => candidate.gradingPolicyRevision === result.gradingPolicyRevision && candidate.grading?.scaleId === result.grading?.scaleId && !candidate.calculationStale)
+    const candidates = [peer, ...peer.publicationHistory]
+    const sameRevision = candidates.find(candidate => candidate.status === 'published' && candidate.reportConfigurationRevision === result.reportConfigurationRevision && candidate.gradingPolicyRevision === result.gradingPolicyRevision && candidate.grading?.maximum === result.grading?.maximum && candidate.grading?.scaleId === result.grading?.scaleId && !candidate.calculationStale)
     if (!sameRevision)
       return []
     const value = sameRevision.grading?.value ?? sameRevision.overallAverage

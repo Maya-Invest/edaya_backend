@@ -2,7 +2,7 @@ import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import process from 'node:process'
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicYear, Assessment, AssessmentKind, ClassGroup, ClassSubject, GradeLevel, GradeScale, noOpFileStorage, Permission, RecordingNotificationGateway, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentSubjectEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicYear, Assessment, AssessmentKind, ClassGroup, ClassSubject, GradeLevel, GradeScale, noOpFileStorage, Permission, RecordingNotificationGateway, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentSubjectEnrollment, Subject } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { onTestFinished } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
@@ -25,15 +25,15 @@ export async function fixture(prefix: string) {
   await r.academicPeriods.save(new AcademicPeriod({ id: id('period'), schoolId: id('school'), academicYearId: id('year'), name: 'Term', isPublished: true, ...dates }))
   await r.gradeLevels.save(new GradeLevel({ id: id('grade'), schoolId: id('school'), name: 'Grade', label: 'Grade', order: 1 }))
   await r.classGroups.save(new ClassGroup({ id: id('class'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), name: 'Class' }))
-  await r.subjects.save(new Subject({ gradeLevelId: id('grade'), academicYearId: id('year'), id: id('math'), schoolId: id('school'), name: 'Math' }))
+  await r.subjects.save(new Subject({ gradeLevelId: id('grade'), academicYearId: id('year'), id: id('math'), schoolId: id('school'), name: 'Math', coefficient: 1 }))
   await r.classSubjects.save(new ClassSubject({ id: id('subject'), classGroupId: id('class'), subjectId: id('math') }))
   await r.students.save(new Student({ id: id('student'), schoolId: id('school'), firstName: 'Native', lastName: 'Student' }))
   await r.enrollments.save(new StudentClassEnrollment({ id: id('enrollment'), studentId: id('student'), classGroupId: id('class'), academicYearId: id('year'), enrollmentIndex: 1, enrolledAt: dates.startDate }))
   await r.subjectEnrollments.save(new StudentSubjectEnrollment({ id: id('participation'), studentClassEnrollmentId: id('enrollment'), classSubjectId: id('subject'), enrolledAt: dates.startDate, endedAt: new Date('2027-01-01'), source: 'automatic' }))
-  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 10.5, maxScore: 20 }] }))
-  await r.definitions.save(new ReportCardDefinition({ id: id('definition'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), gradeScaleId: id('scale'), name: 'Report' }))
-  await r.sections.save(new ReportCardDefinitionSection({ id: id('root'), reportCardDefinitionId: id('definition'), kind: ReportCardDefinitionSectionKind.Group, name: 'Subjects', order: 1, weight: 1 }))
-  await r.sections.save(new ReportCardDefinitionSection({ id: id('math-section'), reportCardDefinitionId: id('definition'), parentSectionId: id('root'), subjectId: id('math'), kind: ReportCardDefinitionSectionKind.Subject, name: 'Math', order: 1, weight: 1 }))
+  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, intervalConvention: 'continuous', ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] }))
+  const scale = (await r.gradeScales.findById(id('scale')))!
+  const level = (await r.gradeLevels.findById(id('grade')))!
+  await r.gradeLevels.save(new GradeLevel({ ...level.data, gradingPolicies: [{ academicYearId: id('year'), revision: 1, mode: 'numeric-first', aggregateLabel: 'Average', status: 'completed', scale: { ...scale.data, ranges: [...scale.ranges] } }] }))
   await r.assessments.save(new Assessment({ id: id('assessment'), classGroupId: id('class'), classSubjectId: id('subject'), periodId: id('period'), title: 'Quiz', kind: AssessmentKind.Quiz, maxScore: 20, startsAt: new Date('2026-02-01'), endsAt: new Date('2026-02-02') }))
   for (const who of ['editor', 'reviewer']) await r.staffMembers.save(new StaffMember({ id: id(who), schoolId: id('school'), firstName: who, lastName: 'Staff', subjectId: id(who) }))
   for (const permission of [Permission.GRADE_READ, Permission.GRADE_VALIDATE]) await r.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: id(permission), schoolId: id('school'), staffId: id('reviewer'), academicYearId: id('year'), permission, scopes: [{ kind: 'class_group', classGroupId: id('class') }] }))
@@ -45,6 +45,6 @@ export async function fixture(prefix: string) {
   const reviewer = actor('reviewer', 1)
   const edit = (requestId: string, expectedRevision: number, score = 12.75) => ({ requestId, id: id('mark'), assessmentId: id('assessment'), studentId: id('student'), expectedRevision, score })
   const command = (requestId: string, expectedRevision: number) => ({ requestId, assessmentId: id('assessment'), expectedRevision })
-  const report = { id: id('report'), studentId: id('student'), periodId: id('period'), reportCardDefinitionId: id('definition') }
+  const report = { id: id('report'), studentId: id('student'), periodId: id('period') }
   return { id, r, editor, other, reviewer, edit, command, report, gateway, handles, application: apps[0]! }
 }

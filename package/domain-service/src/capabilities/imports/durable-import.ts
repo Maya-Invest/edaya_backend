@@ -13,6 +13,8 @@ import { importErrorCode } from './normalization'
 
 type Application = Pick<SchoolApplication, 'importPersistence' | 'forActor' | 'atomicExecution' | 'repositories' | 'commandExecution' | 'durableWork'>
 async function readGroup(store: Application['importPersistence'], schoolId: string, batchId: string, row: ImportRow) {
+  if (!row.collection)
+    return [row]
   const ids = row.collection?.memberIds ?? [row.id]
   const rows: ImportRow[] = []
   for (let offset = 0; offset < ids.length; offset += 200)
@@ -95,7 +97,9 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
           const row = (await store.queryRows(work.schoolId, batch.id, { ids: [candidate.id], outcome: 'pending', ready: true, limit: 1 }))[0]
           if (!row || row.operationId !== candidate.operationId)
             return { stopped: true }
-          const ctx = new ImportBusinessContext(service, currentBatch)
+          // This context ends before the first business write; never reuse its facts
+          // for a later member or command after persistence changes relationships.
+          const ctx = new ImportBusinessContext(service, currentBatch, [], 'validation')
           // Recheck the entire affected cohort under the same academic lock as the placement.
           const classId = row.type === 'students' && row.proposed?.['classGroupId']
           if (typeof classId === 'string') {
@@ -130,7 +134,7 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
             preparedGroup.push(prepared)
           }
           if (row.collection && row.type === 'guardian_relationships')
-            await removeUnmentionedLinks(ctx, preparedGroup)
+            await removeUnmentionedLinks(new ImportBusinessContext(service, currentBatch), preparedGroup)
           const completedRows: ImportRow[] = []
           const identities: ImportIdentity[] = []
           const outcomes: ImportExecutionOutcome[] = []
@@ -140,7 +144,7 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
             if (done(member))
               continue
             const unchanged = prepared.current !== null && await digestCommandRequest(prepared.current) === await digestCommandRequest(prepared.proposed)
-            const result = (prepared.current && (prepared.effectiveMode === 'S' || unchanged)) ? { targetId: prepared.targetId } : await executeImportRow(ctx, prepared)
+            const result = (prepared.current && (prepared.effectiveMode === 'S' || unchanged)) ? { targetId: prepared.targetId } : await executeImportRow(new ImportBusinessContext(service, currentBatch), prepared)
             const outcome = prepared.current ? prepared.effectiveMode === 'S' || (unchanged && ['billing', 'payments'].includes(prepared.type)) ? 'skipped' : unchanged && !row.collection ? 'unchanged' : 'updated' : 'created'
             const targetId = String(result['targetId'] ?? prepared.targetId)
             identities.push({ schoolId: work.schoolId, type: member.type, sourceKey: member.sourceKey, targetId, generatedCode: member.generatedCode, bound: true })

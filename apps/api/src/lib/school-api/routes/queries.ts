@@ -67,6 +67,8 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(counts, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "getReportConfiguration")
+          return c.json(await service.getReportConfiguration(payload as unknown as Parameters<typeof service.getReportConfiguration>[0]), 200);
         if (queryConfig.methodName === "getStudentSubjectEnrollments")
           return c.json(await service.getStudentSubjectEnrollments(payload as Parameters<typeof service.getStudentSubjectEnrollments>[0]), 200);
         if (queryConfig.methodName === "getClassSubjectRoster")

@@ -1,4 +1,4 @@
-import { assertCommentOnlyReportCardUpdate, assertDraftReportCardForTeacherComment, AttendanceSummary, BusinessRuleViolationError, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus } from '@edaya/core'
+import { assertCommentOnlyReportCardUpdate, assertDraftReportCardForTeacherComment, AttendanceSummary, BusinessRuleViolationError, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 function draftReportCard(overrides: {
@@ -8,7 +8,9 @@ function draftReportCard(overrides: {
 } = {}): ReportCardResult {
   return new ReportCardResult({
     id: 'rc-1',
-    reportCardDefinitionId: 'def-1',
+    gradeLevelId: 'grade1',
+    academicYearId: 'ay1',
+    reportConfigurationRevision: 0,
     studentId: 'student-1',
     classGroupId: 'cg-7a',
     periodId: 'period-1',
@@ -28,7 +30,7 @@ function defaultSectionResults(commentOverrides: {
   return [
     new ReportCardResultSection({
       sectionId: 'group-1',
-      sectionKind: ReportCardDefinitionSectionKind.Group,
+      sectionKind: ReportCardResultSectionKind.Module,
       name: 'Core subjects',
       average: 14,
       weight: 1,
@@ -36,7 +38,7 @@ function defaultSectionResults(commentOverrides: {
       subResults: [
         new ReportCardResultSection({
           sectionId: 'subject-math',
-          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          sectionKind: ReportCardResultSectionKind.Subject,
           name: 'Mathematics',
           average: 15,
           weight: 1,
@@ -46,7 +48,7 @@ function defaultSectionResults(commentOverrides: {
         }),
         new ReportCardResultSection({
           sectionId: 'subject-french',
-          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          sectionKind: ReportCardResultSectionKind.Subject,
           name: 'French',
           average: 13,
           weight: 1,

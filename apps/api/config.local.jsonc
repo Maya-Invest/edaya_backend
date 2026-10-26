@@ -34,6 +34,8 @@
   // See docs/reference/api-configuration.md and phone-verification.md.
   "RUNTIME": "local",
   "NODE_ENV": "development",
+  // Require acceptance of the draft terms during local sign-in.
+  "AUTH_TERMS_MODE": "preview",
   "PORT": "9999",
   "LOG_LEVEL": "debug",
   "DATABASE_URL": "pglite:.data/school",

@@ -1,5 +1,5 @@
 /* eslint dot-notation: "off" -- Import snapshots are index-signature records. */
-import type { CoreEntityKey, CoreEntityMap, ImportBatch, ImportExistingMode, ImportFileRevision, ImportFormatPort, ImportPersistencePort, ImportProgress, ImportReadTarget, ImportRow, ImportType } from '@edaya/core'
+import type { CoreEntityKey, CoreEntityMap, ImportBatch, ImportExistingMode, ImportFileRevision, ImportFormatPort, ImportIdentity, ImportPersistencePort, ImportProgress, ImportReadTarget, ImportRow, ImportType } from '@edaya/core'
 import type { SchoolService } from '../../services/school-service'
 import { ImportAccessPolicy, importResources } from '@edaya/authorization'
 import { BusinessRuleViolationError, IMPORT_COMPLETED_OUTCOMES, IMPORT_MAX_FILE_BYTES, IMPORT_MAX_ROWS, IMPORT_TEMPLATE_VERSION, IMPORT_TEMPLATES, parseImportDate, resolveImportExistingMode } from '@edaya/core'
@@ -138,11 +138,19 @@ export class SchoolImportService {
       const previousRows = await this.store.listRows(batch.schoolId, batch.id)
       if (previousRows.filter(row => row.source.fileId !== file.fileId).length + normalized.length > IMPORT_MAX_ROWS)
         fail('IMPORT_BATCH_ROW_LIMIT')
+      const previousById = new Map(previousRows.filter(row => row.source.fileId === file.fileId).map(row => [row.id, row]))
+      const sourceKeys = normalized.flatMap((row) => {
+        const sourceId = String(row.values['source_id'] ?? '').trim()
+        const previous = previousById.get(String(row.values['row_id'] ?? '').trim())
+        return sourceId ? [`source:${sourceId}`] : previous ? [previous.sourceKey] : []
+      })
+      const identityByKey = new Map((await this.store.getIdentities(batch.schoolId, file.type, sourceKeys)).map(identity => [identity.sourceKey, identity]))
+      const pendingIdentities = new Map<string, ImportIdentity>()
       const seen = new Set<string>()
       const rows: ImportRow[] = []
       for (const parsedRow of normalized) {
         const requested = String(parsedRow.values['row_id'] ?? '').trim()
-        const previous = requested ? previousRows.find(row => row.id === requested && row.source.fileId === file.fileId) : undefined
+        const previous = requested ? previousById.get(requested) : undefined
         if (requested && !previous)
           fail('IMPORT_ROW_ID_UNKNOWN')
         const id = previous?.id ?? crypto.randomUUID()
@@ -153,18 +161,21 @@ export class SchoolImportService {
         if (sourceId.length > 200)
           fail('IMPORT_SOURCE_ID_INVALID')
         const sourceKey = sourceId ? `source:${sourceId}` : previous?.sourceKey ?? `row:${file.fileId}:${id}`
-        const identity = await this.store.getIdentity(batch.schoolId, file.type, sourceKey)
+        const identity = identityByKey.get(sourceKey)
         const knownTargetId = String(parsedRow.values['target_id'] ?? '').trim() || identity?.targetId || previous?.targetId
         const resource = file.type === 'teachers' ? 'teachers' : file.type === 'guardians' ? 'guardians' : null
         const knownPerson = resource && knownTargetId ? await this.base.repositories[resource].forAccess(await this.base.access.entity(resource).readScope()).findById(knownTargetId) : undefined
         const needsCode = Boolean(resource && !knownPerson && !String(parsedRow.values['code'] ?? '').trim())
         const generatedCode = needsCode ? identity?.generatedCode ?? previous?.generatedCode ?? `${file.type === 'teachers' ? 'T' : 'G'}-${crypto.randomUUID()}` : null
         const row: ImportRow = { id, batchId: batch.id, schoolId: batch.schoolId, type: file.type, source: { fileId: file.fileId, revisionId: file.id, row: parsedRow.sourceRow, ...(parsed.sheet ? { sheet: parsed.sheet } : {}) }, raw: parsedRow.raw, values: { ...parsedRow.values, row_id: id, ...(generatedCode ? { code: generatedCode } : {}) }, generatedCode, targetId: identity?.targetId ?? previous?.targetId ?? crypto.randomUUID(), sourceKey, effectiveMode: batch.defaultOnExisting, inputDigest: '', operationId: crypto.randomUUID(), dependencies: [], current: null, proposed: null, expectedDigest: null, issues: parsedRow.issues, outcome: parsedRow.issues.length ? 'blocked' : 'pending', result: null }
-        await this.store.saveIdentity({ schoolId: batch.schoolId, type: file.type, sourceKey, targetId: row.targetId, generatedCode, bound: identity?.bound ?? false })
+        const nextIdentity = { schoolId: batch.schoolId, type: file.type, sourceKey, targetId: row.targetId, generatedCode, bound: identity?.bound ?? false }
+        identityByKey.set(sourceKey, nextIdentity)
+        pendingIdentities.set(sourceKey, nextIdentity)
         rows.push(row)
       }
       // Missing rows on a replacement are retained as history, never executed accidentally.
       const removed = previousRows.filter(row => row.source.fileId === file.fileId && !seen.has(row.id) && !IMPORT_COMPLETED_OUTCOMES.includes(row.outcome)).map(row => ({ ...row, outcome: 'cancelled' as const }))
+      await this.store.saveIdentities([...pendingIdentities.values()])
       await this.store.addFile(file)
       await this.store.saveRows([...rows, ...removed])
       await this.base.repositories.privateFiles.retain({ schoolId: batch.schoolId, sourceType: 'capability.school-import', sourceId: file.id, slot: 'original', storageKey })
@@ -185,6 +196,12 @@ export class SchoolImportService {
       const latest = new Map(files.map(file => [file.fileId, file.id]))
       const allRows = await this.store.listRows(batch.schoolId, batch.id)
       const rows = allRows.filter(row => row.source.revisionId === latest.get(row.source.fileId)).sort((a, b) => IMPORT_TEMPLATES[a.type].rank - IMPORT_TEMPLATES[b.type].rank || a.id.localeCompare(b.id))
+      const knownIdentities = new Map<string, ImportIdentity>()
+      for (const type of new Set(rows.map(row => row.type))) {
+        for (const identity of await this.store.getIdentities(batch.schoolId, type, rows.filter(row => row.type === type).map(row => row.sourceKey)))
+          knownIdentities.set(JSON.stringify([type, identity.sourceKey]), identity)
+      }
+      const replayCandidates: ImportRow[] = []
       const ctx = new ImportBusinessContext(this.service, batch, rows, 'validation')
       for (const row of rows) {
         row.issues = row.issues.filter(issue => issue.code === 'IMPORT_COLUMN_UNSUPPORTED')
@@ -199,20 +216,12 @@ export class SchoolImportService {
             continue
           }
           await prepareImportRow(ctx, row)
-          const identity = await this.store.getIdentity(batch.schoolId, row.type, row.sourceKey)
+          const identity = knownIdentities.get(JSON.stringify([row.type, row.sourceKey]))
           if (identity?.bound && identity.targetId !== row.targetId)
             fail('IMPORT_IDENTITY_CONFLICT')
           row.inputDigest = await digestCommandRequest({ type: row.type, values: normalizeImportValues(row.type, row.values), sourceKey: row.sourceKey, mode: row.effectiveMode, academicYearId: batch.academicYearId, enrollmentEffectiveDate: batch.enrollmentEffectiveDate })
-          const previous = await this.store.findOutcome(batch.schoolId, batch.id, row.id, row.inputDigest)
-          if (previous && IMPORT_COMPLETED_OUTCOMES.includes(previous.outcome)) {
-            row.outcome = previous.outcome
-            row.targetId = previous.targetId
-            row.result = previous.result
-            row.operationId = previous.operationId
-          }
-          else {
-            row.operationId = crypto.randomUUID()
-          }
+          row.operationId = crypto.randomUUID()
+          replayCandidates.push(row)
         }
         catch (error) {
           const code = importErrorCode(error)
@@ -220,6 +229,17 @@ export class SchoolImportService {
             throw error
           row.outcome = code === 'IMPORT_DEPENDENCY_BLOCKED' ? 'dependency_blocked' : 'blocked'
           row.issues.push({ code, severity: 'error', ...(error instanceof ImportBusinessIssue && error.candidates.length ? { candidates: error.candidates } : {}), ...(code === 'IMPORT_ON_EXISTING_INVALID' ? { column: 'on_existing' } : {}) })
+        }
+      }
+      const outcomes = await this.store.findOutcomes(batch.schoolId, batch.id, replayCandidates.map(row => ({ rowId: row.id, inputDigest: row.inputDigest })))
+      const outcomesByRow = new Map(outcomes.map(outcome => [outcome.rowId, outcome]))
+      for (const row of replayCandidates) {
+        const previous = outcomesByRow.get(row.id)
+        if (previous && IMPORT_COMPLETED_OUTCOMES.includes(previous.outcome)) {
+          row.outcome = previous.outcome
+          row.targetId = previous.targetId
+          row.result = previous.result
+          row.operationId = previous.operationId
         }
       }
       const identities = new Map<string, ImportRow[]>()

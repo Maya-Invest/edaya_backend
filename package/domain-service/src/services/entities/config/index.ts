@@ -7,9 +7,8 @@ export { subjectMatterConfig } from './academics/subject-matter'
 export { accountInvitationConfig } from './access/account-invitation'
 export { assessmentConfig } from './assessments/assessment'
 export { assessmentResultConfig, validateAssessmentResultSave } from './assessments/assessment-result'
-export { reportCardDefinitionConfig } from './assessments/report-card-definition'
-export { reportCardDefinitionSectionConfig } from './assessments/report-card-definition-section'
 export { reportCardResultConfig } from './assessments/report-card-result'
+export * from './assessments/report-module'
 export { documentIssuanceConfig } from './documents/document-issuance'
 export { catalogServiceConfig, validateCatalogServiceDelete, validateCatalogServiceSave } from './finances/catalog-service'
 export { paymentConfig, validatePaymentDelete, validatePaymentSave } from './finances/payment'
@@ -59,6 +58,7 @@ export { studentClassEnrollmentConfig, validateEnrollmentSave } from './students
 export { studentDisciplinaryActionConfig } from './students/student-disciplinary-action'
 export { studentHealthProfileConfig } from './students/student-health-profile'
 export { studentIncidentInvolvementConfig } from './students/student-incident-involvement'
+
 export { studentNoteConfig, validateStudentNoteSave } from './students/student-note'
 
 export { studentPhotoSubmissionConfig, validateStudentPhotoSubmissionSave } from './students/student-photo-submission'

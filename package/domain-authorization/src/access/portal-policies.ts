@@ -1,7 +1,7 @@
 import type { CoreEntityKey, ResourceAccessClause } from '@edaya/core'
 import type { MutationOperation } from './access-policies'
 import type { AccessFacts } from './facts'
-import { AttachmentOwnerKind as Owner, Permission as P, ReportCardDefinitionStatus } from '@edaya/core'
+import { AttachmentOwnerKind as Owner, Permission as P } from '@edaya/core'
 
 const teacherReads = new Set([
   P.ACTIVITY_READ,
@@ -66,8 +66,6 @@ const teacherResources = new Set<CoreEntityKey>([
   'assessments',
   'assessmentResults',
   'results',
-  'definitions',
-  'sections',
   'attendance',
   'incidents',
   'studentIncidentInvolvements',
@@ -83,8 +81,6 @@ const familyResources = new Set<CoreEntityKey>([
   'assessments',
   'assessmentResults',
   'results',
-  'definitions',
-  'sections',
   'attendance',
   'catalogServices',
   'studentServiceEnrollments',
@@ -202,13 +198,6 @@ export async function familyPolicy(facts: AccessFacts, action: P, resource: Core
   }
   if (resource !== undefined && !familyResources.has(resource))
     return []
-  if (resource === 'sections') {
-    const definitions = await facts.repository('definitions').list({ status: ReportCardDefinitionStatus.Published })
-    const rows = await facts.repository('sections').list({ reportCardDefinitionId: { $in: definitions.map(row => row.id) } })
-    return [{ target: { kind: 'records', ids: rows.map(row => row.id) } }]
-  }
-  if (resource === 'definitions')
-    return [{ target: { kind: 'school' }, publishedOnly: true }]
   const academicYearId = await facts.academicYear()
   if (!academicYearId && resource !== undefined && resource !== 'students' && resource !== 'attachments' && resource !== 'studentPhotoSubmissions')
     return visibleRows([])

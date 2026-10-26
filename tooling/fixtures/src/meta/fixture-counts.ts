@@ -149,8 +149,8 @@ function countAssessments(dataset: FixtureDataset): number {
 }
 
 function countReportCardSections(dataset: FixtureDataset): number {
-  return (dataset.extensions?.reportCardDefinitionFixtures ?? [])
-    .reduce((total, definition) => total + definition.sections.length, 0)
+  return (dataset.extensions?.reportConfigurationFixtures ?? [])
+    .reduce((total, definition) => total + definition.modules.length, 0)
 }
 
 function countCalendarEvents(dataset: FixtureDataset): number {
@@ -237,8 +237,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'payments': countArray(entities.payments),
     'document-issuances': countArray(dataset.extensions?.documentIssuances),
     'grade-scales': countArray(entities.gradeScales),
-    'definitions': countArray(dataset.extensions?.reportCardDefinitionFixtures),
-    'sections': countReportCardSections(dataset),
+    'report-modules': countReportCardSections(dataset),
     'results': countArray(dataset.extensions?.reportCardResults),
     'staff-permission-assignments': 50,
     'announcements': countArray(entities.announcements),

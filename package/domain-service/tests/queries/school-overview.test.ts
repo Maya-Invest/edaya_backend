@@ -133,7 +133,9 @@ describe('buildSchoolOverview', () => {
     })
     const published = new ReportCardResult({
       id: 'rc-1',
-      reportCardDefinitionId: 'def-1',
+      gradeLevelId: 'grade1',
+      academicYearId: 'ay1',
+      reportConfigurationRevision: 0,
       studentId: 'student-1',
       classGroupId: 'class-1',
       periodId: 'period-1',

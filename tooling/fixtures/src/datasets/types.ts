@@ -1,4 +1,4 @@
-import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, AutoBillingConfiguration, CalendarEventKind, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
+import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, AutoBillingConfiguration, CalendarEventKind, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 
 export type FixtureDatasetPurpose = 'demo-ci'
 
@@ -55,13 +55,12 @@ export interface FixtureCalendarEvent {
   scope: 'school' | readonly string[]
 }
 
-export interface FixtureReportCardSection {
+export interface FixtureReportModule {
   id: string
   name: string
-  role: ReportCardDefinitionSectionRole
   order: number
-  weight: number
-  coefficient?: number
+  weightingMode: 'subject_coefficients' | 'explicit'
+  explicitWeight?: number
   subjectIds: readonly string[]
 }
 
@@ -69,10 +68,13 @@ export interface FixtureReportCardGradeScale {
   scale: GradeScaleInput
 }
 
-export interface FixtureReportCardDefinition {
-  definition: ReportCardDefinitionInput
-  sections: readonly FixtureReportCardSection[]
-  narrativeStatus: 'published' | 'draft'
+export interface FixtureReportConfiguration {
+  schoolId: string
+  gradeLevelId: string
+  academicYearId: string
+  gradeScaleId: string
+  passThreshold?: number
+  modules: readonly FixtureReportModule[]
 }
 
 export interface FixtureReportCardSubjectMark {
@@ -87,7 +89,6 @@ export interface FixtureReportCardResult {
   studentId: string
   classGroupId: string
   periodId: string
-  reportCardDefinitionId: string
   gradeScaleId: string
   narrativeStatus: 'published' | 'generated'
   overallAverage: number
@@ -187,7 +188,7 @@ export interface FixtureDatasetExtensions {
   schedulingSessionProgressAnchors?: readonly FixtureSchedulingSessionProgressAnchor[]
   calendarEvents?: readonly FixtureCalendarEvent[]
   reportCardGradeScaleFixtures?: readonly FixtureReportCardGradeScale[]
-  reportCardDefinitionFixtures?: readonly FixtureReportCardDefinition[]
+  reportConfigurationFixtures?: readonly FixtureReportConfiguration[]
   reportCardResults?: readonly FixtureReportCardResult[]
   announcementMaterializePlans?: readonly FixtureAnnouncementMaterializePlan[]
   classSubjectStaffAssignments?: readonly StaffAssignmentInput[]

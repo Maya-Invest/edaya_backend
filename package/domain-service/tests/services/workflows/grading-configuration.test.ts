@@ -16,11 +16,11 @@ async function fixture(published = false) {
     { id: 'a', letter: 'A', interpretation: 'Excellent', minScore: 3.5, maxScore: 4, gpaValue: 4 },
   ] })
   await f.repositories.gradeScales.save(scale)
-  const report = { id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' }
+  const report = { id: 'rc1', studentId: 'stu1', periodId: 'per1' }
+  const draft = await f.service.assessmentsWorkflow.generateReportCardResult(report)
   if (published)
-    await f.service.assessmentsWorkflow.publishReportCardResult(report)
-  else await f.service.assessmentsWorkflow.generateReportCardResult(report)
-  const input = { requestId: 'grading-1', gradeLevelId: 'grade1', academicYearId: 'ay1', scaleId: scale.id, mode: 'numeric-first' as const, aggregateLabel: 'Moyenne', expectedRevision: 0, confirmed: true }
+    await f.service.assessmentsWorkflow.publishReportCardResult({ ...report, reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision })
+  const input = { requestId: 'grading-1', gradeLevelId: 'grade1', academicYearId: 'ay1', scaleId: scale.id, mode: 'numeric-first' as const, aggregateLabel: 'Moyenne', expectedRevision: 1, confirmed: true }
   const policy = async () => (await f.repositories.gradeLevels.findById('grade1'))!.gradingPolicyFor('ay1')!
   const drain = async () => {
     for (let attempt = 0; attempt < 30; attempt++) {
@@ -40,7 +40,7 @@ describe('grading configuration updates', () => {
     await expect(f.service.assessmentsWorkflow.configureGrading({ ...f.input, confirmed: false })).rejects.toMatchObject({ code: 'GRADING_CONFIRMATION_REQUIRED' })
     await f.service.assessmentsWorkflow.configureGrading(f.input)
     expect((await f.policy()).status).toBe('updating')
-    await expect(f.service.assessmentsWorkflow.publishReportCardResult(f.report)).rejects.toMatchObject({ code: 'GRADING_UPDATE_IN_PROGRESS' })
+    await expect(f.service.assessmentsWorkflow.publishReportCardResult(f.report)).rejects.toMatchObject({ code: 'REPORT_REVIEW_REQUIRED' })
     await f.drain()
     const mark = (await f.repositories.assessmentResults.findById('ar1'))!
     expect(mark.score).toBe(80)
@@ -59,7 +59,7 @@ describe('grading configuration updates', () => {
     expect(original.overallAverage).toBe(16)
     expect(original.revisedDraft?.overallAverage).toBe(3.2)
     await expect(f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, id: 'unreviewed' })).rejects.toMatchObject({ code: 'GRADING_REVIEW_REQUIRED' })
-    const published = await f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, reviewedGradingRevision: 1, reviewedDraftVersion: original.revisedDraft!.version })
+    const published = await f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, reviewedGradingRevision: 2, reviewedReportConfigurationRevision: 0, reviewedDraftVersion: original.revisedDraft!.version })
     expect(published.overallAverage).toBe(3.2)
     expect(published.publicationHistory[0]?.overallAverage).toBe(16)
     expect(published.revisedDraft).toBeUndefined()
@@ -67,13 +67,13 @@ describe('grading configuration updates', () => {
   test('label-only saves do not queue work; a superseding configuration wins', async () => {
     const f = await fixture()
     await f.service.assessmentsWorkflow.configureGrading(f.input)
-    await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'label', expectedRevision: 1, aggregateLabel: 'GPA', confirmed: false })
-    expect((await f.policy()).revision).toBe(1)
-    expect((await f.policy()).aggregateLabel).toBe('GPA')
-    await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'newer', expectedRevision: 1, mode: 'mention-first' })
-    await f.drain()
+    await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'label', expectedRevision: 2, aggregateLabel: 'GPA', confirmed: false })
     expect((await f.policy()).revision).toBe(2)
-    expect((await f.repositories.assessmentResults.findById('ar1'))?.calculation?.policyRevision).toBe(2)
+    expect((await f.policy()).aggregateLabel).toBe('GPA')
+    await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'newer', expectedRevision: 2, mode: 'mention-first' })
+    await f.drain()
+    expect((await f.policy()).revision).toBe(3)
+    expect((await f.repositories.assessmentResults.findById('ar1'))?.calculation?.policyRevision).toBe(3)
   })
   test('captures mention entries and requires mappings before converting them', async () => {
     const f = await fixture()
@@ -85,8 +85,8 @@ describe('grading configuration updates', () => {
     expect(mark.score).toBeUndefined()
     expect(mark.originalEntry?.kind).toBe('mention')
     expect(mark.calculation?.value).toBe(3)
-    await expect(f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'numeric', expectedRevision: 1 })).rejects.toMatchObject({ code: 'GRADING_NUMERIC_EQUIVALENT_REQUIRED' })
-    await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'numeric', expectedRevision: 1, numericEquivalents: { '1:f': 0, '1:b': 2.8, '1:a': 4 } })
+    await expect(f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'numeric', expectedRevision: 2 })).rejects.toMatchObject({ code: 'GRADING_NUMERIC_EQUIVALENT_REQUIRED' })
+    await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'numeric', expectedRevision: 2, numericEquivalents: { '2:f': 0, '2:b': 2.8, '2:a': 4 } })
     await f.drain()
     const after = (await f.repositories.assessmentResults.findById('ar1'))!
     expect(after.originalEntry).toEqual(mark.originalEntry)
@@ -115,7 +115,7 @@ test('a failed page retries from its cursor without duplicating a published revi
   resultStore.list = originalList
   expect((await f.policy()).status).toBe('failed')
   expect((await f.policy()).failureCode).toBe('GRADING_UPDATE_FAILED')
-  await f.service.assessmentsWorkflow.retryGrading({ requestId: 'retry', gradeLevelId: 'grade1', academicYearId: 'ay1', expectedRevision: 1 })
+  await f.service.assessmentsWorkflow.retryGrading({ requestId: 'retry', gradeLevelId: 'grade1', academicYearId: 'ay1', expectedRevision: 2 })
   await f.drain()
   const result = (await f.results.findById('rc1'))!
   expect(result.revisedDraft?.overallAverage).toBe(3.2)
@@ -155,21 +155,22 @@ test('annual drafts use recalculated terms and retain publication prerequisites'
   const { AcademicPeriod, AcademicPeriodType, ReportCardAggregationSource } = await import('@edaya/core')
   await f.repositories.academicPeriods.save(new AcademicPeriod({ id: 'annual', schoolId: 'sch1', academicYearId: 'ay1', name: 'Annual', type: AcademicPeriodType.Other, isPublished: true, startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
   const annual = { ...f.report, id: 'annual-report', periodId: 'annual', aggregation: { source: ReportCardAggregationSource.ReportCards, sourcePeriodIds: ['per1'] } }
-  await f.service.assessmentsWorkflow.publishReportCardResult(annual)
+  const annualDraft = await f.service.assessmentsWorkflow.generateReportCardResult(annual)
+  await f.service.assessmentsWorkflow.publishReportCardResult({ ...annual, reviewedDraftVersion: annualDraft.version, reviewedGradingRevision: annualDraft.gradingPolicyRevision, reviewedReportConfigurationRevision: annualDraft.reportConfigurationRevision })
   await f.service.assessmentsWorkflow.configureGrading(f.input)
   await f.drain()
   const revised = (await f.results.findById('annual-report'))!
   expect(revised.overallAverage).toBe(16)
   expect(revised.revisedDraft?.overallAverage).toBe(3.2)
-  await expect(f.service.assessmentsWorkflow.publishReportCardResult({ ...annual, reviewedGradingRevision: 1, reviewedDraftVersion: revised.revisedDraft!.version })).rejects.toMatchObject({ code: 'AGGREGATED_REPORT_CARD_SOURCES_NOT_READY' })
+  await expect(f.service.assessmentsWorkflow.publishReportCardResult({ ...annual, reviewedGradingRevision: 2, reviewedReportConfigurationRevision: 0, reviewedDraftVersion: revised.revisedDraft!.version })).rejects.toMatchObject({ code: 'AGGREGATED_REPORT_CARD_SOURCES_NOT_READY' })
   const term = (await f.results.findById('rc1'))!
-  await f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, reviewedGradingRevision: 1, reviewedDraftVersion: term.revisedDraft!.version })
+  await f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, reviewedGradingRevision: 2, reviewedReportConfigurationRevision: 0, reviewedDraftVersion: term.revisedDraft!.version })
   const retained = await f.service.baseService.access.reportCards.annualDocumentContext('annual-report')
   expect(retained.contributors[0]?.result.overallAverage).toBe(16)
   // Regeneration refreshes provenance after the contributing report's republication.
   const regenerated = await f.service.assessmentsWorkflow.generateReportCardResult(annual)
   expect(regenerated.revisedDraft?.rank).toBe(1)
-  const published = await f.service.assessmentsWorkflow.publishReportCardResult({ ...annual, reviewedGradingRevision: 1, reviewedDraftVersion: regenerated.revisedDraft!.version })
+  const published = await f.service.assessmentsWorkflow.publishReportCardResult({ ...annual, reviewedGradingRevision: 2, reviewedReportConfigurationRevision: 0, reviewedDraftVersion: regenerated.revisedDraft!.version })
   expect(published.overallAverage).toBe(3.2)
   expect(published.rank).toBe(1)
   expect(published.publicationHistory).toHaveLength(1)
@@ -194,9 +195,9 @@ test('an absent-to-numeric correction preserves the full entered precision', asy
   await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', designation: 'absent' }))
   await f.service.assessmentsWorkflow.configureGrading(f.input)
   await f.drain()
-  const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: 'precise', assessmentId: 'ass1', expectedRevision: 0, expectedGradingRevision: 1, reason: 'Original paper recovered', changes: [{ resultId: 'ar1', proposed: { score: 73.123, designation: 'scored', notes: null } }] })
+  const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: 'precise', assessmentId: 'ass1', expectedRevision: 0, expectedGradingRevision: 2, reason: 'Original paper recovered', changes: [{ resultId: 'ar1', proposed: { score: 73.123, designation: 'scored', notes: null } }] })
   expect(correction.changes[0]!.proposed.score).toBe(73.123)
-  const revised = await f.service.assessmentsWorkflow.reviseAssessmentMarksCorrection({ requestId: 'more-precise', correctionId: correction.id, expectedVersion: 0, assessmentId: 'ass1', expectedRevision: 0, expectedGradingRevision: 1, reason: 'Checked the total', changes: [{ resultId: 'ar1', proposed: { score: 74.567, designation: 'scored', notes: null } }] })
+  const revised = await f.service.assessmentsWorkflow.reviseAssessmentMarksCorrection({ requestId: 'more-precise', correctionId: correction.id, expectedVersion: 0, assessmentId: 'ass1', expectedRevision: 0, expectedGradingRevision: 2, reason: 'Checked the total', changes: [{ resultId: 'ar1', proposed: { score: 74.567, designation: 'scored', notes: null } }] })
   expect(revised.changes[0]!.proposed.score).toBe(74.567)
   await f.repositories.staffMembers.save(new StaffMember({ id: 'reviewer', schoolId: 'sch1', firstName: 'Review', lastName: 'Staff', subjectId: 'reviewer-login' }))
   await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission: Permission.GRADE_VALIDATE, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
@@ -241,7 +242,7 @@ test('an exhausted crashed page is visible as failed and can resume', async () =
   expect((await f.policy()).status).toBe('updating')
   expect((await f.repositories.gradeLevels.findById('grade1'))?.name).toBe('Renamed level')
   store.getState = getState
-  await f.service.assessmentsWorkflow.retryGrading({ requestId: 'after-crash', gradeLevelId: 'grade1', academicYearId: 'ay1', expectedRevision: 1 })
+  await f.service.assessmentsWorkflow.retryGrading({ requestId: 'after-crash', gradeLevelId: 'grade1', academicYearId: 'ay1', expectedRevision: 2 })
   await f.drain()
 })
 
@@ -250,10 +251,10 @@ test('changing scale identity creates a revision and rejects a stale scale edito
   await f.service.assessmentsWorkflow.configureGrading(f.input)
   const scale = (await f.repositories.gradeScales.findById('points'))!
   await f.repositories.gradeScales.save(new GradeScale({ ...scale.data, id: 'alternate', ranges: [...scale.ranges] }))
-  await expect(f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'stale-scale', expectedRevision: 1, expectedScaleRevision: 5 })).rejects.toMatchObject({ code: 'GRADING_REVISION_CONFLICT' })
-  await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'alternate', expectedRevision: 1, scaleId: 'alternate', expectedScaleRevision: 0 })
+  await expect(f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'stale-scale', expectedRevision: 2, expectedScaleRevision: 5 })).rejects.toMatchObject({ code: 'GRADING_REVISION_CONFLICT' })
+  await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'alternate', expectedRevision: 2, scaleId: 'alternate', expectedScaleRevision: 0 })
   await f.drain()
-  expect((await f.policy()).revision).toBe(2)
+  expect((await f.policy()).revision).toBe(3)
   expect((await f.policy()).scale.id).toBe('alternate')
   expect((await f.results.findById('rc1'))?.grading?.scaleId).toBe('alternate')
 })
@@ -266,10 +267,10 @@ test('staff correction details resolve mention identifiers using the reviewed gr
   await f.drain()
   await f.service.assessmentsWorkflow.recordAssessmentResult({ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', requestId: 'entry', expectedRevision: 0, designation: 'scored', mentionId: 'b' })
   await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-  const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: 'mention-correction', assessmentId: 'ass1', expectedRevision: 2, expectedGradingRevision: 1, reason: 'Checked original work', changes: [{ resultId: 'ar1', proposed: { mentionId: 'a', score: null, designation: 'scored', notes: null } }] })
+  const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: 'mention-correction', assessmentId: 'ass1', expectedRevision: 2, expectedGradingRevision: 2, reason: 'Checked original work', changes: [{ resultId: 'ar1', proposed: { mentionId: 'a', score: null, designation: 'scored', notes: null } }] })
   const scale = (await f.repositories.gradeScales.findById('points'))!
   await f.repositories.gradeScales.save(new GradeScale({ ...scale.data, ranges: scale.ranges.map(range => ({ ...range, letter: `New ${range.letter}` })) }))
-  await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'new-labels', expectedRevision: 1, mode: 'mention-first' })
+  await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'new-labels', expectedRevision: 2, mode: 'mention-first' })
   const detail = await f.service.teacherCorrectionsWorkflow.detail({ correctionId: correction.id })
   expect(detail.original).toMatchObject({ mentionLabels: { b: 'B · Good', a: 'A · Excellent' } })
 })
@@ -287,7 +288,8 @@ test('ranking a later draft never rewrites an already published ranking', async 
   await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu2', assessmentId: 'ass1', score: 90 }))
   await f.service.assessmentsWorkflow.configureGrading(f.input)
   await f.drain()
-  const published = await f.service.assessmentsWorkflow.publishReportCardResult(f.report)
+  const draft = (await f.repositories.results.findById(f.report.id))!
+  const published = await f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision })
   expect(published.rank).toBe(1)
   const next = await f.service.assessmentsWorkflow.generateReportCardResult({ ...f.report, id: 'rc2', studentId: 'stu2' })
   expect(next.rank).toBe(1)

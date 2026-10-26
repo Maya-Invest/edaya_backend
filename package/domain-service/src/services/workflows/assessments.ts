@@ -1,14 +1,15 @@
-import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, DecideMarksCorrectionInput, GradeScale, GradeScaleInput, GradingPolicy, RejectMarksCorrectionInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, RequestMarksCorrectionInput, ReviseMarksCorrectionInput, StudentClassEnrollment } from '@edaya/core'
+import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, DecideMarksCorrectionInput, GradeScale, GradeScaleInput, GradingPolicy, RejectMarksCorrectionInput, ReportCardAggregation, ReportCardResultSection, RequestMarksCorrectionInput, ReviseMarksCorrectionInput, StudentClassEnrollment } from '@edaya/core'
 import type { ReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import type { ConfigureGradeScaleInput, ConfigureReportModelInput } from './configuration-editors'
+import type { ConfigureGradeScaleInput } from './configuration-editors'
 import type { ConfigureGradingInput, RetryGradingInput } from './grading-configuration'
 import type { MarksReviewInput } from './marks-review'
 import type { ReportAggregationContext } from './report-card-aggregation'
 import type { HomeroomCommentInput, SectionCommentsInput } from './report-comments'
+import type { ConfigureReportModulesInput, ConfigureReportSettingsInput } from './report-configuration'
 import { denyResourceAccess } from '@edaya/authorization'
-import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, describeGrade, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, reportCardSnapshotSchema, roundTo2 } from '@edaya/core'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, calculateModuleReport, describeGrade, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, reportCardSnapshotSchema } from '@edaya/core'
 import { assessmentGradingPolicy, captureGradeEntry } from '../../capabilities/academics/grading'
 import { academicStateLock, assertMarksRevision, enrollmentEffectiveAt } from '../../capabilities/academics/marks-state'
 import { loadReportAssessmentContext, scopeReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
@@ -18,8 +19,8 @@ import { DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-docum
 import { documentNumberLockKey } from '../../capabilities/documents/persist-requested-issuance'
 import { REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { schoolCommandScope } from '../commands/school-command-scope'
-import { validateReportCardResultSave } from '../entities/config/assessments/report-card-result'
 
+import { validateReportCardResultSave } from '../entities/config/assessments/report-card-result'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { ConfigurationEditorsWorkflow } from './configuration-editors'
@@ -27,16 +28,17 @@ import { DocumentsServiceWorkflow } from './documents'
 import { GradingConfigurationWorkflow } from './grading-configuration'
 import { MarksCorrectionsWorkflow } from './marks-corrections'
 import { MarksReviewWorkflow } from './marks-review'
-import { buildGroupResultFromChildren, buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, childReportCardDefinitionSections, dedupeReportCardDefinitionSections, loadReportAggregationContext, rootReportCardDefinitionSections } from './report-card-aggregation'
+import { buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, loadReportAggregationContext } from './report-card-aggregation'
 import { writeReportComments } from './report-comments'
+import { ReportConfigurationWorkflow } from './report-configuration'
 
 export interface PublishReportCardResultInput {
+  reviewedReportConfigurationRevision?: number
   reviewedGradingRevision?: number
   reviewedDraftVersion?: number
   id: string
   studentId: string
   periodId: string
-  reportCardDefinitionId?: string
   publishedAt?: Date
   aggregation?: ReportCardAggregation
 }
@@ -45,7 +47,6 @@ export interface GenerateReportCardResultInput {
   id: string
   studentId: string
   periodId: string
-  reportCardDefinitionId?: string
   generatedAt?: Date
   aggregation?: ReportCardAggregation
 }
@@ -54,8 +55,6 @@ export type WriteHomeroomReportCommentInput = HomeroomCommentInput
 export type WriteReportCardSectionCommentsInput = SectionCommentsInput
 
 export type CreateGradeScaleInput = GradeScaleInput
-export type CreateReportCardDefinitionInput = ReportCardDefinitionInput
-export type CreateReportCardDefinitionSectionInput = ReportCardDefinitionSectionInput
 export type CreateAssessmentInput = AssessmentInput
 
 export interface CompleteAssessmentInput {
@@ -80,7 +79,8 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   configureGradeScale(input: ConfigureGradeScaleInput) { return new ConfigurationEditorsWorkflow(this.baseService).configureScale(input) }
-  configureReportCardDefinition(input: ConfigureReportModelInput) { return new ConfigurationEditorsWorkflow(this.baseService).configureModel(input) }
+  configureReportModules(input: ConfigureReportModulesInput) { return new ReportConfigurationWorkflow(this.baseService).configure(input) }
+  configureReportSettings(input: ConfigureReportSettingsInput) { return new ReportConfigurationWorkflow(this.baseService).configure(input) }
 
   configureGrading(input: ConfigureGradingInput) { return new GradingConfigurationWorkflow(this.baseService).configure(input) }
   retryGrading(input: RetryGradingInput) { return new GradingConfigurationWorkflow(this.baseService).retry(input) }
@@ -90,22 +90,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       const gradeScale = new GradeScaleEntity(input)
       await this.baseService.entities.gradeScales.save(gradeScale)
       return gradeScale
-    })
-  }
-
-  async createReportCardDefinition(input: CreateReportCardDefinitionInput): Promise<ReportCardDefinition> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const definition = new ReportCardDefinition(input)
-      await this.baseService.entities.definitions.save(definition)
-      return definition
-    })
-  }
-
-  async createReportCardDefinitionSection(input: CreateReportCardDefinitionSectionInput): Promise<ReportCardDefinitionSection> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const section = new ReportCardDefinitionSectionEntity(input)
-      await this.baseService.entities.sections.save(section)
-      return section
     })
   }
 
@@ -229,14 +213,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       this.checkActorSchool(student.schoolId)
 
       await this.baseService.access.reportCards.assertGenerate(student.id)
-      await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+      await this.requireReportCardResources(input.periodId, student.schoolId)
       const published = await this.repositories.results.findOne({ studentId: input.studentId, periodId: input.periodId, status: ReportCardResultStatus.Published })
-      const regeneratingRevision = Boolean(published?.revisedDraft)
-      const regeneratingAnnual = regeneratingRevision || await this.requireReportCardNotPublished(input.studentId, input.periodId)
+      const regeneratingAnnual = Boolean(published)
       if (regeneratingAnnual)
         await this.baseService.access.reportCards.assertPublish(student.id)
       const reportCard = await this.buildReportCardResult(input)
-      if (published && (regeneratingRevision || published.grading)) {
+      if (published) {
         const revised = new ReportCardResult({ ...published.data, sectionResults: [...published.sectionResults], revisedDraft: reportCardSnapshotSchema.parse(reportCard) })
         await this.repositories.results.forSchool!(student.schoolId).save(revised)
         return this.refreshGeneratedRanking(revised, student.schoolId)
@@ -292,13 +275,11 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       ],
       authorize: async () => {
         await this.baseService.access.reportCards.assertPublish(student.id)
-        await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+        await this.requireReportCardResources(input.periodId, student.schoolId)
       },
       execute: async () => {
         const existing = await this.repositories.results.findOne({ studentId: input.studentId, periodId: input.periodId, status: ReportCardResultStatus.Published })
         if (existing && !existing.revisedDraft) {
-          if (input.reportCardDefinitionId && existing.reportCardDefinitionId !== input.reportCardDefinitionId)
-            throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', 'The published report uses a different definition')
           // The student/period lock makes distinct concurrent request IDs converge.
           return this.requireEntity(this.baseService.entities.results, existing.id)
         }
@@ -307,10 +288,18 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           throw new BusinessRuleViolationError('GRADING_REVIEW_REQUIRED', 'Review the current revised draft before republishing')
         if (revision?.calculationStale)
           throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Regenerate the revised draft after the latest mark changes')
-        const generated = revision ? hydrateReportRevision(revision) : await this.buildReportCardResult(input, true)
-        if (revision && generated.aggregation && !(await loadReportAggregationContext(this.repositories, generated.studentId, generated.aggregation, period)).readiness.canPublish)
-          throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_SOURCES_NOT_READY', 'Review and republish contributing reports first')
-        if (revision && generated.aggregation?.source === ReportCardAggregationSource.ReportCards) {
+        const draft = revision ?? await this.repositories.results.findOne({ studentId: input.studentId, periodId: input.periodId })
+        if (!draft || draft.status === 'published' || draft.calculationStale || input.reviewedDraftVersion !== draft.version || input.reviewedGradingRevision !== draft.gradingPolicyRevision || input.reviewedReportConfigurationRevision !== draft.reportConfigurationRevision)
+          throw new BusinessRuleViolationError('REPORT_REVIEW_REQUIRED', 'Generate and review the current report draft before publication')
+        const generated = hydrateReportRevision(draft instanceof ReportCardResult ? draft.data : draft)
+        if (generated.aggregation) {
+          if (!(await loadReportAggregationContext(this.repositories, generated.studentId, generated.aggregation, period)).readiness.canPublish)
+            throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_SOURCES_NOT_READY', 'Review and republish contributing reports first')
+        }
+        else if (!period.isPublished) {
+          throw new BusinessRuleViolationError('ACADEMIC_PERIOD_NOT_PUBLISHED', 'Publish the academic period first')
+        }
+        if (generated.aggregation?.source === ReportCardAggregationSource.ReportCards) {
           const sources = await loadReportAggregationContext(this.repositories, generated.studentId, generated.aggregation, period)
           for (const source of sources.priorResultsByPeriodId.values()) {
             if (generated.aggregation.sourceReportVersions?.find(row => row.resultId === source.id)?.sourceVersion !== await reportCardAcademicVersion(source))
@@ -370,45 +359,16 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  private async requireReportCardResources(
-    periodId: string,
-    reportCardDefinitionId: string | undefined,
-    schoolId: string,
-  ): Promise<void> {
+  private async requireReportCardResources(periodId: string, schoolId: string): Promise<void> {
     const period = await this.repositories.academicPeriods.findById(periodId)
-    const definition = reportCardDefinitionId
-      ? await this.repositories.definitions.findById(reportCardDefinitionId)
-      : undefined
-    if (!period || period.schoolId !== schoolId || (reportCardDefinitionId && !definition)) {
+    if (!period || period.schoolId !== schoolId)
       denyResourceAccess()
-    }
-    if (definition && definition.schoolId !== schoolId) {
-      denyResourceAccess()
-    }
-  }
-
-  private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<boolean> {
-    const reportCard = await this.repositories.results.findOne({ studentId, periodId })
-    if (reportCard?.status === ReportCardResultStatus.Published) {
-      if (reportCard.aggregation?.source === ReportCardAggregationSource.ReportCards) {
-        const sources = await loadReportAggregationContext(this.repositories, studentId, reportCard.aggregation)
-        const versions = await Promise.all([...sources.priorResultsByPeriodId.values()].map(async source => ({ source, version: await reportCardAcademicVersion(source) })))
-        if (sources.readiness.canPublish && versions.some(({ source, version }) =>
-          reportCard.aggregation!.sourceReportVersions?.find(entry => entry.periodId === source.periodId)?.sourceVersion !== version,
-        )) {
-          return true
-        }
-      }
-      throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
-    }
-    return false
   }
 
   async buildReportCardResult({
     id,
     studentId,
     periodId,
-    reportCardDefinitionId,
     generatedAt,
     aggregation,
   }: GenerateReportCardResultInput, publishing = false, background = false): Promise<ReportCardResult> {
@@ -422,16 +382,14 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       at: period.endDate,
     })
     const classGroup = await this.requireClassGroup(enrollment.classGroupId)
-    const policy = (await this.repositories.gradeLevels.findById(classGroup.gradeLevelId))?.gradingPolicyFor(period.academicYearId)
+    const level = await this.repositories.gradeLevels.findById(classGroup.gradeLevelId)
+    const policy = level?.gradingPolicyFor(period.academicYearId)
+    if (!level || !policy)
+      throw new BusinessRuleViolationError('GRADING_POLICY_REQUIRED', 'Configure grading for this grade level and academic year')
+    const reportSettings = level.reportSettingsFor(period.academicYearId)
     if (policy && policy.status !== 'completed' && !background)
       throw new BusinessRuleViolationError('GRADING_UPDATE_IN_PROGRESS', 'Wait for grading recalculation to finish')
-    const definition = reportCardDefinitionId
-      ? await this.requireReportCardDefinition(reportCardDefinitionId)
-      : await this.requireDefaultReportCardDefinition({
-          gradeLevelId: classGroup.gradeLevelId,
-          academicYearId: period.academicYearId,
-        })
-    context = await scopeReportAssessmentContext(this.repositories, context, definition.id, classGroup.id)
+    context = await scopeReportAssessmentContext(this.repositories, context, classGroup.gradeLevelId, period.academicYearId)
     const aggregationContext = resolvedAggregation ? await loadReportAggregationContext(this.repositories, studentId, resolvedAggregation, period, policy?.revision) : undefined
     if (resolvedAggregation?.source === ReportCardAggregationSource.ReportCards) {
       resolvedAggregation = {
@@ -448,7 +406,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       studentId,
       periodId,
       classGroupId: classGroup.id,
-      reportCardDefinitionId: definition.id,
+      gradeLevelId: classGroup.gradeLevelId,
+      academicYearId: period.academicYearId,
+      reportConfigurationRevision: reportSettings.revision,
       aggregation: resolvedAggregation,
       aggregationContext,
       policy,
@@ -467,11 +427,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     })
     return new ReportCardResult({
       id: existing?.id ?? id,
-      reportCardDefinitionId: definition.id,
+      gradeLevelId: classGroup.gradeLevelId,
+      academicYearId: period.academicYearId,
+      reportConfigurationRevision: reportSettings.revision,
       studentId,
       classGroupId: classGroup.id,
       periodId,
-      sectionResults: preserveReportComments(existing, definition.id, sectionResults),
+      sectionResults: preserveReportComments(existing?.revisedDraft ? hydrateReportRevision(existing.revisedDraft) : existing, sectionResults, reportSettings.revision),
       version: Math.max(existing?.version ?? 0, existing?.revisedDraft?.version ?? 0) + 1,
       sourceAssessments,
       sourceMarks,
@@ -487,9 +449,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       publicationHistory: existing?.publicationHistory,
       rank: existing?.status === ReportCardResultStatus.Published && !publishing ? undefined : existing?.rank,
       classSize: existing?.classSize,
-      passThreshold: definition.passThreshold,
-      teacherComment: existing?.teacherComment,
-      principalComment: existing?.principalComment,
+      passThreshold: reportSettings.passThreshold,
+      teacherComment: existing?.revisedDraft?.teacherComment ?? existing?.teacherComment,
+      principalComment: existing?.revisedDraft?.principalComment ?? existing?.principalComment,
       status: canPublish && publishing ? (existing?.status ?? ReportCardResultStatus.Draft) : ReportCardResultStatus.Draft,
       generatedAt: existing?.generatedAt ?? generatedAt,
       publishedAt: publishing ? existing?.publishedAt : undefined,
@@ -497,201 +459,50 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  private async buildReportCardResults({
-    studentId,
-    classGroupId,
-    reportCardDefinitionId,
-    aggregation,
-    aggregationContext,
-    policy,
-    period,
-    context,
-  }: {
+  private async buildReportCardResults({ studentId, classGroupId, gradeLevelId, academicYearId, aggregation, aggregationContext, policy, period, context }: {
     studentId: string
-    periodId: string
+    periodId?: string
     classGroupId: string
-    reportCardDefinitionId: string
-    context: ReportAssessmentContext
-    period: AcademicPeriod
-    policy?: GradingPolicy
-    aggregationContext?: ReportAggregationContext
+    gradeLevelId: string
+    academicYearId: string
+    reportConfigurationRevision?: number
     aggregation?: ReportCardAggregation
-  }): Promise<{
-    sectionResults: ReportCardResultSection[]
-    overallAverage?: number
-    assessmentResultCount?: number
-    attendanceSummary?: AttendanceSummary
-    canPublish: boolean
-  }> {
-    const allSections = dedupeReportCardDefinitionSections(
-      await this.repositories.sections.list({ reportCardDefinitionId }),
-    ).sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
-    const classSubjects = [...context.classSubjects].sort((a, b) => Number(a.classGroupId === classGroupId) - Number(b.classGroupId === classGroupId))
-    const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
-
-    if (!aggregation) {
-      const singlePeriod = await this.buildSinglePeriodReportCardResults({
-        classSubjectBySubject,
-        allSections,
-        context,
-        policy,
-      })
-      return {
-        ...singlePeriod,
-        canPublish: period.isPublished,
-      }
-    }
-
-    const { readiness, publishedPeriods: sourcePeriods, priorResultsByPeriodId } = aggregationContext!
-    const publishedSourcePeriodIds = new Set(sourcePeriods.map(source => source.id))
-    const assessmentsWithResults = context.results.filter(({ assessment }) => publishedSourcePeriodIds.has(assessment.periodId))
-
-    const priorClassSubjectIds = new Set<string>()
-    const collectSubjects = (nodes: readonly ReportCardResultSection[]) => {
-      for (const node of nodes) {
-        if (node.classSubjectId)
-          priorClassSubjectIds.add(node.classSubjectId)
-        collectSubjects(node.subResults)
-      }
-    }
-    for (const result of priorResultsByPeriodId.values()) collectSubjects(result.sectionResults)
-    const priorSubjectIdentities = new Map((await this.repositories.classSubjects.findByIds([...priorClassSubjectIds])).map(row => [row.id, row.subjectId]))
-
-    const computeNode = async (
-      section: ReportCardDefinitionSection,
-      visited = new Set<string>(),
-    ): Promise<ReportCardResultSection | null> => {
-      if (visited.has(section.id)) {
-        throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
-      }
-      const nextVisited = new Set(visited).add(section.id)
-      const childSections = childReportCardDefinitionSections(allSections, section.id)
-      if (section.kind === ReportCardDefinitionSectionKind.Subject) {
-        const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
-        if (!classSubject) {
-          return null
-        }
-        const average = aggregation.source === ReportCardAggregationSource.ReportCards
-          ? buildSubjectAverageFromPriorReportCards(section.id, aggregation, priorResultsByPeriodId, { id: classSubject.subjectId, byClassSubject: priorSubjectIdentities }, policy)
-          : buildSubjectAverageFromAssessments([...context.subjectByClassSubject].filter(([, subjectId]) => subjectId === classSubject.subjectId).map(([id]) => id), assessmentsWithResults, policy)
-        return new ReportCardResultSection({
-          sectionId: section.id,
-          sectionKind: ReportCardDefinitionSectionKind.Subject,
-          name: section.name,
-          average: policy && average !== undefined ? describeGrade(average, policy).reportedValue : average,
-          grading: policy && average !== undefined ? describeGrade(average, policy) : undefined,
-          weight: section.weight,
-          parentSectionId: section.parentSectionId,
-          classSubjectId: classSubject.id,
-          subResults: [],
-        })
-      }
-
-      const childResults: ReportCardResultSection[] = []
-      for (const child of childSections) {
-        const childResult = await computeNode(child, nextVisited)
-        if (childResult) {
-          childResults.push(childResult)
-        }
-      }
-      return buildGroupResultFromChildren(section, childResults, policy)
-    }
-
-    const sectionResults: ReportCardResultSection[] = []
-    let rootSumWeights = 0
-    let rootSumWeightedPoints = 0
-    for (const root of rootReportCardDefinitionSections(allSections)) {
-      const result = await computeNode(root)
-      if (result) {
-        sectionResults.push(result)
-        if (result.average !== undefined) {
-          rootSumWeights += root.weight
-          rootSumWeightedPoints += (result.grading?.value ?? result.average) * root.weight
-        }
-      }
-    }
-
-    const attendanceSummary = sourcePeriods.length
-      ? await this.buildAttendanceSummary({ studentId, periods: sourcePeriods })
-      : new AttendanceSummary({ presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 })
-
-    const overallAverage = rootSumWeights > 0 ? policy ? rootSumWeightedPoints / rootSumWeights : roundTo2(rootSumWeightedPoints / rootSumWeights) : undefined
-    return {
-      sectionResults,
-      overallAverage,
-      assessmentResultCount: assessmentsWithResults.length,
-      attendanceSummary,
-      canPublish: readiness.canPublish,
-    }
-  }
-
-  private async buildSinglePeriodReportCardResults({
-    classSubjectBySubject,
-    allSections,
-    context,
-    policy,
-  }: {
-    policy?: GradingPolicy
-    classSubjectBySubject: Map<string, { id: string, subjectId: string }>
-    allSections: ReportCardDefinitionSection[]
+    aggregationContext?: ReportAggregationContext
+    policy: GradingPolicy
+    period: AcademicPeriod
     context: ReportAssessmentContext
-  }): Promise<{ sectionResults: ReportCardResultSection[], overallAverage?: number }> {
-    const computeNode = async (
-      section: ReportCardDefinitionSection,
-      visited = new Set<string>(),
-    ): Promise<ReportCardResultSection | null> => {
-      if (visited.has(section.id)) {
-        throw new BusinessRuleViolationError('REPORT_CARD_SECTION_CYCLE', 'report card definition sections must not contain cycles')
-      }
-      const nextVisited = new Set(visited).add(section.id)
-      const childSections = childReportCardDefinitionSections(allSections, section.id)
-      if (section.kind === ReportCardDefinitionSectionKind.Subject) {
-        const classSubject = section.subjectId ? classSubjectBySubject.get(section.subjectId) : undefined
-        if (!classSubject)
-          return null
-        const average = buildSubjectAverageFromAssessments(
-          [...context.subjectByClassSubject].filter(([, subjectId]) => subjectId === classSubject.subjectId).map(([id]) => id),
-          context.results,
-          policy,
-        )
-        return new ReportCardResultSection({
-          sectionId: section.id,
-          sectionKind: ReportCardDefinitionSectionKind.Subject,
-          name: section.name,
-          average: policy && average !== undefined ? describeGrade(average, policy).reportedValue : average,
-          grading: policy && average !== undefined ? describeGrade(average, policy) : undefined,
-          weight: section.weight,
-          parentSectionId: section.parentSectionId,
-          classSubjectId: classSubject.id,
-          subResults: [],
-        })
-      }
-
-      const childResults: ReportCardResultSection[] = []
-      for (const child of childSections) {
-        const childResult = await computeNode(child, nextVisited)
-        if (childResult) {
-          childResults.push(childResult)
-        }
-      }
-      return buildGroupResultFromChildren(section, childResults, policy)
-    }
-
-    const sectionResults: ReportCardResultSection[] = []
-    let rootSumWeights = 0
-    let rootSumWeightedPoints = 0
-    for (const root of rootReportCardDefinitionSections(allSections)) {
-      const result = await computeNode(root)
-      if (result) {
-        sectionResults.push(result)
-        if (result.average !== undefined) {
-          rootSumWeights += root.weight
-          rootSumWeightedPoints += (result.grading?.value ?? result.average) * root.weight
-        }
+  }) {
+    const subjects = await this.repositories.subjects.list({ schoolId: period.schoolId, gradeLevelId, academicYearId })
+    const modules = await this.repositories.reportModules.list({ schoolId: period.schoolId, gradeLevelId, academicYearId })
+    const offerings = [...context.classSubjects].sort((a, b) => Number(a.classGroupId === classGroupId) - Number(b.classGroupId === classGroupId))
+    const bySubject = new Map(offerings.map(row => [row.subjectId, row]))
+    const prior = aggregationContext?.priorResultsByPeriodId ?? new Map<string, ReportCardResult>()
+    const priorIdentities = new Map<string, string>()
+    const collect = (nodes: readonly ReportCardResultSection[]) => {
+      for (const node of nodes) {
+        if (node.subjectId && node.classSubjectId)
+          priorIdentities.set(node.classSubjectId, node.subjectId)
+        collect(node.subResults)
       }
     }
-    const overallAverage = rootSumWeights > 0 ? policy ? rootSumWeightedPoints / rootSumWeights : roundTo2(rootSumWeightedPoints / rootSumWeights) : undefined
-    return { sectionResults, overallAverage }
+    for (const result of prior.values()) collect(result.sectionResults)
+    const publishedIds = new Set(aggregationContext?.publishedPeriods.map(row => row.id))
+    const marks = aggregation ? context.results.filter(row => publishedIds.has(row.assessment.periodId)) : context.results
+    const rows = subjects.flatMap((subject) => {
+      const offering = bySubject.get(subject.id)
+      if (!offering)
+        return []
+      const average = aggregation?.source === ReportCardAggregationSource.ReportCards
+        ? buildSubjectAverageFromPriorReportCards(`subject:${subject.id}`, aggregation, prior, { id: subject.id, byClassSubject: priorIdentities }, policy)
+        : buildSubjectAverageFromAssessments([...context.subjectByClassSubject].filter(([, id]) => id === subject.id).map(([id]) => id), marks, policy)
+      return [{ subject, classSubjectId: offering.id, average }]
+    })
+    return {
+      ...calculateModuleReport(modules, rows, policy),
+      assessmentResultCount: marks.length,
+      attendanceSummary: aggregationContext ? await this.buildAttendanceSummary({ studentId, periods: aggregationContext.publishedPeriods }) : undefined,
+      canPublish: aggregationContext ? aggregationContext.readiness.canPublish : period.isPublished,
+    }
   }
 
   private requireEnrollmentForPeriod({ enrollments, academicYearId, at }: {
@@ -703,36 +514,6 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     if (effective.length !== 1)
       throw new BusinessRuleViolationError('REPORT_CARD_ENROLLMENT_AMBIGUOUS', 'Exactly one enrollment must be effective at the end of the report period')
     return effective[0]!
-  }
-
-  private async requireReportCardDefinition(reportCardDefinitionId: string) {
-    const definition = await this.repositories.definitions.findById(reportCardDefinitionId)
-    if (!definition) {
-      throw new BusinessRuleViolationError('UNKNOWN_REPORT_CARD_DEFINITION', `Unknown report card definition: ${reportCardDefinitionId}`)
-    }
-    await this.requireCompleteScale(definition.gradeScaleId)
-    return definition
-  }
-
-  private async requireDefaultReportCardDefinition({
-    gradeLevelId,
-    academicYearId,
-  }: {
-    gradeLevelId: string
-    academicYearId: string
-  }) {
-    const definition = await this.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
-    if (!definition) {
-      throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
-    }
-    await this.requireCompleteScale(definition.gradeScaleId)
-    return definition
-  }
-
-  private async requireCompleteScale(id: string) {
-    const scale = await this.repositories.gradeScales.findById(id)
-    if (!scale?.isComplete)
-      throw new BusinessRuleViolationError('GRADE_SCALE_INCOMPLETE', 'Report generation requires a complete scale')
   }
 
   private async buildAttendanceSummary({

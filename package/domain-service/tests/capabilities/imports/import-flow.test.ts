@@ -9,6 +9,30 @@ import { ImportBusinessContext } from '../../../src/capabilities/imports/busines
 import { createStudentTransitionContext } from '../../services/workflows/student-workflow-context'
 // Application tests drive the parsing port, not a spreadsheet implementation.
 const format: ImportFormatPort = { parse: async ({ bytes }) => JSON.parse(new TextDecoder().decode(bytes)) as ParsedImportTable, serialize: async data => new TextEncoder().encode(JSON.stringify(data)) }
+test('identity staging and replay lookup stay batched and retain duplicate-source detection', async () => {
+  const f = await fixture()
+  const store = f.application.importPersistence
+  const individual = [spyOn(store, 'getIdentity'), spyOn(store, 'saveIdentity'), spyOn(store, 'findOutcome')]
+  const batched = [spyOn(store, 'getIdentities'), spyOn(store, 'saveIdentities'), spyOn(store, 'findOutcomes')]
+  try {
+    await f.submit('guardians', ['source_id', 'code', 'first_name', 'last_name'], Array.from({ length: 24 }, (_, i) => [`source-${i}`, `G-${i}`, 'First', 'Last']))
+    const preview = await f.imports.validate({ batchId: f.batch.id })
+    expect(preview.counts['pending']).toBe(24)
+    for (const read of individual) expect(read).not.toHaveBeenCalled()
+    expect(batched[0]).toHaveBeenCalledTimes(2)
+    expect(batched[1]).toHaveBeenCalledTimes(1)
+    expect(batched[2]).toHaveBeenCalledTimes(1)
+  }
+  finally {
+    for (const call of [...individual, ...batched]) call.mockRestore()
+  }
+  const duplicate = await fixture()
+  await duplicate.submit('guardians', ['source_id', 'first_name', 'last_name'], [['same', 'One', 'Parent'], ['same', 'Two', 'Parent']])
+  const preview = await duplicate.imports.validate({ batchId: duplicate.batch.id })
+  expect(new Set(preview.rows.map(row => row.targetId)).size).toBe(1)
+  expect(preview.rows.every(row => row.outcome === 'blocked')).toBe(true)
+})
+
 async function fixture() {
   const original = await createStudentTransitionContext()
   const application = new SchoolApplication({ repositories: original.repositories, atomicExecution: original.atomicExecution, commandJournal: new PostgresCommandJournal(), durableWork: original.durableWork, fileStorage: createInMemoryFileStorage(), notificationGateway: noOpNotificationGateway, importPersistence: new PostgresImportStore(), importFormat: format })

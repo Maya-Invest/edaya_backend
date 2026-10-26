@@ -32,9 +32,9 @@ import { demoCiCatalogServices, demoCiPayments, demoCiStudentServiceEnrollments 
 import { demoCiIncidents, demoCiStudentIncidentInvolvements } from './domains/incidents'
 import {
   demoCiGradeScales,
-  demoCiReportCardDefinitionFixtures,
   demoCiReportCardGradeScaleFixtures,
   demoCiReportCardResults,
+  demoCiReportConfigurationFixtures,
 } from './domains/report-cards'
 import {
   demoCiClassResourceAssignments,
@@ -122,7 +122,7 @@ export const demoCiDataset = {
     schedulingSessionProgressAnchors: demoCiSchedulingSessionProgressAnchors,
     calendarEvents: demoCiCalendarEvents,
     reportCardGradeScaleFixtures: demoCiReportCardGradeScaleFixtures,
-    reportCardDefinitionFixtures: demoCiReportCardDefinitionFixtures,
+    reportConfigurationFixtures: demoCiReportConfigurationFixtures,
     reportCardResults: demoCiReportCardResults,
     announcementMaterializePlans: demoCiAnnouncementMaterializePlans,
     documentIssuances: demoCiDocumentIssuances,

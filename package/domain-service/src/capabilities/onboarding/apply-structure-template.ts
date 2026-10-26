@@ -39,8 +39,8 @@ export interface ApplyStructureTemplateResult {
   subjectCount: number
   classSubjectCount: number
   gradeScaleCount: number
-  reportCardDefinitionCount: number
-  reportCardSectionCount: number
+  reportModuleCount: number
+  reportSubjectAssignmentCount: number
   phases: Array<{ phase: string, ms: number }>
 }
 
@@ -464,8 +464,8 @@ export async function applyStructureTemplate(
   let classSubjectCount = 0
   let subjectCount = 0
   let gradeScaleCount = 0
-  let reportCardDefinitionCount = 0
-  let reportCardSectionCount = 0
+  let reportModuleCount = 0
+  let reportSubjectAssignmentCount = 0
 
   await service.baseService.atomicExecution.execute(async () => {
     const uniqueTemplates = [...new Map(levels.map(level => [level.template.id, level.template])).values()]
@@ -525,8 +525,8 @@ export async function applyStructureTemplate(
       })
     })
     gradeScaleCount = reportCardCounts.gradeScaleCount
-    reportCardDefinitionCount = reportCardCounts.reportCardDefinitionCount
-    reportCardSectionCount = reportCardCounts.reportCardSectionCount
+    reportModuleCount = reportCardCounts.reportModuleCount
+    reportSubjectAssignmentCount = reportCardCounts.reportSubjectAssignmentCount
   })
 
   return {
@@ -535,8 +535,8 @@ export async function applyStructureTemplate(
     subjectCount,
     classSubjectCount,
     gradeScaleCount,
-    reportCardDefinitionCount,
-    reportCardSectionCount,
+    reportModuleCount,
+    reportSubjectAssignmentCount,
     phases,
   }
 }

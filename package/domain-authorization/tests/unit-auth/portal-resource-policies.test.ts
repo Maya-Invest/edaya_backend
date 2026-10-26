@@ -1,5 +1,5 @@
 import { AccessPolicies, createGuardianActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, AttendanceSummary, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, GradeScale, Payment, PaymentKind, PaymentMethod, Permission, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, StudentCharge, StudentServiceEnrollment, StudentYearAccount, studentYearAccountId, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, AttendanceSummary, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, GradeScale, Payment, PaymentKind, PaymentMethod, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StudentCharge, StudentServiceEnrollment, StudentYearAccount, studentYearAccountId, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 
@@ -112,17 +112,16 @@ describe('portal actions use current relationships and publication', () => {
 
   async function reportCards() {
     await fixture.repositories.gradeScales.save(new GradeScale({ id: 'scale', schoolId: 'school-a', name: 'Scale', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] }))
-    await fixture.repositories.definitions.save(new ReportCardDefinition({ id: 'definition', schoolId: 'school-a', academicYearId: 'year-a', gradeLevelId: 'level-a', gradeScaleId: 'scale', name: 'Term' }))
     for (const [id, studentId, classGroupId] of [['card', 'student-a', 'class-a'], ['unrelated-card', 'student-other', 'class-other']] as const) {
-      await fixture.repositories.results.save(new ReportCardResult({ id, reportCardDefinitionId: 'definition', studentId, classGroupId, periodId: 'period-a', sectionResults: sections(), attendanceSummary: new AttendanceSummary({ presentCount: 1, absenceCount: 0, lateCount: 0 }), assessmentResultCount: 2, overallAverage: 11 }))
+      await fixture.repositories.results.save(new ReportCardResult({ id, gradeLevelId: 'level-a', academicYearId: 'year-a', reportConfigurationRevision: 0, studentId, classGroupId, periodId: 'period-a', sectionResults: sections(), attendanceSummary: new AttendanceSummary({ presentCount: 1, absenceCount: 0, lateCount: 0 }), assessmentResultCount: 2, overallAverage: 11 }))
     }
     return (await fixture.repositories.results.findById('card'))!
   }
 
   function sections(mathComment?: string, frenchComment?: string, groupComment?: string) {
-    return [new ReportCardResultSection({ sectionId: 'group', sectionKind: ReportCardDefinitionSectionKind.Group, name: 'Subjects', average: 11, weight: 1, comment: groupComment, subResults: [
-      new ReportCardResultSection({ sectionId: 'math-section', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'Math', average: 10, weight: 1, classSubjectId: 'math-a', comment: mathComment }),
-      new ReportCardResultSection({ sectionId: 'french-section', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'French', average: 12, weight: 1, classSubjectId: 'french-a', comment: frenchComment }),
+    return [new ReportCardResultSection({ sectionId: 'group', sectionKind: ReportCardResultSectionKind.Module, name: 'Subjects', average: 11, weight: 1, comment: groupComment, subResults: [
+      new ReportCardResultSection({ sectionId: 'math-section', sectionKind: ReportCardResultSectionKind.Subject, name: 'Math', average: 10, weight: 1, classSubjectId: 'math-a', comment: mathComment }),
+      new ReportCardResultSection({ sectionId: 'french-section', sectionKind: ReportCardResultSectionKind.Subject, name: 'French', average: 12, weight: 1, classSubjectId: 'french-a', comment: frenchComment }),
     ] })]
   }
 

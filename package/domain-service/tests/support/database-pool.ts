@@ -9,8 +9,13 @@ async function emptyDatabase(fixture: RepositoryDatabase): Promise<boolean> {
   try {
     const { rows } = await fixture.db.query<{ tablename: string }>('SELECT tablename FROM pg_tables WHERE schemaname = \'public\'')
     const tables = rows.map(({ tablename }) => `"${tablename.replaceAll('"', '""')}"`)
-    if (tables.length)
+    if (tables.length) {
       await fixture.db.exec(`TRUNCATE TABLE ${tables.join(', ')} RESTART IDENTITY CASCADE`)
+      // PGlite has no background checkpointer. TRUNCATE defers removal of the
+      // old relation files until a checkpoint; across the full suite these
+      // accumulate and make the final shutdown exceed the hook timeout.
+      await fixture.db.exec('CHECKPOINT')
+    }
     return true
   }
   catch {
@@ -46,12 +51,10 @@ export async function closeServiceTestDatabases(): Promise<void> {
 // Reuse empty SQL databases, never application instances or authorization facts.
 // Repeated Wasm initialization exhausts memory in the complete service suite.
 export async function acquireDatabase(): Promise<RepositoryDatabase> {
-  while (availableDatabases.length > 0) {
+  if (availableDatabases.length > 0) {
     const fixture = availableDatabases.pop()!
-    if (await emptyDatabase(fixture)) {
-      usedDatabases.add(fixture)
-      return fixture
-    }
+    usedDatabases.add(fixture)
+    return fixture
   }
   const fixture = await createRepositoryDatabase()
   usedDatabases.add(fixture)

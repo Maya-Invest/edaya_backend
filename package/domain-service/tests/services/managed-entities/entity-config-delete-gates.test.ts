@@ -1,4 +1,4 @@
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ReportCardDefinition, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment } from '@edaya/core'
 import {
   describe,
   expect,
@@ -93,17 +93,11 @@ describe('Entity config delete gates', () => {
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
     }))
-    await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
-      id: 'definition-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      gradeScaleId: 'gs-test',
-      name: 'Definition',
-    }))
     await repositories.reportCardResultRepository.save(new ReportCardResult({
       id: 'report-card-1',
-      reportCardDefinitionId: 'definition-1',
+      gradeLevelId: 'grade-1',
+      academicYearId: 'year-1',
+      reportConfigurationRevision: 0,
       studentId: 'student-1',
       classGroupId: 'class-1',
       periodId: 'period-1',

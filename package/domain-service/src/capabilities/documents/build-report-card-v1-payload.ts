@@ -5,7 +5,7 @@ import type {
   School,
   Student,
 } from '@edaya/core'
-import { ReportCardDefinitionSectionKind } from '@edaya/core'
+import { ReportCardResultSectionKind } from '@edaya/core'
 import {
   catalogBulletinSection,
   catalogClassName,
@@ -127,13 +127,8 @@ function resolveSectionName(
   lang: ReturnType<typeof catalogLangFromLocale>,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
 ): string {
-  if (section.classSubjectId && subjectNameByClassSubjectId) {
-    const resolved = subjectNameByClassSubjectId.get(section.classSubjectId)
-    if (resolved) {
-      return catalogSubjectName(resolved, lang)
-    }
-  }
-  return catalogBulletinSection(catalogText(section.name, lang), lang)
+  void subjectNameByClassSubjectId
+  return section.sectionKind === ReportCardResultSectionKind.Subject ? catalogSubjectName(section.name, lang) : catalogBulletinSection(catalogText(section.name, lang), lang)
 }
 
 function mapSubjectRow(
@@ -145,7 +140,7 @@ function mapSubjectRow(
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
   teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
 ): ReportCardV1SubjectRow {
-  const total = section.average === undefined ? undefined : section.average * section.weight
+  const total = section.average === undefined ? undefined : (section.grading?.value ?? section.average) * section.weight
   const teacherName = section.classSubjectId
     ? teacherNameByClassSubjectId?.get(section.classSubjectId)
     : undefined
@@ -153,7 +148,7 @@ function mapSubjectRow(
     name: resolveSectionName(section, catalogLangFromLocale(locale), subjectNameByClassSubjectId),
     kind,
     average: `${formatNumber(section.average, locale, section.grading?.decimalPlaces)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
-    coefficient: String(section.weight),
+    coefficient: kind === 'subject' ? (section.coefficient === undefined ? '—' : String(section.coefficient)) : String(section.weight),
     total: formatNumber(total, locale),
     ...(section.rank !== undefined && classSize !== undefined
       ? { rank: formatRank(section.rank, classSize, locale) }
@@ -177,7 +172,7 @@ function flattenSections(
   const rows: ReportCardV1SubjectRow[] = []
 
   for (const section of sections) {
-    if (section.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+    if (section.sectionKind === ReportCardResultSectionKind.Subject) {
       rows.push(mapSubjectRow(
         section,
         'subject',
@@ -191,7 +186,7 @@ function flattenSections(
     }
 
     for (const child of section.subResults) {
-      if (child.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+      if (child.sectionKind === ReportCardResultSectionKind.Subject) {
         rows.push(mapSubjectRow(
           child,
           'subject',

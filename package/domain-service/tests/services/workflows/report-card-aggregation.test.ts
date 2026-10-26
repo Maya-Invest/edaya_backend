@@ -1,18 +1,15 @@
 import type { ReportCardAggregation } from '@edaya/core'
-import { BusinessRuleViolationError, ReportCardAggregationSource, ReportCardDefinitionSectionKind, ReportCardResultSection, ReportCardResultStatus } from '@edaya/core'
+import { BusinessRuleViolationError, ReportCardAggregationSource, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import {
   assertAggregationSource,
-  buildGroupResultFromChildren,
   buildSubjectAverageFromAssessments,
   buildSubjectAverageFromPriorReportCards,
-  childReportCardDefinitionSections,
   evaluateAggregationPublishReadiness,
   findSectionAverage,
   listAssessmentResultsForStudentAndPeriods,
   listPublishedPeriodIds,
   loadPriorReportCardResults,
-  rootReportCardDefinitionSections,
 } from '../../../src/services/workflows/report-card-aggregation'
 
 describe('report card aggregation helpers', () => {
@@ -20,14 +17,14 @@ describe('report card aggregation helpers', () => {
     const average = findSectionAverage([
       new ReportCardResultSection({
         sectionId: 'sec-root',
-        sectionKind: ReportCardDefinitionSectionKind.Group,
+        sectionKind: ReportCardResultSectionKind.Module,
         name: 'Root',
         average: 15,
         weight: 1,
         subResults: [
           new ReportCardResultSection({
             sectionId: 'sec-math',
-            sectionKind: ReportCardDefinitionSectionKind.Subject,
+            sectionKind: ReportCardResultSectionKind.Subject,
             name: 'Math',
             average: 16,
             weight: 1,
@@ -58,7 +55,7 @@ describe('report card aggregation helpers', () => {
           sectionResults: [
             new ReportCardResultSection({
               sectionId: 'sec-math',
-              sectionKind: ReportCardDefinitionSectionKind.Subject,
+              sectionKind: ReportCardResultSectionKind.Subject,
               name: 'Math',
               average: 10,
               weight: 1,
@@ -72,7 +69,7 @@ describe('report card aggregation helpers', () => {
           sectionResults: [
             new ReportCardResultSection({
               sectionId: 'sec-math',
-              sectionKind: ReportCardDefinitionSectionKind.Subject,
+              sectionKind: ReportCardResultSectionKind.Subject,
               name: 'Math',
               average: 14,
               weight: 1,
@@ -115,43 +112,12 @@ describe('report card aggregation helpers', () => {
     expect(readiness.missingOrDraftReportCardPeriodIds).toEqual(['per-t2'])
   })
 
-  test('rootReportCardDefinitionSections preserves distinct stable identities with the same name', () => {
-    const roots = rootReportCardDefinitionSections([
-      { id: 'sec-a', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Group, name: 'Core', order: 1, weight: 1 },
-      { id: 'sec-b', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Group, name: 'Core', order: 2, weight: 1 },
-      { id: 'sec-child', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Subject, name: 'Math', order: 1, weight: 1, parentSectionId: 'sec-a', subjectId: 'sub1' },
-    ] as never)
-
-    expect(roots.map(section => section.id)).toEqual(['sec-a', 'sec-b'])
-  })
-
-  test('childReportCardDefinitionSections keeps only the first subject section per subjectId', () => {
-    const children = childReportCardDefinitionSections([
-      { id: 'sec-math-1', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Subject, name: 'Math A', order: 1, weight: 1, parentSectionId: 'root', subjectId: 'sub-math' },
-      { id: 'sec-math-2', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Subject, name: 'Math B', order: 2, weight: 1, parentSectionId: 'root', subjectId: 'sub-math' },
-      { id: 'sec-group', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Group, name: 'Nested', order: 3, weight: 1, parentSectionId: 'root' },
-    ] as never, 'root')
-
-    expect(children.map(section => section.id)).toEqual(['sec-math-1', 'sec-group'])
-  })
-
-  test('buildSubjectAverageFromAssessments returns undefined without scores and 0 when weights sum to zero', () => {
+  test('buildSubjectAverageFromAssessments returns undefined without scores or contributing assessment weight', () => {
     expect(buildSubjectAverageFromAssessments('cs1', [])).toBeUndefined()
     expect(buildSubjectAverageFromAssessments('cs1', [{
       result: { score: 10 } as never,
       assessment: { marksStatus: 'submitted', classSubjectId: 'cs1', maxScore: 20, coefficient: 0 } as never,
-    }])).toBe(0)
-  })
-
-  test('buildGroupResultFromChildren returns null when there are no child results', () => {
-    expect(buildGroupResultFromChildren({
-      id: 'sec-root',
-      reportCardDefinitionId: 'def1',
-      kind: ReportCardDefinitionSectionKind.Group,
-      name: 'Root',
-      order: 1,
-      weight: 1,
-    } as never, [])).toBeNull()
+    }])).toBeUndefined()
   })
 
   test('listPublishedPeriodIds and listAssessmentResultsForStudentAndPeriods honor published periods', async () => {

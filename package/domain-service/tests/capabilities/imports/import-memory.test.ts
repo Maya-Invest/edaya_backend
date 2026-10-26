@@ -53,6 +53,7 @@ function memoryPersistence(): ImportPersistencePort {
         rows.set(row.id, copy(row))
     },
     getIdentity: async (school, type, key) => copy(identities.get(`${school}:${type}:${key}`)),
+    getIdentities: async (school, type, keys) => copy([...identities.values()].filter(item => item.schoolId === school && item.type === type && keys.includes(item.sourceKey))),
     saveIdentities: async (entries) => {
       for (const identity of entries) identities.set(`${identity.schoolId}:${identity.type}:${identity.sourceKey}`, copy(identity))
     },
@@ -61,6 +62,7 @@ function memoryPersistence(): ImportPersistencePort {
     },
     saveIdentity: async (identity) => { identities.set(`${identity.schoolId}:${identity.type}:${identity.sourceKey}`, copy(identity)) },
     findOutcome: async (school, batch, row, digest) => copy([...outcomes.values()].find(outcome => outcome.schoolId === school && outcome.batchId === batch && outcome.rowId === row && outcome.inputDigest === digest)),
+    findOutcomes: async (school, batch, requests) => copy([...outcomes.values()].filter(outcome => outcome.schoolId === school && outcome.batchId === batch && requests.some(request => request.rowId === outcome.rowId && request.inputDigest === outcome.inputDigest))),
     addOutcome: async (outcome) => { outcomes.set(outcome.operationId, copy(outcome)) },
   }
 }

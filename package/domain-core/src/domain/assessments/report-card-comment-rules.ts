@@ -1,8 +1,8 @@
 import type { ReportCardResult } from './report-card-result'
 import type { ReportCardResultSection } from './report-card-result-section'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
-import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
 import { ReportCardResultStatus } from './report-card-result'
+import { ReportCardResultSectionKind } from './report-card-result-section'
 
 type ReportCardCommentChange
   = | {
@@ -26,6 +26,14 @@ type ReportCardCommentChange
 
 function sectionStructureKey(section: ReportCardResultSection): string {
   return [
+    section.subjectId,
+    section.moduleId,
+    section.coefficient,
+    section.weightingMode,
+    section.explicitWeight,
+    section.contributingCoefficientSum,
+    section.order,
+    JSON.stringify(section.grading),
     section.sectionId,
     section.sectionKind,
     section.name,
@@ -75,7 +83,7 @@ function collectCommentChanges(
       continue
     }
 
-    if (afterSection.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+    if (afterSection.sectionKind === ReportCardResultSectionKind.Subject) {
       if (!afterSection.classSubjectId) {
         throw new BusinessRuleViolationError(
           'REPORT_CARD_COMMENT_INVALID_SECTION',
@@ -145,7 +153,9 @@ export function assertCommentOnlyReportCardUpdate(
     throw commentOnlyViolation()
   }
   if (
-    before.reportCardDefinitionId !== after.reportCardDefinitionId
+    before.gradeLevelId !== after.gradeLevelId
+    || before.academicYearId !== after.academicYearId
+    || before.reportConfigurationRevision !== after.reportConfigurationRevision
     || before.studentId !== after.studentId
     || before.classGroupId !== after.classGroupId
     || before.periodId !== after.periodId

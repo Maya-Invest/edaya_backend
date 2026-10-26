@@ -136,21 +136,12 @@ describe("onboarding apply-structure-template route", () => {
     expect(schoolId).toBeTruthy();
 
     const gradeScales = (await application.repositories.gradeScales.list()).filter(entry => entry.schoolId === schoolId);
-    const definitions = (await application.repositories.definitions.list()).filter(entry => entry.schoolId === schoolId);
-    const sections = (await application.repositories.sections.list()).filter(entry =>
-      definitions.some(definition => definition.id === entry.reportCardDefinitionId));
+    const modules = (await application.repositories.reportModules.list()).filter(entry => entry.schoolId === schoolId);
 
+    expect(modules.length).toBeGreaterThan(0);
+    expect(modules.every(module => module.weightingMode === "subject_coefficients")).toBe(true);
     expect(gradeScales).toHaveLength(1);
     expect(gradeScales[0]?.maxScore).toBe(20);
-    expect(definitions).toHaveLength(2);
-    expect(definitions.every(definition => definition.isDefault)).toBe(true);
-    expect(sections.length).toBeGreaterThan(10);
-    expect(sections.some(section => section.role === "matieres")).toBe(true);
-    expect(sections.some(section => section.role === "synthese")).toBe(false);
-    expect(sections.some(section => section.name === "Bilan Lettre")).toBe(true);
-    expect(sections.some(section => section.name === "Bilan Science")).toBe(true);
-    expect(sections.some(section => section.name === "Bilan autres")).toBe(true);
-    expect(sections.some(section => section.role === "appreciation")).toBe(true);
 
     const academicPeriods = (await application.repositories.academicPeriods.list()).filter(entry => entry.schoolId === schoolId);
     expect(academicPeriods).toHaveLength(3);
@@ -236,25 +227,19 @@ describe("onboarding apply-structure-template route", () => {
     }));
 
     expect(response.status).toBe(200);
-    const summary = await response.json() as { subjectCount: number; reportCardDefinitionCount: number };
+    const summary = await response.json() as { subjectCount: number; reportModuleCount: number };
     expect(summary.subjectCount).toBeGreaterThan(0);
-    expect(summary.reportCardDefinitionCount).toBe(1);
+    expect(summary.reportModuleCount).toBeGreaterThan(0);
 
-    const definitions = (await application.repositories.definitions.list()).filter(entry => entry.schoolId === school.id);
+    const modules = (await application.repositories.reportModules.list()).filter(entry => entry.schoolId === school.id);
     const gradeScales = (await application.repositories.gradeScales.list()).filter(entry => entry.schoolId === school.id);
     const subjects = (await application.repositories.subjects.list()).filter(entry => entry.schoolId === school.id);
-    const sections = (await application.repositories.sections.list()).filter(entry =>
-      definitions.some(definition => definition.id === entry.reportCardDefinitionId),
-    );
+
+    expect(modules.length).toBeGreaterThan(0);
+    expect(modules.every(module => module.weightingMode === "subject_coefficients")).toBe(true);
     expect(gradeScales).toHaveLength(1);
     expect(gradeScales[0]?.maxScore).toBe(20);
-    expect(definitions).toHaveLength(1);
     expect(subjects.some(subject => subject.name.includes("Français"))).toBe(true);
     expect(subjects.some(subject => subject.name.includes("Mathématiques"))).toBe(true);
-    expect(sections.some(section => section.name === "Bilan Lettre")).toBe(true);
-    expect(sections.some(section => section.name === "Bilan Science")).toBe(true);
-    expect(sections.some(section => section.name === "Bilan autres")).toBe(true);
-    expect(sections.some(section => section.name === "Appréciations")).toBe(true);
-    expect(sections.some(section => section.name.includes("Synthèse"))).toBe(false);
   });
 });

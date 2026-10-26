@@ -275,16 +275,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
   }: LinkGuardianToStudentInput): Promise<GuardianStudentLinkType> {
     return this.baseService.atomicExecution.execute(async () => {
-      const [guardian, student] = await Promise.all([
-        this.requireGuardian(guardianId),
-        this.requireStudent(studentId),
-      ])
+      const { guardian, student } = await this.baseService.access.guardians.assertLinkStudent({ guardianId, studentId })
       if (guardian.schoolId !== student.schoolId) {
         denyResourceAccess()
       }
       this.checkActorSchool(guardian.schoolId)
-
-      await this.baseService.access.guardians.assertLinkStudent({ guardianId: guardian.id, studentId: student.id })
 
       const existing = await this.repositories.guardianLinks.findOne({ guardianId, studentId })
       const link = new GuardianStudentLink({
@@ -692,14 +687,6 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (activeEnrollments.length >= classGroup.capacity) {
       throw new BusinessRuleViolationError('CLASS_GROUP_CAPACITY_EXCEEDED', `Class group ${classGroup.id} has reached capacity`)
     }
-  }
-
-  private async requireGuardian(guardianId: string): Promise<Guardian> {
-    const guardian = await this.repositories.guardians.findById(guardianId)
-    if (!guardian || guardian.schoolId !== this.baseService.actor.schoolId) {
-      denyResourceAccess()
-    }
-    return guardian
   }
 
   private async requireEntity<T>(

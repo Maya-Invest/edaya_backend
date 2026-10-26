@@ -63,7 +63,7 @@ export async function assembleReportDocument(
     academicYearId: context.academicYear.id,
     sourceType: DocumentSourceType.ReportCardResult,
     sourceId: context.result.id,
-    sourceVersion: `${publishedAt}:${context.period.id}:${context.result.reportCardDefinitionId}${revision ? `:comments:${revision.version}` : ''}`,
+    sourceVersion: `${publishedAt}:${context.period.id}:${context.result.reportConfigurationRevision}${revision ? `:comments:${revision.version}` : ''}`,
     studentId: context.student.id,
     classGroupId: context.classGroup.id,
     portraitRequired: false,

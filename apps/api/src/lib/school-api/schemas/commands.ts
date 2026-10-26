@@ -1,4 +1,4 @@
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, autoBillingSchema, calendarEventSchema, classGroupSchema, classSubjectProgressSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeScaleSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, autoBillingSchema, calendarEventSchema, classGroupSchema, classSubjectProgressSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeScaleSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -6,7 +6,7 @@ import { field, namedObjectSchema, objectFromSchema } from "./helpers";
 const optionalText = () => z.string().optional();
 const attendanceByStudentSchema = z.record(field.id(), field.enumValue(AttendanceStatus));
 
-export const gradeLevelConfigCommandSchema = objectFromSchema(gradeLevelSchema).omit({ gradingPolicies: true }).openapi("GradeLevelConfigCommand");
+export const gradeLevelConfigCommandSchema = objectFromSchema(gradeLevelSchema).omit({ gradingPolicies: true, reportSettings: true }).openapi("GradeLevelConfigCommand");
 
 export const periodDefinitionConfigCommandSchema = objectFromSchema(periodDefinitionSchema)
   .omit({ schoolId: true })
@@ -21,6 +21,9 @@ const subjectCommandFields = {
   shortName: subjectSchema.shape.shortName.innerType(),
   code: subjectSchema.shape.code.innerType(),
   coefficient: subjectSchema.shape.coefficient.innerType(),
+  reportModuleId: subjectSchema.shape.reportModuleId.innerType(),
+  reportOrder: subjectSchema.shape.reportOrder.removeDefault().optional(),
+  expectedReportConfigurationRevision: z.number().int().nonnegative().optional(),
   periodsPerWeek: subjectSchema.shape.periodsPerWeek.innerType(),
   minPeriodSpan: subjectSchema.shape.minPeriodSpan.innerType(),
   maxPeriodSpan: subjectSchema.shape.maxPeriodSpan.innerType(),
@@ -621,9 +624,6 @@ export const createGradeScaleCommandSchema = objectFromSchema(gradeScaleSchema)
   })
   .openapi("CreateGradeScaleCommand");
 
-export const createReportCardDefinitionCommandSchema = objectFromSchema(reportCardDefinitionSchema)
-  .openapi("CreateReportCardDefinitionCommand");
-
 export const createAssessmentCommandSchema = objectFromSchema(assessmentSchema).omit({ marksStatus: true, marksRevision: true, marksReview: true }).omit({ completedAt: true }).openapi("CreateAssessmentCommand");
 
 export const submitAssessmentMarksCommandSchema = z.object({
@@ -649,11 +649,11 @@ export const recordAssessmentResultComplianceCommandSchema = objectFromSchema(as
   status: z.nativeEnum(DeadlineComplianceStatus),
 }).openapi("RecordAssessmentResultComplianceCommand");
 
-export const createReportCardDefinitionSectionCommandSchema = objectFromSchema(reportCardDefinitionSectionSchema)
-  .openapi("CreateReportCardDefinitionSectionCommand");
-
 export const generateReportCardResultCommandSchema = objectFromSchema(reportCardResultSchema)
   .omit({
+    gradeLevelId: true,
+    academicYearId: true,
+    reportConfigurationRevision: true,
     grading: true,
     aggregateLabel: true,
     gradingPolicyRevision: true,
@@ -680,7 +680,6 @@ export const generateReportCardResultCommandSchema = objectFromSchema(reportCard
     publishedAt: true,
   })
   .extend({
-    reportCardDefinitionId: optionalText(),
     periodId: field.id(),
   })
   .openapi("GenerateReportCardResultCommand");
@@ -703,12 +702,12 @@ export const writeReportCardSectionCommentsCommandSchema = z.object({
 }).openapi("WriteReportCardSectionCommentsCommand");
 
 export const publishReportCardResultCommandSchema = z.object({
+  reviewedReportConfigurationRevision: z.number().int().nonnegative(),
   reviewedGradingRevision: z.number().int().positive().optional(),
   reviewedDraftVersion: z.number().int().positive().optional(),
   id: field.id(),
   studentId: field.id(),
   periodId: field.id(),
-  reportCardDefinitionId: optionalText(),
   publishedAt: field.optionalDate(),
 }).openapi("PublishReportCardResultCommand");
 
@@ -1217,15 +1216,6 @@ export const configureGradeScaleCommandSchema = z.object({
   interval: coreGradeScaleRangeSchema.omit({ maxScore: true }).extend({ id: field.id() }).optional(),
   intervalId: field.id().optional(),
 }).openapi("ConfigureGradeScaleCommand");
-export const configureReportCardDefinitionCommandSchema = z.object({
-  requestId: field.id(),
-  id: field.id(),
-  expectedRevision: z.number().int().nonnegative(),
-  action: z.enum(["metadata", "section", "remove-section"]),
-  metadata: objectFromSchema(reportCardDefinitionSchema).pick({ name: true, description: true, passThreshold: true }).optional(),
-  section: objectFromSchema(reportCardDefinitionSectionSchema).omit({ reportCardDefinitionId: true, createdAt: true }).optional(),
-  sectionId: field.id().optional(),
-}).openapi("ConfigureReportCardDefinitionCommand");
 
 export const configureAcademicDisciplineCommandSchema = z.object({ id: field.id(), code: field.text(), name: field.text(), isActive: z.boolean().optional() }).openapi("ConfigureAcademicDisciplineCommand");
 export const configurePlacementStatusCommandSchema = z.object({ id: field.id(), code: field.text(), label: field.text(), isActive: z.boolean().optional() }).openapi("ConfigurePlacementStatusCommand");
@@ -1237,3 +1227,5 @@ export const removeTeacherAcademicYearProfileCommandSchema = z.object({ id: fiel
 export const getAutoBillingOptionsCommandSchema = z.object({}).openapi("GetAutoBillingOptionsCommand");
 export const getFeeAutoBillingCommandSchema = z.object({ catalogServiceId: field.id() }).openapi("GetFeeAutoBillingCommand");
 export const retryAutoBillingCommandSchema = z.object({ runId: field.id(), requestId: z.string().trim().min(1).max(200) }).openapi("RetryAutoBillingCommand");
+
+export { configureReportModulesCommandSchema, configureReportSettingsCommandSchema } from "./report-modules";

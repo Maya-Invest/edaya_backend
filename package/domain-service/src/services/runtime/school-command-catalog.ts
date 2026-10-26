@@ -64,10 +64,9 @@ export type SchoolCommandKey
     | 'configureGrading'
     | 'retryGrading'
     | 'configureGradeScale'
-    | 'configureReportCardDefinition'
+    | 'configureReportModules'
     | 'createGradeScale'
-    | 'createReportCardDefinition'
-    | 'createReportCardDefinitionSection'
+    | 'configureReportSettings'
     | 'createAssessment'
     | 'submitAssessmentMarks'
     | 'saveTeacherAttendanceDraft'
@@ -279,10 +278,9 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'configureGrading',
   'retryGrading',
   'configureGradeScale',
-  'configureReportCardDefinition',
+  'configureReportModules',
   'createGradeScale',
-  'createReportCardDefinition',
-  'createReportCardDefinitionSection',
+  'configureReportSettings',
   'createAssessment',
   'submitAssessmentMarks',
   'saveTeacherAttendanceDraft',

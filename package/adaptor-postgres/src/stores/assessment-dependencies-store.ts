@@ -28,15 +28,15 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
     // Only drafts (including revised drafts) receive refreshed rankings.
     await this.executor().execute(sql`
       with candidates as (
-        select r.id, r.period_id, r.revised_draft is not null as revised,
+        select r.id, r.period_id, coalesce((r.revised_draft->>'reportConfigurationRevision')::integer, r.report_configuration_revision) as configuration_revision, r.revised_draft is not null as revised,
           case when r.revised_draft is not null then (r.revised_draft->>'overallAverage')::numeric else r.overall_average end as average
         from report_card_results r join class_groups c on c.id=r.class_group_id
         where c.school_id=${input.schoolId} and c.id=${input.classGroupId}
           and coalesce((r.revised_draft->>'gradingPolicyRevision')::integer, r.grading_policy_revision)=${input.policyRevision}
           and not coalesce((r.revised_draft->>'calculationStale')::boolean, r.calculation_stale)
       ), ranks as (
-        select id, revised, rank() over (partition by period_id order by average desc) as rank,
-          count(*) over (partition by period_id) as size from candidates where average is not null
+        select id, revised, rank() over (partition by period_id, configuration_revision order by average desc) as rank,
+          count(*) over (partition by period_id, configuration_revision) as size from candidates where average is not null
       ) update report_card_results r set
         rank=case when ranks.revised or r.status='published' then r.rank else ranks.rank end,
         class_size=case when ranks.revised or r.status='published' then r.class_size else ranks.size end,

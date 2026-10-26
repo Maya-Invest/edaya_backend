@@ -1,21 +1,9 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { OnboardingSchoolApplication } from './onboarding-application'
-import type {
-  StructureTemplateCurriculumEntry,
-  StructureTemplateDefinition,
-  StructureTemplateReportCardSection,
-  StructureTemplateReportCardStructure,
-} from './structure-template-types'
+import type { StructureTemplateCurriculumEntry, StructureTemplateDefinition, StructureTemplateReportCardStructure } from './structure-template-types'
 import { randomUUID } from 'node:crypto'
 import { requireActorSchoolId } from '@edaya/authorization'
-import {
-  rangesFromThresholds,
-  ReportCardDefinitionKind,
-  ReportCardDefinitionSection,
-  ReportCardDefinitionSectionKind,
-  ReportCardDefinitionSectionRole,
-  ReportCardDefinitionStatus,
-} from '@edaya/core'
+import { BusinessRuleViolationError, GradeLevel, rangesFromThresholds, ReportModule } from '@edaya/core'
 
 export interface AppliedStructureLevelSubjects {
   template: StructureTemplateDefinition
@@ -39,8 +27,8 @@ export interface ApplyReportCardsFromTemplateInput {
 
 export interface ApplyReportCardsFromTemplateResult {
   gradeScaleCount: number
-  reportCardDefinitionCount: number
-  reportCardSectionCount: number
+  reportModuleCount: number
+  reportSubjectAssignmentCount: number
 }
 
 function roundTo2(value: number): number {
@@ -83,14 +71,6 @@ function buildGradeScaleRanges(maxScore: number, passingGrade: number) {
   ], maxScore)
 }
 
-function periodLabel(structure: StructureTemplateReportCardStructure): string {
-  const firstPeriod = structure.periods[0]?.name.toLowerCase() ?? ''
-  if (firstPeriod.includes('semestre')) {
-    return 'semestriel'
-  }
-  return 'trimestriel'
-}
-
 async function ensureGradeScale(
   application: OnboardingSchoolApplication,
   actor: ActorMetadata,
@@ -123,280 +103,40 @@ async function ensureGradeScale(
   return gradeScaleId
 }
 
-function subjectsByDomain(
-  level: AppliedStructureLevelSubjects,
-  structure: StructureTemplateReportCardStructure,
-): Map<string, AppliedStructureLevelSubjects['subjects']> {
-  const grouped = new Map<string, AppliedStructureLevelSubjects['subjects']>()
-
-  for (const category of [...(structure.domainCategories ?? [])].sort((a, b) => a.order - b.order)) {
-    grouped.set(category.domain, [])
-  }
-
-  for (const subject of level.subjects) {
-    const bucket = grouped.get(subject.domain)
-    if (bucket) {
-      bucket.push(subject)
-    }
-  }
-
-  return grouped
-}
-
-function subjectByCode(
-  level: AppliedStructureLevelSubjects,
-): Map<string, AppliedStructureLevelSubjects['subjects'][number]> {
-  return new Map(level.subjects.map(subject => [subject.subjectCode, subject]))
-}
-
-function pushSubjectChildren(
-  sections: ReportCardDefinitionSection[],
-  definitionId: string,
-  parentSectionId: string,
-  subjects: AppliedStructureLevelSubjects['subjects'],
-): number {
-  for (const [subjectIndex, subject] of subjects.entries()) {
-    sections.push(new ReportCardDefinitionSection({
-      id: randomUUID(),
-      reportCardDefinitionId: definitionId,
-      name: subject.subjectCode,
-      kind: ReportCardDefinitionSectionKind.Subject,
-      order: subjectIndex + 1,
-      weight: subject.coefficient > 0 ? subject.coefficient : 1,
-      parentSectionId,
-      subjectId: subject.subjectId,
-    }))
-  }
-  return subjects.length
-}
-
-function buildSectionsFromTemplate(
-  level: AppliedStructureLevelSubjects,
-  _structure: StructureTemplateReportCardStructure,
-  definitionId: string,
-  templateSections: StructureTemplateReportCardSection[],
-): ReportCardDefinitionSection[] {
-  const byCode = subjectByCode(level)
-  const assigned = new Set<string>()
-  let sectionOrder = 1
-  const sections: ReportCardDefinitionSection[] = []
-  const autresSection = templateSections.find(
-    section => section.role === 'subjects' && section.label.toLowerCase().includes('autres'),
-  )
-
-  for (const section of [...templateSections].sort((a, b) => a.order - b.order)) {
-    if (section.role === 'subjects') {
-      const orderedCodes = section.subjectCodes ?? []
-      const members = orderedCodes
-        .map(code => byCode.get(code))
-        .filter((subject): subject is AppliedStructureLevelSubjects['subjects'][number] => Boolean(subject))
-
-      for (const member of members) {
-        assigned.add(member.subjectCode)
-      }
-
-      if (autresSection && section.label === autresSection.label) {
-        for (const subject of level.subjects) {
-          if (!assigned.has(subject.subjectCode)) {
-            members.push(subject)
-            assigned.add(subject.subjectCode)
-          }
-        }
-      }
-
-      if (members.length === 0) {
-        continue
-      }
-
-      const groupSectionId = randomUUID()
-      sections.push(new ReportCardDefinitionSection({
-        id: groupSectionId,
-        reportCardDefinitionId: definitionId,
-        name: section.label,
-        kind: ReportCardDefinitionSectionKind.Group,
-        role: ReportCardDefinitionSectionRole.Subjects,
-        coefficient: 1,
-        order: sectionOrder,
-        weight: members.reduce((sum, subject) => sum + subject.coefficient, 0) || members.length,
-      }))
-      sectionOrder += 1
-      pushSubjectChildren(sections, definitionId, groupSectionId, members)
-      continue
-    }
-
-    if (section.role === 'summary') {
-      sections.push(new ReportCardDefinitionSection({
-        id: randomUUID(),
-        reportCardDefinitionId: definitionId,
-        name: section.label,
-        kind: ReportCardDefinitionSectionKind.Group,
-        role: ReportCardDefinitionSectionRole.Summary,
-        order: sectionOrder,
-        weight: 1,
-      }))
-      sectionOrder += 1
-      continue
-    }
-
-    if (section.role === 'comments') {
-      sections.push(new ReportCardDefinitionSection({
-        id: randomUUID(),
-        reportCardDefinitionId: definitionId,
-        name: section.label,
-        kind: ReportCardDefinitionSectionKind.Group,
-        role: ReportCardDefinitionSectionRole.Comments,
-        order: sectionOrder,
-        weight: 1,
-      }))
-      sectionOrder += 1
-    }
-  }
-
-  if (!autresSection) {
-    const leftovers = level.subjects.filter(subject => !assigned.has(subject.subjectCode))
-    for (const subject of leftovers) {
-      sections.push(new ReportCardDefinitionSection({
-        id: randomUUID(),
-        reportCardDefinitionId: definitionId,
-        name: subject.subjectCode,
-        kind: ReportCardDefinitionSectionKind.Subject,
-        order: sectionOrder,
-        weight: subject.coefficient > 0 ? subject.coefficient : 1,
-        subjectId: subject.subjectId,
-      }))
-      sectionOrder += 1
-    }
-  }
-
-  return sections
-}
-
-function buildDomainCategoriesFallbackSections(
-  level: AppliedStructureLevelSubjects,
-  structure: StructureTemplateReportCardStructure,
-  definitionId: string,
-): ReportCardDefinitionSection[] {
-  const groupedSubjects = subjectsByDomain(level, structure)
-  let sectionOrder = 1
-  const sections: ReportCardDefinitionSection[] = []
-
-  for (const category of [...(structure.domainCategories ?? [])].sort((a, b) => a.order - b.order)) {
-    const domainSubjects = groupedSubjects.get(category.domain) ?? []
-    if (domainSubjects.length === 0) {
-      continue
-    }
-
-    const groupSectionId = randomUUID()
-    sections.push(new ReportCardDefinitionSection({
-      id: groupSectionId,
-      reportCardDefinitionId: definitionId,
-      name: category.label,
-      kind: ReportCardDefinitionSectionKind.Group,
-      role: ReportCardDefinitionSectionRole.Subjects,
-      coefficient: category.coefficient ?? 1,
-      order: sectionOrder,
-      weight: category.weight ?? domainSubjects.length,
-    }))
-    sectionOrder += 1
-    pushSubjectChildren(sections, definitionId, groupSectionId, domainSubjects)
-  }
-
-  if (structure.includeSummary !== false) {
-    sections.push(new ReportCardDefinitionSection({
-      id: randomUUID(),
-      reportCardDefinitionId: definitionId,
-      name: structure.periods.length > 2 ? 'Synthèse trimestrielle' : 'Synthèse semestrielle',
-      kind: ReportCardDefinitionSectionKind.Group,
-      role: ReportCardDefinitionSectionRole.Summary,
-      order: sectionOrder,
-      weight: 1,
-    }))
-    sectionOrder += 1
-  }
-
-  if (structure.includeComments !== false) {
-    sections.push(new ReportCardDefinitionSection({
-      id: randomUUID(),
-      reportCardDefinitionId: definitionId,
-      name: 'Appréciations',
-      kind: ReportCardDefinitionSectionKind.Group,
-      role: ReportCardDefinitionSectionRole.Comments,
-      order: sectionOrder,
-      weight: 1,
-    }))
-  }
-
-  return sections
-}
-
-export async function applyReportCardsFromTemplate(
-  application: OnboardingSchoolApplication,
-  actor: ActorMetadata,
-  input: ApplyReportCardsFromTemplateInput,
-): Promise<ApplyReportCardsFromTemplateResult> {
-  const service = application.forActor(actor)
+export async function applyReportCardsFromTemplate(application: OnboardingSchoolApplication, actor: ActorMetadata, input: ApplyReportCardsFromTemplateInput): Promise<ApplyReportCardsFromTemplateResult> {
   const gradeScaleByTemplateId = new Map<string, string>()
-  let reportCardDefinitionCount = 0
-  const allSections: ReportCardDefinitionSection[] = []
-
+  let reportModuleCount = 0
+  let reportSubjectAssignmentCount = 0
   for (const level of input.levels) {
-    const gradeLevel = level.template.gradeLevels.find(entry => entry.code === level.levelCode)
-    const structure = gradeLevel?.reportCardStructure ?? level.template.reportCardStructure
-    if (!structure) {
+    const structure = level.template.gradeLevels.find(row => row.code === level.levelCode)?.reportCardStructure ?? level.template.reportCardStructure
+    if (!structure)
       continue
-    }
-
-    const gradeScaleId = await ensureGradeScale(
-      application,
-      actor,
-      level.template,
-      structure,
-      gradeScaleByTemplateId,
-    )
-
-    const definitionId = randomUUID()
-    reportCardDefinitionCount += 1
-
-    await service.assessmentsWorkflow.createReportCardDefinition({
-      id: definitionId,
-      schoolId: input.schoolId,
-      academicYearId: input.academicYearId,
-      gradeLevelId: level.gradeLevelId,
-      gradeScaleId,
-      passThreshold: structure.passingGrade,
-      name: `Bulletin ${periodLabel(structure)} — ${level.gradeLevelName}`,
-      kind: ReportCardDefinitionKind.Default,
-      status: ReportCardDefinitionStatus.Published,
-      isDefault: true,
-      description: `Modèle de bulletin ${periodLabel(structure)} pour ${level.gradeLevelShortLabel}.`,
-    })
-
-    if (structure.sections?.length) {
-      allSections.push(...buildSectionsFromTemplate(
-        level,
-        structure,
-        definitionId,
-        structure.sections,
-      ))
-    }
-    else {
-      allSections.push(...buildDomainCategoriesFallbackSections(
-        level,
-        structure,
-        definitionId,
-      ))
+    const scaleId = await ensureGradeScale(application, actor, level.template, structure, gradeScaleByTemplateId)
+    const scale = await application.repositories.gradeScales.findById(scaleId)
+    const grade = await application.repositories.gradeLevels.findById(level.gradeLevelId)
+    if (!scale || !grade || grade.schoolId !== input.schoolId || requireActorSchoolId(actor) !== input.schoolId)
+      throw new BusinessRuleViolationError('REPORT_CONFIGURATION_SCOPE_INVALID', 'Invalid onboarding report scope')
+    const settings = grade.reportSettingsFor(input.academicYearId)
+    await application.repositories.gradeLevels.forSchool!(input.schoolId).save(new GradeLevel({ ...grade.data, reportSettings: [...grade.reportSettings.filter(row => row.academicYearId !== input.academicYearId), { ...settings, revision: settings.revision + 1, passThreshold: structure.passingGrade }], gradingPolicies: [...grade.gradingPolicies.filter(row => row.academicYearId !== input.academicYearId), { academicYearId: input.academicYearId, revision: 1, mode: 'numeric-first', aggregateLabel: 'Moyenne générale', scale: { ...scale.data, ranges: scale.ranges.map(row => ({ ...row })) }, status: 'completed', numericEquivalents: {} }] }))
+    const assigned = new Set<string>()
+    for (const spec of structure.modules ?? []) {
+      const module = new ReportModule({ id: randomUUID(), schoolId: input.schoolId, gradeLevelId: grade.id, academicYearId: input.academicYearId, name: spec.name, order: spec.order, weightingMode: spec.weightingMode, explicitWeight: spec.explicitWeight })
+      await application.repositories.reportModules.forSchool!(input.schoolId).save(module)
+      reportModuleCount += 1
+      for (const [order, code] of spec.subjectCodes.entries()) {
+        const member = level.subjects.find(row => row.subjectCode === code)
+        if (!member || assigned.has(member.subjectId))
+          throw new BusinessRuleViolationError('REPORT_MODULE_MEMBERSHIP_INVALID', 'Preset module membership must reference each subject at most once')
+        const subject = await application.repositories.subjects.findById(member.subjectId)
+        if (!subject)
+          throw new BusinessRuleViolationError('REPORT_SUBJECT_REQUIRED', 'Preset subject was not created')
+        await application.repositories.subjects.forSchool!(input.schoolId).save(subject.copyWith({ reportModuleId: module.id, reportOrder: order + 1 }))
+        assigned.add(subject.id)
+        reportSubjectAssignmentCount += 1
+      }
     }
   }
-
-  if (allSections.length > 0) {
-    await application.repositories.sections.batchSave(allSections)
-  }
-
-  return {
-    gradeScaleCount: gradeScaleByTemplateId.size,
-    reportCardDefinitionCount,
-    reportCardSectionCount: allSections.length,
-  }
+  return { gradeScaleCount: gradeScaleByTemplateId.size, reportModuleCount, reportSubjectAssignmentCount }
 }
 
 export function collectLevelSubjects(

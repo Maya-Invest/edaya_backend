@@ -24,10 +24,12 @@ export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = ({ repositories
     },
     writeLockGroup: 'academic-state',
     gates: { preSave: async (level, existing) => {
+      if (normalizeCommandRequest(level.reportSettings) !== normalizeCommandRequest(existing?.reportSettings ?? []))
+        throw new BusinessRuleViolationError('REPORT_CONFIGURATION_COMMAND_REQUIRED', 'Use the report configuration command')
       if (normalizeCommandRequest(level.gradingPolicies) !== normalizeCommandRequest(existing?.gradingPolicies ?? []))
         throw new BusinessRuleViolationError('GRADING_COMMAND_REQUIRED', 'Use the grading configuration command')
     }, preDelete: async (level, repos) => {
-      if (await repos.subjects.count({ gradeLevelId: level.id }) || (await repos.catalogServices.list({ schoolId: level.schoolId })).some(fee => fee.autoBilling.mode === 'matching' && fee.autoBilling.gradeLevelIds?.includes(level.id)))
+      if (await repos.reportModules.count({ gradeLevelId: level.id }) || await repos.subjects.count({ gradeLevelId: level.id }) || (await repos.catalogServices.list({ schoolId: level.schoolId })).some(fee => fee.autoBilling.mode === 'matching' && fee.autoBilling.gradeLevelIds?.includes(level.id)))
         throw new BusinessRuleViolationError('GRADE_LEVEL_HAS_SUBJECTS', 'Remove subjects before deleting their grade level')
     } },
 

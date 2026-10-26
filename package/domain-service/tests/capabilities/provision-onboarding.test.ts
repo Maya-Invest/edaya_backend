@@ -13,7 +13,7 @@ const templateSnapshot: StructureTemplateDefinition = {
     gradingScale: 20,
     passingGrade: 10,
     periods: [{ code: 'T1', name: 'Trimestre 1', weight: 1 }],
-    sections: [{ role: 'subjects', label: 'Matières', order: 1 }],
+    modules: [{ name: 'Matières', order: 1, weightingMode: 'subject_coefficients', subjectCodes: ['MATH'] }],
   },
   gradeLevels: [{
     id: 'ci-college:4EME',

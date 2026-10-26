@@ -31,3 +31,13 @@ Migration `0051_flat_guardian_contacts.sql` is a fresh-database breaking cutover
 ## Year-level dashboard
 
 `getSchoolOverview` requires a school and academic year; its academic period is optional. A year-only response returns `academicPeriodId: null`, null period-dependent grading/report-card metrics, and no period-dependent action items. Other authorized summaries retain their existing year/date scopes. Supplied periods still require authorization and membership in the selected year. Regenerate first-party clients for the nullable response fields; no database migration or reset is needed.
+
+## Flat report modules
+
+Migration `0052_flat_report_modules.sql` is a clean-school-database cutover. It refuses populated report definitions, sections or results; it does not convert historical reports. Back up any local school data before resetting or reseeding it. The account/identity database is outside this cutover. Hosted resets and deployments require a separate rollout authorization.
+
+Deploy the matching backend, web and mobile contracts together, generated from one immutable backend candidate. Report templates and their commands/resources are retired. Modules, membership and report settings are scoped to grade level/year; subjects retain categories and coefficients. The new configuration query supports report administrators independently of chapter access. No mobile module administration is added.
+
+Run migration guard tests, both weighting modes, permission isolation, explicit generation/review/publication, annual source-version validation, report PDF rendering and mobile comment draft tests before reopening academic writes. Published results keep captured module/subject labels and weights. Draft regeneration uses the current configuration revision. Old offline template-section comments are not restored into the new report contract.
+
+Deleting a module leaves its feedback on earlier publications. Regeneration carries forward comments for retained subjects by stable subject identity, including when they become ungrouped; it does not transfer a removed module's comment to another result group. Removed subject comments still require explicit reconciliation.

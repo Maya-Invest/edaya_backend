@@ -666,30 +666,17 @@ export const clientBindings = {
           "batchDelete": true
         }
       },
-      "definitions": {
-        "publicName": "definitions",
-        "schemaName": "ReportCardDefinition",
-        "allowDirectSave": true,
+      "reportModules": {
+        "publicName": "report-modules",
+        "schemaName": "ReportModule",
+        "allowDirectSave": false,
         "publicOperations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
-        }
-      },
-      "sections": {
-        "publicName": "sections",
-        "schemaName": "ReportCardDefinitionSection",
-        "allowDirectSave": true,
-        "publicOperations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
         }
       },
       "results": {
@@ -1236,6 +1223,16 @@ export const clientBindings = {
         "requestSchemaName": "RecordLessonSessionProgressCommand",
         "responseSchemaName": "ClassSubjectProgress"
       },
+      "configureReportModules": {
+        "publicName": "configure-report-modules",
+        "requestSchemaName": "ConfigureReportModulesCommand",
+        "responseSchemaName": "ReportConfigurationResponse"
+      },
+      "configureReportSettings": {
+        "publicName": "configure-report-settings",
+        "requestSchemaName": "ConfigureReportSettingsCommand",
+        "responseSchemaName": "ReportConfigurationResponse"
+      },
       "configureGrading": {
         "publicName": "configure-grading",
         "requestSchemaName": "ConfigureGradingCommand",
@@ -1251,25 +1248,10 @@ export const clientBindings = {
         "requestSchemaName": "ConfigureGradeScaleCommand",
         "responseSchemaName": "GradeScale"
       },
-      "configureReportCardDefinition": {
-        "publicName": "configure-report-card-definition",
-        "requestSchemaName": "ConfigureReportCardDefinitionCommand",
-        "responseSchemaName": "ReportCardDefinition"
-      },
       "createGradeScale": {
         "publicName": "create-grade-scale",
         "requestSchemaName": "CreateGradeScaleCommand",
         "responseSchemaName": "GradeScale"
-      },
-      "createReportCardDefinition": {
-        "publicName": "create-report-card-definition",
-        "requestSchemaName": "CreateReportCardDefinitionCommand",
-        "responseSchemaName": "ReportCardDefinition"
-      },
-      "createReportCardDefinitionSection": {
-        "publicName": "create-report-card-definition-section",
-        "requestSchemaName": "CreateReportCardDefinitionSectionCommand",
-        "responseSchemaName": "ReportCardDefinitionSection"
       },
       "createAssessment": {
         "publicName": "create-assessment",
@@ -1888,6 +1870,11 @@ export const clientBindings = {
       }
     },
     "queries": {
+      "getReportConfiguration": {
+        "publicName": "get-report-configuration",
+        "requestSchemaName": "ReportConfigurationQuery",
+        "responseSchemaName": "ReportConfigurationResponse"
+      },
       "getStudentSubjectEnrollments": {
         "publicName": "get-student-subject-enrollments",
         "requestSchemaName": "GetStudentSubjectEnrollmentsQuery",

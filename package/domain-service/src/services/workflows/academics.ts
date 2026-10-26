@@ -25,7 +25,7 @@ export interface RecordLessonSessionProgressInput {
 
 export interface RemoveSubjectMatterInput { subjectMatterId: string }
 export interface RemoveSubjectInput { subjectId: string }
-export type UpdateSubjectInput = Partial<Omit<SubjectInput, 'id' | 'schoolId' | 'gradeLevelId' | 'academicYearId' | 'createdAt'>> & { subjectId: string, expectedParticipationRevisions?: Record<string, number> }
+export type UpdateSubjectInput = Partial<Omit<SubjectInput, 'id' | 'schoolId' | 'gradeLevelId' | 'academicYearId' | 'createdAt'>> & { subjectId: string, expectedReportConfigurationRevision?: number, expectedParticipationRevisions?: Record<string, number> }
 
 export interface SetClassSubjectOfferedInput {
   classSubjectId: string
@@ -42,6 +42,7 @@ export interface ConfigureClassSubjectTimetableInput {
 
 export type ConfigureSubjectInput = SubjectInput & {
   classSubjectIdsByClassGroupId?: Record<string, string>
+  expectedReportConfigurationRevision?: number
   expectedParticipationRevisions?: Record<string, number>
 }
 export type ConfigureSubjectCategoryInput = SubjectCategoryInput & { schoolId?: string }
@@ -62,17 +63,26 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   removeStudentAcademicYearProfile(input: Parameters<typeof intake.removeStudentAcademicYearProfile>[1]) { return intake.removeStudentAcademicYearProfile(this.baseService, input) }
   removeTeacherAcademicYearProfile(input: Parameters<typeof intake.removeTeacherAcademicYearProfile>[1]) { return intake.removeTeacherAcademicYearProfile(this.baseService, input) }
 
+  private async assertReportRevision(gradeLevelId: string, academicYearId: string, expected: number | undefined, required: boolean) {
+    if (expected === undefined && !required)
+      return
+    const level = await this.baseService.repositories.gradeLevels.findById(gradeLevelId)
+    if (!level || expected !== level.reportSettingsFor(academicYearId).revision)
+      throw new BusinessRuleViolationError('REPORT_CONFIGURATION_REVISION_CONFLICT', 'Reload subjects and modules before saving')
+  }
+
   async configureSubject(input: ConfigureSubjectInput): Promise<Subject> {
     return this.baseService.atomicExecution.execute(async () => {
-      const { classSubjectIdsByClassGroupId, ...data } = input
+      const { classSubjectIdsByClassGroupId, expectedReportConfigurationRevision, ...data } = input
       const schoolId = data.schoolId ?? this.baseService.actor.schoolId
       this.checkActorSchool(schoolId)
       const existing = await this.repositories.subjects.findById(data.id)
       if (existing) {
         if (existing.schoolId !== schoolId || existing.gradeLevelId !== data.gradeLevelId || existing.academicYearId !== data.academicYearId)
           throw new BusinessRuleViolationError('SUBJECT_PLACEMENT_IMMUTABLE', 'A subject cannot move between schools, grades or academic years')
-        return this.updateSubject({ ...data, subjectId: data.id })
+        return this.updateSubject({ ...data, subjectId: data.id, expectedReportConfigurationRevision })
       }
+      await this.assertReportRevision(data.gradeLevelId, data.academicYearId, expectedReportConfigurationRevision, !!data.reportModuleId)
       const subject = new SubjectEntity({ ...data, schoolId })
       await this.baseService.entities.subjects.save(subject)
       await syncSubjectToAllClassGroups(this.baseService, subject, Object.fromEntries(
@@ -112,8 +122,6 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const subject = await this.requireSubject(subjectId)
       await this.baseService.access.entity('subjects').assertDelete([subject.id])
-      if (await this.repositories.sections.count({ subjectId }))
-        throw new BusinessRuleViolationError('SUBJECT_HAS_DEPENDENCIES', 'Subject is referenced by report-card definitions')
       await removeMirroredClassSubjects(this.baseService, subjectId)
       for (const chapter of await this.repositories.subjectMatters.list({ subjectId }))
         await this.baseService.entities.subjectMatters.delete(chapter.id)
@@ -121,10 +129,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async updateSubject({ subjectId, expectedParticipationRevisions, ...changes }: UpdateSubjectInput): Promise<Subject> {
+  async updateSubject({ subjectId, expectedParticipationRevisions, expectedReportConfigurationRevision, ...changes }: UpdateSubjectInput): Promise<Subject> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireSubject(subjectId)
       const updated = existing.copyWith(changes)
+      await this.assertReportRevision(existing.gradeLevelId, existing.academicYearId, expectedReportConfigurationRevision, updated.reportModuleId !== existing.reportModuleId || updated.reportOrder !== existing.reportOrder)
       if (existing.isOptional !== updated.isOptional)
         await saveSubjectPolicy(this.baseService, updated, existing, expectedParticipationRevisions)
       else

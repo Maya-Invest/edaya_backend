@@ -28,7 +28,9 @@ export const reportCardResultBaseSchema = z.object({
   grading: calculatedGradeSchema.optional(),
   aggregateLabel: z.string().optional(),
   gradingPolicyRevision: z.number().int().positive().optional(),
-  reportCardDefinitionId: z.string().trim().min(1, 'reportCardDefinitionId must not be blank'),
+  gradeLevelId: z.string().trim().min(1),
+  academicYearId: z.string().trim().min(1),
+  reportConfigurationRevision: z.number().int().nonnegative(),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   periodId: z.string().trim().min(1, 'periodId must not be blank'),
@@ -110,7 +112,9 @@ export class ReportCardResult {
   get sourceAssessments() { return this.data.sourceAssessments }
   get pendingAssessmentIds() { return this.data.pendingAssessmentIds }
   get calculationStale() { return this.data.calculationStale }
-  get reportCardDefinitionId() { return this.data.reportCardDefinitionId }
+  get gradeLevelId() { return this.data.gradeLevelId }
+  get academicYearId() { return this.data.academicYearId }
+  get reportConfigurationRevision() { return this.data.reportConfigurationRevision }
   get studentId() { return this.data.studentId }
   get classGroupId() { return this.data.classGroupId }
   get periodId() { return this.data.periodId }
@@ -153,7 +157,9 @@ export class ReportCardResult {
       pendingAssessmentIds: this.pendingAssessmentIds,
       calculationStale: this.calculationStale,
       id: this.id,
-      reportCardDefinitionId: this.reportCardDefinitionId,
+      gradeLevelId: this.gradeLevelId,
+      academicYearId: this.academicYearId,
+      reportConfigurationRevision: this.reportConfigurationRevision,
       studentId: this.studentId,
       classGroupId: this.classGroupId,
       periodId: this.periodId,

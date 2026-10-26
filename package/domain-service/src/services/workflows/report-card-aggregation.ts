@@ -1,14 +1,10 @@
-import type { AcademicPeriod, Assessment, AssessmentResult, GradingPolicy, ReportCardAggregation, ReportCardDefinitionSection, ReportCardResult, ReportCardResultSection } from '@edaya/core'
+import type { AcademicPeriod, Assessment, AssessmentResult, GradingPolicy, ReportCardAggregation, ReportCardResult, ReportCardResultSection } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import {
   BusinessRuleViolationError,
   calculateGrade,
-  describeGrade,
   ReportCardAggregationSource,
-  ReportCardDefinitionSectionKind,
-  ReportCardResultSection as ReportCardResultSectionEntity,
   ReportCardResultStatus,
-  roundTo2,
   weightForPeriod,
 } from '@edaya/core'
 import { hydrateReportRevision } from '../../capabilities/academics/report-comment-revisions'
@@ -19,59 +15,6 @@ export interface AggregationPublishReadiness {
   canPublish: boolean
   unpublishedPeriodIds: string[]
   missingOrDraftReportCardPeriodIds: string[]
-}
-
-export function dedupeReportCardDefinitionSections(
-  sections: readonly ReportCardDefinitionSection[],
-): ReportCardDefinitionSection[] {
-  const byId = new Map<string, ReportCardDefinitionSection>()
-  for (const section of sections) {
-    if (!byId.has(section.id)) {
-      byId.set(section.id, section)
-    }
-  }
-  return [...byId.values()]
-}
-
-export function rootReportCardDefinitionSections(
-  sections: readonly ReportCardDefinitionSection[],
-): ReportCardDefinitionSection[] {
-  return dedupeReportCardDefinitionSections(sections).filter(section => !section.parentSectionId)
-}
-
-export function childReportCardDefinitionSections(
-  sections: readonly ReportCardDefinitionSection[],
-  parentSectionId: string,
-): ReportCardDefinitionSection[] {
-  const seenSubjectIds = new Set<string>()
-  return dedupeReportCardDefinitionSections(sections)
-    .filter(section => section.parentSectionId === parentSectionId)
-    .filter((section) => {
-      if (section.kind !== ReportCardDefinitionSectionKind.Subject || !section.subjectId) {
-        return true
-      }
-      if (seenSubjectIds.has(section.subjectId)) {
-        return false
-      }
-      seenSubjectIds.add(section.subjectId)
-      return true
-    })
-}
-
-export function findSectionAverage(
-  sectionResults: readonly ReportCardResultSection[],
-  sectionId: string,
-): number | undefined {
-  for (const section of sectionResults) {
-    if (section.sectionId === sectionId) {
-      return section.average
-    }
-    const nested = findSectionAverage(section.subResults, sectionId)
-    if (nested !== undefined) {
-      return nested
-    }
-  }
-  return undefined
 }
 
 export async function listPublishedPeriodIds(
@@ -120,7 +63,7 @@ export function buildSubjectAverageFromAssessments(
       : ((result.score ?? 0) / assessment.maxScore) * 20
     return sum + normalizedScore * assessment.coefficient
   }, 0)
-  return totalWeight === 0 ? 0 : policy ? weightedPoints / totalWeight : roundTo2(weightedPoints / totalWeight)
+  return totalWeight === 0 ? undefined : weightedPoints / totalWeight
 }
 
 export interface PriorReportCardLoadResult {
@@ -233,35 +176,7 @@ export function buildSubjectAverageFromPriorReportCards(
   if (sumWeights === 0) {
     return undefined
   }
-  return policy ? sumWeightedPoints / sumWeights : roundTo2(sumWeightedPoints / sumWeights)
-}
-
-export function buildGroupResultFromChildren(
-  section: ReportCardDefinitionSection,
-  childResults: ReportCardResultSection[],
-  policy?: GradingPolicy,
-): ReportCardResultSection | null {
-  if (childResults.length === 0) {
-    return null
-  }
-  let sumWeights = 0
-  let sumWeightedPoints = 0
-  for (const childResult of childResults) {
-    if (childResult.average !== undefined) {
-      sumWeights += childResult.weight
-      sumWeightedPoints += (childResult.grading?.value ?? childResult.average) * childResult.weight
-    }
-  }
-  return new ReportCardResultSectionEntity({
-    sectionId: section.id,
-    sectionKind: ReportCardDefinitionSectionKind.Group,
-    name: section.name,
-    grading: sumWeights && policy ? describeGrade(sumWeightedPoints / sumWeights, policy) : undefined,
-    average: sumWeights === 0 ? undefined : policy ? describeGrade(sumWeightedPoints / sumWeights, policy).reportedValue : sumWeightedPoints / sumWeights,
-    weight: section.weight,
-    parentSectionId: section.parentSectionId,
-    subResults: childResults,
-  })
+  return sumWeightedPoints / sumWeights
 }
 
 export function assertAggregationSource(
@@ -274,4 +189,15 @@ export function assertAggregationSource(
       `Expected aggregation source ${source} but received ${aggregation.source}`,
     )
   }
+}
+
+export function findSectionAverage(sections: readonly ReportCardResultSection[], id: string): number | undefined {
+  for (const section of sections) {
+    if (section.sectionId === id)
+      return section.grading?.value ?? section.average
+    const value = findSectionAverage(section.subResults, id)
+    if (value !== undefined)
+      return value
+  }
+  return undefined
 }

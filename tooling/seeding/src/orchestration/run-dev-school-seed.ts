@@ -97,8 +97,8 @@ export type DevSchoolSeedResult
       studentHealthProfiles: number
       studentNotes: number
       gradeScales: number
-      reportCardDefinitions: number
-      reportCardSections: number
+      reportModules: number
+      reportModuleAssignments: number
       reportCardResults: number
       disciplinaryActions: number
       studentDisciplinaryActions: number
@@ -355,8 +355,8 @@ export async function runDevSchoolSeed(
     studentHealthProfiles: studentSupportCounts.studentHealthProfiles,
     studentNotes: studentSupportCounts.studentNotes,
     gradeScales: reportCardCounts.gradeScales,
-    reportCardDefinitions: reportCardCounts.definitions,
-    reportCardSections: reportCardCounts.sections,
+    reportModules: reportCardCounts.modules,
+    reportModuleAssignments: reportCardCounts.assignments,
     reportCardResults: reportCardCounts.results,
     disciplinaryActions: disciplineCounts.disciplinaryActions,
     studentDisciplinaryActions: disciplineCounts.studentDisciplinaryActions,

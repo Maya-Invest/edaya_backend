@@ -45,6 +45,6 @@ export async function resolveNotificationDispatchRecipient(base: BaseSchoolServi
   }
   if (!profile)
     return undefined
-  const contact = await base.authContactResolver?.resolveBySubjectId(request.subjectId)
+  const contact = profile.recipient.kind === 'guardian' ? undefined : await base.authContactResolver?.resolveBySubjectId(request.subjectId)
   return enrichRecipientProfile(profile, contact)
 }

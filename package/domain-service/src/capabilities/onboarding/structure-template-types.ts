@@ -62,7 +62,7 @@ export interface StructureTemplateReportCardStructure {
   passingGrade: number
   /** Optional catalog metadata; bulletin layout prefers `sections` when present. */
   domainCategories?: StructureTemplateReportCardDomainCategory[]
-  sections?: StructureTemplateReportCardSection[]
+  modules?: Array<{ name: string, order: number, subjectCodes: string[], weightingMode: 'subject_coefficients' | 'explicit', explicitWeight?: number }>
   includeSummary?: boolean
   includeComments?: boolean
   summaryPeriod?: StructureTemplateReportCardPeriod

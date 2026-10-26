@@ -1,7 +1,7 @@
-import type { GradeScaleInput, GradeScaleRange, ReportCardDefinitionSectionInput } from '@edaya/core'
+import type { GradeScaleInput, GradeScaleRange } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, GradeScale, rangesFromThresholds, ReportCardDefinition, ReportCardDefinitionSection } from '@edaya/core'
+import { BusinessRuleViolationError, GradeScale, rangesFromThresholds } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { schoolCommandScope } from '../commands/school-command-scope'
 
@@ -14,16 +14,6 @@ export interface ConfigureGradeScaleInput {
   interval?: Omit<GradeScaleRange, 'maxScore'> & { id: string }
   intervalId?: string
 }
-export interface ConfigureReportModelInput {
-  requestId: string
-  id: string
-  expectedRevision: number
-  action: 'metadata' | 'section' | 'remove-section'
-  metadata?: { name: string, description?: string | null, passThreshold?: number | null }
-  section?: Omit<ReportCardDefinitionSectionInput, 'reportCardDefinitionId' | 'createdAt'>
-  sectionId?: string
-}
-
 export class ConfigurationEditorsWorkflow {
   constructor(private readonly base: BaseSchoolService) {}
 
@@ -92,46 +82,6 @@ export class ConfigurationEditorsWorkflow {
       persistResult: result => ({ id: result.id, deleted: input.action === 'delete' ? JSON.stringify(result.data) : null }),
       replay: async stored => stored.deleted ? new GradeScale(JSON.parse(stored.deleted)) : (await this.base.entities.gradeScales.findById(stored.id))!,
       audit: result => [{ event: 'configureGradeScale', resourceType: 'gradeScales', resourceId: result.id }],
-    })
-  }
-
-  async configureModel(input: ConfigureReportModelInput): Promise<ReportCardDefinition> {
-    return this.base.commandExecution.execute({
-      scope: await schoolCommandScope(this.base.actor, 'configureReportCardDefinition', input.requestId),
-      input,
-      resultMode: 'ordinary',
-      lockKeys: [academicStateLock(this.base.actor.schoolId)],
-      authorize: async () => {},
-      execute: async () => {
-        const existing = await this.base.repositories.definitions.findById(input.id)
-        if (!existing || existing.schoolId !== this.base.actor.schoolId)
-          denyResourceAccess()
-        if (existing.revision !== input.expectedRevision)
-          throw new BusinessRuleViolationError('REPORT_MODEL_REVISION_CONFLICT', 'Reload the report model before saving')
-        if (input.action === 'metadata') {
-          if (!input.metadata)
-            throw new BusinessRuleViolationError('MODEL_METADATA_REQUIRED', 'Model details are required')
-          await this.base.entities.definitions.save(new ReportCardDefinition({ ...existing.data, ...input.metadata }))
-        }
-        else if (input.action === 'section') {
-          if (!input.section)
-            throw new BusinessRuleViolationError('SECTION_REQUIRED', 'A section is required')
-          const previous = await this.base.repositories.sections.findById(input.section.id)
-          if (previous && previous.reportCardDefinitionId !== existing.id)
-            denyResourceAccess()
-          await this.base.entities.sections.save(new ReportCardDefinitionSection({ ...previous?.data, ...input.section, reportCardDefinitionId: existing.id }))
-        }
-        else {
-          const section = input.sectionId ? await this.base.repositories.sections.findById(input.sectionId) : undefined
-          if (!section || section.reportCardDefinitionId !== existing.id)
-            denyResourceAccess()
-          await this.base.entities.sections.delete(section.id)
-        }
-        return (await this.base.repositories.definitions.findById(existing.id))!
-      },
-      persistResult: result => ({ id: result.id }),
-      replay: async stored => (await this.base.entities.definitions.findById(stored.id))!,
-      audit: result => [{ event: 'configureReportCardDefinition', resourceType: 'definitions', resourceId: result.id }],
     })
   }
 }

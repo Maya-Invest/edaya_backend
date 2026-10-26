@@ -117,8 +117,8 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
   it('configures completed grading before seeding marks and generating report cards', async () => {
     const { application } = getContext()
-    for (const fixture of demoCiDataset.extensions?.reportCardDefinitionFixtures ?? []) {
-      const definition = fixture.definition
+    for (const fixture of demoCiDataset.extensions?.reportConfigurationFixtures ?? []) {
+      const definition = fixture
       const level = (await application.repositories.gradeLevels.findById(definition.gradeLevelId))!
       expect(level.gradingPolicyFor(definition.academicYearId)).toMatchObject({ status: 'completed', mode: 'numeric-first', scale: { id: definition.gradeScaleId } })
     }

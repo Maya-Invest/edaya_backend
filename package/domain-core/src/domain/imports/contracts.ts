@@ -167,9 +167,11 @@ export interface ImportPersistencePort {
   exhaustedBatches: (limit: number) => Promise<ImportBatch[]>
   saveRows: (rows: readonly ImportRow[]) => Promise<void>
   getIdentity: (schoolId: string, type: ImportType, sourceKey: string) => Promise<ImportIdentity | undefined>
+  getIdentities: (schoolId: string, type: ImportType, sourceKeys: readonly string[]) => Promise<ImportIdentity[]>
   saveIdentities: (identities: readonly ImportIdentity[]) => Promise<void>
   saveIdentity: (identity: ImportIdentity) => Promise<void>
   findOutcome: (schoolId: string, batchId: string, rowId: string, inputDigest: string) => Promise<ImportExecutionOutcome | undefined>
+  findOutcomes: (schoolId: string, batchId: string, requests: readonly { rowId: string, inputDigest: string }[]) => Promise<ImportExecutionOutcome[]>
   addOutcomes: (outcomes: readonly ImportExecutionOutcome[]) => Promise<void>
   addOutcome: (outcome: ImportExecutionOutcome) => Promise<void>
 }

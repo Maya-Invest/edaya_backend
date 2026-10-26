@@ -2,6 +2,7 @@ import type { AcademicYear, ClassGroup, StudentSubjectEnrollment as Enrollment, 
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { SubjectInvalidationWork, SubjectWork } from './work'
 import { BusinessRuleViolationError, ClassSubject, StudentSubjectEnrollment } from '@edaya/core'
+import { loadInBatches } from '../shared/bounded-reads'
 import { schoolDayStart } from './dates'
 import { hasSubjectDependencies, invalidateSubjectWork, loadSubjectWork } from './work'
 
@@ -35,6 +36,13 @@ export async function bumpParticipation(repositories: SchoolRepositories, classS
 }
 
 export async function persistSubjectEnrollment(repositories: SchoolRepositories, row: Enrollment, previous?: Enrollment, snapshot?: SubjectInvalidationWork, context?: { bounds: Awaited<ReturnType<typeof enrollmentBounds>>, existing: readonly Enrollment[] }): Promise<void> {
+  const { bounds, work } = await validateSubjectEnrollment(repositories, row, snapshot, context)
+  await repositories.subjectEnrollments.save(row)
+  await invalidateSubjectWork(repositories, work, bounds.placement.studentId, previous, row)
+  await bumpParticipation(repositories, row.classSubjectId)
+}
+
+async function validateSubjectEnrollment(repositories: SchoolRepositories, row: Enrollment, snapshot?: SubjectInvalidationWork, context?: { bounds: Awaited<ReturnType<typeof enrollmentBounds>>, existing: readonly Enrollment[] }) {
   const bounds = context?.bounds ?? await enrollmentBounds(repositories, row.studentClassEnrollmentId, row.classSubjectId)
   if (bounds.placement.id !== row.studentClassEnrollmentId || bounds.offering.id !== row.classSubjectId)
     throw new BusinessRuleViolationError('SUBJECT_ENROLLMENT_PLACEMENT_INVALID', 'Participation context does not match the selection')
@@ -44,9 +52,37 @@ export async function persistSubjectEnrollment(repositories: SchoolRepositories,
   if (!row.deletedAt && other.some(item => item.id !== row.id && !item.deletedAt))
     throw new BusinessRuleViolationError('SUBJECT_ENROLLMENT_ALREADY_EXISTS', 'Only one current selection is allowed per subject and placement')
   const work = snapshot ?? await loadSubjectWork(repositories, row.classSubjectId)
-  await repositories.subjectEnrollments.save(row)
-  await invalidateSubjectWork(repositories, work, bounds.placement.studentId, previous, row)
-  await bumpParticipation(repositories, row.classSubjectId)
+  return { bounds, work }
+}
+
+export interface ParticipationChange {
+  row: Enrollment
+  previous?: Enrollment
+  snapshot?: SubjectInvalidationWork
+  context: { bounds: Awaited<ReturnType<typeof enrollmentBounds>>, existing: readonly Enrollment[] }
+}
+
+/** Caller holds academic-state in the placement transaction. Reuses individual validation/invalidation. */
+export async function persistSubjectEnrollments(repositories: SchoolRepositories, changes: readonly ParticipationChange[]): Promise<void> {
+  const pairs = new Set<string>()
+  const prepared = []
+  for (const change of changes) {
+    const key = JSON.stringify([change.row.studentClassEnrollmentId, change.row.classSubjectId])
+    if (pairs.has(key))
+      throw new BusinessRuleViolationError('SUBJECT_ENROLLMENT_ALREADY_EXISTS', 'Only one selection change is allowed per subject and placement')
+    pairs.add(key)
+    prepared.push({ ...change, ...await validateSubjectEnrollment(repositories, change.row, change.snapshot, change.context) })
+  }
+  for (let offset = 0; offset < prepared.length; offset += 500)
+    await repositories.subjectEnrollments.batchSave(prepared.slice(offset, offset + 500).map(change => change.row))
+  const increments = new Map<string, number>()
+  for (const change of prepared) {
+    await invalidateSubjectWork(repositories, change.work, change.bounds.placement.studentId, change.previous, change.row)
+    increments.set(change.row.classSubjectId, (increments.get(change.row.classSubjectId) ?? 0) + 1)
+  }
+  const offerings = await loadInBatches([...increments.keys()], ids => repositories.classSubjects.findByIds(ids))
+  for (let offset = 0; offset < offerings.length; offset += 500)
+    await repositories.classSubjects.batchSave(offerings.slice(offset, offset + 500).map(offering => new ClassSubject({ ...offering.data, participationRevision: offering.participationRevision + increments.get(offering.id)! })))
 }
 
 /** Called only under academic-state; no catch-and-delete fallback and no dependent cascades. */

@@ -60,8 +60,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
   assessments: s.assessments,
   assessmentResults: s.assessmentResults,
   gradeScales: s.gradeScales,
-  definitions: s.reportCardDefinitions,
-  sections: s.reportCardDefinitionSections,
+  reportModules: s.reportModules,
   results: s.reportCardResults,
   students: s.students,
   subjectEnrollments: s.studentSubjectEnrollments,
@@ -82,7 +81,6 @@ const parents: Record<string, readonly [string, PgTable][]> = {
   student_subject_enrollments: [['studentClassEnrollmentId', s.studentClassEnrollments], ['classSubjectId', s.classSubjects]],
   payments: [['accountId', s.studentYearAccounts]],
   assessment_results: [['assessmentId', s.assessments]],
-  report_card_definition_sections: [['reportCardDefinitionId', s.reportCardDefinitions]],
   class_subject_matters: [['classSubjectId', s.classSubjects]],
   class_subject_progress: [['classSubjectMatterId', s.classSubjectMatters]],
   subject_matters: [['subjectId', s.subjects]],
@@ -531,7 +529,7 @@ function yearPredicate(table: PgTable, year: string, schoolId: string, visited: 
 
 function publicationPredicate(table: PgTable, schoolId: string, value: (field: string) => SQLWrapper): SQL {
   const name = getTableName(table)
-  if (name === 'report_card_results' || name === 'report_card_definitions' || name === 'announcements')
+  if (name === 'report_card_results' || name === 'report_modules' || name === 'announcements')
     return sql`${value('status')} = 'published'`
   if (name === 'assessment_results') {
     return exists(s.assessments, schoolId, and(sql`${s.assessments.id} = ${value('assessmentId')}`, exists(s.reportCardResults, schoolId, and(sql`${s.reportCardResults.studentId} = ${value('studentId')}`, eq(s.reportCardResults.periodId, s.assessments.periodId), eq(s.reportCardResults.status, 'published'))!))!)

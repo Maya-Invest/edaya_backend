@@ -1,4 +1,4 @@
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, LessonSession, PeriodDefinition, ReportCardDefinition, ReportCardResult, School, Subject, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevel, LessonSession, PeriodDefinition, ReportCardResult, School, Subject, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -19,13 +19,10 @@ describe('PostgresSchoolRepositories with PGlite', () => {
   })
 
   test('round-trips optional report thresholds without losing three-decimal precision', async () => {
-    const model = new ReportCardDefinition({ id: 'threshold-model', schoolId: 'school', academicYearId: 'year', gradeLevelId: 'level', gradeScaleId: 'scale', name: 'Report', passThreshold: 10.125 })
-    await repos.definitions.save(model)
-    const saved = (await repos.definitions.findById(model.id))!
-    expect(saved.passThreshold).toBe(10.125)
-    await repos.definitions.save(new ReportCardDefinition({ ...saved.data, passThreshold: null }))
-    expect((await repos.definitions.findById(model.id))?.passThreshold).toBeUndefined()
-    const result = new ReportCardResult({ id: 'threshold-result', reportCardDefinitionId: model.id, studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 0, sectionResults: [], attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, overallAverage: 10.12, passThreshold: 10.125 })
+    const level = new GradeLevel({ id: 'level', schoolId: 'school', name: 'Level', label: 'L', order: 1, reportSettings: [{ academicYearId: 'year', revision: 1, passThreshold: 10.125 }] })
+    await repos.gradeLevels.save(level)
+    expect((await repos.gradeLevels.findById('level'))?.reportSettingsFor('year').passThreshold).toBe(10.125)
+    const result = new ReportCardResult({ id: 'threshold-result', gradeLevelId: 'level', academicYearId: 'year', reportConfigurationRevision: 1, studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 0, sectionResults: [], attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, overallAverage: 10.12, passThreshold: 10.125 })
     await repos.results.save(result)
     const captured = (await repos.results.findById(result.id))!
     expect(captured.passThreshold).toBe(10.125)

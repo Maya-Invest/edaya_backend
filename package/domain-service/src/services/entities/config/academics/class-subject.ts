@@ -102,7 +102,7 @@ export async function assertClassSubjectUnused(classSubject: ClassSubject, repos
 
 /** Shared by generic writes and curriculum synchronization under the academic-state lock. */
 export async function assertClassSubjectGradingMutable(classSubject: ClassSubject, existing: ClassSubject | undefined, repositories: Pick<SchoolRepositories, 'assessments'>): Promise<void> {
-  if (existing && (classSubject.subjectId !== existing.subjectId || classSubject.classGroupId !== existing.classGroupId || classSubject.coefficient !== existing.coefficient)) {
+  if (existing && (classSubject.subjectId !== existing.subjectId || classSubject.classGroupId !== existing.classGroupId)) {
     if (await repositories.assessments.count({ classSubjectId: existing.id, marksStatus: { $ne: 'draft' } }))
       throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Return affected marks sheets before changing their subject configuration')
   }

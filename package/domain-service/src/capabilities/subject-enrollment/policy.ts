@@ -2,7 +2,7 @@ import type { ClassSubject, Subject } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { validateSubjectSave } from '../../services/entities/config/academics/subject'
-import { reconcileSubjectPolicy } from './reconcile'
+import { subjectParticipationHooks } from './mutation-hooks'
 
 export function assertParticipationRevision(offering: ClassSubject, expected: number | undefined): void {
   if (expected !== offering.participationRevision)
@@ -16,5 +16,5 @@ export async function saveSubjectPolicy(base: BaseSchoolService, updated: Subjec
   for (const offering of await base.repositories.classSubjects.list({ subjectId: updated.id }))
     assertParticipationRevision(offering, expected?.[offering.id])
   await base.repositories.subjects.forAccess(scope).save(updated)
-  await reconcileSubjectPolicy(base.repositories, updated, previous, base.actor)
+  await subjectParticipationHooks.postSave!(updated, previous, base.repositories, base.actor)
 }

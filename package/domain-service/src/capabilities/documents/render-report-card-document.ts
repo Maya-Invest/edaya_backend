@@ -60,7 +60,7 @@ function documentSource(context: DocumentContext, locale: string, captured?: Doc
   return {
     payload,
     // This guards the in-flight rendering window, not long-term document versioning.
-    signature: JSON.stringify({ resultId: result.id, studentId: student.id, schoolId: school.id, periodId: period.id, classGroupId: classGroup.id, academicYearId: academicYear.id, definitionId: result.reportCardDefinitionId, publishedAt: result.publishedAt, payload }),
+    signature: JSON.stringify({ resultId: result.id, studentId: student.id, schoolId: school.id, periodId: period.id, classGroupId: classGroup.id, academicYearId: academicYear.id, reportConfigurationRevision: result.reportConfigurationRevision, publishedAt: result.publishedAt, payload }),
   }
 }
 

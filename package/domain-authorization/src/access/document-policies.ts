@@ -247,9 +247,8 @@ export class DocumentAccessPolicy {
         throw new BusinessRuleViolationError('DOCUMENT_SOURCE_UNPUBLISHED', 'Each annual source period must have one published report')
       const result = await publishedReportSource(reports[0]!, annual.aggregation?.sourceReportVersions?.find(source => source.periodId === periodId)?.sourceVersion)
       const period = await facts.one('academicPeriods', periodId)
-      const sourceDefinition = await facts.one('definitions', result.reportCardDefinitionId)
       const classGroup = await facts.one('classGroups', result.classGroupId)
-      if (result.grading?.scaleId !== annual.grading?.scaleId || result.grading?.maximum !== annual.grading?.maximum || sourceDefinition.academicYearId !== annualPeriod.academicYearId || classGroup.academicYearId !== annualPeriod.academicYearId)
+      if (result.grading?.scaleId !== annual.grading?.scaleId || result.grading?.maximum !== annual.grading?.maximum || result.academicYearId !== annualPeriod.academicYearId || classGroup.academicYearId !== annualPeriod.academicYearId)
         return denied('Annual report sources have incompatible academic placement')
       contributors.push({ result, period })
     }

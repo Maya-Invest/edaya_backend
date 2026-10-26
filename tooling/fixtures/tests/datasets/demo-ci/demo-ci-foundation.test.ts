@@ -57,7 +57,7 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.entities.studentHealthProfiles).toHaveLength(3)
     expect(demoCiDataset.entities.attachments).toHaveLength(7)
     expect(demoCiDataset.extensions?.calendarEvents!.length).toBeGreaterThan(10)
-    expect(demoCiDataset.extensions?.reportCardDefinitionFixtures).toHaveLength(4)
+    expect(demoCiDataset.extensions?.reportConfigurationFixtures).toHaveLength(4)
     expect(demoCiDataset.extensions?.reportCardResults).toHaveLength(30)
     expect(demoCiDataset.extensions?.publishAcademicPeriodIds).toEqual(['ci-2025-t1'])
     expect(demoCiDataset.extensions?.schedulingReferenceWeekStart).toBe('2026-09-14')

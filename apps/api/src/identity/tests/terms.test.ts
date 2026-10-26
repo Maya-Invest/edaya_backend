@@ -6,6 +6,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
+import { parseRuntimeEnv } from "@/runtime/shared/env/schema";
 import { createAccountAuthHandler, isAccountAuthRoute } from "../account-auth";
 import { parseEnv } from "../env";
 import { ensureIdentitySigningKeys } from "../jwt-keys";
@@ -175,6 +176,13 @@ test("draft previews are explicit, localized and cannot be enabled in production
   expect(preview.current("fr").document?.documentHash).not.toBe(preview.current("en").document?.documentHash);
   expect(() => createTermsPolicy({ NODE_ENV: "production", AUTH_TERMS_MODE: "preview" })).toThrow("production");
   expect(() => createTermsPolicy({ NODE_ENV: "production", AUTH_TERMS_MODE: "enforced", AUTH_TERMS_VERSION: "draft-2026-10-25" })).toThrow("approved");
+});
+
+test("unified API configuration preserves terms enforcement through identity parsing", () => {
+  const runtime = parseRuntimeEnv({ NODE_ENV: "test", DATABASE_URL: "pglite:memory", AUTH_TERMS_MODE: "preview", AUTH_TERMS_VERSION: "draft-version" });
+  const identity = parseEnv({ ...runtime, BETTER_AUTH_SECRET: "test-only-key-with-more-than-32-characters", BETTER_AUTH_URL: runtime.API_ORIGIN, FIRST_PARTY_API_ORIGINS: runtime.API_ORIGIN }, "local");
+  expect(identity.AUTH_TERMS_VERSION).toBe("draft-version");
+  expect(createTermsPolicy(identity).current("en")).toMatchObject({ enforced: true, document: { status: "draft" } });
 });
 
 test("public terms HTTP endpoint validates locale and serializes published content without session", async () => {

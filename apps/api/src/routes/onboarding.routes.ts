@@ -43,13 +43,6 @@ const structureTemplateReportCardDomainCategorySchema = z.object({
   weight: z.number().optional(),
 });
 
-const structureTemplateReportCardSectionSchema = z.object({
-  role: z.enum(["subjects", "summary", "comments"]),
-  label: z.string().trim().min(1),
-  order: z.number().int(),
-  subjectCodes: z.array(z.string().trim().min(1)).optional(),
-});
-
 const structureTemplateReportCardStructureSchema = z.object({
   gradingScale: z.number(),
   passingGrade: z.number(),
@@ -59,7 +52,7 @@ const structureTemplateReportCardStructureSchema = z.object({
     weight: z.number(),
   })).min(1),
   domainCategories: z.array(structureTemplateReportCardDomainCategorySchema).optional(),
-  sections: z.array(structureTemplateReportCardSectionSchema).optional(),
+  modules: z.array(z.object({ name: z.string().trim().min(1), order: z.number().int().positive(), subjectCodes: z.array(z.string().min(1)), weightingMode: z.enum(["subject_coefficients", "explicit"]), explicitWeight: z.number().finite().positive().optional() })).optional(),
   includeSummary: z.boolean().optional(),
   includeComments: z.boolean().optional(),
 });
@@ -135,8 +128,8 @@ const onboardingApplyStructureTemplateResponseSchema = z.object({
   subjectCount: z.number().int(),
   classSubjectCount: z.number().int(),
   gradeScaleCount: z.number().int(),
-  reportCardDefinitionCount: z.number().int(),
-  reportCardSectionCount: z.number().int(),
+  reportModuleCount: z.number().int(),
+  reportSubjectAssignmentCount: z.number().int(),
 }).openapi("OnboardingApplyStructureTemplateResponse");
 
 const onboardingStaffInviteRequestSchema = z.object({
@@ -539,8 +532,8 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
             subjectCount: structure.subjectCount,
             classSubjectCount: structure.classSubjectCount,
             gradeScaleCount: structure.gradeScaleCount,
-            reportCardDefinitionCount: structure.reportCardDefinitionCount,
-            reportCardSectionCount: structure.reportCardSectionCount,
+            reportModuleCount: structure.reportModuleCount,
+            reportSubjectAssignmentCount: structure.reportSubjectAssignmentCount,
           }
         : null,
     }, HttpStatusCodes.OK);

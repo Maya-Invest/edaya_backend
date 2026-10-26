@@ -1,7 +1,7 @@
 import type { GradingPolicy } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, GradeLevel, gradingPolicySchema, ReportCardDefinition } from '@edaya/core'
+import { BusinessRuleViolationError, GradeLevel, gradingPolicySchema } from '@edaya/core'
 import { GRADING_RECALCULATE_KIND } from '../../capabilities/academics/grading'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { normalizeCommandRequest } from '../commands/command-execution'
@@ -91,11 +91,6 @@ export class GradingConfigurationWorkflow {
         const updated = new GradeLevel({ ...level.data, gradingPolicies: policies })
         const scope = await this.base.access.reportCards.assertConfigureGrading(updated, level)
         await this.base.repositories.gradeLevels.forAccess(scope).save(updated)
-        const definitions = await this.base.repositories.definitions.list({ schoolId: level.schoolId, gradeLevelId: level.id, academicYearId: input.academicYearId })
-        for (const definition of definitions) {
-          if (definition.gradeScaleId !== scale.id)
-            await this.base.repositories.definitions.forSchool!(level.schoolId).save(new ReportCardDefinition({ ...definition.data, gradeScaleId: scale.id }))
-        }
         return updated
       },
       persistResult: result => ({ id: result.id }),

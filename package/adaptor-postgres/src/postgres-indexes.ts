@@ -226,20 +226,12 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       ]
     case 'grade_scales':
       return [index('grade_scales_school_id_idx').on(col(table, 'schoolId'))]
-    case 'report_card_definitions':
-      return [
-        index('report_card_definitions_school_id_idx').on(col(table, 'schoolId')),
-        index('report_card_definitions_academic_year_id_idx').on(col(table, 'academicYearId')),
-      ]
-    case 'report_card_definition_sections':
-      return [
-        index('report_card_definition_sections_definition_id_idx').on(col(table, 'reportCardDefinitionId')),
-        index('report_card_definition_sections_parent_section_id_idx').on(col(table, 'parentSectionId')),
-      ]
+    case 'report_modules':
+      return [index('report_modules_scope_idx').on(col(table, 'schoolId'), col(table, 'gradeLevelId'), col(table, 'academicYearId'))]
     case 'report_card_results':
       return [
         index('report_card_results_student_id_idx').on(col(table, 'studentId')),
-        index('report_card_results_definition_id_idx').on(col(table, 'reportCardDefinitionId')),
+        uniqueIndex('report_card_results_student_period_unique').on(col(table, 'studentId'), col(table, 'periodId')),
         index('report_card_results_class_group_period_idx').on(col(table, 'classGroupId'), col(table, 'periodId')),
       ]
     case 'students':

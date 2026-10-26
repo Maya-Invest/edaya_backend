@@ -1,7 +1,7 @@
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { PublicEntityOperations } from "./public-operations";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicDiscipline, AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, attendanceCallSchema, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, conversationDetailQuerySchema, conversationRecipientsQuerySchema, conversationsQuerySchema, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlacementStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAcademicYearProfile, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentSubjectEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment, teacherCorrectionsQuerySchema, TeacherUnavailability } from "@edaya/core";
+import { AcademicDiscipline, AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, attendanceCallSchema, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, conversationDetailQuerySchema, conversationRecipientsQuerySchema, conversationsQuerySchema, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlacementStatus, ReportCardResult, ReportModule, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAcademicYearProfile, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentSubjectEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment, teacherCorrectionsQuerySchema, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -10,6 +10,7 @@ import * as entitySchemas from "@/lib/school-api/schemas/entities";
 import * as querySchemas from "@/lib/school-api/schemas/queries";
 import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import * as messaging from "./schemas/conversations";
+import * as reportModules from "./schemas/report-modules";
 import * as subjectEnrollmentSchemas from "./schemas/subject-enrollment";
 import { teacherAttendanceCallResponseSchema, teacherCorrectionDetailResponseSchema, teacherCorrectionsResponseSchema, teacherWorkflowEligibilityResponseSchema } from "./schemas/teacher-corrections";
 
@@ -22,7 +23,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getStudentSubjectEnrollments" | "getClassSubjectRoster" | "getStudentTimetable" | "getFinanceOverview" | "getFeeFinanceOverview" | "getFinanceBillingPage" | "getFinancePaymentsPage" | "getFinanceBillingDetail" | "getActivityRoster" | "getAssessmentEditorContext" | "listConversationRecipients" | "listConversations" | "getConversation" | "getTeacherAttendanceCall" | "getTeacherWorkflowState" | "getTeacherCorrection" | "listTeacherCorrections" | "getAssessmentMarksReview" | "listAssessmentMarksReviews" | "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "getTeacherTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
+  methodName: "getReportConfiguration" | "getStudentSubjectEnrollments" | "getClassSubjectRoster" | "getStudentTimetable" | "getFinanceOverview" | "getFeeFinanceOverview" | "getFinanceBillingPage" | "getFinancePaymentsPage" | "getFinanceBillingDetail" | "getActivityRoster" | "getAssessmentEditorContext" | "listConversationRecipients" | "listConversations" | "getConversation" | "getTeacherAttendanceCall" | "getTeacherWorkflowState" | "getTeacherCorrection" | "listTeacherCorrections" | "getAssessmentMarksReview" | "listAssessmentMarksReviews" | "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "getTeacherTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -116,8 +117,7 @@ const apiEntityDecorations = {
   assessments: decoration("assessments", "Assessments", entitySchemas.assessmentQuerySchema, entitySchemas.assessmentResponseSchema, Assessment, PUBLIC_CRUD),
   assessmentResults: decoration("assessment-results", "Assessment Results", entitySchemas.assessmentResultQuerySchema, entitySchemas.assessmentResultResponseSchema, AssessmentResult, COMMAND_ONLY),
   gradeScales: decoration("grade-scales", "Grade Scales", entitySchemas.gradeScaleQuerySchema, entitySchemas.gradeScaleResponseSchema, GradeScale, PUBLIC_CRUD),
-  definitions: decoration("definitions", "Report Card Definitions", entitySchemas.definitionQuerySchema, entitySchemas.definitionResponseSchema, ReportCardDefinition, PUBLIC_CRUD),
-  sections: decoration("sections", "Report Card Sections", entitySchemas.sectionQuerySchema, entitySchemas.sectionResponseSchema, ReportCardDefinitionSection, PUBLIC_CRUD),
+  reportModules: decoration("report-modules", "Report Modules", entitySchemas.reportModuleQuerySchema, entitySchemas.reportModuleResponseSchema, ReportModule, COMMAND_ONLY),
   results: decoration("results", "Report Card Results", entitySchemas.resultQuerySchema, entitySchemas.resultResponseSchema, ReportCardResult, COMMAND_ONLY),
   students: decoration("students", "Students", entitySchemas.studentQuerySchema, entitySchemas.studentResponseSchema, Student, COMMAND_ONLY),
   subjectEnrollments: decoration("subject-enrollments", "Student Subject Enrollments", entitySchemas.subjectEnrollmentQuerySchema, entitySchemas.subjectEnrollmentResponseSchema, StudentSubjectEnrollment, COMMAND_ONLY),
@@ -230,13 +230,12 @@ export const coreCommands = [
   command("set-class-subject-offered", "setClassSubjectOffered", commandSchemas.setClassSubjectOfferedCommandSchema),
   command("configure-class-subject-timetable", "configureClassSubjectTimetable", commandSchemas.configureClassSubjectTimetableCommandSchema),
   command("record-lesson-session-progress", "recordLessonSessionProgress", commandSchemas.recordLessonSessionProgressCommandSchema),
+  command("configure-report-modules", "configureReportModules", commandSchemas.configureReportModulesCommandSchema),
+  command("configure-report-settings", "configureReportSettings", commandSchemas.configureReportSettingsCommandSchema),
   command("configure-grading", "configureGrading", commandSchemas.configureGradingCommandSchema),
   command("retry-grading", "retryGrading", commandSchemas.retryGradingCommandSchema),
   command("configure-grade-scale", "configureGradeScale", commandSchemas.configureGradeScaleCommandSchema),
-  command("configure-report-card-definition", "configureReportCardDefinition", commandSchemas.configureReportCardDefinitionCommandSchema),
   command("create-grade-scale", "createGradeScale", commandSchemas.createGradeScaleCommandSchema),
-  command("create-report-card-definition", "createReportCardDefinition", commandSchemas.createReportCardDefinitionCommandSchema),
-  command("create-report-card-definition-section", "createReportCardDefinitionSection", commandSchemas.createReportCardDefinitionSectionCommandSchema),
   command("create-assessment", "createAssessment", commandSchemas.createAssessmentCommandSchema),
   command("submit-assessment-marks", "submitAssessmentMarks", commandSchemas.submitAssessmentMarksCommandSchema),
   command("save-teacher-attendance-draft", "saveTeacherAttendanceDraft", commandSchemas.saveTeacherAttendanceDraftCommandSchema),
@@ -363,6 +362,7 @@ export const coreCommands = [
 ] satisfies CoreCommandConfig[];
 
 export const coreQueries = [
+  { publicName: "get-report-configuration", methodName: "getReportConfiguration", requestSchema: reportModules.reportConfigurationQuerySchema, responseSchema: reportModules.reportConfigurationResponseSchema, responseShape: "body" },
   { publicName: "get-student-subject-enrollments", methodName: "getStudentSubjectEnrollments", requestSchema: subjectEnrollmentSchemas.studentSubjectEnrollmentsQuerySchema, responseSchema: subjectEnrollmentSchemas.studentSubjectEnrollmentsResponseSchema, responseShape: "body" },
   { publicName: "get-class-subject-roster", methodName: "getClassSubjectRoster", requestSchema: subjectEnrollmentSchemas.classSubjectRosterQuerySchema, responseSchema: subjectEnrollmentSchemas.classSubjectRosterResponseSchema, responseShape: "body" },
   { publicName: "get-student-timetable", methodName: "getStudentTimetable", requestSchema: subjectEnrollmentSchemas.studentTimetableQuerySchema, responseSchema: subjectEnrollmentSchemas.studentTimetableResponseSchema, responseShape: "body" },

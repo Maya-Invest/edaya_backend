@@ -2,7 +2,7 @@ import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SQL } from 'drizzle-orm'
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, transactionContext } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicYear, Attachment, AttachmentOwnerKind, AttachmentStatus, ClassGroup, ClassSubject, DocumentIssuanceStatus, GradeLevel, GradeScale, LessonSession, noOpFileStorage, noOpNotificationGateway, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicYear, Attachment, AttachmentOwnerKind, AttachmentStatus, ClassGroup, ClassSubject, DocumentIssuanceStatus, GradeLevel, GradeScale, LessonSession, noOpFileStorage, noOpNotificationGateway, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
 import { dispatchDocumentRender, grantAttachmentDownload, renderReportCardDocument, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
@@ -33,12 +33,14 @@ beforeAll(async () => {
   await repositories.students.save(new Student({ id: 'report-student', schoolId: school.id, firstName: 'Synthetic', lastName: 'Student' }))
   await repositories.enrollments.save(new StudentClassEnrollment({ id: 'report-enrollment', studentId: 'report-student', classGroupId: 'report-class', academicYearId: 'report-year', enrollmentIndex: 1 }))
   await repositories.gradeScales.save(new GradeScale({ id: 'report-scale', schoolId: school.id, name: '20 points', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] }))
-  await repositories.definitions.save(new ReportCardDefinition({ id: 'report-definition', schoolId: school.id, academicYearId: 'report-year', gradeLevelId: 'report-grade', gradeScaleId: 'report-scale', name: 'Report' }))
 }, 30000)
 afterAll(() => Promise.all(handles.map(handle => handle.dispose())))
 
 async function result(id: string) {
-  const value = new ReportCardResult({ id, reportCardDefinitionId: 'report-definition', studentId: 'report-student', classGroupId: 'report-class', periodId: 'report-period', status: ReportCardResultStatus.Published, publishedAt: new Date(), assessmentResultCount: 1, overallAverage: 12, attendanceSummary: { presentCount: 20, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, sectionResults: [new ReportCardResultSection({ sectionId: 'math', classSubjectId: 'report-math-class', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'Math', average: 12, weight: 1 })] })
+  const studentId = `${id}-student`
+  await repositories.students.save(new Student({ id: studentId, schoolId: school.id, firstName: 'Synthetic', lastName: id }))
+  await repositories.enrollments.save(new StudentClassEnrollment({ id: `${id}-enrollment`, studentId, classGroupId: 'report-class', academicYearId: 'report-year', enrollmentIndex: 1 }))
+  const value = new ReportCardResult({ id, gradeLevelId: 'report-grade', academicYearId: 'report-year', reportConfigurationRevision: 0, studentId, classGroupId: 'report-class', periodId: 'report-period', status: ReportCardResultStatus.Published, publishedAt: new Date(), assessmentResultCount: 1, overallAverage: 12, attendanceSummary: { presentCount: 20, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, sectionResults: [new ReportCardResultSection({ sectionId: 'math', classSubjectId: 'report-math-class', sectionKind: ReportCardResultSectionKind.Subject, name: 'Math', average: 12, weight: 1 })] })
   await repositories.results.save(value)
   return value
 }

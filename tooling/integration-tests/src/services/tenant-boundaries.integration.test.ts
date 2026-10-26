@@ -3,7 +3,7 @@ import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment,
 import { createAttachmentUpload } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listClassSubjectAssessmentResultsForPeriod, publishAcademicPeriod, resolveIncident, reviewAttendanceJustification, saveAnnouncement, saveAnnouncementTarget, saveAssessment, saveCalendarEvent, saveClassSubject, saveFee, saveGuardian, saveIncident, saveLessonSession, saveReportCardDefinition, saveResourceAssignment, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, saveStudentHealthProfileForStudent, saveStudentNote, updateClassGroup, updateGuardian, updateGuardianStudentLink, updateSchool, updateStaffStatus, updateStudent, updateStudentNote, withFixtureDiscipline } from '../utils/core-service-helpers'
+import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listClassSubjectAssessmentResultsForPeriod, publishAcademicPeriod, resolveIncident, reviewAttendanceJustification, saveAnnouncement, saveAnnouncementTarget, saveAssessment, saveCalendarEvent, saveClassSubject, saveFee, saveGuardian, saveIncident, saveLessonSession, saveResourceAssignment, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, saveStudentHealthProfileForStudent, saveStudentNote, seedReportGradingPolicy, updateClassGroup, updateGuardian, updateGuardianStudentLink, updateSchool, updateStaffStatus, updateStudent, updateStudentNote, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('tenant boundary safeguards', () => {
@@ -295,19 +295,20 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Standard',
       minScore: 0,
       maxScore: 20,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }],
+      intervalConvention: 'continuous',
+      ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }],
     }))
-    await saveReportCardDefinition(schoolBApp, {
-      id: 'definition-b',
-      schoolId: 'school-b',
+    await seedReportGradingPolicy(schoolBApp, {
       academicYearId: 'year-b',
       gradeLevelId: 'level-b',
       gradeScaleId: 'gs-b',
-      name: 'School B Report Card',
-      isDefault: true,
     })
     await publishAcademicPeriod(schoolBApp, 'term-b')
+    const draft = await schoolBApp.assessmentsWorkflow.generateReportCardResult({ id: 'report-card-b', studentId: 'student-b', periodId: 'term-b' })
     await schoolBApp.assessmentsWorkflow.publishReportCardResult({
+      reviewedDraftVersion: draft.version,
+      reviewedGradingRevision: draft.gradingPolicyRevision,
+      reviewedReportConfigurationRevision: draft.reportConfigurationRevision,
       id: 'report-card-b',
       studentId: 'student-b',
       periodId: 'term-b',

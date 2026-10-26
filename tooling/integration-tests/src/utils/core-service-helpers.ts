@@ -2,7 +2,7 @@ import type { Permission } from '@edaya/authorization'
 import type { AttendanceJustificationStatus, SubjectInput } from '@edaya/core'
 import type { SchoolRepositories, SchoolService } from '@edaya/service'
 import { AuthorizationError, AuthorizationErrorCode, resolveAuditActorId } from '@edaya/authorization'
-import { AcademicDiscipline, AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
+import { AcademicDiscipline, AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
 
@@ -442,10 +442,10 @@ export async function saveAttachment(app: SchoolService, input: ArgsOf<typeof At
   return attachment
 }
 
-export async function saveReportCardDefinition(app: SchoolService, input: ArgsOf<typeof ReportCardDefinition>): Promise<ReportCardDefinition> {
-  const definition = new ReportCardDefinition(input)
-  await app.baseService.entities.definitions.save(definition)
-  return definition
+export async function seedReportGradingPolicy(app: SchoolService, input: { gradeLevelId: string, academicYearId: string, gradeScaleId: string }): Promise<void> {
+  const level = (await app.baseService.repositories.gradeLevels.findById(input.gradeLevelId))!
+  const scale = (await app.baseService.repositories.gradeScales.findById(input.gradeScaleId))!
+  await app.baseService.repositories.gradeLevels.save(new GradeLevel({ ...level.data, gradingPolicies: [{ academicYearId: input.academicYearId, revision: 1, mode: 'numeric-first', aggregateLabel: 'Average', status: 'completed', scale: { ...scale.data, ranges: [...scale.ranges] } }] }))
 }
 
 export async function saveAssessment(app: SchoolService, input: ArgsOf<typeof Assessment>): Promise<Assessment> {

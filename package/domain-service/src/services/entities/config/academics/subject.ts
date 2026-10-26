@@ -31,15 +31,19 @@ export async function validateSubjectSave(subject: Subject, existing: Subject | 
     if (!discipline.isActive && existing?.disciplineId !== discipline.id)
       throw new BusinessRuleViolationError('DISCIPLINE_INACTIVE', 'Select an active academic discipline')
   }
+  if (subject.reportModuleId) {
+    const module = await repositories.reportModules.findById(subject.reportModuleId)
+    if (!module || module.schoolId !== subject.schoolId || module.gradeLevelId !== subject.gradeLevelId || module.academicYearId !== subject.academicYearId)
+      denyResourceAccess()
+  }
   await requireSubjectCategory(repositories, subject.schoolId, subject.categoryId)
 }
 
 export async function validateSubjectDelete(subject: Subject, repositories: SchoolRepositories): Promise<void> {
-  const [offerings, chapters, sections] = await Promise.all([
+  const [offerings, chapters] = await Promise.all([
     repositories.classSubjects.count({ subjectId: subject.id }),
     repositories.subjectMatters.count({ subjectId: subject.id }),
-    repositories.sections.count({ subjectId: subject.id }),
   ])
-  if (offerings || chapters || sections)
+  if (offerings || chapters)
     throw new BusinessRuleViolationError('SUBJECT_HAS_DEPENDENCIES', 'Remove subject through the curriculum command after resolving its dependencies')
 }

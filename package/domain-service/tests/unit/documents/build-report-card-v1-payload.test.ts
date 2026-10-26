@@ -1,8 +1,8 @@
 import {
   AttendanceSummary,
-  ReportCardDefinitionSectionKind,
   ReportCardResult,
   ReportCardResultSection,
+  ReportCardResultSectionKind,
   School,
   Student,
 } from '@edaya/core'
@@ -28,13 +28,15 @@ describe('buildReportCardV1Payload', () => {
       id: 'rc-empty',
       assessmentResultCount: 1,
       attendanceSummary: new AttendanceSummary({ presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }),
-      reportCardDefinitionId: 'def-1',
+      gradeLevelId: 'grade1',
+      academicYearId: 'ay1',
+      reportConfigurationRevision: 0,
       studentId: student.id,
       classGroupId: 'cg-1',
       periodId: 'per-1',
       sectionResults: [
-        new ReportCardResultSection({ sectionId: 'absent', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'Math', classSubjectId: 'cs1', weight: 1, comment: 'Excused absence' }),
-        new ReportCardResultSection({ sectionId: 'zero', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'Physics', classSubjectId: 'cs2', weight: 1, average: 0 }),
+        new ReportCardResultSection({ sectionId: 'absent', sectionKind: ReportCardResultSectionKind.Subject, name: 'Math', classSubjectId: 'cs1', weight: 1, comment: 'Excused absence' }),
+        new ReportCardResultSection({ sectionId: 'zero', sectionKind: ReportCardResultSectionKind.Subject, name: 'Physics', classSubjectId: 'cs2', weight: 1, average: 0 }),
       ],
     })
     const payload = buildReportCardV1Payload({ school, student, result, periodLabel: 'Term 1' })
@@ -45,7 +47,9 @@ describe('buildReportCardV1Payload', () => {
   test('flattens subject and bilan rows and formats totals', () => {
     const result = new ReportCardResult({
       id: 'rc-1',
-      reportCardDefinitionId: 'def-1',
+      gradeLevelId: 'grade1',
+      academicYearId: 'ay1',
+      reportConfigurationRevision: 0,
       studentId: student.id,
       classGroupId: 'cg-1',
       periodId: 'per-1',
@@ -63,27 +67,29 @@ describe('buildReportCardV1Payload', () => {
       sectionResults: [
         new ReportCardResultSection({
           sectionId: 'grp-1',
-          sectionKind: ReportCardDefinitionSectionKind.Group,
+          sectionKind: ReportCardResultSectionKind.Module,
           name: 'Bilan scientifique',
           average: 13,
           weight: 1,
           subResults: [
             new ReportCardResultSection({
               sectionId: 'sub-math',
-              sectionKind: ReportCardDefinitionSectionKind.Subject,
+              sectionKind: ReportCardResultSectionKind.Subject,
               name: 'Mathématiques',
               average: 15,
               weight: 3,
+              coefficient: 3,
               classSubjectId: 'cs-math',
               rank: 2,
               comment: 'Très bien',
             }),
             new ReportCardResultSection({
               sectionId: 'sub-pc',
-              sectionKind: ReportCardDefinitionSectionKind.Subject,
+              sectionKind: ReportCardResultSectionKind.Subject,
               name: 'Physique-Chimie',
               average: 11,
               weight: 2,
+              coefficient: 2,
               classSubjectId: 'cs-pc',
               rank: 8,
             }),
@@ -144,7 +150,9 @@ describe('buildReportCardV1Payload', () => {
   test('localizes catalog labels and ranks for English locale', () => {
     const result = new ReportCardResult({
       id: 'rc-en',
-      reportCardDefinitionId: 'def-1',
+      gradeLevelId: 'grade1',
+      academicYearId: 'ay1',
+      reportConfigurationRevision: 0,
       studentId: student.id,
       classGroupId: 'cg-1',
       periodId: 'per-1',
@@ -161,10 +169,11 @@ describe('buildReportCardV1Payload', () => {
       sectionResults: [
         new ReportCardResultSection({
           sectionId: 'sub-esp',
-          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          sectionKind: ReportCardResultSectionKind.Subject,
           name: 'Espagnol',
           average: 15,
           weight: 2,
+          coefficient: 2,
           classSubjectId: 'cs-esp',
           rank: 2,
         }),
@@ -190,7 +199,9 @@ describe('buildReportCardV1Payload', () => {
   test('throws when there are no renderable section rows', () => {
     const result = new ReportCardResult({
       id: 'rc-empty',
-      reportCardDefinitionId: 'def-1',
+      gradeLevelId: 'grade1',
+      academicYearId: 'ay1',
+      reportConfigurationRevision: 0,
       studentId: student.id,
       classGroupId: 'cg-1',
       periodId: 'per-1',
@@ -214,7 +225,7 @@ describe('buildReportCardV1Payload', () => {
 
 test('configured report documents use captured points, precision, mention and aggregate label', () => {
   const grading = { policyRevision: 2, scaleId: 'gpa', scaleRevision: 1, mode: 'mention-first' as const, maximum: 4, decimalPlaces: 3, roundingMode: 'nearest' as const, units: 'points' as const, value: 11 / 3, reportedValue: 3.667, mention: { id: 'a', code: 'A', label: 'Excellent' }, provenance: 'mention-points' as const }
-  const result = new ReportCardResult({ id: 'configured', reportCardDefinitionId: 'def', studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 2, attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, aggregateLabel: 'GPA', grading, gradingPolicyRevision: 2, overallAverage: 3.667, sectionResults: [new ReportCardResultSection({ sectionId: 'math', sectionKind: ReportCardDefinitionSectionKind.Subject, classSubjectId: 'math', name: 'Math', weight: 1, average: 3.667, grading })] })
+  const result = new ReportCardResult({ id: 'configured', gradeLevelId: 'grade1', academicYearId: 'ay1', reportConfigurationRevision: 0, studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 2, attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, aggregateLabel: 'GPA', grading, gradingPolicyRevision: 2, overallAverage: 3.667, sectionResults: [new ReportCardResultSection({ sectionId: 'math', sectionKind: ReportCardResultSectionKind.Subject, classSubjectId: 'math', name: 'Math', weight: 1, average: 3.667, grading })] })
   const school = new School({ id: 'school', name: 'School', timeZone: 'America/Toronto' })
   const student = new Student({ id: 'student', schoolId: school.id, firstName: 'Ada', lastName: 'L' })
   for (const locale of ['en-US', 'fr-FR']) {

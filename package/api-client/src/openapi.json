@@ -3532,25 +3532,19 @@
                   ]
                 }
               },
-              "sections": {
+              "modules": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "role": {
-                      "type": "string",
-                      "enum": [
-                        "subjects",
-                        "summary",
-                        "comments"
-                      ]
-                    },
-                    "label": {
+                    "name": {
                       "type": "string",
                       "minLength": 1
                     },
                     "order": {
-                      "type": "integer"
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true
                     },
                     "subjectCodes": {
                       "type": "array",
@@ -3558,12 +3552,25 @@
                         "type": "string",
                         "minLength": 1
                       }
+                    },
+                    "weightingMode": {
+                      "type": "string",
+                      "enum": [
+                        "subject_coefficients",
+                        "explicit"
+                      ]
+                    },
+                    "explicitWeight": {
+                      "type": "number",
+                      "minimum": 0,
+                      "exclusiveMinimum": true
                     }
                   },
                   "required": [
-                    "role",
-                    "label",
-                    "order"
+                    "name",
+                    "order",
+                    "subjectCodes",
+                    "weightingMode"
                   ]
                 }
               },
@@ -3675,25 +3682,19 @@
                         ]
                       }
                     },
-                    "sections": {
+                    "modules": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "role": {
-                            "type": "string",
-                            "enum": [
-                              "subjects",
-                              "summary",
-                              "comments"
-                            ]
-                          },
-                          "label": {
+                          "name": {
                             "type": "string",
                             "minLength": 1
                           },
                           "order": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 0,
+                            "exclusiveMinimum": true
                           },
                           "subjectCodes": {
                             "type": "array",
@@ -3701,12 +3702,25 @@
                               "type": "string",
                               "minLength": 1
                             }
+                          },
+                          "weightingMode": {
+                            "type": "string",
+                            "enum": [
+                              "subject_coefficients",
+                              "explicit"
+                            ]
+                          },
+                          "explicitWeight": {
+                            "type": "number",
+                            "minimum": 0,
+                            "exclusiveMinimum": true
                           }
                         },
                         "required": [
-                          "role",
-                          "label",
-                          "order"
+                          "name",
+                          "order",
+                          "subjectCodes",
+                          "weightingMode"
                         ]
                       }
                     },
@@ -3901,10 +3915,10 @@
           "gradeScaleCount": {
             "type": "integer"
           },
-          "reportCardDefinitionCount": {
+          "reportModuleCount": {
             "type": "integer"
           },
-          "reportCardSectionCount": {
+          "reportSubjectAssignmentCount": {
             "type": "integer"
           }
         },
@@ -3914,8 +3928,8 @@
           "subjectCount",
           "classSubjectCount",
           "gradeScaleCount",
-          "reportCardDefinitionCount",
-          "reportCardSectionCount"
+          "reportModuleCount",
+          "reportSubjectAssignmentCount"
         ]
       },
       "OnboardingApplyStructureTemplateRequest": {
@@ -5737,6 +5751,32 @@
           "id": {
             "type": "string",
             "minLength": 1
+          },
+          "reportSettings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "academicYearId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "passThreshold": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "academicYearId"
+              ]
+            },
+            "default": []
           },
           "gradingPolicies": {
             "type": "array",
@@ -12234,6 +12274,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "reportModuleId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "reportOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
           "coefficient": {
             "type": "number",
             "nullable": true,
@@ -12320,6 +12370,15 @@
             "nullable": true,
             "minLength": 1
           },
+          "reportModuleId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "reportOrder": {
+            "type": "integer",
+            "minimum": 0
+          },
           "coefficient": {
             "type": "number",
             "nullable": true,
@@ -12365,6 +12424,10 @@
             ]
           },
           "createdAt": {},
+          "expectedReportConfigurationRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "classSubjectIdsByClassGroupId": {
             "type": "object",
             "additionalProperties": {
@@ -12878,6 +12941,15 @@
             "nullable": true,
             "minLength": 1
           },
+          "reportModuleId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "reportOrder": {
+            "type": "integer",
+            "minimum": 0
+          },
           "coefficient": {
             "type": "number",
             "nullable": true,
@@ -12921,6 +12993,10 @@
               "sky",
               "warm"
             ]
+          },
+          "expectedReportConfigurationRevision": {
+            "type": "integer",
+            "minimum": 0
           },
           "subjectId": {
             "type": "string",
@@ -13123,6 +13199,359 @@
           "classSubjectMatterId",
           "lessonSessionId",
           "completedPercentage"
+        ]
+      },
+      "ReportModule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "weightingMode": {
+            "type": "string",
+            "enum": [
+              "subject_coefficients",
+              "explicit"
+            ],
+            "default": "subject_coefficients"
+          },
+          "explicitWeight": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "gradeLevelId",
+          "academicYearId",
+          "name",
+          "order"
+        ]
+      },
+      "ReportConfigurationQuery": {
+        "type": "object",
+        "properties": {
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "gradeLevelId",
+          "academicYearId"
+        ]
+      },
+      "ReportConfigurationResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ReportConfigurationQuery"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "settings": {
+                "type": "object",
+                "properties": {
+                  "academicYearId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0
+                  },
+                  "passThreshold": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "academicYearId"
+                ]
+              },
+              "modules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ReportModule"
+                }
+              },
+              "subjects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "schoolId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "academicYearId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "shortName": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
+                    "code": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
+                    "reportModuleId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
+                    "reportOrder": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "default": 0
+                    },
+                    "coefficient": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": 0,
+                      "exclusiveMinimum": true
+                    },
+                    "periodsPerWeek": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": 0,
+                      "exclusiveMinimum": true
+                    },
+                    "minPeriodSpan": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": 0,
+                      "exclusiveMinimum": true
+                    },
+                    "maxPeriodSpan": {
+                      "type": "integer",
+                      "nullable": true,
+                      "minimum": 0,
+                      "exclusiveMinimum": true
+                    },
+                    "isOptional": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "disciplineId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
+                    "categoryId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "color": {
+                      "type": "string",
+                      "enum": [
+                        "mint",
+                        "sky",
+                        "warm"
+                      ],
+                      "default": "mint"
+                    },
+                    "createdAt": {},
+                    "categoryName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "schoolId",
+                    "gradeLevelId",
+                    "academicYearId",
+                    "name",
+                    "categoryId"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "settings",
+              "modules",
+              "subjects"
+            ]
+          }
+        ]
+      },
+      "ConfigureReportModulesCommand": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ReportConfigurationQuery"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "requestId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "expectedRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "save",
+                  "delete",
+                  "assign"
+                ]
+              },
+              "module": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "order": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "weightingMode": {
+                    "type": "string",
+                    "enum": [
+                      "subject_coefficients",
+                      "explicit"
+                    ],
+                    "default": "subject_coefficients"
+                  },
+                  "explicitWeight": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "order"
+                ]
+              },
+              "moduleId": {
+                "type": "string",
+                "nullable": true,
+                "minLength": 1
+              },
+              "assignments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "subjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "moduleId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "subjectId",
+                    "moduleId"
+                  ]
+                },
+                "maxItems": 500
+              }
+            },
+            "required": [
+              "requestId",
+              "expectedRevision",
+              "action"
+            ]
+          }
+        ]
+      },
+      "ConfigureReportSettingsCommand": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ReportConfigurationQuery"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "requestId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "expectedRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "passThreshold": {
+                "type": "number",
+                "nullable": true,
+                "minimum": 0
+              }
+            },
+            "required": [
+              "requestId",
+              "expectedRevision"
+            ]
+          }
         ]
       },
       "ConfigureGradingCommand": {
@@ -13432,198 +13861,6 @@
           "action"
         ]
       },
-      "ReportCardDefinition": {
-        "type": "object",
-        "properties": {
-          "revision": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-          },
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "gradeLevelId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "gradeScaleId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "passThreshold": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "default",
-              "custom"
-            ],
-            "default": "custom"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "published"
-            ],
-            "default": "draft"
-          },
-          "isDefault": {
-            "type": "boolean",
-            "default": false
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "academicYearId",
-          "gradeLevelId",
-          "gradeScaleId",
-          "name"
-        ]
-      },
-      "ConfigureReportCardDefinitionCommand": {
-        "type": "object",
-        "properties": {
-          "requestId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "expectedRevision": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "metadata",
-              "section",
-              "remove-section"
-            ]
-          },
-          "metadata": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "description": {
-                "type": "string",
-                "nullable": true,
-                "minLength": 1
-              },
-              "passThreshold": {
-                "type": "number",
-                "nullable": true,
-                "minimum": 0
-              }
-            },
-            "required": [
-              "name"
-            ]
-          },
-          "section": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "group",
-                  "subject"
-                ],
-                "default": "group"
-              },
-              "role": {
-                "type": "string",
-                "nullable": true,
-                "enum": [
-                  "matieres",
-                  "synthese",
-                  "appreciation"
-                ]
-              },
-              "coefficient": {
-                "type": "number",
-                "nullable": true,
-                "minimum": 0,
-                "exclusiveMinimum": true
-              },
-              "order": {
-                "type": "integer",
-                "minimum": 0,
-                "exclusiveMinimum": true
-              },
-              "weight": {
-                "type": "number",
-                "minimum": 0,
-                "exclusiveMinimum": true
-              },
-              "parentSectionId": {
-                "type": "string",
-                "nullable": true,
-                "minLength": 1
-              },
-              "subjectId": {
-                "type": "string",
-                "nullable": true,
-                "minLength": 1
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "order",
-              "weight"
-            ]
-          },
-          "sectionId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "requestId",
-          "id",
-          "expectedRevision",
-          "action"
-        ]
-      },
       "GradeScaleRangeCommandValue": {
         "type": "object",
         "properties": {
@@ -13735,215 +13972,6 @@
           "minScore",
           "maxScore",
           "ranges"
-        ]
-      },
-      "CreateReportCardDefinitionCommand": {
-        "type": "object",
-        "properties": {
-          "revision": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-          },
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "gradeLevelId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "gradeScaleId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "passThreshold": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "default",
-              "custom"
-            ],
-            "default": "custom"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "published"
-            ],
-            "default": "draft"
-          },
-          "isDefault": {
-            "type": "boolean",
-            "default": false
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "academicYearId",
-          "gradeLevelId",
-          "gradeScaleId",
-          "name"
-        ]
-      },
-      "ReportCardDefinitionSection": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "reportCardDefinitionId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "group",
-              "subject"
-            ],
-            "default": "group"
-          },
-          "role": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "matieres",
-              "synthese",
-              "appreciation"
-            ]
-          },
-          "coefficient": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "order": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "weight": {
-            "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "parentSectionId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "subjectId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "reportCardDefinitionId",
-          "name",
-          "order",
-          "weight"
-        ]
-      },
-      "CreateReportCardDefinitionSectionCommand": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "reportCardDefinitionId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "group",
-              "subject"
-            ],
-            "default": "group"
-          },
-          "role": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "matieres",
-              "synthese",
-              "appreciation"
-            ]
-          },
-          "coefficient": {
-            "type": "number",
-            "nullable": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "order": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "weight": {
-            "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "parentSectionId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "subjectId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "reportCardDefinitionId",
-          "name",
-          "order",
-          "weight"
         ]
       },
       "Assessment": {
@@ -17851,9 +17879,17 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
-          "reportCardDefinitionId": {
+          "gradeLevelId": {
             "type": "string",
             "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reportConfigurationRevision": {
+            "type": "integer",
+            "minimum": 0
           },
           "studentId": {
             "type": "string",
@@ -18012,7 +18048,9 @@
         },
         "required": [
           "id",
-          "reportCardDefinitionId",
+          "gradeLevelId",
+          "academicYearId",
+          "reportConfigurationRevision",
           "studentId",
           "classGroupId",
           "periodId",
@@ -18200,9 +18238,17 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
-          "reportCardDefinitionId": {
+          "gradeLevelId": {
             "type": "string",
             "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reportConfigurationRevision": {
+            "type": "integer",
+            "minimum": 0
           },
           "studentId": {
             "type": "string",
@@ -18378,7 +18424,9 @@
         },
         "required": [
           "id",
-          "reportCardDefinitionId",
+          "gradeLevelId",
+          "academicYearId",
+          "reportConfigurationRevision",
           "studentId",
           "classGroupId",
           "periodId",
@@ -18393,9 +18441,6 @@
           "id": {
             "type": "string",
             "minLength": 1
-          },
-          "reportCardDefinitionId": {
-            "type": "string"
           },
           "studentId": {
             "type": "string",
@@ -18551,6 +18596,10 @@
       "PublishReportCardResultCommand": {
         "type": "object",
         "properties": {
+          "reviewedReportConfigurationRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "reviewedGradingRevision": {
             "type": "integer",
             "minimum": 0,
@@ -18573,15 +18622,13 @@
             "type": "string",
             "minLength": 1
           },
-          "reportCardDefinitionId": {
-            "type": "string"
-          },
           "publishedAt": {
             "type": "string",
             "nullable": true
           }
         },
         "required": [
+          "reviewedReportConfigurationRevision",
           "id",
           "studentId",
           "periodId"
@@ -31338,7 +31385,7 @@
           "id"
         ]
       },
-      "Filter_63": {
+      "Filter_62": {
         "type": "object"
       },
       "CoreEntityDelete": {
@@ -31369,13 +31416,13 @@
           "ids"
         ]
       },
+      "Filter_63": {
+        "type": "object"
+      },
       "Filter_64": {
         "type": "object"
       },
       "Filter_65": {
-        "type": "object"
-      },
-      "Filter_66": {
         "type": "object"
       },
       "Filter_1": {
@@ -32027,10 +32074,10 @@
       "Filter_14": {
         "type": "object"
       },
-      "Filter_62": {
+      "Filter_61": {
         "type": "object"
       },
-      "Filter_61": {
+      "Filter_60": {
         "type": "object"
       },
       "Filter_15": {
@@ -32579,52 +32626,19 @@
       "Filter_46": {
         "type": "object"
       },
-      "ReportCardDefinitionsBatchSave": {
-        "type": "object",
-        "properties": {
-          "entities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReportCardDefinition"
-            },
-            "maxItems": 100
-          }
-        },
-        "required": [
-          "entities"
-        ]
-      },
       "Filter_47": {
         "type": "object"
       },
-      "ReportCardSectionsBatchSave": {
-        "type": "object",
-        "properties": {
-          "entities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReportCardDefinitionSection"
-            },
-            "maxItems": 100
-          }
-        },
-        "required": [
-          "entities"
-        ]
-      },
       "Filter_48": {
+        "type": "object"
+      },
+      "Filter_66": {
         "type": "object"
       },
       "Filter_49": {
         "type": "object"
       },
-      "Filter_67": {
-        "type": "object"
-      },
       "Filter_50": {
-        "type": "object"
-      },
-      "Filter_51": {
         "type": "object"
       },
       "GuardiansBatchSave": {
@@ -32642,7 +32656,7 @@
           "entities"
         ]
       },
-      "Filter_52": {
+      "Filter_51": {
         "type": "object"
       },
       "GuardianStudentLinksBatchSave": {
@@ -32660,7 +32674,7 @@
           "entities"
         ]
       },
-      "Filter_54": {
+      "Filter_53": {
         "type": "object"
       },
       "StudentNotesBatchSave": {
@@ -32678,10 +32692,10 @@
           "entities"
         ]
       },
-      "Filter_53": {
+      "Filter_52": {
         "type": "object"
       },
-      "Filter_55": {
+      "Filter_54": {
         "type": "object"
       },
       "StudentHealthProfilesBatchSave": {
@@ -32699,7 +32713,7 @@
           "entities"
         ]
       },
-      "Filter_56": {
+      "Filter_55": {
         "type": "object"
       },
       "StudentDisciplinaryActionsBatchSave": {
@@ -32717,7 +32731,7 @@
           "entities"
         ]
       },
-      "Filter_57": {
+      "Filter_56": {
         "type": "object"
       },
       "DisciplinaryActionsBatchSave": {
@@ -32735,7 +32749,7 @@
           "entities"
         ]
       },
-      "Filter_58": {
+      "Filter_57": {
         "type": "object"
       },
       "StudentIncidentInvolvementsBatchSave": {
@@ -32753,7 +32767,7 @@
           "entities"
         ]
       },
-      "Filter_59": {
+      "Filter_58": {
         "type": "object"
       },
       "IncidentsBatchSave": {
@@ -33089,7 +33103,7 @@
           "requestId"
         ]
       },
-      "Filter_60": {
+      "Filter_59": {
         "type": "object"
       }
     },
@@ -49906,6 +49920,266 @@
         }
       }
     },
+    "/core/commands/configure-report-modules": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-report-modules",
+        "operationId": "commands.configureReportModules",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureReportModules",
+        "x-edaya-command-public-name": "configure-report-modules",
+        "x-edaya-request-schema": "ConfigureReportModulesCommand",
+        "x-edaya-response-schema": "ReportConfigurationResponse",
+        "requestBody": {
+          "description": "configure-report-modules payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureReportModulesCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-report-modules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportConfigurationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-report-settings": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-report-settings",
+        "operationId": "commands.configureReportSettings",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureReportSettings",
+        "x-edaya-command-public-name": "configure-report-settings",
+        "x-edaya-request-schema": "ConfigureReportSettingsCommand",
+        "x-edaya-response-schema": "ReportConfigurationResponse",
+        "requestBody": {
+          "description": "configure-report-settings payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureReportSettingsCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-report-settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportConfigurationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/configure-grading": {
       "post": {
         "tags": [
@@ -50296,136 +50570,6 @@
         }
       }
     },
-    "/core/commands/configure-report-card-definition": {
-      "post": {
-        "tags": [
-          "Core Commands"
-        ],
-        "summary": "configure-report-card-definition",
-        "operationId": "commands.configureReportCardDefinition",
-        "x-edaya-kind": "command",
-        "x-edaya-command-key": "configureReportCardDefinition",
-        "x-edaya-command-public-name": "configure-report-card-definition",
-        "x-edaya-request-schema": "ConfigureReportCardDefinitionCommand",
-        "x-edaya-response-schema": "ReportCardDefinition",
-        "requestBody": {
-          "description": "configure-report-card-definition payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConfigureReportCardDefinitionCommand"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Executed configure-report-card-definition",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinition"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/core/commands/create-grade-scale": {
       "post": {
         "tags": [
@@ -50455,266 +50599,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GradeScale"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/commands/create-report-card-definition": {
-      "post": {
-        "tags": [
-          "Core Commands"
-        ],
-        "summary": "create-report-card-definition",
-        "operationId": "commands.createReportCardDefinition",
-        "x-edaya-kind": "command",
-        "x-edaya-command-key": "createReportCardDefinition",
-        "x-edaya-command-public-name": "create-report-card-definition",
-        "x-edaya-request-schema": "CreateReportCardDefinitionCommand",
-        "x-edaya-response-schema": "ReportCardDefinition",
-        "requestBody": {
-          "description": "create-report-card-definition payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateReportCardDefinitionCommand"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Executed create-report-card-definition",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinition"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/commands/create-report-card-definition-section": {
-      "post": {
-        "tags": [
-          "Core Commands"
-        ],
-        "summary": "create-report-card-definition-section",
-        "operationId": "commands.createReportCardDefinitionSection",
-        "x-edaya-kind": "command",
-        "x-edaya-command-key": "createReportCardDefinitionSection",
-        "x-edaya-command-public-name": "create-report-card-definition-section",
-        "x-edaya-request-schema": "CreateReportCardDefinitionSectionCommand",
-        "x-edaya-response-schema": "ReportCardDefinitionSection",
-        "requestBody": {
-          "description": "create-report-card-definition-section payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateReportCardDefinitionSectionCommand"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Executed create-report-card-definition-section",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinitionSection"
                 }
               }
             }
@@ -66806,6 +66690,136 @@
         }
       }
     },
+    "/core/queries/get-report-configuration": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-report-configuration",
+        "operationId": "queries.getReportConfiguration",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getReportConfiguration",
+        "x-edaya-query-public-name": "get-report-configuration",
+        "x-edaya-request-schema": "ReportConfigurationQuery",
+        "x-edaya-response-schema": "ReportConfigurationResponse",
+        "requestBody": {
+          "description": "get-report-configuration payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportConfigurationQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-report-configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportConfigurationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/queries/get-student-subject-enrollments": {
       "post": {
         "tags": [
@@ -73593,7 +73607,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_63"
+                    "$ref": "#/components/schemas/Filter_62"
                   },
                   {
                     "type": "object",
@@ -73761,7 +73775,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_63"
+                    "$ref": "#/components/schemas/Filter_62"
                   },
                   {
                     "type": "object",
@@ -73947,7 +73961,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_63"
+                    "$ref": "#/components/schemas/Filter_62"
                   },
                   {
                     "type": "object",
@@ -74552,7 +74566,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_64"
+                    "$ref": "#/components/schemas/Filter_63"
                   },
                   {
                     "type": "object",
@@ -74720,7 +74734,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_64"
+                    "$ref": "#/components/schemas/Filter_63"
                   },
                   {
                     "type": "object",
@@ -74906,7 +74920,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_64"
+                    "$ref": "#/components/schemas/Filter_63"
                   },
                   {
                     "type": "object",
@@ -75511,7 +75525,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_65"
+                    "$ref": "#/components/schemas/Filter_64"
                   },
                   {
                     "type": "object",
@@ -75679,7 +75693,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_65"
+                    "$ref": "#/components/schemas/Filter_64"
                   },
                   {
                     "type": "object",
@@ -75865,7 +75879,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_65"
+                    "$ref": "#/components/schemas/Filter_64"
                   },
                   {
                     "type": "object",
@@ -76198,7 +76212,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_66"
+                    "$ref": "#/components/schemas/Filter_65"
                   },
                   {
                     "type": "object",
@@ -76366,7 +76380,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_66"
+                    "$ref": "#/components/schemas/Filter_65"
                   },
                   {
                     "type": "object",
@@ -76552,7 +76566,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_66"
+                    "$ref": "#/components/schemas/Filter_65"
                   },
                   {
                     "type": "object",
@@ -92525,7 +92539,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_62"
+                    "$ref": "#/components/schemas/Filter_61"
                   },
                   {
                     "type": "object",
@@ -92693,7 +92707,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_62"
+                    "$ref": "#/components/schemas/Filter_61"
                   },
                   {
                     "type": "object",
@@ -92879,7 +92893,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_62"
+                    "$ref": "#/components/schemas/Filter_61"
                   },
                   {
                     "type": "object",
@@ -93212,7 +93226,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_61"
+                    "$ref": "#/components/schemas/Filter_60"
                   },
                   {
                     "type": "object",
@@ -93380,7 +93394,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_61"
+                    "$ref": "#/components/schemas/Filter_60"
                   },
                   {
                     "type": "object",
@@ -93566,7 +93580,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_61"
+                    "$ref": "#/components/schemas/Filter_60"
                   },
                   {
                     "type": "object",
@@ -126941,28 +126955,28 @@
         }
       }
     },
-    "/core/entities/definitions/list": {
+    "/core/entities/report-modules/list": {
       "post": {
         "tags": [
           "Core Entities"
         ],
-        "summary": "List Report Card Definitions",
-        "operationId": "entities.definitions.list",
+        "summary": "List Report Modules",
+        "operationId": "entities.reportModules.list",
         "x-edaya-kind": "entity",
-        "x-edaya-entity-key": "definitions",
-        "x-edaya-entity-public-name": "definitions",
-        "x-edaya-response-schema": "ReportCardDefinition",
-        "x-edaya-allow-direct-save": true,
+        "x-edaya-entity-key": "reportModules",
+        "x-edaya-entity-public-name": "report-modules",
+        "x-edaya-response-schema": "ReportModule",
+        "x-edaya-allow-direct-save": false,
         "x-edaya-public-operations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
         },
         "requestBody": {
-          "description": "Report Card Definitions query",
+          "description": "Report Modules query",
           "content": {
             "application/json": {
               "schema": {
@@ -127013,13 +127027,13 @@
         },
         "responses": {
           "200": {
-            "description": "Listed Report Card Definitions",
+            "description": "Listed Report Modules",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ReportCardDefinition"
+                    "$ref": "#/components/schemas/ReportModule"
                   }
                 }
               }
@@ -127122,15 +127136,15 @@
         }
       }
     },
-    "/core/entities/definitions/one": {
+    "/core/entities/report-modules/one": {
       "post": {
         "tags": [
           "Core Entities"
         ],
-        "summary": "Find one Report Card Definitions",
-        "operationId": "entities.definitions.one",
+        "summary": "Find one Report Modules",
+        "operationId": "entities.reportModules.one",
         "requestBody": {
-          "description": "Report Card Definitions query",
+          "description": "Report Modules query",
           "content": {
             "application/json": {
               "schema": {
@@ -127181,11 +127195,11 @@
         },
         "responses": {
           "200": {
-            "description": "Found Report Card Definitions",
+            "description": "Found Report Modules",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinition"
+                  "$ref": "#/components/schemas/ReportModule"
                 }
               }
             }
@@ -127254,7 +127268,7 @@
             }
           },
           "404": {
-            "description": "Report Card Definitions not found",
+            "description": "Report Modules not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -127308,15 +127322,15 @@
         }
       }
     },
-    "/core/entities/definitions/count": {
+    "/core/entities/report-modules/count": {
       "post": {
         "tags": [
           "Core Entities"
         ],
-        "summary": "Count Report Card Definitions",
-        "operationId": "entities.definitions.count",
+        "summary": "Count Report Modules",
+        "operationId": "entities.reportModules.count",
         "requestBody": {
-          "description": "Report Card Definitions query",
+          "description": "Report Modules query",
           "content": {
             "application/json": {
               "schema": {
@@ -127367,7 +127381,7 @@
         },
         "responses": {
           "200": {
-            "description": "Counted Report Card Definitions",
+            "description": "Counted Report Modules",
             "content": {
               "application/json": {
                 "schema": {
@@ -127481,13 +127495,13 @@
         }
       }
     },
-    "/core/entities/definitions/{id}": {
+    "/core/entities/report-modules/{id}": {
       "get": {
         "tags": [
           "Core Entities"
         ],
-        "summary": "Get Report Card Definitions",
-        "operationId": "entities.definitions.get",
+        "summary": "Get Report Modules",
+        "operationId": "entities.reportModules.get",
         "parameters": [
           {
             "schema": {
@@ -127501,11 +127515,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Fetched Report Card Definitions",
+            "description": "Fetched Report Modules",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinition"
+                  "$ref": "#/components/schemas/ReportModule"
                 }
               }
             }
@@ -127574,1844 +127588,7 @@
             }
           },
           "404": {
-            "description": "Report Card Definitions not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/definitions/save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Save Report Card Definitions",
-        "operationId": "entities.definitions.save",
-        "requestBody": {
-          "description": "Report Card Definitions entity",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReportCardDefinition"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Saved Report Card Definitions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinition"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/definitions/delete": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Delete Report Card Definitions",
-        "operationId": "entities.definitions.delete",
-        "requestBody": {
-          "description": "Report Card Definitions delete request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CoreEntityDelete"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Deleted Report Card Definitions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/definitions/batch-save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch save Report Card Definitions",
-        "operationId": "entities.definitions.batchSave",
-        "requestBody": {
-          "description": "Report Card Definitions batch save request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReportCardDefinitionsBatchSave"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch saved Report Card Definitions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ids": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "ids"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/definitions/batch-delete": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch delete Report Card Definitions",
-        "operationId": "entities.definitions.batchDelete",
-        "requestBody": {
-          "description": "Report Card Definitions batch delete request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CoreEntityBatchDelete"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch deleted Report Card Definitions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/list": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "List Report Card Sections",
-        "operationId": "entities.sections.list",
-        "x-edaya-kind": "entity",
-        "x-edaya-entity-key": "sections",
-        "x-edaya-entity-public-name": "sections",
-        "x-edaya-response-schema": "ReportCardDefinitionSection",
-        "x-edaya-allow-direct-save": true,
-        "x-edaya-public-operations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
-        },
-        "requestBody": {
-          "description": "Report Card Sections query",
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/Filter_47"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "$orderBy": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "field": {
-                              "type": "string"
-                            },
-                            "direction": {
-                              "type": "string",
-                              "enum": [
-                                "asc",
-                                "desc"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "field",
-                            "direction"
-                          ]
-                        }
-                      },
-                      "$limit": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                      },
-                      "$offset": {
-                        "type": "integer",
-                        "minimum": 0
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Listed Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReportCardDefinitionSection"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/one": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Find one Report Card Sections",
-        "operationId": "entities.sections.one",
-        "requestBody": {
-          "description": "Report Card Sections query",
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/Filter_47"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "$orderBy": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "field": {
-                              "type": "string"
-                            },
-                            "direction": {
-                              "type": "string",
-                              "enum": [
-                                "asc",
-                                "desc"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "field",
-                            "direction"
-                          ]
-                        }
-                      },
-                      "$limit": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                      },
-                      "$offset": {
-                        "type": "integer",
-                        "minimum": 0
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Found Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinitionSection"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Report Card Sections not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/count": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Count Report Card Sections",
-        "operationId": "entities.sections.count",
-        "requestBody": {
-          "description": "Report Card Sections query",
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/Filter_47"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "$orderBy": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "field": {
-                              "type": "string"
-                            },
-                            "direction": {
-                              "type": "string",
-                              "enum": [
-                                "asc",
-                                "desc"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "field",
-                            "direction"
-                          ]
-                        }
-                      },
-                      "$limit": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                      },
-                      "$offset": {
-                        "type": "integer",
-                        "minimum": 0
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Counted Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "count": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "count"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/{id}": {
-      "get": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Get Report Card Sections",
-        "operationId": "entities.sections.get",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Fetched Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinitionSection"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Report Card Sections not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Save Report Card Sections",
-        "operationId": "entities.sections.save",
-        "requestBody": {
-          "description": "Report Card Sections entity",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReportCardDefinitionSection"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Saved Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportCardDefinitionSection"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/delete": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Delete Report Card Sections",
-        "operationId": "entities.sections.delete",
-        "requestBody": {
-          "description": "Report Card Sections delete request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CoreEntityDelete"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Deleted Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/batch-save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch save Report Card Sections",
-        "operationId": "entities.sections.batchSave",
-        "requestBody": {
-          "description": "Report Card Sections batch save request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReportCardSectionsBatchSave"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch saved Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ids": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "ids"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/sections/batch-delete": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch delete Report Card Sections",
-        "operationId": "entities.sections.batchDelete",
-        "requestBody": {
-          "description": "Report Card Sections batch delete request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CoreEntityBatchDelete"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch deleted Report Card Sections",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
+            "description": "Report Modules not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -129492,7 +127669,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -129660,7 +127837,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -129846,7 +128023,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_48"
+                    "$ref": "#/components/schemas/Filter_47"
                   },
                   {
                     "type": "object",
@@ -130179,7 +128356,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -130347,7 +128524,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -130533,7 +128710,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_49"
+                    "$ref": "#/components/schemas/Filter_48"
                   },
                   {
                     "type": "object",
@@ -130866,7 +129043,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_67"
+                    "$ref": "#/components/schemas/Filter_66"
                   },
                   {
                     "type": "object",
@@ -131034,7 +129211,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_67"
+                    "$ref": "#/components/schemas/Filter_66"
                   },
                   {
                     "type": "object",
@@ -131220,7 +129397,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_67"
+                    "$ref": "#/components/schemas/Filter_66"
                   },
                   {
                     "type": "object",
@@ -131553,7 +129730,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -131721,7 +129898,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -131907,7 +130084,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_50"
+                    "$ref": "#/components/schemas/Filter_49"
                   },
                   {
                     "type": "object",
@@ -132240,7 +130417,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -132408,7 +130585,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -132594,7 +130771,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_51"
+                    "$ref": "#/components/schemas/Filter_50"
                   },
                   {
                     "type": "object",
@@ -133502,7 +131679,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_52"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -133670,7 +131847,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_52"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -133856,7 +132033,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_52"
+                    "$ref": "#/components/schemas/Filter_51"
                   },
                   {
                     "type": "object",
@@ -134764,7 +132941,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_54"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -134932,7 +133109,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_54"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -135118,7 +133295,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_54"
+                    "$ref": "#/components/schemas/Filter_53"
                   },
                   {
                     "type": "object",
@@ -136026,7 +134203,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_53"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -136194,7 +134371,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_53"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -136380,7 +134557,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_53"
+                    "$ref": "#/components/schemas/Filter_52"
                   },
                   {
                     "type": "object",
@@ -136713,7 +134890,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_55"
+                    "$ref": "#/components/schemas/Filter_54"
                   },
                   {
                     "type": "object",
@@ -136881,7 +135058,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_55"
+                    "$ref": "#/components/schemas/Filter_54"
                   },
                   {
                     "type": "object",
@@ -137067,7 +135244,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_55"
+                    "$ref": "#/components/schemas/Filter_54"
                   },
                   {
                     "type": "object",
@@ -137975,7 +136152,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_56"
+                    "$ref": "#/components/schemas/Filter_55"
                   },
                   {
                     "type": "object",
@@ -138143,7 +136320,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_56"
+                    "$ref": "#/components/schemas/Filter_55"
                   },
                   {
                     "type": "object",
@@ -138329,7 +136506,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_56"
+                    "$ref": "#/components/schemas/Filter_55"
                   },
                   {
                     "type": "object",
@@ -139237,7 +137414,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_57"
+                    "$ref": "#/components/schemas/Filter_56"
                   },
                   {
                     "type": "object",
@@ -139405,7 +137582,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_57"
+                    "$ref": "#/components/schemas/Filter_56"
                   },
                   {
                     "type": "object",
@@ -139591,7 +137768,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_57"
+                    "$ref": "#/components/schemas/Filter_56"
                   },
                   {
                     "type": "object",
@@ -140499,7 +138676,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_58"
+                    "$ref": "#/components/schemas/Filter_57"
                   },
                   {
                     "type": "object",
@@ -140667,7 +138844,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_58"
+                    "$ref": "#/components/schemas/Filter_57"
                   },
                   {
                     "type": "object",
@@ -140853,7 +139030,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_58"
+                    "$ref": "#/components/schemas/Filter_57"
                   },
                   {
                     "type": "object",
@@ -141761,7 +139938,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_59"
+                    "$ref": "#/components/schemas/Filter_58"
                   },
                   {
                     "type": "object",
@@ -141929,7 +140106,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_59"
+                    "$ref": "#/components/schemas/Filter_58"
                   },
                   {
                     "type": "object",
@@ -142115,7 +140292,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_59"
+                    "$ref": "#/components/schemas/Filter_58"
                   },
                   {
                     "type": "object",
@@ -143023,7 +141200,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_60"
+                    "$ref": "#/components/schemas/Filter_59"
                   },
                   {
                     "type": "object",
@@ -143191,7 +141368,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_60"
+                    "$ref": "#/components/schemas/Filter_59"
                   },
                   {
                     "type": "object",
@@ -143377,7 +141554,7 @@
               "schema": {
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/Filter_60"
+                    "$ref": "#/components/schemas/Filter_59"
                   },
                   {
                     "type": "object",

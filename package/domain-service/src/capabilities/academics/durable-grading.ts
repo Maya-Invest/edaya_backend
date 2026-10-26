@@ -45,7 +45,7 @@ async function advance(base: BaseSchoolService, level: GradeLevel, policy: Gradi
     // Report generation loads a student's dependencies; keep the page deliberately small.
     const rows = await repositories.results.list({ classGroupId: group.id, id: { $gt: cursor.afterId }, $orderBy: [{ field: 'id', direction: 'asc' }], $limit: 5 })
     const regenerate = async (original: ReportCardResult): Promise<void> => {
-      const generated = await new AssessmentsServiceWorkflow(base).buildReportCardResult({ id: original.id, studentId: original.studentId, periodId: original.periodId, reportCardDefinitionId: original.reportCardDefinitionId, aggregation: original.aggregation }, false, true)
+      const generated = await new AssessmentsServiceWorkflow(base).buildReportCardResult({ id: original.id, studentId: original.studentId, periodId: original.periodId, aggregation: original.aggregation }, false, true)
       const updated = original.status === ReportCardResultStatus.Published
         ? new ReportCardResult({ ...original.data, sectionResults: [...original.sectionResults], revisedDraft: { ...generated.data, sectionResults: [...generated.sectionResults] } })
         : generated

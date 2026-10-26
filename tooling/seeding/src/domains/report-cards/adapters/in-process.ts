@@ -24,12 +24,16 @@ export function createInProcessReportCardsSeedPort(
         ranges: record.ranges.map(range => ({ ...range })),
       })
     }),
-    createReportCardDefinition: record =>
-      withSeedPortError('reportCards.createReportCardDefinition', async () => {
-        await service.assessmentsWorkflow.createReportCardDefinition(record)
-      }),
-    createReportCardSection: record => withSeedPortError('reportCards.createReportCardSection', async () => {
-      await service.assessmentsWorkflow.createReportCardDefinitionSection(record)
+    configureReport: record => withSeedPortError('reportCards.configureReport', async () => {
+      const level = await application.repositories.gradeLevels.findById(record.gradeLevelId)
+      let expectedRevision = level!.reportSettingsFor(record.academicYearId).revision
+      const scope = { gradeLevelId: record.gradeLevelId, academicYearId: record.academicYearId }
+      await service.assessmentsWorkflow.configureReportSettings({ ...scope, requestId: `seed-report-settings:${record.gradeLevelId}`, expectedRevision, passThreshold: record.passThreshold })
+      expectedRevision += 1
+      for (const { subjectIds, ...module } of record.modules) {
+        await service.assessmentsWorkflow.configureReportModules({ ...scope, requestId: `seed-module:${module.id}`, expectedRevision, action: 'save', module, assignments: subjectIds.map((subjectId, index) => ({ subjectId, moduleId: module.id, order: index + 1 })) })
+        expectedRevision += 1
+      }
     }),
     generateReportCardResult: record =>
       withSeedPortError('reportCards.generateReportCardResult', async () => {
@@ -49,8 +53,12 @@ export function createInProcessReportCardsSeedPort(
       }),
     publishReportCardResult: record =>
       withSeedPortError('reportCards.publishReportCardResult', async () => {
+        const report = (await service.baseService.entities.results.findById(record.id))!
         await service.assessmentsWorkflow.publishReportCardResult({
           ...record,
+          reviewedDraftVersion: report.version,
+          reviewedGradingRevision: report.gradingPolicyRevision!,
+          reviewedReportConfigurationRevision: report.reportConfigurationRevision,
           publishedAt: record.publishedAt ? new Date(record.publishedAt) : undefined,
         })
       }),

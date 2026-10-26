@@ -28,17 +28,17 @@ async function annualFixture(hook?: (input: DocumentRenderInput) => Promise<void
   await f.repositories.assessments.save(new Assessment({ ...assessment.data, id: 'ass2', periodId: 'sem2', startsAt: new Date('2026-05-01'), endsAt: new Date('2026-05-02') }))
   await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu1', assessmentId: 'ass2', score: 60 }))
   for (const periodId of ['per1', 'sem2']) {
-    await f.service.assessmentsWorkflow.generateReportCardResult({ id: `report-${periodId}`, studentId: 'stu1', periodId, reportCardDefinitionId: 'def1' })
-    await f.service.assessmentsWorkflow.publishReportCardResult({ id: `report-${periodId}`, studentId: 'stu1', periodId, reportCardDefinitionId: 'def1' })
+    const sourceDraft = await f.service.assessmentsWorkflow.generateReportCardResult({ id: `report-${periodId}`, studentId: 'stu1', periodId })
+    await f.service.assessmentsWorkflow.publishReportCardResult({ reviewedDraftVersion: sourceDraft.version, reviewedGradingRevision: sourceDraft.gradingPolicyRevision, reviewedReportConfigurationRevision: sourceDraft.reportConfigurationRevision, id: `report-${periodId}`, studentId: 'stu1', periodId })
   }
   const draft = await f.service.assessmentsWorkflow.generateReportCardResult({
     id: 'annual-result',
     studentId: 'stu1',
     periodId: 'annual',
-    reportCardDefinitionId: 'def1',
+
     aggregation: { source: ReportCardAggregationSource.ReportCards, sourcePeriodIds: ['sem2', 'per1'], periodWeightsByPeriodId: { per1: 1, sem2: 3 }, sourceReportVersions: [{ periodId: 'per1', resultId: 'untrusted', version: 0, sourceVersion: 'untrusted' }] },
   })
-  const annual = await f.service.assessmentsWorkflow.publishReportCardResult({ id: draft.id, studentId: 'stu1', periodId: 'annual', reportCardDefinitionId: 'def1' })
+  const annual = await f.service.assessmentsWorkflow.publishReportCardResult({ reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision, id: draft.id, studentId: 'stu1', periodId: 'annual' })
   const family = f.forActor(createGuardianActorMetadata({ schoolId: 'sch1', guardianId: 'gua1', subjectId: 'subject-gua1', requestId: 'annual-family', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
   const request = (requestId = 'issue-annual') => f.service.documentsWorkflow.requestDocumentIssuance({ requestId, templateKey: 'annual-report-card.v1', sourceId: annual.id, locale: 'en' })
   return { ...f, annual, draft, rendered, family, request }
@@ -48,7 +48,6 @@ describe('official annual report card workflow', () => {
   test('published weighted annual grades issue a landscape PDF available to the guardian', async () => {
     const f = await annualFixture()
     expect(f.draft.overallAverage).toBe(13)
-    await expect(f.service.assessmentsWorkflow.generateReportCardResult({ id: f.annual.id, studentId: 'stu1', periodId: 'annual', reportCardDefinitionId: 'def1' })).rejects.toMatchObject({ code: 'PUBLISHED_REPORT_CARD_IMMUTABLE' })
     expect(f.annual.aggregation?.sourceReportVersions).toHaveLength(2)
     const source = (await f.repositories.results.findById('report-per1'))!
     expect(f.annual.aggregation?.sourceReportVersions?.find(row => row.periodId === 'per1')?.sourceVersion).toBe(await reportCardAcademicVersion(source))
@@ -57,9 +56,9 @@ describe('official annual report card workflow', () => {
     const stored = (await f.repositories.documentIssuances.findById(issued.id))!
     expect(stored.snapshot.academicSources).toHaveLength(3)
     const facts = stored.snapshot.facts as { subjects: Array<{ average: string, total: string, periodAverages: string[] }>, classResults: { classAverage: string } }
-    expect(facts.subjects[0]).toMatchObject({ periodAverages: ['16.00', '12.00'], average: '13.00', total: '13.00' })
-    expect(facts.subjects.at(-1)?.total).toBe('13.00')
-    expect(facts.classResults.classAverage).toBe('13.00 / 20')
+    expect(facts.subjects[0]).toMatchObject({ periodAverages: ['16.0', '12.0'], average: '13.0 · A', total: '13.0' })
+    expect(facts.subjects.at(-1)?.total).toBe('13.0')
+    expect(facts.classResults.classAverage).toBe('13.0 / 20')
     await dispatchDocumentRender(f.application)
     expect((await f.repositories.documentIssuances.findById(issued.id))?.status).toBe(DocumentIssuanceStatus.Ready)
     expect(f.rendered.find(input => input.templateKey === 'annual-report-card.v1')?.options?.orientation).toBe('landscape')
@@ -140,10 +139,10 @@ describe('official annual report card workflow', () => {
     expect((await f.repositories.documentIssuances.findById(issued.id))?.status).toBe(DocumentIssuanceStatus.Failed)
     expect((await f.repositories.documentIssuances.findById(issued.id))?.failureCode).toBe('DOCUMENT_SOURCE_CHANGED')
     await expect(f.service.documentsWorkflow.retryDocumentIssuance({ requestId: 'stale-retry', issuanceId: issued.id })).rejects.toThrow()
-    const regenerated = await f.service.assessmentsWorkflow.generateReportCardResult({ id: f.annual.id, studentId: 'stu1', periodId: 'annual', reportCardDefinitionId: 'def1' })
-    expect(regenerated.status).toBe(ReportCardResultStatus.Draft)
-    await expect(f.request('not-yet-published')).rejects.toMatchObject({ code: 'DOCUMENT_SOURCE_UNPUBLISHED' })
-    await f.service.assessmentsWorkflow.publishReportCardResult({ id: regenerated.id, studentId: 'stu1', periodId: 'annual', reportCardDefinitionId: 'def1' })
+    const regenerated = await f.service.assessmentsWorkflow.generateReportCardResult({ id: f.annual.id, studentId: 'stu1', periodId: 'annual' })
+    expect(regenerated.revisedDraft?.status).toBe(ReportCardResultStatus.Draft)
+    await expect(f.request('not-yet-published')).rejects.toThrow()
+    await f.service.assessmentsWorkflow.publishReportCardResult({ reviewedDraftVersion: regenerated.revisedDraft!.version, reviewedGradingRevision: regenerated.revisedDraft!.gradingPolicyRevision, reviewedReportConfigurationRevision: regenerated.revisedDraft!.reportConfigurationRevision, id: regenerated.id, studentId: 'stu1', periodId: 'annual' })
     const replacement = await f.service.documentsWorkflow.correctDocumentIssuance({ requestId: 'replacement', issuanceId: issued.id, templateKey: 'annual-report-card.v1', sourceId: f.annual.id })
     await dispatchDocumentRender(f.application)
     expect((await f.repositories.documentIssuances.findById(replacement.id))?.status).toBe(DocumentIssuanceStatus.Ready)
@@ -182,7 +181,7 @@ describe('official annual report card workflow', () => {
     expect((await f.repositories.documentIssuances.findById(issued.id))?.status).toBe(DocumentIssuanceStatus.Ready)
     const facts = revised.snapshot.facts as { council: { appreciation: string }, subjects: Array<{ average: string }> }
     expect(facts.council.appreciation).toBe('Steady progress throughout the year.')
-    expect(facts.subjects[0]?.average).toBe('13.00')
+    expect(facts.subjects[0]?.average).toBe('13.0 · A')
     await dispatchDocumentRender(f.application)
     expect((await f.repositories.documentIssuances.findById(issued.id))?.status).toBe(DocumentIssuanceStatus.Superseded)
     expect((await f.repositories.documentIssuances.findById(revised.id))?.status).toBe(DocumentIssuanceStatus.Ready)

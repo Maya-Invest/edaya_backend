@@ -70,11 +70,11 @@ describe('ivory coast structure templates', () => {
 
     const sixieme = college!.gradeLevels.find(level => level.code === '6EME')
     const quatrieme = college!.gradeLevels.find(level => level.code === '4EME')
-    expect(sixieme?.reportCardStructure?.sections?.find(s => s.label === 'Bilan Science')?.subjectCodes)
+    expect(sixieme?.reportCardStructure?.modules?.find(s => s.name === 'Bilan Science')?.subjectCodes)
       .toEqual(['MATH', 'PC', 'SVT', 'TECH', 'TICE'])
-    expect(sixieme?.reportCardStructure?.sections?.find(s => s.label === 'Bilan Lettre')?.subjectCodes)
+    expect(sixieme?.reportCardStructure?.modules?.find(s => s.name === 'Bilan Lettre')?.subjectCodes)
       .toEqual(['FR', 'ANG', 'HG'])
-    expect(quatrieme?.reportCardStructure?.sections?.find(s => s.label === 'Bilan Lettre')?.subjectCodes)
+    expect(quatrieme?.reportCardStructure?.modules?.find(s => s.name === 'Bilan Lettre')?.subjectCodes)
       .toEqual(['FR', 'ANG', 'ALL', 'ESP', 'HG'])
 
     const lv2 = college!.curriculum.filter(
@@ -118,11 +118,10 @@ describe('ivory coast structure templates', () => {
     ])
 
     const sixieme = college?.gradeLevels.find(level => level.code === '6EME')
-    expect(sixieme?.reportCardStructure?.sections?.map(section => section.label)).toEqual([
+    expect(sixieme?.reportCardStructure?.modules?.map(section => section.name)).toEqual([
       'Bilan Lettre',
       'Bilan Science',
       'Bilan autres',
-      'Appréciations',
     ])
     expect(college?.subjects.some(subject => subject.code === 'ALL')).toBe(true)
     expect(college?.subjects.some(subject => subject.code === 'ESP')).toBe(true)

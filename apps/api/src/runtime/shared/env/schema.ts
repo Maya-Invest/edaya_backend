@@ -27,6 +27,8 @@ export const EnvSchema = z.object({
   ACCOUNT_SECURITY_KEYS: z.string().optional(),
   ACCOUNT_SECURITY_KEY_VERSION: z.string().default("v1"),
   AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),
+  AUTH_TERMS_MODE: z.enum(["off", "preview", "enforced"]).default("off"),
+  AUTH_TERMS_VERSION: z.string().optional(),
   PHONE_AUTH_MODE: z.enum(["disabled", "sms_only", "whatsapp_first"]).default("disabled"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   /** Email transport for in-process notify (`log` local default; `cloudflare` on the API Worker) */

@@ -3,7 +3,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardResult, ReportCardResultStatus, ReportModule, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
 import { validateStudentChargeSave } from '@edaya/service'
 import {
   describe,
@@ -73,127 +73,9 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('report-card definition preSave rejects invalid resources and duplicate defaults', async () => {
-    const { app, repositories } = await createAcademicTestApp()
-    await repositories.schoolRepository.save(new School({
-      id: 'school',
-      name: 'School',
-      timeZone: 'UTC',
-    }))
-    await repositories.academicYearRepository.save(new AcademicYear({
-      id: 'year-1',
-      schoolId: 'school',
-      name: '2026',
-      startDate: new Date('2026-01-01T00:00:00Z'),
-      endDate: new Date('2026-12-31T00:00:00Z'),
-    }))
-    await repositories.gradeLevelRepository.save(new GradeLevel({
-      id: 'grade-1',
-      schoolId: 'school',
-      name: 'Grade 1',
-      label: 'G1',
-      order: 1,
-    }))
-    await repositories.gradeScaleRepository.save(new GradeScale({
-      id: 'gs-test',
-      schoolId: 'school',
-      name: 'Test scale',
-      minScore: 0,
-      maxScore: 20,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }],
-    }))
-    await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
-      id: 'definition-existing',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      gradeScaleId: 'gs-test',
-      name: 'Default',
-      isDefault: true,
-    }))
-
-    await expect(app.baseService.entities.definitions.save(new ReportCardDefinition({
-      id: 'definition-missing-year',
-      schoolId: 'school',
-      academicYearId: 'missing-year',
-      gradeLevelId: 'grade-1',
-      gradeScaleId: 'gs-test',
-      name: 'Invalid',
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-
-    await expect(app.baseService.entities.definitions.save(new ReportCardDefinition({
-      id: 'definition-new',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      gradeScaleId: 'gs-test',
-      name: 'Other default',
-      isDefault: true,
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
-  test('report-card section preSave rejects invalid parent relationships', async () => {
-    const { app, repositories } = await createAcademicTestApp()
-    await repositories.schoolRepository.save(new School({
-      id: 'school',
-      name: 'School',
-      timeZone: 'UTC',
-    }))
-    await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
-      id: 'definition-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      gradeScaleId: 'gs-test',
-      name: 'Definition',
-    }))
-
-    await expect(app.baseService.entities.sections.save(new ReportCardDefinitionSection({
-      id: 'section-self',
-      reportCardDefinitionId: 'definition-1',
-      name: 'Self',
-      order: 1,
-      weight: 1,
-      parentSectionId: 'section-self',
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    await repositories.reportCardDefinitionSectionRepository.save(new ReportCardDefinitionSection({
-      id: 'section-subject-parent',
-      reportCardDefinitionId: 'definition-1',
-      kind: ReportCardDefinitionSectionKind.Subject,
-      name: 'Math',
-      order: 1,
-      weight: 1,
-      subjectId: 'subject-1',
-    }))
-    await expect(app.baseService.entities.sections.save(new ReportCardDefinitionSection({
-      id: 'section-child',
-      reportCardDefinitionId: 'definition-1',
-      name: 'Child',
-      order: 2,
-      weight: 1,
-      parentSectionId: 'section-subject-parent',
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    const child = new ReportCardDefinitionSection({
-      id: 'section-cycle-child',
-      reportCardDefinitionId: 'definition-1',
-      name: 'Cycle child',
-      order: 3,
-      weight: 1,
-    })
-    await repositories.reportCardDefinitionSectionRepository.save(child)
-    await repositories.reportCardDefinitionSectionRepository.save(new ReportCardDefinitionSection({
-      id: 'section-cycle-parent',
-      reportCardDefinitionId: 'definition-1',
-      name: 'Cycle parent',
-      order: 4,
-      weight: 1,
-      parentSectionId: child.id,
-    }))
-    await expect(app.baseService.entities.sections.save(child.copyWith({
-      parentSectionId: 'section-cycle-parent',
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('modules require revision-aware configuration commands', async () => {
+    const { app } = await createAcademicTestApp()
+    await expect(app.baseService.entities.reportModules.save(new ReportModule({ id: 'new-module', schoolId: 'school', gradeLevelId: 'grade-1', academicYearId: 'year-1', name: 'Science', order: 1 }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('assessment preSave rejects inconsistent class subject, period, and lesson session references', async () => {
@@ -768,7 +650,9 @@ describe('Entity config save gates', () => {
     }))
     await repositories.reportCardResultRepository.save(new ReportCardResult({
       id: 'report-card-1',
-      reportCardDefinitionId: 'definition-1',
+      gradeLevelId: 'grade-1',
+      academicYearId: 'year-1',
+      reportConfigurationRevision: 0,
       studentId: 'student-1',
       classGroupId: 'class-1',
       periodId: 'period-1',
@@ -875,17 +759,11 @@ describe('Entity config save gates', () => {
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
     }))
-    await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
-      id: 'definition-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      gradeScaleId: 'gs-test',
-      name: 'Definition',
-    }))
     const published = new ReportCardResult({
       id: 'report-card-1',
-      reportCardDefinitionId: 'definition-1',
+      gradeLevelId: 'grade-1',
+      academicYearId: 'year-1',
+      reportConfigurationRevision: 0,
       studentId: 'student-1',
       classGroupId: 'class-1',
       periodId: 'period-1',
@@ -899,7 +777,9 @@ describe('Entity config save gates', () => {
 
     await expect(app.baseService.entities.results.save(new ReportCardResult({
       id: published.id,
-      reportCardDefinitionId: published.reportCardDefinitionId,
+      gradeLevelId: published.gradeLevelId,
+      academicYearId: published.academicYearId,
+      reportConfigurationRevision: published.reportConfigurationRevision,
       studentId: published.studentId,
       classGroupId: published.classGroupId,
       periodId: published.periodId,

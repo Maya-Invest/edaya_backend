@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardDefinition, ReportCardResultStatus, School } from '@edaya/core'
+import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResultStatus, School } from '@edaya/core'
 import {
   describe,
   expect,
@@ -19,13 +19,13 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
       generatedAt,
     })
 
     expect(result.id).toBe('rc1')
     expect(result.status).toBe(ReportCardResultStatus.Draft)
-    expect(result.generatedAt).toBe(generatedAt)
+    expect(result.generatedAt).toEqual(generatedAt)
     expect(result.overallAverage).toBe(16)
     expect(result.assessmentResultCount).toBe(1)
     expect(result.attendanceSummary.presentCount).toBe(1)
@@ -40,7 +40,9 @@ describe('SchoolService assessment workflows', () => {
     const { repositories, service } = await createReportCardContext({
       existingReportCard: {
         id: 'rc-existing',
-        reportCardDefinitionId: 'def1',
+        gradeLevelId: 'grade1',
+        academicYearId: 'ay1',
+        reportConfigurationRevision: 0,
         studentId: 'stu1',
         classGroupId: 'cg1',
         periodId: 'per1',
@@ -53,7 +55,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc-new',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
       generatedAt: new Date('2026-04-01T00:00:00Z'),
     })
 
@@ -63,22 +65,14 @@ describe('SchoolService assessment workflows', () => {
     expect((await repositories.results.findById(result.id))?.data).toEqual(result.data)
   })
 
-  test('generateReportCardResult rejects already published report cards', async () => {
-    const { service } = await createReportCardContext({
-      existingReportCard: {
-        id: 'rc-existing',
-        studentId: 'stu1',
-        periodId: 'per1',
-        status: ReportCardResultStatus.Published,
-      },
-    })
-
-    await expect(service.assessmentsWorkflow.generateReportCardResult({
-      id: 'rc1',
-      studentId: 'stu1',
-      periodId: 'per1',
-      reportCardDefinitionId: 'def1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('regeneration preserves the publication and creates a separate draft', async () => {
+    const { service, repositories } = await createReportCardContext({ existingReportCard: { id: 'rc-existing', studentId: 'stu1', periodId: 'per1', status: ReportCardResultStatus.Published } })
+    const before = (await repositories.results.findById('rc-existing'))!
+    const result = await service.assessmentsWorkflow.generateReportCardResult({ id: before.id, studentId: 'stu1', periodId: 'per1' })
+    expect(result.status).toBe(ReportCardResultStatus.Published)
+    expect(result.overallAverage).toBe(before.overallAverage)
+    expect(result.revisedDraft?.status).toBe(ReportCardResultStatus.Draft)
+    expect(result.revisedDraft?.overallAverage).toBe(16)
   })
 
   test('writeHomeroomReportComment updates only the teacher comment on draft cards', async () => {
@@ -88,7 +82,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
     })
 
     const result = await service.assessmentsWorkflow.writeHomeroomReportComment({
@@ -108,7 +102,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
     })
     const math = generated.sectionResults.flatMap(section => section.subResults).find(section => section.classSubjectId === 'cs1')
     expect(math?.sectionId).toBeTruthy()
@@ -130,11 +124,16 @@ describe('SchoolService assessment workflows', () => {
   test('publishReportCardResult publishes generated report cards through managed service', async () => {
     const { repositories, service } = await createReportCardContext()
 
+    const draft = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1' })
+
     const result = await service.assessmentsWorkflow.publishReportCardResult({
+      reviewedDraftVersion: draft.version,
+      reviewedGradingRevision: draft.gradingPolicyRevision,
+      reviewedReportConfigurationRevision: draft.reportConfigurationRevision,
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
       publishedAt: new Date('2026-04-01T00:00:00Z'),
     })
 
@@ -151,11 +150,16 @@ describe('SchoolService assessment workflows', () => {
     const gateway = new RecordingNotificationGateway()
     const { repositories, service } = await createReportCardContext({ notificationGateway: gateway })
 
+    const draft = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1' })
+
     await service.assessmentsWorkflow.publishReportCardResult({
+      reviewedDraftVersion: draft.version,
+      reviewedGradingRevision: draft.gradingPolicyRevision,
+      reviewedReportConfigurationRevision: draft.reportConfigurationRevision,
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
       publishedAt: new Date('2026-04-01T00:00:00Z'),
     })
 
@@ -192,7 +196,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
@@ -210,7 +214,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
     })).resolves.toMatchObject({ id: 'rc-existing', status: ReportCardResultStatus.Published })
   })
 
@@ -280,18 +284,11 @@ describe('SchoolService assessment workflows', () => {
     expect(result.status).toBe(DeadlineComplianceStatus.Late)
   })
 
-  test('generateReportCardResult uses the default definition when none is provided', async () => {
-    const { repositories, service } = await createReportCardContext()
-    const definition = (await repositories.definitions.findById('def1'))!
-    await repositories.definitions.save(new ReportCardDefinition({ ...definition.data, id: 'def-default', isDefault: true }))
-
-    const result = await service.assessmentsWorkflow.generateReportCardResult({
-      id: 'rc-default',
-      studentId: 'stu1',
-      periodId: 'per1',
-    })
-
-    expect(result.reportCardDefinitionId).toBe('def-default')
+  test('generates from level/year configuration without a template', async () => {
+    const { service } = await createReportCardContext()
+    const result = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc-default', studentId: 'stu1', periodId: 'per1' })
+    expect(result.gradeLevelId).toBe('grade1')
+    expect(result.academicYearId).toBe('ay1')
   })
 
   test('publishReportCardResult rejects aggregated sources that are not ready', async () => {
@@ -301,7 +298,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc-agg',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
       aggregation: {
         source: ReportCardAggregationSource.ReportCards,
         sourcePeriodIds: ['per-t1', 'per-unpublished'],
@@ -316,7 +313,7 @@ describe('SchoolService assessment workflows', () => {
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
-      reportCardDefinitionId: 'def1',
+
     })
 
     const school = (await repositories.schools.findById('sch1'))!

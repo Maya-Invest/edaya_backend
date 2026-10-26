@@ -18,7 +18,9 @@ export const subjectSchema = z.object({
   name: z.string().trim().min(1, 'name must not be blank'),
   shortName: z.string().trim().min(1, 'shortName must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  coefficient: z.number().positive().nullable().optional().transform(v => v ?? undefined),
+  reportModuleId: z.string().trim().min(1).nullish().transform(value => value ?? undefined),
+  reportOrder: z.number().int().nonnegative().default(0),
+  coefficient: z.number().finite().positive().nullable().optional().transform(v => v ?? undefined),
   periodsPerWeek: z.number().int().positive().nullable().optional().transform(v => v ?? undefined),
   minPeriodSpan: z.number().int().positive().nullable().optional().transform(v => v ?? undefined),
   maxPeriodSpan: z.number().int().positive().nullable().optional().transform(v => v ?? undefined),
@@ -71,6 +73,8 @@ export class Subject {
   get shortName() { return this.data.shortName }
   get displayShortName() { return this.data.shortName ?? this.data.name }
   get code() { return this.data.code }
+  get reportModuleId() { return this.data.reportModuleId }
+  get reportOrder() { return this.data.reportOrder }
   get coefficient() { return this.data.coefficient }
   get periodsPerWeek() { return this.data.periodsPerWeek }
   get minPeriodSpan() { return this.data.minPeriodSpan }
@@ -90,6 +94,8 @@ export class Subject {
       name: overrides.name ?? this.name,
       shortName: overrides.shortName !== undefined ? overrides.shortName : this.shortName,
       code: overrides.code !== undefined ? overrides.code : this.code,
+      reportModuleId: overrides.reportModuleId !== undefined ? overrides.reportModuleId : this.reportModuleId,
+      reportOrder: overrides.reportOrder ?? this.reportOrder,
       coefficient: overrides.coefficient !== undefined ? overrides.coefficient : this.coefficient,
       periodsPerWeek: overrides.periodsPerWeek !== undefined ? overrides.periodsPerWeek : this.periodsPerWeek,
       minPeriodSpan: overrides.minPeriodSpan !== undefined ? overrides.minPeriodSpan : this.minPeriodSpan,

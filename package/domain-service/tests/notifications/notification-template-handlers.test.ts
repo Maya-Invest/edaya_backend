@@ -51,7 +51,8 @@ describe('templated notifications through authorized workflows', () => {
 
   test('report-card notifications include period and class context', async () => {
     const { service, gateway } = await createContext()
-    await service.assessmentsWorkflow.publishReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' })
+    const draft = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1' })
+    await service.assessmentsWorkflow.publishReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1', reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision })
     expect(gateway.enqueued).toHaveLength(2)
     expect(gateway.enqueued[0]).toMatchObject({ eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY })
     expect(gateway.enqueued[0]?.body).toContain('Term 2')
@@ -70,7 +71,8 @@ describe('templated notifications through authorized workflows', () => {
     const { service, repositories, gateway } = await createContext()
     const link = (await repositories.guardianLinks.findById('link'))!
     await repositories.guardianLinks.save(new GuardianStudentLink({ ...link.data, receivesAcademicReports: false }))
-    await service.assessmentsWorkflow.publishReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' })
+    const draft = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1' })
+    await service.assessmentsWorkflow.publishReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1', reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision })
     expect(gateway.enqueued).toHaveLength(1)
     expect(gateway.enqueued[0]?.recipients).toEqual([{ kind: MessageDeliveryRecipientKind.Student, id: 'stu1', subjectId: 'subject-stu1' }])
     expect(await repositories.messageDeliveries.count({ recipientKind: MessageDeliveryRecipientKind.Guardian })).toBe(0)

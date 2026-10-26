@@ -42,12 +42,16 @@ export function createHttpReportCardsSeedPort(
     createGradeScale: record => withSeedPortError('reportCards.createGradeScale', async () => {
       await postCoreCommand(requestOptions, 'createGradeScale', record)
     }),
-    createReportCardDefinition: record =>
-      withSeedPortError('reportCards.createReportCardDefinition', async () => {
-        await postCoreCommand(requestOptions, 'createReportCardDefinition', record)
-      }),
-    createReportCardSection: record => withSeedPortError('reportCards.createReportCardSection', async () => {
-      await postCoreCommand(requestOptions, 'createReportCardDefinitionSection', record)
+    configureReport: record => withSeedPortError('reportCards.configureReport', async () => {
+      const level = new GradeLevel(await postEntityFindById(requestOptions, 'gradeLevels', record.gradeLevelId) as ConstructorParameters<typeof GradeLevel>[0])
+      let expectedRevision = level!.reportSettingsFor(record.academicYearId).revision
+      const scope = { gradeLevelId: record.gradeLevelId, academicYearId: record.academicYearId }
+      await postCoreCommand(requestOptions, 'configureReportSettings', { ...scope, requestId: `seed-report-settings:${record.gradeLevelId}`, expectedRevision, passThreshold: record.passThreshold })
+      expectedRevision += 1
+      for (const { subjectIds, ...module } of record.modules) {
+        await postCoreCommand(requestOptions, 'configureReportModules', { ...scope, requestId: `seed-module:${module.id}`, expectedRevision, action: 'save', module, assignments: subjectIds.map((subjectId, index) => ({ subjectId, moduleId: module.id, order: index + 1 })) })
+        expectedRevision += 1
+      }
     }),
     generateReportCardResult: record =>
       withSeedPortError('reportCards.generateReportCardResult', async () => {
@@ -65,7 +69,8 @@ export function createHttpReportCardsSeedPort(
       }),
     publishReportCardResult: record =>
       withSeedPortError('reportCards.publishReportCardResult', async () => {
-        await postCoreCommand(requestOptions, 'publishReportCardResult', record)
+        const report = await postEntityFindById(requestOptions, 'results', record.id) as { version: number, gradingPolicyRevision: number, reportConfigurationRevision: number }
+        await postCoreCommand(requestOptions, 'publishReportCardResult', { ...record, reviewedDraftVersion: report.version, reviewedGradingRevision: report.gradingPolicyRevision, reviewedReportConfigurationRevision: report.reportConfigurationRevision })
       }),
   }
 }

@@ -32,14 +32,13 @@ const relatedFields: Record<string, PgTable> = {
   lessonSessionId: schema.lessonSessions,
   activitySessionId: schema.activitySessions,
   scheduleId: schema.schedules,
-  reportCardDefinitionId: schema.reportCardDefinitions,
   gradeScaleId: schema.gradeScales,
   incidentId: schema.incidents,
   disciplinaryActionId: schema.disciplinaryActions,
   resourceId: schema.resources,
   announcementId: schema.announcements,
 }
-const academicSubjectTables = new Set(['class_subjects', 'subject_matters', 'report_card_definition_sections'])
+const academicSubjectTables = new Set(['class_subjects', 'subject_matters'])
 const anchors: Record<string, Array<[string, PgTable]>> = {
   staff_assignments: [
     ['classGroupId', schema.classGroups],

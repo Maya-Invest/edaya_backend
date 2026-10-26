@@ -578,8 +578,18 @@ export class AccessPolicies {
 
   readonly guardians = {
     assertLinkStudent: async (input: { guardianId: string, studentId: string }) => {
-      await this.assertResources(P.PARENT_MANAGE, 'guardians', [input.guardianId])
-      await this.assertResources(P.PARENT_MANAGE, 'students', [input.studentId])
+      // One read-only preflight returns the same scoped records it authorizes.
+      // Entity persistence still performs its fresh write authorization and gates.
+      const access = this.forOperation()
+      const guardianScope = await access.scope(P.PARENT_MANAGE, 'guardians', 'write', 'command')
+      const studentScope = await access.scope(P.PARENT_MANAGE, 'students', 'write', 'command')
+      const [guardian, student] = await Promise.all([
+        this.repositories.guardians.forAccess(guardianScope).findById(input.guardianId),
+        this.repositories.students.forAccess(studentScope).findById(input.studentId),
+      ])
+      if (!guardian || !student)
+        return denied()
+      return { guardian, student }
     },
   }
 

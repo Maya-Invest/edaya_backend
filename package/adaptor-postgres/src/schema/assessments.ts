@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, numeric, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, doublePrecision, integer, jsonb, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const assessments = pgTable('assessments', {
@@ -59,36 +59,17 @@ export const gradeScales = pgTable('grade_scales', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('grade_scales', table))
 
-export const reportCardDefinitions = pgTable('report_card_definitions', {
-  passThreshold: numeric('pass_threshold'),
-  revision: integer('revision').notNull().default(0),
+export const reportModules = pgTable('report_modules', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
-  academicYearId: text('academic_year_id').notNull(),
   gradeLevelId: text('grade_level_id').notNull(),
-  gradeScaleId: text('grade_scale_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
   name: text('name').notNull(),
-  kind: text('kind').notNull(),
-  status: text('status').notNull().default('draft'),
-  isDefault: boolean('is_default').notNull(),
-  description: text('description'),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('report_card_definitions', table))
-
-// 31. Report Card Definition Section Table
-
-export const reportCardDefinitionSections = pgTable('report_card_definition_sections', {
-  id: text('id').primaryKey(),
-  reportCardDefinitionId: text('definition_id').notNull(),
-  name: text('name').notNull(),
-  role: text('role'),
-  coefficient: real('coefficient'),
   order: integer('order_val').notNull(),
-  weight: real('weight').notNull(),
-  parentSectionId: text('parent_section_id'),
-  subjectId: text('subject_id'),
+  weightingMode: text('weighting_mode').notNull(),
+  explicitWeight: doublePrecision('explicit_weight'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('report_card_definition_sections', table))
+}, table => definePerformanceIndexes('report_modules', table))
 
 // 32. Report Card Result Table
 
@@ -108,7 +89,9 @@ export const reportCardResults = pgTable('report_card_results', {
   studentId: text('student_id').notNull(),
   classGroupId: text('class_group_id').notNull(),
   periodId: text('period_id').notNull(),
-  reportCardDefinitionId: text('report_card_definition_id').notNull(),
+  gradeLevelId: text('grade_level_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  reportConfigurationRevision: integer('report_configuration_revision').notNull(),
   sectionResults: jsonb('section_results').notNull(),
   attendanceSummary: jsonb('attendance_summary').notNull(),
   assessmentResultCount: integer('assessment_result_count').notNull(),

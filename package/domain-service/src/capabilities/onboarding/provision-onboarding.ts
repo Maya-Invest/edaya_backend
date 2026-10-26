@@ -80,8 +80,8 @@ interface StoredProvisionResult {
   subjectCount: number
   classSubjectCount: number
   gradeScaleCount: number
-  reportCardDefinitionCount: number
-  reportCardSectionCount: number
+  reportModuleCount: number
+  reportSubjectAssignmentCount: number
   hasStructure: boolean
   staffInviteCount: number
   permissionAssignmentsEnsured: number
@@ -174,8 +174,8 @@ function persistProvisionResult(result: ProvisionOnboardingResult): StoredProvis
     subjectCount: result.structure?.subjectCount ?? 0,
     classSubjectCount: result.structure?.classSubjectCount ?? 0,
     gradeScaleCount: result.structure?.gradeScaleCount ?? 0,
-    reportCardDefinitionCount: result.structure?.reportCardDefinitionCount ?? 0,
-    reportCardSectionCount: result.structure?.reportCardSectionCount ?? 0,
+    reportModuleCount: result.structure?.reportModuleCount ?? 0,
+    reportSubjectAssignmentCount: result.structure?.reportSubjectAssignmentCount ?? 0,
     hasStructure: result.structure != null,
     staffInviteCount: result.staff.invitedCount,
     permissionAssignmentsEnsured: result.staff.permissionAssignmentsEnsured,
@@ -199,8 +199,8 @@ function storedToResult(stored: StoredProvisionResult, replayed: boolean): Provi
           subjectCount: stored.subjectCount,
           classSubjectCount: stored.classSubjectCount,
           gradeScaleCount: stored.gradeScaleCount,
-          reportCardDefinitionCount: stored.reportCardDefinitionCount,
-          reportCardSectionCount: stored.reportCardSectionCount,
+          reportModuleCount: stored.reportModuleCount,
+          reportSubjectAssignmentCount: stored.reportSubjectAssignmentCount,
           phases: [],
         }
       : null,

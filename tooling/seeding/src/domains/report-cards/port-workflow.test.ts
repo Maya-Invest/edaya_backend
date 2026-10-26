@@ -1,10 +1,9 @@
 import type {
   GradeScaleSeedRecord,
   GradingPolicySeedRecord,
-  ReportCardDefinitionSeedRecord,
   ReportCardResultSeedRecord,
-  ReportCardSectionSeedRecord,
   ReportCardsSeedPort,
+  ReportConfigurationSeedRecord,
 } from './port'
 import { GradeScale } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
@@ -12,15 +11,14 @@ import { describe, expect, test } from 'bun:test'
 import { seedDevReportCardConfiguration, seedDevReportCardResults } from './workflow'
 
 describe('report-cards seed port workflow', () => {
-  test('seeds scales, definitions, sections, and generated or published results', async () => {
+  test('seeds scales, flat modules, assignments, and generated or published results', async () => {
     const results = demoCiDataset.extensions?.reportCardResults ?? []
     const publishedCount = results.filter(
       result => result.narrativeStatus === 'published' && result.publishedAt,
     ).length
     const scales: GradeScaleSeedRecord[] = []
     const policies: GradingPolicySeedRecord[] = []
-    const definitions: ReportCardDefinitionSeedRecord[] = []
-    const sections: ReportCardSectionSeedRecord[] = []
+    const configurations: ReportConfigurationSeedRecord[] = []
     const generated: ReportCardResultSeedRecord[] = []
     const published: ReportCardResultSeedRecord[] = []
     const port: ReportCardsSeedPort = {
@@ -31,12 +29,9 @@ describe('report-cards seed port workflow', () => {
         expect(scales.some(scale => scale.id === record.scaleId)).toBe(true)
         policies.push(record)
       },
-      createReportCardDefinition: async (record) => {
+      configureReport: async (record) => {
         expect(policies.some(policy => policy.gradeLevelId === record.gradeLevelId && policy.academicYearId === record.academicYearId)).toBe(true)
-        definitions.push(record)
-      },
-      createReportCardSection: async (record) => {
-        sections.push(record)
+        configurations.push(record)
       },
       generateReportCardResult: async (record) => {
         generated.push(record)
@@ -55,8 +50,8 @@ describe('report-cards seed port workflow', () => {
 
     expect(counts).toEqual({
       gradeScales: scales.length,
-      definitions: definitions.length,
-      sections: sections.length,
+      modules: configurations.reduce((sum, config) => sum + config.modules.length, 0),
+      assignments: configurations.reduce((sum, config) => sum + config.modules.reduce((count, module) => count + module.subjectIds.length, 0), 0),
       results: generated.length,
     })
     expect(scales).toHaveLength(demoCiDataset.entities.gradeScales?.length ?? 0)
@@ -68,7 +63,7 @@ describe('report-cards seed port workflow', () => {
     expect(seeded.findRange(10)?.letter).toBe('C')
     expect(seeded.findRange(20)?.letter).toBe('A')
     expect(seeded.findRange(20.001)).toBeUndefined()
-    expect(definitions).toHaveLength(demoCiDataset.extensions?.reportCardDefinitionFixtures?.length ?? 0)
+    expect(configurations).toHaveLength(demoCiDataset.extensions?.reportConfigurationFixtures?.length ?? 0)
     expect(published).toHaveLength(publishedCount)
     expect(generated[0]?.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
   })

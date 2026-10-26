@@ -1,4 +1,4 @@
-import type { Assessment, AssessmentResult, GradeScale, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult } from '@edaya/core'
+import type { Assessment, AssessmentResult, GradeScale, ReportCardResult, ReportModule } from '@edaya/core'
 import type { StoreDatabase } from '../postgres-store'
 import type { StoredReportCardResultSection } from './entity-store-helpers'
 import type { EntityStores } from './entity-stores-types'
@@ -9,11 +9,9 @@ import {
   AttendanceSummary,
   DeadlineComplianceStatus,
   GradeScale as GradeScaleCtor,
-  ReportCardDefinition as ReportCardDefinitionCtor,
-  ReportCardDefinitionSection as ReportCardDefinitionSectionCtor,
-  ReportCardDefinitionSectionKind,
   ReportCardResult as ReportCardResultCtor,
   ReportCardResultStatus,
+  ReportModule as ReportModuleCtor,
 } from '@edaya/core'
 import { deserializeJsonb } from '../lib/mappers'
 import { customStore } from '../lib/store-factory'
@@ -35,7 +33,7 @@ function numericToNumber(value: string | number): number {
   return parsed
 }
 
-export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntityStores, 'assessments' | 'assessmentResults' | 'gradeScales' | 'definitions' | 'sections' | 'results'> {
+export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntityStores, 'assessments' | 'assessmentResults' | 'gradeScales' | 'reportModules' | 'results'> {
   return {
     assessments: customStore(
       db,
@@ -154,43 +152,11 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
       }),
     ),
 
-    definitions: customStore(
+    reportModules: customStore(
       db,
-      schema.reportCardDefinitions,
-      (entity: ReportCardDefinition) => ({ ...entity.data, description: entity.description ?? null, passThreshold: entity.passThreshold == null ? null : String(entity.passThreshold) }),
-      row => new ReportCardDefinitionCtor({ ...row, passThreshold: row.passThreshold == null ? undefined : numericToNumber(row.passThreshold) }),
-    ),
-
-    sections: customStore(
-      db,
-      schema.reportCardDefinitionSections,
-      (entity: ReportCardDefinitionSection) => ({
-        id: entity.id,
-        reportCardDefinitionId: entity.reportCardDefinitionId,
-        name: entity.name,
-        role: entity.role ?? null,
-        coefficient: entity.coefficient ?? null,
-        order: entity.order,
-        weight: entity.weight,
-        parentSectionId: entity.parentSectionId ?? null,
-        subjectId: entity.subjectId ?? null,
-        createdAt: entity.createdAt,
-      }),
-      row => new ReportCardDefinitionSectionCtor({
-        id: row.id,
-        reportCardDefinitionId: row.reportCardDefinitionId,
-        name: row.name,
-        kind: row.subjectId
-          ? ReportCardDefinitionSectionKind.Subject
-          : ReportCardDefinitionSectionKind.Group,
-        role: row.role ?? undefined,
-        coefficient: row.coefficient ?? undefined,
-        order: row.order,
-        weight: row.weight,
-        parentSectionId: row.parentSectionId,
-        subjectId: row.subjectId,
-        createdAt: row.createdAt,
-      }),
+      schema.reportModules,
+      (entity: ReportModule) => ({ ...entity.data, explicitWeight: entity.explicitWeight ?? null }),
+      row => new ReportModuleCtor({ ...row, weightingMode: row.weightingMode as ReportModule['weightingMode'] }),
     ),
 
     results: customStore(
@@ -201,7 +167,9 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
         studentId: entity.studentId,
         classGroupId: entity.classGroupId,
         periodId: entity.periodId,
-        reportCardDefinitionId: entity.reportCardDefinitionId,
+        gradeLevelId: entity.gradeLevelId,
+        academicYearId: entity.academicYearId,
+        reportConfigurationRevision: entity.reportConfigurationRevision,
         sectionResults: entity.sectionResults.map(serializeReportCardResultSection),
         attendanceSummary: entity.attendanceSummary,
         assessmentResultCount: entity.assessmentResultCount,
@@ -233,7 +201,9 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
 
         return new ReportCardResultCtor({
           id: row.id,
-          reportCardDefinitionId: row.reportCardDefinitionId,
+          gradeLevelId: row.gradeLevelId,
+          academicYearId: row.academicYearId,
+          reportConfigurationRevision: row.reportConfigurationRevision,
           studentId: row.studentId,
           classGroupId: row.classGroupId,
           periodId: row.periodId,

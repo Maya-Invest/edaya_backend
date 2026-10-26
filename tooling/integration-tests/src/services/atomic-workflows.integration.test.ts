@@ -2,7 +2,7 @@ import { AuthorizationErrorCode } from '@edaya/authorization'
 import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, ChargeStatus, DayOfWeek, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, studentYearAccountId, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listMatterProgress, publishAcademicPeriod, saveAnnouncement, saveAnnouncementTarget, saveClassSubject, saveClassSubjectMatter, saveFee, saveGuardian, saveLessonSession, saveReportCardDefinition, saveSchedule, saveSchool, saveStudent, withFixtureDiscipline } from '../utils/core-service-helpers'
+import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listMatterProgress, publishAcademicPeriod, saveAnnouncement, saveAnnouncementTarget, saveClassSubject, saveClassSubjectMatter, saveFee, saveGuardian, saveLessonSession, saveSchedule, saveSchool, saveStudent, seedReportGradingPolicy, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('atomic workflow safeguards', () => {
@@ -176,25 +176,19 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Standard',
       minScore: 0,
       maxScore: 20,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }],
+      intervalConvention: 'continuous',
+      ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }],
     }))
-    await saveReportCardDefinition(app, {
-      id: 'definition',
-      schoolId: 'school',
+    await seedReportGradingPolicy(app, {
       academicYearId: 'year',
       gradeLevelId: 'level',
       gradeScaleId: 'gs-test',
-      name: 'Grade 6 Standard',
-      isDefault: true,
     })
     await publishAcademicPeriod(app, 'term')
+    const draft = await app.assessmentsWorkflow.generateReportCardResult({ id: 'report-card', studentId: 'student', periodId: 'term' })
     failSaveOnAttempt('reportCardResultRepository')
-    await expect(app.assessmentsWorkflow.publishReportCardResult({
-      id: 'report-card',
-      studentId: 'student',
-      periodId: 'term',
-    })).rejects.toThrow('Simulated reportCardResultRepository save failure')
-    expect(await repositories.reportCardResultRepository.findById('report-card')).toBeUndefined()
+    await expect(app.assessmentsWorkflow.publishReportCardResult({ reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision, id: 'report-card', studentId: 'student', periodId: 'term' })).rejects.toThrow('Simulated reportCardResultRepository save failure')
+    expect((await repositories.reportCardResultRepository.findById('report-card'))?.status).toBe('draft')
   })
 
   it('rolls back bulk attendance capture when a later roster entry is invalid', async () => {

@@ -1,6 +1,6 @@
 import type { AcademicPeriod, ReportCardResult, ReportCardResultSection } from '@edaya/core'
 import type { ReportCardDocumentContext, ReportCardV1SubjectRow } from './build-report-card-v1-payload'
-import { BusinessRuleViolationError, ReportCardDefinitionSectionKind, weightForPeriod } from '@edaya/core'
+import { BusinessRuleViolationError, ReportCardResultSectionKind, weightForPeriod } from '@edaya/core'
 import { buildReportCardV1Payload } from './build-report-card-v1-payload'
 import { catalogBulletinSection, catalogLangFromLocale, catalogPeriodLabel, catalogText } from './catalog-label'
 
@@ -16,19 +16,18 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
   const format = (value: number | undefined) => value === undefined ? '—' : formatter.format(value)
   const periods = [...input.periods].sort((a, b) => a.period.startDate.getTime() - b.period.startDate.getTime() || a.period.id.localeCompare(b.period.id))
   const subjectId = (section: ReportCardResultSection) => {
-    const id = section.classSubjectId && input.subjectIdByClassSubjectId.get(section.classSubjectId)
+    const id = section.subjectId ?? (section.classSubjectId && input.subjectIdByClassSubjectId.get(section.classSubjectId))
     if (!id)
       throw new BusinessRuleViolationError('DOCUMENT_SOURCE_MISSING', 'A report subject could not be resolved')
     return id
   }
-  const subjectIds = (nodes: readonly ReportCardResultSection[]): string[] => nodes.flatMap(node => node.sectionKind === ReportCardDefinitionSectionKind.Subject ? [subjectId(node)] : subjectIds(node.subResults))
-  const groupKey = (section: ReportCardResultSection) => [...new Set(subjectIds(section.subResults))].sort().join('|')
+  const groupKey = (section: ReportCardResultSection) => section.moduleId ?? section.sectionId
   const values = (result: ReportCardResult) => {
     const subjects = new Map<string, ReportCardResultSection>()
     const groups = new Map<string, ReportCardResultSection>()
     const walk = (nodes: readonly ReportCardResultSection[]) => {
       for (const node of nodes) {
-        if (node.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+        if (node.sectionKind === ReportCardResultSectionKind.Subject) {
           const id = subjectId(node)
           if (subjects.has(id))
             throw new BusinessRuleViolationError('DOCUMENT_INPUT_CONFLICT', 'A subject appears more than once in a report')
@@ -50,12 +49,12 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
   const rows: Array<ReportCardV1SubjectRow & { periodAverages: string[] }> = []
   const row = (section: ReportCardResultSection, kind: 'subject' | 'bilan', periodAverages: string[]) => ({
     name: kind === 'subject'
-      ? input.subjectNameByClassSubjectId?.get(section.classSubjectId!) ?? section.name
+      ? section.name
       : catalogBulletinSection(catalogText(section.name, lang), lang),
     kind,
     average: `${format(section.average)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
-    coefficient: String(section.weight),
-    total: format(section.average === undefined ? undefined : section.average * section.weight),
+    coefficient: kind === 'subject' ? (section.coefficient === undefined ? '—' : String(section.coefficient)) : String(section.weight),
+    total: format(section.average === undefined ? undefined : (section.grading?.value ?? section.average) * section.weight),
     rank: section.rank === undefined ? undefined : `${section.rank} / ${input.result.classSize ?? '—'}`,
     appreciation: section.comment,
     teacherName: kind === 'subject' ? input.teacherNameByClassSubjectId?.get(section.classSubjectId!) : undefined,
@@ -64,7 +63,7 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
   })
   const walk = (nodes: readonly ReportCardResultSection[]) => {
     for (const node of nodes) {
-      if (node.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+      if (node.sectionKind === ReportCardResultSectionKind.Subject) {
         const id = subjectId(node)
         if (seen.has(id))
           throw new BusinessRuleViolationError('DOCUMENT_INPUT_CONFLICT', 'A subject appears more than once in the annual report')
@@ -85,7 +84,7 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
         continue
       seen.add(id)
       rows.push({
-        name: input.subjectNameByClassSubjectId?.get(section.classSubjectId!) ?? section.name,
+        name: section.name,
         kind: 'subject',
         teacherName: input.teacherNameByClassSubjectId?.get(section.classSubjectId!),
         teachers: input.teachersByClassSubjectId?.get(section.classSubjectId!),
@@ -96,11 +95,10 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
       })
     }
   }
-  const annualSubjects = values(input.result).subjects
-  const gradedSubjects = [...annualSubjects.values()].filter(section => section.average !== undefined)
+  const gradedSubjects = input.result.sectionResults.filter(section => section.average !== undefined)
   rows.push({
     coefficient: String(gradedSubjects.reduce((sum, section) => sum + section.weight, 0)),
-    total: gradedSubjects.length ? format(gradedSubjects.reduce((sum, section) => sum + section.average! * section.weight, 0)) : '—',
+    total: gradedSubjects.length ? format(gradedSubjects.reduce((sum, section) => sum + (section.grading?.value ?? section.average!) * section.weight, 0)) : '—',
     name: input.result.aggregateLabel ?? (lang === 'en' ? 'Overall average' : 'Moyenne générale'),
     kind: 'totals',
     average: format(input.result.overallAverage),

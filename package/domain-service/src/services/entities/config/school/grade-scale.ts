@@ -52,8 +52,6 @@ async function validateGradeScaleSave(
 }
 
 async function scaleIsUsed(id: string, repositories: SchoolRepositories): Promise<boolean> {
-  if (await repositories.definitions.count({ gradeScaleId: id }))
-    return true
   const scale = await repositories.gradeScales.findById(id)
   if (!scale)
     return false

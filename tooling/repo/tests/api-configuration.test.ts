@@ -10,6 +10,12 @@ afterEach(() => {
 })
 
 describe('API configuration ownership', () => {
+  test('accepts terms settings in configuration and rejects unsupported modes', () => {
+    expect(validateConfig({ AUTH_TERMS_MODE: 'preview' }, 'config', 'local')).toEqual({ AUTH_TERMS_MODE: 'preview' })
+    expect(validateConfig({ AUTH_TERMS_MODE: 'enforced', AUTH_TERMS_VERSION: 'approved-v1' }, 'config', 'production')).toEqual({ AUTH_TERMS_MODE: 'enforced', AUTH_TERMS_VERSION: 'approved-v1' })
+    expect(() => validateConfig({ AUTH_TERMS_MODE: 'enabled' })).toThrow('unsupported setting')
+    expect(() => validateSecrets({ AUTH_TERMS_MODE: 'preview' })).toThrow('non-secret')
+  })
   test('rejects retired GraphQL settings and development credentials', () => {
     for (const key of ['ENABLE_GRAPHQL', 'GRAPHQL_GRAPHIQL', 'GRAPHIQL_WEBAPP_ORIGIN', 'GRAPHIQL_DEFAULT_EMAIL'])
       expect(() => validateConfig({ [key]: 'true' })).toThrow()

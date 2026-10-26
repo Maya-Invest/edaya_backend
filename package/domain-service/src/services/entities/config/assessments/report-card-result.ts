@@ -39,11 +39,10 @@ export async function validateReportCardResultSave(
   if (existing && !gradingRepublication) {
     assertDraftReportCardForTeacherComment(existing)
   }
-  const [student, classGroup, period, definition] = await Promise.all([
+  const [student, classGroup, period] = await Promise.all([
     repositories.students.findById(result.studentId),
     repositories.classGroups.findById(result.classGroupId),
     repositories.academicPeriods.findById(result.periodId),
-    repositories.definitions.findById(result.reportCardDefinitionId),
   ])
   if (
     !student
@@ -52,9 +51,8 @@ export async function validateReportCardResultSave(
     || !period
     || period.schoolId !== student.schoolId
     || period.academicYearId !== classGroup.academicYearId
-    || !definition
-    || definition.schoolId !== student.schoolId
-    || definition.academicYearId !== period.academicYearId
+    || result.gradeLevelId !== classGroup.gradeLevelId
+    || result.academicYearId !== period.academicYearId
   ) {
     denyResourceAccess()
   }
@@ -63,11 +61,14 @@ export async function validateReportCardResultSave(
     throw new BusinessRuleViolationError('GRADING_COMMAND_REQUIRED', 'Report revisions are command owned')
 
   if (result.status === ReportCardResultStatus.Published) {
-    const policy = (await repositories.gradeLevels.findById(classGroup.gradeLevelId))?.gradingPolicyFor(period.academicYearId)
+    const level = await repositories.gradeLevels.findById(classGroup.gradeLevelId)
+    const policy = level?.gradingPolicyFor(period.academicYearId)
+    if (!level || result.reportConfigurationRevision !== level.reportSettingsFor(period.academicYearId).revision)
+      throw new BusinessRuleViolationError('REPORT_CONFIGURATION_REVISION_CONFLICT', 'Regenerate the report after the configuration change')
     if (policy && (policy.status !== 'completed' || result.gradingPolicyRevision !== policy.revision || result.calculationStale))
       throw new BusinessRuleViolationError('GRADING_UPDATE_IN_PROGRESS', 'Publish only a current, fully recalculated report')
 
-    const context = await scopeReportAssessmentContext(repositories, await loadReportAssessmentContext(repositories, student.schoolId, result.studentId, result.aggregation?.sourcePeriodIds ?? [result.periodId]), definition.id, classGroup.id)
+    const context = await scopeReportAssessmentContext(repositories, await loadReportAssessmentContext(repositories, student.schoolId, result.studentId, result.aggregation?.sourcePeriodIds ?? [result.periodId]), classGroup.gradeLevelId, period.academicYearId)
     if (context.assessments.some(assessment => assessment.marksStatus !== 'submitted'))
       throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_SUBMITTED', 'Every applicable evaluation must be submitted before publication')
     if (result.sourceAssessments.length !== context.assessments.length || context.assessments.some(assessment => !result.sourceAssessments.some(source => source.assessmentId === assessment.id && source.revision === assessment.marksRevision)))

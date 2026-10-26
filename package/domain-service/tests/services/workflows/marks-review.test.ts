@@ -4,7 +4,7 @@ import { describe, expect, test } from 'bun:test'
 import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createReportCardContext } from './report-card-workflow-context'
 
-const reportInput = { id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' }
+const reportInput = { id: 'rc1', studentId: 'stu1', periodId: 'per1' }
 
 async function fixture() {
   const gateway = new RecordingNotificationGateway()
@@ -17,6 +17,14 @@ async function fixture() {
   const family = f.forActor(createGuardianActorMetadata({ schoolId: 'sch1', guardianId: 'gua1', subjectId: 'subject-gua1', academicYearId: 'ay1', requestId: 'family', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
   const edit = (score = 77.5, revision = 0) => f.service.assessmentsWorkflow.recordAssessmentResult({ requestId: `edit-${revision}`, expectedRevision: revision, id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score, designation: 'scored' })
   return { ...f, reviewer, family, edit, gateway }
+}
+
+async function publishReviewed(f: Awaited<ReturnType<typeof fixture>>, input: typeof reportInput & { aggregation?: import('@edaya/core').ReportCardAggregation }) {
+  let current = await f.repositories.results.findOne({ studentId: input.studentId, periodId: input.periodId })
+  if (!current || current.calculationStale)
+    current = await f.service.assessmentsWorkflow.generateReportCardResult(input)
+  const draft = current.revisedDraft ?? current
+  return f.service.assessmentsWorkflow.publishReportCardResult({ ...input, reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision })
 }
 
 function correctionInput(score: number | null = 85, designation: 'scored' | 'absent' | 'exempt' = 'scored') {
@@ -60,17 +68,16 @@ describe('evaluation marks review', () => {
     expect((await f.repositories.assessments.findById('ass1'))!.marksStatus).toBe('submitted')
   })
 
-  test('curriculum edits and resynchronization cannot change submitted grading configuration', async () => {
+  test('subject coefficient edits invalidate drafts without changing submitted marks', async () => {
     const f = await fixture()
-    const offering = (await f.repositories.classSubjects.findById('cs1'))!
-    const allocation = (await f.repositories.subjects.findById(offering.subjectId))!.copyWith({ coefficient: 1 })
-    await f.repositories.subjects.save(allocation)
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'freeze-curriculum', expectedRevision: 1 })
-    await expect(f.service.academicsWorkflow.updateSubject({ subjectId: allocation.id, coefficient: 2 })).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
-    await expect(f.service.academicsWorkflow.configureSubject({ ...allocation.data, coefficient: 2 })).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
-    expect((await f.repositories.classSubjects.findById('cs1'))!.coefficient).toBe(1)
-    expect((await f.repositories.subjects.findById(allocation.id))!.coefficient).toBe(1)
+    const draft = await f.service.assessmentsWorkflow.generateReportCardResult(reportInput)
+    const mark = (await f.repositories.assessmentResults.findById('ar1'))!
+    await f.service.academicsWorkflow.updateSubject({ subjectId: 'subject-math', coefficient: 2 })
+    expect((await f.repositories.results.findById(draft.id))!.calculationStale).toBe(true)
+    expect((await f.repositories.subjects.findById('subject-math'))!.coefficient).toBe(2)
+    expect((await f.repositories.assessmentResults.findById('ar1'))!.data).toEqual(mark.data)
   })
 
   test('batch grades preserve revision counts, reject duplicate targets and roll back mixed invalid writes', async () => {
@@ -103,7 +110,7 @@ describe('evaluation marks review', () => {
     const draft = await f.service.assessmentsWorkflow.generateReportCardResult(reportInput)
     expect(draft.overallAverage).toBeUndefined()
     expect(draft.pendingAssessmentIds).toEqual(['ass1'])
-    await expect(f.service.assessmentsWorkflow.publishReportCardResult(reportInput)).rejects.toMatchObject({ code: 'REPORT_CARD_MARKS_NOT_SUBMITTED' })
+    await expect(publishReviewed(f, reportInput)).rejects.toMatchObject({ code: 'REPORT_CARD_MARKS_NOT_SUBMITTED' })
     const input = { assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 }
     expect((await f.service.assessmentsWorkflow.submitAssessmentMarks(input)).marksStatus).toBe('submitted')
     expect((await f.service.assessmentsWorkflow.submitAssessmentMarks(input)).marksRevision).toBe(2)
@@ -114,29 +121,30 @@ describe('evaluation marks review', () => {
     const generated = await f.service.assessmentsWorkflow.generateReportCardResult(reportInput)
     expect(generated.overallAverage).toBe(15.5)
     expect(generated.sourceMarks).toEqual([{ resultId: 'ar1', assessmentId: 'ass1', revision: 1 }])
-    await f.service.assessmentsWorkflow.writeReportCardSectionComments({ id: 'rc1', requestId: 'comment', expectedVersion: generated.version, sections: [{ sectionId: 'sec-math', comment: 'Excellent progress' }] })
-    const published = await f.service.assessmentsWorkflow.publishReportCardResult({ ...reportInput, id: 'different-request-id' })
+    await f.service.assessmentsWorkflow.writeReportCardSectionComments({ id: 'rc1', requestId: 'comment', expectedVersion: generated.version, sections: [{ sectionId: 'subject:subject-math', comment: 'Excellent progress' }] })
+    const published = await publishReviewed(f, { ...reportInput, id: 'different-request-id' })
     expect(published.id).toBe('rc1')
     expect(published.sectionResults[0]?.subResults[0]?.comment).toBe('Excellent progress')
     expect(published.overallAverage).toBe(15.5)
-    expect((await f.service.assessmentsWorkflow.publishReportCardResult({ ...reportInput, id: 'different-request-id' })).id).toBe('rc1')
+    expect((await publishReviewed(f, { ...reportInput, id: 'different-request-id' })).id).toBe('rc1')
     await expect(f.service.assessmentsWorkflow.requestAssessmentMarksCorrection(correctionInput())).rejects.toMatchObject({ code: 'PUBLISHED_REPORT_CARD_IMMUTABLE' })
   })
 
-  test('publication excludes subjects absent from the report definition from blockers and permanent locks', async () => {
+  test('ungrouped subjects participate in publication blockers and permanent locks', async () => {
     const f = await fixture()
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-    await f.repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art' }))
+    await f.repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art', coefficient: 1 }))
     await f.repositories.classSubjects.save(new ClassSubject({ ...(await f.repositories.classSubjects.findById('cs1'))!.data, id: 'cs-art', subjectId: 'art' }))
     await f.repositories.assessments.save(new Assessment({ ...(await f.repositories.assessments.findById('ass1'))!.data, id: 'ass-art', classSubjectId: 'cs-art' }))
     await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar-art', assessmentId: 'ass-art', studentId: 'stu1', score: 50 }))
+    await seedSubjectParticipation(f.repositories)
     const pending = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...correctionInput(), assessmentId: 'ass-art', changes: [{ resultId: 'ar-art', proposed: { score: 60, designation: 'scored', notes: null } }] })
-    const report = await f.service.assessmentsWorkflow.publishReportCardResult(reportInput)
-    expect(report.sourceMarks.map(row => row.resultId)).toEqual(['ar1'])
-    expect(report.pendingCorrectionIds).toEqual([])
+    await expect(publishReviewed(f, reportInput)).rejects.toMatchObject({ code: 'REPORT_CARD_CORRECTIONS_PENDING' })
     await f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'approve-art', correctionId: pending.id, expectedVersion: 0 })
     expect((await f.repositories.assessmentResults.findById('ar-art'))!.score).toBe(60)
+    const report = await publishReviewed(f, reportInput)
+    expect(report.sourceMarks.map(row => row.resultId).sort()).toEqual(['ar-art', 'ar1'])
   })
 
   test('transferred marks retain per-student correction blockers and permanent locks in multi-period reports', async () => {
@@ -154,9 +162,9 @@ describe('evaluation marks review', () => {
     expect(draft.sourceMarks.map(row => row.resultId)).toEqual(['ar1'])
     expect(draft.overallAverage).toBe(15.5)
     const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection(correctionInput())
-    await expect(f.service.assessmentsWorkflow.publishReportCardResult(input)).rejects.toMatchObject({ code: 'REPORT_CARD_CORRECTIONS_PENDING' })
+    await expect(publishReviewed(f, input)).rejects.toMatchObject({ code: 'REPORT_CARD_CORRECTIONS_PENDING' })
     await f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'approve-transfer', correctionId: correction.id, expectedVersion: 0 })
-    const published = await f.service.assessmentsWorkflow.publishReportCardResult(input)
+    const published = await publishReviewed(f, input)
     expect(published.overallAverage).toBe(17)
     expect(published.sourceMarks).toEqual([{ resultId: 'ar1', assessmentId: 'ass1', revision: 2 }])
     await expect(f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...correctionInput(90), requestId: 'published-transfer', expectedRevision: 3 })).rejects.toMatchObject({ code: 'PUBLISHED_REPORT_CARD_IMMUTABLE' })
@@ -167,7 +175,7 @@ describe('evaluation marks review', () => {
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
     const draft = await f.service.assessmentsWorkflow.generateReportCardResult(reportInput)
-    await f.service.assessmentsWorkflow.writeReportCardSectionComments({ id: draft.id, requestId: 'comment', expectedVersion: draft.version, sections: [{ sectionId: 'sec-math', comment: 'Retain this comment' }] })
+    await f.service.assessmentsWorkflow.writeReportCardSectionComments({ id: draft.id, requestId: 'comment', expectedVersion: draft.version, sections: [{ sectionId: 'subject:subject-math', comment: 'Retain this comment' }] })
     const input = correctionInput(null, 'absent')
     const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection(input)
     expect((await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection(input)).id).toBe(correction.id)
@@ -175,7 +183,7 @@ describe('evaluation marks review', () => {
     expect((await f.family.baseService.entities.assessmentResults.findById('ar1'))!.score).toBe(77.5)
     expect((await f.repositories.assessments.findById('ass1'))!.marksRevision).toBe(2)
     expect((await f.repositories.results.findById(draft.id))!.pendingCorrectionIds).toEqual([correction.id])
-    await expect(f.service.assessmentsWorkflow.publishReportCardResult(reportInput)).rejects.toMatchObject({ code: 'REPORT_CARD_CORRECTIONS_PENDING' })
+    await expect(publishReviewed(f, reportInput)).rejects.toMatchObject({ code: 'REPORT_CARD_CORRECTIONS_PENDING' })
     await expect(f.service.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'self', correctionId: correction.id, expectedVersion: 0 })).rejects.toMatchObject({ code: 'MARKS_SELF_APPROVAL' })
     const decision = { requestId: 'approve', correctionId: correction.id, expectedVersion: 0 }
     await expect(f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ ...decision, expectedVersion: 1 })).rejects.toMatchObject({ code: 'MARKS_CORRECTION_VERSION_CONFLICT' })
@@ -257,7 +265,7 @@ describe('evaluation marks review', () => {
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 2 })
     const input = { ...correctionInput(), expectedRevision: 3, changes: [{ resultId: 'ar2', proposed: { score: 70, designation: 'scored' as const, notes: null } }] }
     const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection(input)
-    await f.service.assessmentsWorkflow.publishReportCardResult(reportInput)
+    await publishReviewed(f, reportInput)
     await f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ correctionId: correction.id, requestId: 'approve', expectedVersion: 0 })
     expect((await f.repositories.assessmentResults.findById('ar1'))!.revision).toBe(1)
     expect((await f.repositories.assessmentResults.findById('ar2'))!.revision).toBe(2)
