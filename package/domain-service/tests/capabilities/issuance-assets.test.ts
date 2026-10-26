@@ -44,7 +44,6 @@ describe('school issuance assets', () => {
       firstName: 'Grace',
       lastName: 'Hopper',
       subjectId: 'gua-subject',
-      contactMethods: [],
     }))
     await fixture.schoolRepositories.guardianLinks.save(new GuardianStudentLink({
       id: 'link-1',

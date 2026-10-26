@@ -23,3 +23,11 @@ Apply additive school migration `0047_durable_school_imports.sql` after the acad
 Apply school migration `0049_auto_billing.sql` with the matching backend and regenerated first-party clients. It replaces the fee enrollment mode with `autoBilling`; every existing fee starts Off and the migration creates neither charges nor background work. Enabling All students or Matching students explicitly schedules missing assignments for active class placements in that fee's academic year. Existing charge snapshots and cancellations are preserved.
 
 The transactional command outbox drives resumable automatic-billing runs. Request completion nudges the dispatcher, and the existing cron heartbeat recovers pending work. Fee details expose pending/running/completed/failed status and a retry command for unfinished work. Configuration and retry require catalog management plus assignment authority covering all students, classes, or grade levels in the fee's year; academic enrolment/profile writers need no added finance permission.
+
+## Flat guardian contacts
+
+Migration `0051_flat_guardian_contacts.sql` is a fresh-database breaking cutover and refuses populated guardian tables. Coordinate the backend with regenerated web and mobile clients. `updateGuardianProfile` replaces the contact-collection command and atomically saves supplied existing-child notification preferences. Guardian contacts are scalar import fields; the separate contact import is retired. Back up before resetting local school and identity databases; this cutover does not authorize resetting remote environments.
+
+## Year-level dashboard
+
+`getSchoolOverview` requires a school and academic year; its academic period is optional. A year-only response returns `academicPeriodId: null`, null period-dependent grading/report-card metrics, and no period-dependent action items. Other authorized summaries retain their existing year/date scopes. Supplied periods still require authorization and membership in the selected year. Regenerate first-party clients for the nullable response fields; no database migration or reset is needed.

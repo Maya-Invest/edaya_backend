@@ -1,8 +1,8 @@
-import type { AnnouncementInput, AnnouncementTarget, AnnouncementTargetInput, Guardian, MessageDeliveryRecipientKind, MessageDeliveryStatus, StaffMember } from '@edaya/core'
+import type { AnnouncementInput, AnnouncementTarget, AnnouncementTargetInput, MessageDeliveryRecipientKind, MessageDeliveryStatus, StaffMember } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { CommunicationsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, isInteractiveActor } from '@edaya/authorization'
-import { Announcement, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetEntity, BusinessRuleViolationError, MessageDeliveryStatus as DeliveryStatus, Guardian as GuardianEntity, MessageDelivery, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { Announcement, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetEntity, BusinessRuleViolationError, MessageDeliveryStatus as DeliveryStatus, MessageDelivery, StaffMember as StaffMemberEntity } from '@edaya/core'
 import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, buildNotificationDeliveryId, runWorkflowNotifications } from '../../capabilities/notifications'
 
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -382,7 +382,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async updateNotificationContact(
     input: UpdateNotificationContactInput,
-  ): Promise<StaffMember | Guardian> {
+  ): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const actor = await this.baseService.access.communications.assertOwnAccount()
 
@@ -425,40 +425,9 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         return staffMember
       }
 
-      if (actor.kind === 'guardian') {
-        const existing = await this.repositories.guardians.findById(actor.guardianId)
-        if (!existing) {
-          denyResourceAccess()
-        }
-        this.checkActorSchool(existing.schoolId)
-        if (!existing.subjectId) {
-          throw new BusinessRuleViolationError(
-            'NOTIFICATION_CONTACT_SUBJECT_REQUIRED',
-            'Link a login account before configuring notification contact details',
-          )
-        }
-        const guardian = new GuardianEntity({
-          ...existing.data,
-          id: existing.id,
-          schoolId: existing.schoolId,
-          firstName: existing.firstName,
-          lastName: existing.lastName,
-          contactMethods: [...existing.contactMethods],
-          notificationEmail,
-          notificationPhone,
-          subjectId: existing.subjectId,
-          hasAccess: existing.hasAccess,
-          createdAt: existing.createdAt,
-        })
-        const scope = await this.baseService.access.communications.assertContactUpdate('guardians', existing, guardian)
-        await this.repositories.guardians.forAccess(scope).save(guardian)
-
-        return guardian
-      }
-
       throw new BusinessRuleViolationError(
         'NOTIFICATION_CONTACT_UNSUPPORTED_ACTOR',
-        'Only linked staff and guardian accounts can update notification contact details',
+        'Only linked staff accounts can update notification contact details',
       )
     })
   }

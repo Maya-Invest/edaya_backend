@@ -35,7 +35,7 @@ export function createInProcessProfilePicturesSeedPort(
       })
     }),
     setGuardianPhotoUrl: (guardianId, photoUrl) => withSeedPortError('profilePictures.setGuardianPhotoUrl', async () => {
-      await service.studentWorkflow.updateGuardianContactMethods({ guardianId, photoUrl })
+      await service.studentWorkflow.updateGuardianProfile({ guardianId, photoUrl })
     }),
     setStaffPhotoUrl: (staffId, photoUrl) => withSeedPortError('profilePictures.setStaffPhotoUrl', async () => {
       await service.setupWorkflow.updateStaffMemberProfile({ staffId, photoUrl })

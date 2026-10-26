@@ -1,6 +1,6 @@
 import type { Activity, CalendarEvent } from '@edaya/core'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { AcademicYear, ActivityEnrollment, ActivityEnrollmentStatus, ClassGroup, GradeLevel, Guardian, GuardianContactMethod, GuardianContactMethodType, GuardianStudentLink, RecordingNotificationGateway, School, Student, StudentClassEnrollment } from '@edaya/core'
+import { AcademicYear, ActivityEnrollment, ActivityEnrollmentStatus, ClassGroup, GradeLevel, Guardian, GuardianStudentLink, RecordingNotificationGateway, School, Student, StudentClassEnrollment } from '@edaya/core'
 import { createTestApp } from './create-test-app'
 
 export async function createReminderCronContext(options: { asOf: Date, calendarEvents?: CalendarEvent[], activities?: Activity[] }) {
@@ -14,7 +14,7 @@ export async function createReminderCronContext(options: { asOf: Date, calendarE
   await repositories.gradeLevels.save(new GradeLevel({ id: 'gl1', schoolId: 'school-1', name: '6', label: '6', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'school-1', academicYearId: 'y1', gradeLevelId: 'gl1', name: '6A' }))
   await repositories.students.save(new Student({ id: 'stu1', schoolId: 'school-1', firstName: 'A', lastName: 'Student', subjectId: 'subject-stu1' }))
-  await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'school-1', firstName: 'A', lastName: 'Guardian', subjectId: 'subject-gua1', contactMethods: [new GuardianContactMethod({ type: GuardianContactMethodType.Email, value: 'guardian@example.test', allowsNotifications: true })] }))
+  await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'school-1', firstName: 'A', lastName: 'Guardian', subjectId: 'subject-gua1', email: 'guardian@example.test' }))
   await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link', schoolId: 'school-1', studentId: 'stu1', guardianId: 'gua1', relationship: 'parent', isPrimary: true, receivesAcademicReports: true }))
   await repositories.enrollments.save(new StudentClassEnrollment({ id: 'enrollment', studentId: 'stu1', classGroupId: 'cg1', academicYearId: 'y1', enrollmentIndex: 1 }))
   for (const event of options.calendarEvents ?? []) await repositories.calendarEvents.save(event)

@@ -102,7 +102,7 @@ describe('communications and calendar scope boundaries', () => {
     expect(await fixture.repositories.announcements.forAccess(await access.entity('announcements').readScope()).count()).toBe(1)
     expect((await fixture.repositories.announcementTargets.forAccess(await access.entity('announcementTargets').readScope()).list()).map(target => target.id)).toEqual(['target-mixed'])
     const before = (await fixture.repositories.guardians.findById('guardian-a'))!
-    await expect(access.communications.assertContactUpdate('guardians', before, new Guardian({ ...before.data, contactMethods: [...before.contactMethods], hasAccess: false }))).rejects.toThrow()
+    await expect(access.entity('guardians').assertSave(new Guardian({ ...before.data, hasAccess: false }), before)).rejects.toThrow()
   })
 
   async function calendars() {

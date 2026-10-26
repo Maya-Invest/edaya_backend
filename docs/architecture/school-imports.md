@@ -16,11 +16,11 @@ Prerequisites run before their dependents. Unrelated ready rows proceed. Cancell
 
 Corrections retain `row_id`, optional explicit `target_id`, source provenance and `on_existing`. Replacing a file creates an immutable revision. Successful unchanged logical operations retain their outcomes. Changing an already bound identity is a review conflict. Names, shared phone numbers and national matricules never silently merge people.
 
-`M` applies nonblank scalar values (including false and zero) and merges collections. `O` clears blank nullable mapped fields but preserves absent columns. A partial contact/link file never deletes unmentioned members. Complete replacement requires an explicit owner-level `complete_collection` declaration and executes the entire owner group atomically. Posted payments and accepted billing terms require financial correction workflows for conflicts.
+`M` applies nonblank scalar values (including false and zero) and merges collections. `O` clears blank nullable mapped fields but preserves absent columns. A partial relationship file never deletes unmentioned members. Complete replacement requires an explicit owner-level `complete_collection` declaration and executes the entire owner group atomically. Posted payments and accepted billing terms require financial correction workflows for conflicts.
 
 ## Formats and release
 
-Version 1 supports the ten former types plus academic disciplines, placement statuses, guardian contacts, guardian relationships and class offerings. Annual student/teacher values belong to the selected year. Teacher declarations do not create assignments. Imports do not activate accounts or send invitations.
+Version 1 supports the ten former types plus academic disciplines, placement statuses, guardian relationships and class offerings. Annual student/teacher values belong to the selected year. Teacher declarations do not create assignments. Imports do not activate accounts or send invitations.
 
 Limits: 5 MiB per file, 10,000 rows per batch, 128 columns, 32,768 characters per cell, one populated workbook sheet, 32 MiB expanded workbook, 8 MiB per ZIP entry, 500 ZIP entries. Formulas, encrypted workbooks, malformed dates, duplicate normalized headers and unsupported nonblank columns fail validation. `.xls` and irregular workbook preparation remain outside the application.
 
@@ -28,11 +28,11 @@ Apply additive migration `0047_durable_school_imports.sql` after the updated sch
 
 The synthetic submission fixture accounts for 1,144 students, 27 classes, 34 teachers, 231 repeating/913 non-repeating values, 32 numeric workloads totaling 649 hours and two unknown workloads. All 156 coefficient cells and 12 totals have explicit pending-review dispositions, including three inconsistent totals. Pending evidence is never counted as an operational import.
 
-Birth dates must be valid, unambiguous ISO dates and cannot be in the future. Ages below three or above eighty receive a nonblocking `IMPORT_BIRTH_DATE_REVIEW` warning for external review. Guardian telephone/email shorthand adds supplied contacts; clearing a collection requires `contact_methods` and an explicit `complete_contacts` declaration so additional contacts survive unrelated edits.
+Birth dates must be valid, unambiguous ISO dates and cannot be in the future. Ages below three or above eighty receive a nonblocking `IMPORT_BIRTH_DATE_REVIEW` warning for external review. Guardian rows contain `phone`, `alternative_phone`, `email`, `email_notifications_enabled`, `sms_notifications_enabled` and `push_notifications_enabled`. Contact fields follow scalar merge/overwrite rules; omitted switches preserve saved preferences. New guardians default to enabled channel preferences. The former guardian-contacts format and contact collection columns are unsupported.
 
 Confirmation drains bounded pages through the durable dispatcher (20 seconds on Workers; five minutes locally). The deployed heartbeat runs every minute and recovers remaining or interrupted work. The local API runs a non-overlapping recovery drain at startup and every minute, using the same runtime and honoring local job pauses. Page/elapsed limits stop between row transactions and leave persisted continuations; they never depend on browser polling.
 
-Phone imports accept a leading `#` as an Excel-friendly alternative to `+`. The service normalizes scalar phone fields and phone-valued guardian contacts (including JSON contact collections), while preserving raw cells and other fields. Existing plus prefixes and internal hash characters are unchanged. Matching never uses the phone alone.
+Phone imports accept a leading `#` as an Excel-friendly alternative to `+`. The service normalizes scalar phone fields, including guardian alternative phones, while preserving raw cells and other fields. Guardian contact validation then normalizes spacing, punctuation and international prefixes and rejects duplicate main/alternative numbers. Matching never uses the phone alone.
 
 Guardians may have an empty first name with a required nonblank last name. No name components are inferred. For existing records, blank first names preserve in M and clear to the empty string in O; omitted columns preserve in every mode. Student and teacher first names remain required.
 

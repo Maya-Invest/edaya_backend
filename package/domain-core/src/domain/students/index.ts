@@ -1,6 +1,5 @@
 export * from './disciplinary-action'
 export * from './guardian'
-export * from './guardian-contact-method'
 export * from './guardian-student-link'
 export * from './incident'
 export * from './student'

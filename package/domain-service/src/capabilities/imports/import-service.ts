@@ -234,7 +234,6 @@ export class SchoolImportService {
           staff: ['code'],
           classes: ['gradeLevelId', 'name'],
           subjects: ['gradeLevelId', data['code'] ? 'code' : 'name'],
-          guardian_contacts: ['guardianId', 'type', 'value'],
           guardian_relationships: ['guardianId', 'studentId'],
           class_offerings: ['classGroupId', 'subjectId'],
           teacher_assignments: ['teacherId', 'kind', 'classGroupId', 'subjectId'],
@@ -243,8 +242,7 @@ export class SchoolImportService {
           payments: ['reference'],
         }
         const keys = [`${row.type}:business:${fields[row.type].map(field => String(data[field] ?? '').trim().toLocaleLowerCase()).join('\0')}`]
-        if (row.type !== 'guardian_contacts')
-          keys.push(`${row.type}:target:${row.targetId}`)
+        keys.push(`${row.type}:target:${row.targetId}`)
         for (const identity of keys)
           identities.set(identity, [...identities.get(identity) ?? [], row])
       }

@@ -38,12 +38,18 @@ describeWithLightSchool('generated school client contract', (getContext) => {
     const client = createSchoolClient<components['schemas']>(createInProcessTransport(app, { headers: { ...await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL), 'x-actor-kind': 'staff', 'x-school-id': school.id } }))
     const guardian = await client.commands.registerGuardian({ id: 'single-token-api', schoolId: school.id, firstName: '', lastName: 'Koné', hasAccess: false, sendAccountInvitation: false })
     expect(guardian.firstName).toBe('')
-    await client.commands.updateGuardianContactMethods({ guardianId: guardian.id, occupation: 'Teacher', hasAccess: false })
+    await client.commands.updateGuardianProfile({ guardianId: guardian.id, occupation: 'Teacher', hasAccess: false, phone: '+22501020304', alternativePhone: '+22505060708', smsNotificationsEnabled: false })
+    await client.commands.updateGuardianProfile({ guardianId: guardian.id, phone: null })
+    const cleared = await client.entities.guardians.get(guardian.id)
+    expect(cleared.phone ?? null).toBeNull()
+    expect(cleared.alternativePhone).toBe('+22505060708')
+    expect(cleared.smsNotificationsEnabled).toBe(false)
+    expect(cleared.pushNotificationsEnabled).toBe(true)
     const saved = (await application.repositories.guardians.findById(guardian.id))!
     expect(saved.firstName).toBe('')
     expect(saved.fullName).toBe('Koné')
     expect(saved.occupation).toBe('Teacher')
-    await expect(client.commands.updateGuardianContactMethods({ guardianId: guardian.id, lastName: '', hasAccess: false })).rejects.toMatchObject({ status: 422 })
+    await expect(client.commands.updateGuardianProfile({ guardianId: guardian.id, lastName: '', hasAccess: false })).rejects.toMatchObject({ status: 422 })
   })
 
   it('returns 401 from generated authorization routes without a session cookie', async () => {

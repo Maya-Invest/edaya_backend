@@ -37,7 +37,6 @@ describe('student portrait review', () => {
       firstName: 'Grace',
       lastName: 'Hopper',
       subjectId: 'gua-subject',
-      contactMethods: [],
     }))
     await fixture.schoolRepositories.guardianLinks.save(new GuardianStudentLink({
       id: 'link-1',
@@ -244,7 +243,6 @@ describe('student portrait review', () => {
       firstName: 'Other',
       lastName: 'Adult',
       subjectId: 'unlinked-subject',
-      contactMethods: [],
     }))
     const unlinked = fixture.forActor(createGuardianActorMetadata({
       schoolId: 'school',
@@ -269,7 +267,6 @@ describe('student portrait review', () => {
     const guardian = (await fixture.schoolRepositories.guardians.findById('gua1'))!
     await fixture.schoolRepositories.guardians.save(new Guardian({
       ...guardian.data,
-      contactMethods: [...guardian.contactMethods],
       hasAccess: false,
     }))
     await expect(guardianService().studentWorkflow.submitStudentPhoto({
@@ -308,7 +305,6 @@ describe('student portrait review', () => {
       firstName: 'Co',
       lastName: 'Guardian',
       subjectId: 'co-subject',
-      contactMethods: [],
     }))
     await fixture.schoolRepositories.guardianLinks.save(new GuardianStudentLink({
       id: 'link-co',
@@ -446,12 +442,12 @@ describe('student portrait review', () => {
       attachmentId: 'att-gua',
       actor: guardianService(),
     })
-    const guardian = await guardianService().studentWorkflow.updateGuardianContactMethods({
+    const guardian = await guardianService().studentWorkflow.updateGuardianProfile({
       guardianId: 'gua1',
       photoUrl: `/core/files/${guardianPhoto.id}/content`,
     })
     expect(guardian.photoUrl).toBe(`/core/files/${guardianPhoto.id}/content`)
-    await expect(guardianService().studentWorkflow.updateGuardianContactMethods({
+    await expect(guardianService().studentWorkflow.updateGuardianProfile({
       guardianId: 'gua1',
       photoUrl: 'https://cdn.example/photo.jpg',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)

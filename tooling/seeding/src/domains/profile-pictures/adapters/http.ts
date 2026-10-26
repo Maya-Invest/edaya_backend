@@ -116,7 +116,7 @@ export function createHttpProfilePicturesSeedPort(
       })
     }),
     setGuardianPhotoUrl: (guardianId, photoUrl) => withSeedPortError('profilePictures.setGuardianPhotoUrl', async () => {
-      await postCoreCommand(requestOptions, 'updateGuardianContactMethods', { guardianId, photoUrl })
+      await postCoreCommand(requestOptions, 'updateGuardianProfile', { guardianId, photoUrl })
     }),
     setStaffPhotoUrl: (staffId, photoUrl) => withSeedPortError('profilePictures.setStaffPhotoUrl', async () => {
       await postCoreCommand(requestOptions, 'updateStaffMemberProfile', { staffId, photoUrl })

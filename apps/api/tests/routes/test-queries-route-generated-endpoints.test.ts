@@ -190,6 +190,22 @@ describe("generated core query endpoints", () => {
     });
   });
 
+  it("accepts a year-only dashboard query but rejects an explicitly invalid period", async () => {
+    const getSchoolOverview = mock().mockResolvedValue({ academicPeriodId: null });
+    const app = setupTestApp({ baseService: {}, getSchoolOverview });
+    const request = (academicPeriodId?: string) => app.request("/core/queries/get-school-overview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schoolId: "school-1", academicYearId: "year-1", academicPeriodId }),
+    });
+    const response = await request();
+    expect(response.status).toBe(200);
+    expect(await response.json() as { academicPeriodId: null }).toEqual({ academicPeriodId: null });
+    expect(getSchoolOverview).toHaveBeenCalledWith({ schoolId: "school-1", academicYearId: "year-1", academicPeriodId: undefined, referenceDate: undefined });
+    expect((await request("")).status).toBe(422);
+    expect(getSchoolOverview).toHaveBeenCalledTimes(1);
+  });
+
   it("executes get-class-group-timetable query route", async () => {
     const mockGetClassGroupTimetable = mock().mockResolvedValue({
       classGroupId: "cg-1",

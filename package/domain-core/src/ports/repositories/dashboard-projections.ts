@@ -3,7 +3,7 @@ import type { ResourceAccessScope } from './resource-access-scope'
 export interface GetSchoolOverviewInput {
   schoolId: string
   academicYearId: string
-  academicPeriodId: string
+  academicPeriodId?: string
   referenceDate?: Date
 }
 
@@ -57,9 +57,9 @@ export interface DashboardAreaHealthStudents {
 
 export interface DashboardAreaHealthAcademics {
   gradingCompletionPercent: number | null
-  publishedReportCards: number
-  totalReportCards: number
-  incompleteGradingClassCount: number
+  publishedReportCards: number | null
+  totalReportCards: number | null
+  incompleteGradingClassCount: number | null
 }
 
 export interface DashboardAreaHealthFinance {
@@ -88,20 +88,20 @@ export interface SchoolOverviewKpis {
   staffCount: number
   overdueFeeCount: number
   overdueFeeAmount: number
-  publishedReportCardCount: number
-  unpublishedReportCardCount: number
+  publishedReportCardCount: number | null
+  unpublishedReportCardCount: number | null
   attendanceRateToday: number | null
   absencesToday: number
   openIncidentCount: number
   highSeverityIncidentCount: number
   pendingJustificationCount: number
-  incompleteGradingClassCount: number
+  incompleteGradingClassCount: number | null
 }
 
 export interface SchoolOverview {
   schoolId: string
   academicYearId: string
-  academicPeriodId: string
+  academicPeriodId: string | null
   referenceDate: string
   generatedAt: string
   kpis: SchoolOverviewKpis

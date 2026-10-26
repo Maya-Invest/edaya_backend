@@ -1151,9 +1151,9 @@ export const clientBindings = {
         "requestSchemaName": "UpdateStudentNoteCommand",
         "responseSchemaName": "StudentNote"
       },
-      "updateGuardianContactMethods": {
-        "publicName": "update-guardian-contact-methods",
-        "requestSchemaName": "UpdateGuardianContactMethodsCommand",
+      "updateGuardianProfile": {
+        "publicName": "update-guardian-profile",
+        "requestSchemaName": "UpdateGuardianProfileCommand",
         "responseSchemaName": "Guardian"
       },
       "updateGuardianStudentLink": {
@@ -1864,7 +1864,7 @@ export const clientBindings = {
       "updateNotificationContact": {
         "publicName": "update-notification-contact",
         "requestSchemaName": "UpdateNotificationContactCommand",
-        "responseSchemaName": "UpdateNotificationContactResponse"
+        "responseSchemaName": "StaffMember"
       },
       "registerPushDevice": {
         "publicName": "register-push-device",

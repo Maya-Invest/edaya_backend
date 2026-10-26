@@ -53,3 +53,9 @@ test("import upload allows a 5 MiB file with bounded base64 overhead without rai
   expect((await f.request("create", { academicYearId: "x".repeat(1024 * 1024) })).status).toBe(413);
   expect(f.received).toHaveLength(1);
 });
+
+test("removed guardian contact imports are rejected before persistence", async () => {
+  const f = fixture();
+  expect((await f.request("submit", { batchId: "batch", type: "guardian_contacts", fileName: "contacts.csv", base64: "YQ==" })).status).toBe(422);
+  expect(f.received).toHaveLength(0);
+});

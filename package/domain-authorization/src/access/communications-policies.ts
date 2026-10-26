@@ -126,9 +126,9 @@ export class CommunicationsAccessPolicy {
     return scope
   }
 
-  async assertContactUpdate<K extends 'staffMembers' | 'guardians'>(resource: K, before: CoreEntityMap[K], after: CoreEntityMap[K]) {
+  async assertContactUpdate<K extends 'staffMembers'>(resource: K, before: CoreEntityMap[K], after: CoreEntityMap[K]) {
     const actor = await this.assertOwnAccount()
-    if ((resource === 'staffMembers' ? actor.kind !== 'staff' : actor.kind !== 'guardian')
+    if (actor.kind !== 'staff'
       || before.id !== actor.actorId || after.id !== before.id || before.subjectId !== actor.subjectId || after.subjectId !== before.subjectId) {
       return denied('Notification contacts belong to the selected profile')
     }

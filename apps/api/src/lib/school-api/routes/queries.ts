@@ -47,7 +47,7 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           const input: GetSchoolOverviewInput = {
             schoolId: payload.schoolId as string,
             academicYearId: payload.academicYearId as string,
-            academicPeriodId: payload.academicPeriodId as string,
+            academicPeriodId: payload.academicPeriodId as string | undefined,
             referenceDate: payload.referenceDate
               ? new Date(`${payload.referenceDate as string}T00:00:00.000Z`)
               : undefined,

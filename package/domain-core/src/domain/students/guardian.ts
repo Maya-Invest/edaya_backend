@@ -1,10 +1,12 @@
 import { z } from 'zod'
+import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
-import {
-  GuardianContactMethod,
-  guardianContactMethodSchema,
-  GuardianContactMethodType,
-} from './guardian-contact-method'
+
+export function normalizeGuardianPhone(value: string): string {
+  return value.trim().replace(/^#(?=\d)/, '+').replace(/[\s().-]/g, '').replace(/^00/, '+')
+}
+
+const guardianPhoneSchema = z.string().trim().min(1).transform(normalizeGuardianPhone).pipe(z.string().regex(/^\+?\d+$/, 'Invalid phone number')).nullable().optional()
 
 export const guardianSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -15,19 +17,18 @@ export const guardianSchema = z.object({
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional(),
-  email: z.string().trim().min(1, 'email must not be blank').nullable().optional(),
-  notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  notificationPhone: z.string().trim().min(1, 'notificationPhone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  phone: guardianPhoneSchema,
+  alternativePhone: guardianPhoneSchema,
+  email: z.string().trim().email().toLowerCase().nullable().optional(),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  contactMethods: z.array(z.union([z.instanceof(GuardianContactMethod), guardianContactMethodSchema])).default([]),
+  emailNotificationsEnabled: z.boolean().default(true),
+  smsNotificationsEnabled: z.boolean().default(true),
+  pushNotificationsEnabled: z.boolean().default(true),
   hasAccess: z.boolean().default(true),
   createdAt: zodDate().default(() => new Date()),
 })
 
-export type GuardianData = Omit<z.infer<typeof guardianSchema>, 'contactMethods'> & {
-  contactMethods: readonly GuardianContactMethod[]
-}
+export type GuardianData = z.infer<typeof guardianSchema>
 export type GuardianInput = z.input<typeof guardianSchema>
 
 export const guardianCreateSchema = guardianSchema.omit({ createdAt: true })
@@ -42,36 +43,10 @@ export class Guardian {
 
   constructor(args: GuardianInput) {
     const data = parseDomain(guardianSchema, args)
-    const builtContactMethods = data.contactMethods.map(item =>
-      item instanceof GuardianContactMethod ? item : new GuardianContactMethod(item),
-    )
-    const normalizedPhone = data.phone ?? undefined
-    const normalizedEmail = data.email ?? undefined
-    if (normalizedPhone) {
-      builtContactMethods.push(
-        new GuardianContactMethod({
-          type: GuardianContactMethodType.Phone,
-          value: normalizedPhone,
-          isPrimary: builtContactMethods.length === 0,
-        }),
-      )
+    if (data.phone && data.phone === data.alternativePhone) {
+      throw new BusinessRuleViolationError('DUPLICATE_GUARDIAN_PHONE', 'Main and alternative phone numbers must be different')
     }
-    if (normalizedEmail) {
-      builtContactMethods.push(
-        new GuardianContactMethod({
-          type: GuardianContactMethodType.Email,
-          value: normalizedEmail,
-          isPrimary: builtContactMethods.length === 0,
-        }),
-      )
-    }
-    const finalContactMethods = Object.freeze(Guardian.normalizeContactMethods(builtContactMethods))
-    this.data = {
-      ...data,
-      contactMethods: finalContactMethods,
-      phone: finalContactMethods.find(item => item.type === GuardianContactMethodType.Phone)?.value,
-      email: finalContactMethods.find(item => item.type === GuardianContactMethodType.Email)?.value,
-    }
+    this.data = { ...data, phone: data.phone ?? undefined, alternativePhone: data.alternativePhone ?? undefined, email: data.email ?? undefined }
   }
 
   get id() { return this.data.id }
@@ -82,58 +57,18 @@ export class Guardian {
   get lastName() { return this.data.lastName }
   get code() { return this.data.code }
   get photoUrl() { return this.data.photoUrl }
-  get contactMethods() { return this.data.contactMethods }
   get subjectId() { return this.data.subjectId }
   get hasAccess() { return this.data.hasAccess }
-  get notificationEmail() { return this.data.notificationEmail }
-  get notificationPhone() { return this.data.notificationPhone }
   get createdAt() { return this.data.createdAt }
 
-  get phone(): string | undefined {
-    return this.contactMethods.find(item => item.type === GuardianContactMethodType.Phone)?.value
-  }
-
-  get email(): string | undefined {
-    return this.contactMethods.find(item => item.type === GuardianContactMethodType.Email)?.value
-  }
+  get phone() { return this.data.phone ?? undefined }
+  get alternativePhone() { return this.data.alternativePhone ?? undefined }
+  get email() { return this.data.email ?? undefined }
+  get emailNotificationsEnabled() { return this.data.emailNotificationsEnabled }
+  get smsNotificationsEnabled() { return this.data.smsNotificationsEnabled }
+  get pushNotificationsEnabled() { return this.data.pushNotificationsEnabled }
 
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`.trim()
-  }
-
-  private static normalizeContactMethods(
-    contactMethods: readonly GuardianContactMethod[],
-  ): readonly GuardianContactMethod[] {
-    const uniqueMethods = new Map<string, GuardianContactMethod>()
-    let primaryKey: string | undefined
-
-    for (const method of contactMethods) {
-      const key = Guardian.buildContactMethodKey(method.type, method.value)
-      if (!uniqueMethods.has(key)) {
-        uniqueMethods.set(key, method)
-      }
-      if (!primaryKey && method.isPrimary) {
-        primaryKey = key
-      }
-    }
-
-    const normalizedMethods = [...uniqueMethods.entries()].map(([key, method], index) => {
-      const isPrimary = primaryKey ? key === primaryKey : index === 0
-      return new GuardianContactMethod({
-        type: method.type,
-        value: method.value,
-        label: method.label,
-        isPrimary,
-        allowsNotifications: method.allowsNotifications,
-      })
-    })
-
-    return normalizedMethods
-  }
-
-  private static buildContactMethodKey(type: GuardianContactMethodType, value: string): string {
-    const normalizedValue
-      = type === GuardianContactMethodType.Email ? value.toLocaleLowerCase() : value
-    return `${type}:${normalizedValue}`
   }
 }

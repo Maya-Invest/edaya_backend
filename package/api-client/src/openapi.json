@@ -995,7 +995,6 @@
               "guardians",
               "teachers",
               "staff",
-              "guardian_contacts",
               "guardian_relationships",
               "class_offerings",
               "teacher_assignments",
@@ -1066,7 +1065,6 @@
               "guardians",
               "teachers",
               "staff",
-              "guardian_contacts",
               "guardian_relationships",
               "class_offerings",
               "teacher_assignments",
@@ -1117,7 +1115,6 @@
               "guardians",
               "teachers",
               "staff",
-              "guardian_contacts",
               "guardian_relationships",
               "class_offerings",
               "teacher_assignments",
@@ -1585,7 +1582,6 @@
               "guardians",
               "teachers",
               "staff",
-              "guardian_contacts",
               "guardian_relationships",
               "class_offerings",
               "teacher_assignments",
@@ -7071,64 +7067,32 @@
             "nullable": true,
             "minLength": 1
           },
+          "alternativePhone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "email": {
             "type": "string",
             "nullable": true,
-            "minLength": 1
-          },
-          "notificationEmail": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "notificationPhone": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "format": "email"
           },
           "subjectId": {
             "type": "string",
             "nullable": true,
             "minLength": 1
           },
-          "contactMethods": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "phone",
-                    "email",
-                    "whatsapp",
-                    "sms",
-                    "other"
-                  ]
-                },
-                "value": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "label": {
-                  "type": "string",
-                  "nullable": true,
-                  "minLength": 1
-                },
-                "isPrimary": {
-                  "type": "boolean",
-                  "default": false
-                },
-                "allowsNotifications": {
-                  "type": "boolean",
-                  "default": true
-                }
-              },
-              "required": [
-                "type",
-                "value"
-              ]
-            }
+          "emailNotificationsEnabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "smsNotificationsEnabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "pushNotificationsEnabled": {
+            "type": "boolean",
+            "default": true
           },
           "hasAccess": {
             "type": "boolean",
@@ -7140,8 +7104,7 @@
           "id",
           "schoolId",
           "firstName",
-          "lastName",
-          "contactMethods"
+          "lastName"
         ]
       },
       "Student": {
@@ -11569,68 +11532,32 @@
             "nullable": true,
             "minLength": 1
           },
+          "alternativePhone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "email": {
             "type": "string",
             "nullable": true,
-            "minLength": 1
-          },
-          "notificationEmail": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "notificationPhone": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "format": "email"
           },
           "subjectId": {
             "type": "string",
             "nullable": true,
             "minLength": 1
           },
-          "contactMethods": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "phone",
-                    "email",
-                    "whatsapp",
-                    "sms",
-                    "other"
-                  ]
-                },
-                "value": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "label": {
-                  "type": "string",
-                  "nullable": true,
-                  "minLength": 1
-                },
-                "isPrimary": {
-                  "type": "boolean",
-                  "default": false
-                },
-                "allowsNotifications": {
-                  "type": "boolean",
-                  "default": true
-                }
-              },
-              "required": [
-                "type",
-                "value"
-              ]
-            }
+          "emailNotificationsEnabled": {
+            "type": "boolean"
+          },
+          "smsNotificationsEnabled": {
+            "type": "boolean"
+          },
+          "pushNotificationsEnabled": {
+            "type": "boolean"
           },
           "hasAccess": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "createdAt": {},
           "sendAccountInvitation": {
@@ -11642,7 +11569,8 @@
           "schoolId",
           "firstName",
           "lastName"
-        ]
+        ],
+        "additionalProperties": false
       },
       "PromoteStudentCommand": {
         "type": "object",
@@ -12127,7 +12055,7 @@
           "noteId"
         ]
       },
-      "UpdateGuardianContactMethodsCommand": {
+      "UpdateGuardianProfileCommand": {
         "type": "object",
         "properties": {
           "occupation": {
@@ -12161,72 +12089,59 @@
             "nullable": true,
             "minLength": 1
           },
+          "alternativePhone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "email": {
             "type": "string",
             "nullable": true,
-            "minLength": 1
+            "format": "email"
           },
-          "notificationEmail": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+          "emailNotificationsEnabled": {
+            "type": "boolean"
           },
-          "notificationPhone": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+          "smsNotificationsEnabled": {
+            "type": "boolean"
           },
-          "contactMethods": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "phone",
-                    "email",
-                    "whatsapp",
-                    "sms",
-                    "other"
-                  ]
-                },
-                "value": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "label": {
-                  "type": "string",
-                  "nullable": true,
-                  "minLength": 1
-                },
-                "isPrimary": {
-                  "type": "boolean",
-                  "default": false
-                },
-                "allowsNotifications": {
-                  "type": "boolean",
-                  "default": true
-                }
-              },
-              "required": [
-                "type",
-                "value"
-              ]
-            }
+          "pushNotificationsEnabled": {
+            "type": "boolean"
           },
           "hasAccess": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "guardianId": {
             "type": "string",
             "minLength": 1
+          },
+          "studentNotificationPreferences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "receivesAcademicReports": {
+                  "type": "boolean"
+                },
+                "receivesAttendanceAlerts": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "studentId"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
           "guardianId"
-        ]
+        ],
+        "additionalProperties": false
       },
       "UpdateGuardianStudentLinkCommand": {
         "type": "object",
@@ -24091,16 +24006,6 @@
           "deliveryId"
         ]
       },
-      "UpdateNotificationContactResponse": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/StaffMember"
-          },
-          {
-            "$ref": "#/components/schemas/Guardian"
-          }
-        ]
-      },
       "UpdateNotificationContactCommand": {
         "type": "object",
         "properties": {
@@ -27974,10 +27879,12 @@
           },
           "publishedReportCardCount": {
             "type": "integer",
+            "nullable": true,
             "minimum": 0
           },
           "unpublishedReportCardCount": {
             "type": "integer",
+            "nullable": true,
             "minimum": 0
           },
           "attendanceRateToday": {
@@ -28002,6 +27909,7 @@
           },
           "incompleteGradingClassCount": {
             "type": "integer",
+            "nullable": true,
             "minimum": 0
           }
         },
@@ -28116,14 +28024,17 @@
           },
           "publishedReportCards": {
             "type": "integer",
+            "nullable": true,
             "minimum": 0
           },
           "totalReportCards": {
             "type": "integer",
+            "nullable": true,
             "minimum": 0
           },
           "incompleteGradingClassCount": {
             "type": "integer",
+            "nullable": true,
             "minimum": 0
           }
         },
@@ -28275,6 +28186,7 @@
           },
           "academicPeriodId": {
             "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "referenceDate": {
@@ -28345,8 +28257,7 @@
         },
         "required": [
           "schoolId",
-          "academicYearId",
-          "academicPeriodId"
+          "academicYearId"
         ]
       },
       "AppShellCountsResponse": {
@@ -47785,31 +47696,31 @@
         }
       }
     },
-    "/core/commands/update-guardian-contact-methods": {
+    "/core/commands/update-guardian-profile": {
       "post": {
         "tags": [
           "Core Commands"
         ],
-        "summary": "update-guardian-contact-methods",
-        "operationId": "commands.updateGuardianContactMethods",
+        "summary": "update-guardian-profile",
+        "operationId": "commands.updateGuardianProfile",
         "x-edaya-kind": "command",
-        "x-edaya-command-key": "updateGuardianContactMethods",
-        "x-edaya-command-public-name": "update-guardian-contact-methods",
-        "x-edaya-request-schema": "UpdateGuardianContactMethodsCommand",
+        "x-edaya-command-key": "updateGuardianProfile",
+        "x-edaya-command-public-name": "update-guardian-profile",
+        "x-edaya-request-schema": "UpdateGuardianProfileCommand",
         "x-edaya-response-schema": "Guardian",
         "requestBody": {
-          "description": "update-guardian-contact-methods payload",
+          "description": "update-guardian-profile payload",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateGuardianContactMethodsCommand"
+                "$ref": "#/components/schemas/UpdateGuardianProfileCommand"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Executed update-guardian-contact-methods",
+            "description": "Executed update-guardian-profile",
             "content": {
               "application/json": {
                 "schema": {
@@ -66256,7 +66167,7 @@
         "x-edaya-command-key": "updateNotificationContact",
         "x-edaya-command-public-name": "update-notification-contact",
         "x-edaya-request-schema": "UpdateNotificationContactCommand",
-        "x-edaya-response-schema": "UpdateNotificationContactResponse",
+        "x-edaya-response-schema": "StaffMember",
         "requestBody": {
           "description": "update-notification-contact payload",
           "content": {
@@ -66273,7 +66184,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UpdateNotificationContactResponse"
+                  "$ref": "#/components/schemas/StaffMember"
                 }
               }
             }

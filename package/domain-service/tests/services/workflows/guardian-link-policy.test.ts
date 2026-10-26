@@ -14,7 +14,7 @@ describe('guardian linking uses its own action and shared enrollment validation'
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
-    await fixture.repositories.guardians.save(new Guardian({ id: 'new-guardian', schoolId: 'school-a', firstName: 'Another', lastName: 'Guardian', contactMethods: [] }))
+    await fixture.repositories.guardians.save(new Guardian({ id: 'new-guardian', schoolId: 'school-a', firstName: 'Another', lastName: 'Guardian' }))
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
   afterEach(async () => fixture.db.close())

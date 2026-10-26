@@ -7,13 +7,7 @@ import { importErrorCode, importJson } from './normalization'
 export function completeCollectionRows(row: ImportRow, rows: ImportRow[]): ImportRow[] {
   return row.collection?.memberIds.map(id => rows.find(candidate => candidate.id === id)!).filter(Boolean) ?? [row]
 }
-export async function collectionSnapshot(ctx: ImportBusinessContext, type: ImportRow['type'], ownerId: string): Promise<ImportRecord[]> {
-  if (type === 'guardian_contacts') {
-    const existing = (await ctx.list('guardians', { id: ownerId })).find(guardian => guardian.id === ownerId)
-    if (existing)
-      return importJson(await ctx.readable('guardians', ownerId))['contactMethods'] as ImportRecord[]
-    return (ctx.rows.find(row => row.type === 'guardians' && row.targetId === ownerId)?.proposed?.['contactMethods'] ?? []) as ImportRecord[]
-  }
+export async function collectionSnapshot(ctx: ImportBusinessContext, _type: ImportRow['type'], ownerId: string): Promise<ImportRecord[]> {
   const links = (await ctx.list('guardianLinks', { guardianId: ownerId })).filter(link => link.guardianId === ownerId)
   const records: ImportRecord[] = []
   for (const link of links)
@@ -24,7 +18,7 @@ export async function collectionSnapshot(ctx: ImportBusinessContext, type: Impor
 export async function prepareCompleteCollections(ctx: ImportBusinessContext, rows: ImportRow[]): Promise<void> {
   for (const row of rows)
     delete row.collection
-  for (const declaration of rows.filter(row => ['guardian_contacts', 'guardian_relationships'].includes(row.type) && row.proposed?.['completeCollection'] === true && row.effectiveMode === 'O')) {
+  for (const declaration of rows.filter(row => row.type === 'guardian_relationships' && row.proposed?.['completeCollection'] === true && row.effectiveMode === 'O')) {
     const ownerId = String(declaration.proposed!['guardianId'])
     const group = rows.filter(row => row.type === declaration.type && row.source.fileId === declaration.source.fileId && (row.proposed?.['guardianId'] === ownerId || normalizeImportKey(row.values['guardian']) === normalizeImportKey(declaration.values['guardian'])))
     const invalid = group.some(row => row.effectiveMode !== 'O' || (!IMPORT_COMPLETED_OUTCOMES.includes(row.outcome) && row.outcome !== 'pending'))
@@ -50,11 +44,6 @@ export async function prepareCompleteCollections(ctx: ImportBusinessContext, row
       }
     }
   }
-}
-export async function replaceCompleteContacts(ctx: ImportBusinessContext, group: ImportRow[]): Promise<void> {
-  const ownerId = group[0]!.collection!.ownerId
-  const contacts = group.map(row => Object.fromEntries(Object.entries(row.proposed!).filter(([key]) => ['type', 'value', 'label', 'isPrimary', 'allowsNotifications'].includes(key))))
-  await ctx.service.studentWorkflow.updateGuardianContactMethods({ guardianId: ownerId, contactMethods: contacts } as Parameters<typeof ctx.service.studentWorkflow.updateGuardianContactMethods>[0])
 }
 export async function removeUnmentionedLinks(ctx: ImportBusinessContext, group: ImportRow[]): Promise<void> {
   const ownerId = group[0]!.collection!.ownerId

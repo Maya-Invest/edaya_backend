@@ -81,6 +81,9 @@ describe('typed staff grants coordinated migration', () => {
       DELETE FROM class_subjects;
       DELETE FROM subjects;
     `)
+    // This staff-grant fixture does not use family records. The guardian schema
+    // cutover intentionally requires an empty table, tested separately.
+    await db.exec('DELETE FROM guardian_student_links; DELETE FROM guardians')
     // Current repository policies require the complete current schema after the historical conversion.
     for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0044').sort())
       await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))

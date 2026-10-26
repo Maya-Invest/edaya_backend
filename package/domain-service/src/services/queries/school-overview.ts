@@ -12,7 +12,7 @@ function buildActionItems(kpis: SchoolOverviewKpis, pendingStudentPhotoCount = 0
       amount: kpis.overdueFeeAmount,
     })
   }
-  if (kpis.unpublishedReportCardCount > 0) {
+  if (kpis.unpublishedReportCardCount !== null && kpis.unpublishedReportCardCount > 0) {
     candidates.push({
       key: 'unpublished_report_cards',
       count: kpis.unpublishedReportCardCount,
@@ -30,7 +30,7 @@ function buildActionItems(kpis: SchoolOverviewKpis, pendingStudentPhotoCount = 0
       count: kpis.highSeverityIncidentCount,
     })
   }
-  if (kpis.incompleteGradingClassCount > 0) {
+  if (kpis.incompleteGradingClassCount !== null && kpis.incompleteGradingClassCount > 0) {
     candidates.push({
       key: 'incomplete_grading',
       count: kpis.incompleteGradingClassCount,

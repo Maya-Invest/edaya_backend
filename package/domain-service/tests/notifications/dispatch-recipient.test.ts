@@ -20,7 +20,7 @@ describe('delayed notification dispatch uses current business facts', () => {
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec(`UPDATE students SET subject_id = 'person-a' WHERE id = 'student-a';
       UPDATE staff_members SET notification_email = 'staff@example.test' WHERE id = 'staff-a';
-      UPDATE guardians SET notification_email = 'guardian@example.test', contact_methods = '[{"type":"email","value":"guardian@example.test","allowsNotifications":true}]' WHERE id = 'guardian-a';`)
+      UPDATE guardians SET email = 'guardian@example.test' WHERE id = 'guardian-a';`)
     base = new BaseSchoolService({
       actor: createSystemActorMetadata({ systemId: 'notify-adapter', schoolId: 'school-a', reason: 'Dispatch fixture', requestId: 'dispatch-test' }),
       repositories: fixture.repositories,
@@ -65,9 +65,9 @@ describe('delayed notification dispatch uses current business facts', () => {
     const runtime = createNotifyRuntimeFromDrizzle({ db, env: {}, resolveSchoolRecipient: resolve, email, sms: { implemented: false, send: async () => ({ status: 'rejected' as const, reason: 'SMS_UNIMPLEMENTED', retryable: false }) } })
     const gateway = createNotifyNotificationGateway({ runtime })
     for (const input of inputs) await gateway.enqueue({ idempotencyKey: input.deliveryId, schoolId: input.schoolId, kind: 'event', eventKey: input.eventKey, title: 'Private', body: 'Details', recipients: [{ kind: input.deliveryId.endsWith('staff') ? staff : guardian, id: input.deliveryId.endsWith('staff') ? 'staff-a' : 'guardian-a', subjectId: input.subjectId }] })
-    await fixture.db.exec('UPDATE guardians SET notification_email = \'new-guardian@example.test\' WHERE id = \'guardian-a\'')
+    await fixture.db.exec('UPDATE guardians SET email = \'new-guardian@example.test\' WHERE id = \'guardian-a\'')
     if (!guardianEnabled)
-      await fixture.db.exec('UPDATE guardians SET contact_methods = \'[]\' WHERE id = \'guardian-a\'')
+      await fixture.db.exec('UPDATE guardians SET email_notifications_enabled = false WHERE id = \'guardian-a\'')
     await drainPendingSchoolNotifications(runtime)
     expect(sent.sort()).toEqual(guardianEnabled ? ['new-guardian@example.test', 'staff@example.test'] : ['staff@example.test'])
     expect(await runtime.sql.query('SELECT * FROM notify.recipients')).toEqual([])

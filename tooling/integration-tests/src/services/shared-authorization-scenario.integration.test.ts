@@ -79,7 +79,7 @@ describe('shared two-school authorization scenario', () => {
     expect((await guardian.list()).map(student => student.id)).toEqual([ids.sibling])
     expect((await coGuardian.list()).map(student => student.id)).toEqual([ids.child])
     const original = scenario.guardians[0]!
-    await owner.guardians.save(new Guardian({ ...original.data, contactMethods: [...original.contactMethods], hasAccess: false }))
+    await owner.guardians.save(new Guardian({ ...original.data, hasAccess: false }))
     await expect(guardian.list()).rejects.toBeInstanceOf(AuthorizationError)
     expect(await owner.students.count()).toBe(3)
     expect((await owner.students.findById(ids.child))?.firstName).toBe(ids.child)

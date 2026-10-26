@@ -2230,7 +2230,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/commands/update-guardian-contact-methods": {
+    "/core/commands/update-guardian-profile": {
         parameters: {
             query?: never;
             header?: never;
@@ -2239,8 +2239,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** update-guardian-contact-methods */
-        post: operations["commands.updateGuardianContactMethods"];
+        /** update-guardian-profile */
+        post: operations["commands.updateGuardianProfile"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13271,7 +13271,7 @@ export interface components {
             batchId: string;
             schoolId: string;
             /** @enum {string} */
-            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
             templateVersion: number;
             revision: number;
             fileName: string;
@@ -13284,7 +13284,7 @@ export interface components {
             batchId: string;
             fileId?: string;
             /** @enum {string} */
-            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
             fileName: string;
             base64: string;
         };
@@ -13293,7 +13293,7 @@ export interface components {
             batchId: string;
             schoolId: string;
             /** @enum {string} */
-            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
             source: {
                 fileId: string;
                 revisionId: string;
@@ -13400,7 +13400,7 @@ export interface components {
         };
         SchoolImportTemplateRequest: {
             /** @enum {string} */
-            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
             /**
              * @default xlsx
              * @enum {string}
@@ -14605,20 +14605,16 @@ export interface components {
             code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
+            alternativePhone?: string | null;
+            /** Format: email */
             email?: string | null;
-            notificationEmail?: string | null;
-            notificationPhone?: string | null;
             subjectId?: string | null;
-            contactMethods: {
-                /** @enum {string} */
-                type: "phone" | "email" | "whatsapp" | "sms" | "other";
-                value: string;
-                label?: string | null;
-                /** @default false */
-                isPrimary: boolean;
-                /** @default true */
-                allowsNotifications: boolean;
-            }[];
+            /** @default true */
+            emailNotificationsEnabled: boolean;
+            /** @default true */
+            smsNotificationsEnabled: boolean;
+            /** @default true */
+            pushNotificationsEnabled: boolean;
             /** @default true */
             hasAccess: boolean;
             createdAt?: unknown;
@@ -15413,22 +15409,14 @@ export interface components {
             code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
+            alternativePhone?: string | null;
+            /** Format: email */
             email?: string | null;
-            notificationEmail?: string | null;
-            notificationPhone?: string | null;
             subjectId?: string | null;
-            contactMethods?: {
-                /** @enum {string} */
-                type: "phone" | "email" | "whatsapp" | "sms" | "other";
-                value: string;
-                label?: string | null;
-                /** @default false */
-                isPrimary: boolean;
-                /** @default true */
-                allowsNotifications: boolean;
-            }[];
-            /** @default true */
-            hasAccess: boolean;
+            emailNotificationsEnabled?: boolean;
+            smsNotificationsEnabled?: boolean;
+            pushNotificationsEnabled?: boolean;
+            hasAccess?: boolean;
             createdAt?: unknown;
             sendAccountInvitation?: boolean;
         };
@@ -15566,7 +15554,7 @@ export interface components {
             updatedAt?: unknown;
             noteId: string;
         };
-        UpdateGuardianContactMethodsCommand: {
+        UpdateGuardianProfileCommand: {
             occupation?: string | null;
             sourceFullName?: string | null;
             firstName?: string;
@@ -15574,22 +15562,19 @@ export interface components {
             code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
+            alternativePhone?: string | null;
+            /** Format: email */
             email?: string | null;
-            notificationEmail?: string | null;
-            notificationPhone?: string | null;
-            contactMethods?: {
-                /** @enum {string} */
-                type: "phone" | "email" | "whatsapp" | "sms" | "other";
-                value: string;
-                label?: string | null;
-                /** @default false */
-                isPrimary: boolean;
-                /** @default true */
-                allowsNotifications: boolean;
-            }[];
-            /** @default true */
-            hasAccess: boolean;
+            emailNotificationsEnabled?: boolean;
+            smsNotificationsEnabled?: boolean;
+            pushNotificationsEnabled?: boolean;
+            hasAccess?: boolean;
             guardianId: string;
+            studentNotificationPreferences?: {
+                studentId: string;
+                receivesAcademicReports?: boolean;
+                receivesAttendanceAlerts?: boolean;
+            }[];
         };
         UpdateGuardianStudentLinkCommand: {
             guardianId?: string;
@@ -18404,7 +18389,6 @@ export interface components {
             deliveryId: string;
             readAt?: string | null;
         };
-        UpdateNotificationContactResponse: components["schemas"]["StaffMember"] | components["schemas"]["Guardian"];
         UpdateNotificationContactCommand: {
             notificationEmail?: string | null;
             notificationPhone?: string | null;
@@ -19369,14 +19353,14 @@ export interface components {
             staffCount: number;
             overdueFeeCount: number;
             overdueFeeAmount: number;
-            publishedReportCardCount: number;
-            unpublishedReportCardCount: number;
+            publishedReportCardCount: number | null;
+            unpublishedReportCardCount: number | null;
             attendanceRateToday: number | null;
             absencesToday: number;
             openIncidentCount: number;
             highSeverityIncidentCount: number;
             pendingJustificationCount: number;
-            incompleteGradingClassCount: number;
+            incompleteGradingClassCount: number | null;
         };
         DashboardActionItem: {
             /** @enum {string} */
@@ -19400,9 +19384,9 @@ export interface components {
         };
         DashboardAreaHealthAcademics: {
             gradingCompletionPercent: number | null;
-            publishedReportCards: number;
-            totalReportCards: number;
-            incompleteGradingClassCount: number;
+            publishedReportCards: number | null;
+            totalReportCards: number | null;
+            incompleteGradingClassCount: number | null;
         };
         DashboardAreaHealthFinance: {
             overdueAmount: number;
@@ -19436,7 +19420,7 @@ export interface components {
         SchoolOverviewResponse: {
             schoolId: string;
             academicYearId: string;
-            academicPeriodId: string;
+            academicPeriodId: string | null;
             /** Format: date */
             referenceDate: string;
             /** Format: date-time */
@@ -19450,7 +19434,7 @@ export interface components {
         GetSchoolOverviewQuery: {
             schoolId: string;
             academicYearId: string;
-            academicPeriodId: string;
+            academicPeriodId?: string;
             /** Format: date */
             referenceDate?: string;
         };
@@ -29637,21 +29621,21 @@ export interface operations {
             };
         };
     };
-    "commands.updateGuardianContactMethods": {
+    "commands.updateGuardianProfile": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description update-guardian-contact-methods payload */
+        /** @description update-guardian-profile payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateGuardianContactMethodsCommand"];
+                "application/json": components["schemas"]["UpdateGuardianProfileCommand"];
             };
         };
         responses: {
-            /** @description Executed update-guardian-contact-methods */
+            /** @description Executed update-guardian-profile */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -40733,7 +40717,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UpdateNotificationContactResponse"];
+                    "application/json": components["schemas"]["StaffMember"];
                 };
             };
             /** @description Invalid request payload */

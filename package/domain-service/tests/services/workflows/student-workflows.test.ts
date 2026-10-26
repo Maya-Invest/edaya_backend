@@ -454,7 +454,7 @@ describe('SchoolService student workflows', () => {
     expect((await studentNotes.findById('note-1'))?.body).toBe('Strong improvement in math and science.')
   })
 
-  test('updateGuardianContactMethods and updateGuardianStudentLink persist guardian relationships', async () => {
+  test('updateGuardianProfile and updateGuardianStudentLink persist guardian relationships', async () => {
     const { guardianLinks, guardians, service } = await createStudentAdminContext()
     await guardianLinks.save(new GuardianStudentLink({
       id: 'link-1',
@@ -465,7 +465,7 @@ describe('SchoolService student workflows', () => {
       createdAt: new Date('2026-01-01T00:00:00Z'),
     }))
 
-    const guardian = await service.studentWorkflow.updateGuardianContactMethods({
+    const guardian = await service.studentWorkflow.updateGuardianProfile({
       guardianId: 'gua1',
       firstName: 'Grace',
       lastName: 'Brewster',

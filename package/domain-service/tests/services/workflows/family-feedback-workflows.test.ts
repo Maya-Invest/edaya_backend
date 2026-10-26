@@ -106,7 +106,6 @@ async function seedAssignment(repositories: Awaited<ReturnType<typeof createTest
       firstName: `Parent${index}`,
       lastName: 'Ada',
       subjectId: `gua-subject-${index}`,
-      contactMethods: [],
     }))
     await repositories.guardianLinks.save(new GuardianStudentLink({
       id: `link${index}`,
@@ -202,7 +201,6 @@ describe('FamilyFeedbackServiceWorkflow', () => {
       firstName: 'Other',
       lastName: 'Ada',
       subjectId: 'gua-subject-1b',
-      contactMethods: [],
     }))
     await fixture.schoolRepositories.guardianLinks.save(new GuardianStudentLink({
       id: 'link1b',
@@ -556,7 +554,6 @@ describe('FamilyFeedbackServiceWorkflow', () => {
       firstName: 'Other',
       lastName: 'Ada',
       subjectId: 'gua-subject-1b',
-      contactMethods: [],
     }))
     await fixture.schoolRepositories.guardianLinks.save(new GuardianStudentLink({
       id: 'link1b',

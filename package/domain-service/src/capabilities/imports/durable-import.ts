@@ -7,7 +7,7 @@ import { digestCommandRequest } from '../../services/commands/command-execution'
 import { schoolCommandScope } from '../../services/commands/school-command-scope'
 import { DurableWorkFailure, runDurableWorkBatch } from '../scheduling-jobs/durable-work'
 import { executeImportRow, ImportBusinessContext, prepareImportRow } from './business'
-import { collectionSnapshot, removeUnmentionedLinks, replaceCompleteContacts } from './collections'
+import { collectionSnapshot, removeUnmentionedLinks } from './collections'
 import { importLocks, SCHOOL_IMPORT_WORK_KIND } from './import-service'
 import { importErrorCode } from './normalization'
 
@@ -129,8 +129,6 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
             prepared.collection = member.collection
             preparedGroup.push(prepared)
           }
-          if (row.collection && row.type === 'guardian_contacts')
-            await replaceCompleteContacts(ctx, preparedGroup)
           if (row.collection && row.type === 'guardian_relationships')
             await removeUnmentionedLinks(ctx, preparedGroup)
           const completedRows: ImportRow[] = []
@@ -142,7 +140,7 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
             if (done(member))
               continue
             const unchanged = prepared.current !== null && await digestCommandRequest(prepared.current) === await digestCommandRequest(prepared.proposed)
-            const result = (row.collection && row.type === 'guardian_contacts') || (prepared.current && (prepared.effectiveMode === 'S' || unchanged)) ? { targetId: prepared.targetId } : await executeImportRow(ctx, prepared)
+            const result = (prepared.current && (prepared.effectiveMode === 'S' || unchanged)) ? { targetId: prepared.targetId } : await executeImportRow(ctx, prepared)
             const outcome = prepared.current ? prepared.effectiveMode === 'S' || (unchanged && ['billing', 'payments'].includes(prepared.type)) ? 'skipped' : unchanged && !row.collection ? 'unchanged' : 'updated' : 'created'
             const targetId = String(result['targetId'] ?? prepared.targetId)
             identities.push({ schoolId: work.schoolId, type: member.type, sourceKey: member.sourceKey, targetId, generatedCode: member.generatedCode, bound: true })

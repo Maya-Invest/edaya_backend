@@ -121,7 +121,8 @@ export interface UpdateStudentNoteInput extends Partial<StudentNoteInput> {
   noteId: string
 }
 
-export interface UpdateGuardianContactMethodsInput extends Partial<GuardianInput> {
+export interface UpdateGuardianProfileInput extends Partial<Omit<GuardianInput, 'id' | 'schoolId' | 'subjectId' | 'createdAt'>> {
+  studentNotificationPreferences?: Array<{ studentId: string, receivesAcademicReports?: boolean, receivesAttendanceAlerts?: boolean }>
   guardianId: string
 }
 
@@ -522,24 +523,30 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
+  async updateGuardianProfile({ guardianId, studentNotificationPreferences, ...changes }: UpdateGuardianProfileInput): Promise<Guardian> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
       await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Guardian, guardianId, changes.photoUrl)
       const guardian = new Guardian({
         ...existing.data,
-        phone: undefined,
-        email: undefined,
+        ...Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined)),
         code: Object.hasOwn(changes, 'code') ? changes.code : existing.code,
         occupation: Object.hasOwn(changes, 'occupation') ? changes.occupation : existing.occupation,
         sourceFullName: Object.hasOwn(changes, 'sourceFullName') ? changes.sourceFullName : existing.sourceFullName,
-        firstName: changes.firstName ?? existing.firstName,
-        lastName: changes.lastName ?? existing.lastName,
-        photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
-        contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
-        hasAccess: changes.hasAccess ?? existing.hasAccess,
+        photoUrl: Object.hasOwn(changes, 'photoUrl') ? changes.photoUrl : existing.photoUrl,
+        id: existing.id,
+        schoolId: existing.schoolId,
+        subjectId: existing.subjectId,
+        createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardians.save(guardian)
+      const seen = new Set<string>()
+      for (const preference of studentNotificationPreferences ?? []) {
+        if (seen.has(preference.studentId))
+          throw new BusinessRuleViolationError('DUPLICATE_GUARDIAN_STUDENT_PREFERENCE', 'Each student must appear once')
+        seen.add(preference.studentId)
+        await this.updateGuardianStudentLink({ guardianId, studentId: preference.studentId, receivesAcademicReports: preference.receivesAcademicReports, receivesAttendanceAlerts: preference.receivesAttendanceAlerts })
+      }
 
       return guardian
     })

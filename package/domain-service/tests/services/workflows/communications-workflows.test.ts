@@ -242,10 +242,10 @@ describe('communications workflows with production policies and transactions', (
     await expect(workflow.markDeliveryRead({ deliveryId: existing.id })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test.each([staff, guardian])('$kind can update personal notification contacts without staff-management permissions or student links', async (actor) => {
+  test.each([staff])('$kind can update personal notification contacts without staff-management permissions or student links', async (actor) => {
     await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
     await fixture.repositories.guardianLinks.delete('guardian-link')
-    const before = actor.kind === 'staff' ? (await fixture.repositories.staffMembers.findById(actor.actorId))! : (await fixture.repositories.guardians.findById(actor.actorId))!
+    const before = (await fixture.repositories.staffMembers.findById(actor.actorId))!
     const updated = await service(actor).communicationsWorkflow.updateNotificationContact({ notificationEmail: ' alerts@example.test ', notificationPhone: ' +22501020304 ' })
     expect(updated.notificationEmail).toBe('alerts@example.test')
     expect(updated.notificationPhone).toBe('+22501020304')

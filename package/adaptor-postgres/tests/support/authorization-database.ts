@@ -81,7 +81,7 @@ export async function seedAuthorizationRelationships(db: PGlite): Promise<void> 
       INSERT INTO teachers (id, school_id, first_name, last_name, subject_id, is_active, created_at) VALUES ('teacher-a', 'school-a', 'A', 'Teacher', 'person-a', true, now());
       INSERT INTO teacher_assignments (id, teacher_id, academic_year_id, kind, class_subject_id, status, created_at) VALUES
         ('teaching', 'teacher-a', 'year-a', 'subject', 'math-a', 'active', now());
-      INSERT INTO guardians (id, school_id, first_name, last_name, subject_id, has_access, contact_methods, created_at) VALUES ('guardian-a', 'school-a', 'A', 'Guardian', 'person-a', true, '[]', now());
+      INSERT INTO guardians (id, school_id, first_name, last_name, subject_id, has_access, created_at) VALUES ('guardian-a', 'school-a', 'A', 'Guardian', 'person-a', true, now());
       INSERT INTO guardian_student_links (id, school_id, guardian_id, student_id, relationship, is_primary, created_at) VALUES
         ('guardian-link', 'school-a', 'guardian-a', 'student-a', 'parent', true, now());
     `)

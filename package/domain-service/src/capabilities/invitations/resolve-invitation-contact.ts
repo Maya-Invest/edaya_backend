@@ -1,5 +1,5 @@
 import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
-import { AccountInvitationContactChannel, GuardianContactMethodType } from '@edaya/core'
+import { AccountInvitationContactChannel } from '@edaya/core'
 import { guardianFallbackEmail, staffFallbackEmail } from '../notifications/delivery/resolve-notification-contact'
 
 export function normalizeInvitationEmail(value: string | undefined): string | undefined {
@@ -13,8 +13,7 @@ export function resolveStaffInvitationEmail(staff: StaffMember): string | undefi
 
 export function resolveGuardianInvitationEmail(guardian: Guardian): string | undefined {
   return normalizeInvitationEmail(
-    guardian.notificationEmail
-    ?? guardianFallbackEmail(guardian),
+    guardianFallbackEmail(guardian),
   )
 }
 
@@ -68,8 +67,7 @@ export function resolveStudentInvitationContact(
 }
 
 export function guardianHasEmailContact(guardian: Guardian): boolean {
-  return guardian.contactMethods.some(method => method.type === GuardianContactMethodType.Email)
-    || Boolean(guardian.email)
+  return Boolean(guardian.email)
 }
 
 export function resolveStudentInvitationEmail(explicitValue: string | undefined): string | undefined {

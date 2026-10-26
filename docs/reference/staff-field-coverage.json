@@ -4504,7 +4504,7 @@
           "ACCESS_CONTROL_MANAGE"
         ]
       },
-      "reason": "Teacher-owned signature. Staff cannot replace another teacher’s signature",
+      "reason": "Teacher-owned signature. Staff cannot replace another teacher\u2019s signature",
       "sourceEvidence": [
         "lib/people-profile-fields.ts",
         "routes/(app)/school/teachers/+page.svelte"
@@ -30620,58 +30620,6 @@
     },
     {
       "entity": "guardians",
-      "field": "notificationEmail",
-      "list": "context/summary only",
-      "detail": "school/guardians",
-      "editorOrWorkflow": "/account/notifications",
-      "mode": "self-service",
-      "permission": {
-        "read": [
-          "PARENT_READ",
-          "GUARDIAN_SELF_READ"
-        ],
-        "write": [
-          "PARENT_MANAGE"
-        ],
-        "delete": [
-          "PARENT_MANAGE"
-        ]
-      },
-      "reason": "Owner-controlled notification contact; editable on /account/notifications",
-      "sourceEvidence": [
-        "routes/(app)/account/notifications/components/StaffNotificationSettingsView.svelte",
-        "routes/(app)/account/notifications/components/GuardianNotificationSettingsView.svelte"
-      ],
-      "evidenceKind": "field/alias match"
-    },
-    {
-      "entity": "guardians",
-      "field": "notificationPhone",
-      "list": "context/summary only",
-      "detail": "school/guardians",
-      "editorOrWorkflow": "/account/notifications",
-      "mode": "self-service",
-      "permission": {
-        "read": [
-          "PARENT_READ",
-          "GUARDIAN_SELF_READ"
-        ],
-        "write": [
-          "PARENT_MANAGE"
-        ],
-        "delete": [
-          "PARENT_MANAGE"
-        ]
-      },
-      "reason": "Owner-controlled notification contact; editable on /account/notifications",
-      "sourceEvidence": [
-        "routes/(app)/account/notifications/components/StaffNotificationSettingsView.svelte",
-        "routes/(app)/account/notifications/components/GuardianNotificationSettingsView.svelte"
-      ],
-      "evidenceKind": "field/alias match"
-    },
-    {
-      "entity": "guardians",
       "field": "subjectId",
       "list": "excluded",
       "detail": null,
@@ -30694,33 +30642,6 @@
         "routes/(app)/school/guardians/lib/guardian-detail-mutations.ts",
         "routes/(app)/school/guardians/[[id]]/components/GuardianDetail.svelte",
         "routes/(app)/account/notifications/components/StaffNotificationSettingsView.svelte"
-      ],
-      "evidenceKind": "field/alias match"
-    },
-    {
-      "entity": "guardians",
-      "field": "contactMethods",
-      "list": "selectable",
-      "detail": "school/guardians",
-      "editorOrWorkflow": "school/guardians",
-      "mode": "editor/workflow",
-      "permission": {
-        "read": [
-          "PARENT_READ",
-          "GUARDIAN_SELF_READ"
-        ],
-        "write": [
-          "PARENT_MANAGE"
-        ],
-        "delete": [
-          "PARENT_MANAGE"
-        ]
-      },
-      "reason": "Business field in its existing workflow",
-      "sourceEvidence": [
-        "routes/(app)/school/guardians/components/GuardianCreateModal.svelte",
-        "routes/(app)/school/guardians/lib/guardian-detail-mutations.ts",
-        "routes/(app)/school/guardians/[[id]]/components/GuardianEditModal.svelte"
       ],
       "evidenceKind": "field/alias match"
     },
@@ -36408,6 +36329,110 @@
         "routes/(app)/school/corrections/corrections-page.svelte.ts",
         "routes/(app)/school/corrections/correction-diff.ts",
         "routes/(app)/school/corrections/components/CorrectionsView.svelte"
+      ],
+      "evidenceKind": "field/alias match"
+    },
+    {
+      "entity": "guardians",
+      "field": "alternativePhone",
+      "list": "selectable",
+      "detail": "school/guardians",
+      "editorOrWorkflow": "school/guardians",
+      "mode": "editor/workflow",
+      "permission": {
+        "read": [
+          "PARENT_READ",
+          "GUARDIAN_SELF_READ"
+        ],
+        "write": [
+          "PARENT_MANAGE"
+        ],
+        "delete": [
+          "PARENT_MANAGE"
+        ]
+      },
+      "reason": "Business field in its existing workflow",
+      "sourceEvidence": [
+        "lib/components/school/shared/GuardianContactFields.svelte",
+        "routes/(app)/school/guardians/lib/guardian-detail-mutations.ts"
+      ],
+      "evidenceKind": "field/alias match"
+    },
+    {
+      "entity": "guardians",
+      "field": "emailNotificationsEnabled",
+      "list": "selectable",
+      "detail": "school/guardians",
+      "editorOrWorkflow": "school/guardians",
+      "mode": "editor/workflow",
+      "permission": {
+        "read": [
+          "PARENT_READ",
+          "GUARDIAN_SELF_READ"
+        ],
+        "write": [
+          "PARENT_MANAGE"
+        ],
+        "delete": [
+          "PARENT_MANAGE"
+        ]
+      },
+      "reason": "Business field in its existing workflow",
+      "sourceEvidence": [
+        "lib/components/school/shared/GuardianContactFields.svelte",
+        "routes/(app)/school/guardians/lib/guardian-detail-mutations.ts"
+      ],
+      "evidenceKind": "field/alias match"
+    },
+    {
+      "entity": "guardians",
+      "field": "smsNotificationsEnabled",
+      "list": "selectable",
+      "detail": "school/guardians",
+      "editorOrWorkflow": "school/guardians",
+      "mode": "editor/workflow",
+      "permission": {
+        "read": [
+          "PARENT_READ",
+          "GUARDIAN_SELF_READ"
+        ],
+        "write": [
+          "PARENT_MANAGE"
+        ],
+        "delete": [
+          "PARENT_MANAGE"
+        ]
+      },
+      "reason": "Business field in its existing workflow",
+      "sourceEvidence": [
+        "lib/components/school/shared/GuardianContactFields.svelte",
+        "routes/(app)/school/guardians/lib/guardian-detail-mutations.ts"
+      ],
+      "evidenceKind": "field/alias match"
+    },
+    {
+      "entity": "guardians",
+      "field": "pushNotificationsEnabled",
+      "list": "selectable",
+      "detail": "school/guardians",
+      "editorOrWorkflow": "school/guardians",
+      "mode": "editor/workflow",
+      "permission": {
+        "read": [
+          "PARENT_READ",
+          "GUARDIAN_SELF_READ"
+        ],
+        "write": [
+          "PARENT_MANAGE"
+        ],
+        "delete": [
+          "PARENT_MANAGE"
+        ]
+      },
+      "reason": "Business field in its existing workflow",
+      "sourceEvidence": [
+        "lib/components/school/shared/GuardianContactFields.svelte",
+        "routes/(app)/school/guardians/lib/guardian-detail-mutations.ts"
       ],
       "evidenceKind": "field/alias match"
     }

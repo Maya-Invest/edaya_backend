@@ -83,7 +83,7 @@ export async function resolveClassGroupStudentAndGuardianRecipients(
     schoolId,
     enrollments.map(enrollment => enrollment.studentId),
     linkFilter,
-    guardian => guardian.contactMethods.some(method => method.allowsNotifications),
+    guardian => guardian.hasAccess,
   )
 
   return uniqueNotificationRecipients([...studentRecipients, ...guardianRecipients])
@@ -109,7 +109,7 @@ export async function resolveActivityEnrollmentRecipients(
     schoolId,
     approvedStudentIds,
     () => true,
-    guardian => guardian.contactMethods.some(method => method.allowsNotifications),
+    guardian => guardian.hasAccess,
   )
 
   return uniqueNotificationRecipients([...studentRecipients, ...guardianRecipients])

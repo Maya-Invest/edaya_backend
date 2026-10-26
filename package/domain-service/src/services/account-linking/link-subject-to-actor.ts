@@ -133,7 +133,7 @@ export async function unlinkSubjectFromActor(
     if (!existing.subjectId) {
       return { kind: 'guardian', entity: existing }
     }
-    const guardian = new GuardianEntity({ ...existing.data, contactMethods: [...existing.contactMethods], subjectId: undefined })
+    const guardian = new GuardianEntity({ ...existing.data, subjectId: undefined })
     const scope = await baseService.access.identities.assertLink('guardians', guardian, existing)
     await repositories.guardians.forAccess(scope).save(guardian)
 
@@ -209,7 +209,7 @@ async function replaceActorSubject(
     if (!options.allowReplace) {
       assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
     }
-    const guardian = new GuardianEntity({ ...existing.data, contactMethods: [...existing.contactMethods], subjectId: input.subjectId })
+    const guardian = new GuardianEntity({ ...existing.data, subjectId: input.subjectId })
     const scope = await baseService.access.identities.assertLink('guardians', guardian, existing)
     await repositories.guardians.forAccess(scope).save(guardian)
 

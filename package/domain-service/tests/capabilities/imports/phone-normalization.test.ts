@@ -12,10 +12,7 @@ describe('Excel-friendly phone imports', () => {
     expect(normalizeImportValues(type, {})['phone']).toBeUndefined()
     expect(normalizeImportValues(type, { phone: '' })['phone']).toBeNull()
   })
-  test('normalized child contacts and JSON contacts use the same rule without touching other contact types', () => {
-    expect(normalizeImportValues('guardian_contacts', { type: 'phone', value: ' #33612345678 ' })['value']).toBe('+33612345678')
-    expect(normalizeImportValues('guardian_contacts', { type: 'email', value: '#a@example.test' })['value']).toBe('#a@example.test')
-    const contacts = [{ type: 'phone', value: ' #2250012345678 ', isPrimary: false }, { type: 'email', value: '#a@example.test' }]
-    expect(normalizeImportValues('guardians', { contact_methods: JSON.stringify(contacts) })['contactMethods']).toEqual([{ type: 'phone', value: '+2250012345678', isPrimary: false }, { type: 'email', value: '#a@example.test' }])
+  test('alternative phones use the same prefix rule', () => {
+    expect(normalizeImportValues('guardians', { alternative_phone: ' #33612345678 ' })['alternativePhone']).toBe('+33612345678')
   })
 })

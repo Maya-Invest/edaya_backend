@@ -160,8 +160,5 @@ async function resolveAttendanceGuardianRecipients(
 }
 
 function guardianAllowsNotifications(guardian: Guardian): boolean {
-  if (guardian.contactMethods.length === 0) {
-    return true
-  }
-  return guardian.contactMethods.some(method => method.allowsNotifications)
+  return guardian.hasAccess
 }

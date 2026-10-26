@@ -3,7 +3,7 @@ import type { AccessPolicies } from '@edaya/authorization'
 import type { CoreEntityKey, CoreEntityMap, ImportBatch, ImportJson, ImportRecord, ImportRow, ImportType, QueryOptions } from '@edaya/core'
 import type { SchoolService } from '../../services/school-service'
 import { ImportAccessPolicy, importResources } from '@edaya/authorization'
-import { AcademicDiscipline, applyImportCollection, applyImportScalars, BusinessRuleViolationError, ClassGroup, Guardian, GuardianContactMethod, GuardianStudentLink, IMPORT_TEMPLATES, isBlankImportValue, normalizeImportKey, PaymentMethod, PlacementStatus, ServiceEnrollmentStatus, StaffMember, Student, StudentAcademicYearProfile, StudentClassEnrollmentStatus, Subject, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment } from '@edaya/core'
+import { AcademicDiscipline, applyImportCollection, applyImportScalars, BusinessRuleViolationError, ClassGroup, Guardian, GuardianStudentLink, IMPORT_TEMPLATES, isBlankImportValue, normalizeImportKey, PaymentMethod, PlacementStatus, ServiceEnrollmentStatus, StaffMember, Student, StudentAcademicYearProfile, StudentClassEnrollmentStatus, Subject, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment } from '@edaya/core'
 import { digestCommandRequest } from '../../services/commands/command-execution'
 import { acceptedCatalogTerms } from '../finance/accepted-catalog-terms'
 import { importJson, normalizeImportValues } from './normalization'
@@ -20,7 +20,6 @@ const listText = (value: ImportJson | undefined): string[] => Array.isArray(valu
 const annualStudent = ['placementStatusId', 'isRepeating']
 const annualTeacher = ['disciplineIds', 'declaredHours', 'hoursPeriod', 'hoursPeriodLabel']
 const relationshipFields = ['relationship', 'isPrimary', 'isBillingContact', 'legalGuardian', 'canPickup', 'emergencyContactPriority', 'receivesAcademicReports', 'receivesAttendanceAlerts', 'contactRestrictions', 'notes']
-const contactKey = (item: ImportRecord) => `${item['type']}:${normalizeImportKey(item['value'])}`
 const sourceResource: Partial<Record<CoreEntityKey, ImportType>> = { academicDisciplines: 'academic_disciplines', placementStatuses: 'placement_statuses', classGroups: 'classes', subjects: 'subjects', students: 'students', guardians: 'guardians', teachers: 'teachers', staffMembers: 'staff', studentServiceEnrollments: 'billing' }
 /** One bounded validation pass shares tenant indexes, never a global or cross-request cache. */
 export class ImportBusinessContext {
@@ -172,7 +171,7 @@ export class ImportBusinessContext {
   }
 }
 function primaryFields(type: ImportType): string[] {
-  const secondary = type === 'students' ? [...annualStudent, 'classGroupId', 'enrolledAt'] : type === 'teachers' ? annualTeacher : type === 'guardians' ? [...relationshipFields, 'studentIds', 'completeContacts'] : []
+  const secondary = type === 'students' ? [...annualStudent, 'classGroupId', 'enrolledAt'] : type === 'teachers' ? annualTeacher : type === 'guardians' ? [...relationshipFields, 'studentIds'] : []
   return IMPORT_TEMPLATES[type].columns.map(col => col.field).filter((field): field is string => Boolean(field && !secondary.includes(field)))
 }
 function project(type: ImportType, record: unknown): ImportRecord {
@@ -198,7 +197,6 @@ async function matchTarget(ctx: ImportBusinessContext, row: ImportRow, data: Imp
     students: ['matricule'],
     classes: ['academicYearId', 'gradeLevelId', 'name'],
     subjects: ['academicYearId', 'gradeLevelId', data['code'] ? 'code' : 'name'],
-    guardian_contacts: ['id'],
     guardian_relationships: ['guardianId', 'studentId'],
     class_offerings: ['classGroupId', 'subjectId'],
     teacher_assignments: ['academicYearId', 'teacherId'],
@@ -207,7 +205,7 @@ async function matchTarget(ctx: ImportBusinessContext, row: ImportRow, data: Imp
     payments: ['academicYearId', 'reference'],
   }
   const query = Object.fromEntries(matchFields[row.type].map((field) => {
-    const value = String(field === 'academicYearId' ? ctx.batch.academicYearId : row.type === 'guardian_contacts' ? data['guardianId'] ?? '' : data[field] ?? '')
+    const value = String(field === 'academicYearId' ? ctx.batch.academicYearId : data[field] ?? '')
     // References have already been resolved (including ambiguity/access checks).
     // Only external business keys need text normalization at this point.
     return [field, field === 'id' || field.endsWith('Id') ? value : { $normalizedCandidate: value }]
@@ -223,7 +221,6 @@ async function matchTarget(ctx: ImportBusinessContext, row: ImportRow, data: Imp
       case 'students': return same(record['matricule'], data['matricule'])
       case 'classes': return sameYear(record) && same(record['gradeLevelId'], data['gradeLevelId']) && same(record['name'], data['name'])
       case 'subjects': return sameYear(record) && same(record['gradeLevelId'], data['gradeLevelId']) && (data['code'] ? same(record['code'], data['code']) : same(record['name'], data['name']))
-      case 'guardian_contacts': return same(entity.id, data['guardianId'])
       case 'guardian_relationships': return same(record['guardianId'], data['guardianId']) && same(record['studentId'], data['studentId'])
       case 'class_offerings': return same(record['classGroupId'], data['classGroupId']) && same(record['subjectId'], data['subjectId'])
       case 'teacher_assignments': return sameYear(record) && same(record['teacherId'], data['teacherId']) && record['kind'] === (data['kind'] ?? 'subject') && same(record['classSubjectId'] ?? record['classGroupId'], data['classSubjectId'] ?? data['classGroupId'])
@@ -278,9 +275,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
     row.targetId = existing.id
   const existingData = existing ? importJson(existing) : {}
   // Projection excludes account ownership, credentials, audit identity and arbitrary internal fields.
-  let current: ImportRecord | null = existing ? project(row.type, existing) : null
-  if (row.type === 'guardians' && current)
-    current['contactMethods'] = importJson(existing)['contactMethods'] ?? []
+  const current: ImportRecord | null = existing ? project(row.type, existing) : null
   if (row.type === 'staff' && existingData['accountKind'] !== undefined && existingData['accountKind'] !== 'human')
     fail('IMPORT_HUMAN_STAFF_REQUIRED')
   if (row.type === 'students' || row.type === 'teachers') {
@@ -313,7 +308,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
   const nullable = new Set(IMPORT_TEMPLATES[row.type].columns.filter(col => col.nullable).map(col => col.field!))
   // New records do not inherit Skip, and blank optional cells mean absent at creation.
   const supplied = existing ? incoming : Object.fromEntries(Object.entries(incoming).filter(([, value]) => !isBlankImportValue(value)))
-  let proposed = applyImportScalars(row.type === 'guardian_contacts' ? {} : current ?? { id: row.targetId, schoolId: ctx.batch.schoolId, academicYearId: ctx.batch.academicYearId }, supplied, row.type === 'guardian_contacts' ? 'M' : existing ? row.effectiveMode : 'M', nullable)
+  let proposed = applyImportScalars(current ?? { id: row.targetId, schoolId: ctx.batch.schoolId, academicYearId: ctx.batch.academicYearId }, supplied, existing ? row.effectiveMode : 'M', nullable)
   if (row.type === 'academic_disciplines' || row.type === 'placement_statuses') {
     if (existing && normalizeImportKey(existingData['code']) !== normalizeImportKey(proposed['code']))
       fail('IMPORT_IMMUTABLE_CODE')
@@ -360,28 +355,6 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
   if (row.type === 'guardians') {
     // Empty first names are valid; missing/blank merge inputs still preserve existing names.
     proposed['firstName'] ??= ''
-    const old = (current?.['contactMethods'] ?? []) as ImportRecord[]
-    let contacts: ImportRecord[] | undefined
-    if ('contactMethods' in supplied) {
-      if (!Array.isArray(supplied['contactMethods']) && supplied['contactMethods'] !== null)
-        fail('IMPORT_CONTACTS_INVALID')
-      if (supplied['contactMethods'] !== null || row.effectiveMode === 'O')
-        contacts = (supplied['contactMethods'] ?? []) as ImportRecord[]
-    }
-    for (const field of ['phone', 'email']) {
-      if (!isBlankImportValue(supplied[field]))
-        (contacts ??= []).push({ type: field, value: supplied[field]!, isPrimary: false, allowsNotifications: false })
-    }
-    if (contacts) {
-      contacts = contacts.map((contact) => {
-        const previous = old.find(item => contactKey(item) === contactKey(contact))
-        const merged = applyImportScalars(previous ?? {}, contact, existing ? row.effectiveMode : 'M', new Set(['label']))
-        return importJson(new GuardianContactMethod(merged as unknown as ConstructorParameters<typeof GuardianContactMethod>[0]))
-      })
-    }
-    proposed['contactMethods'] = applyImportCollection(old, contacts, existing ? row.effectiveMode : 'M', supplied['completeContacts'] === true, contactKey)
-    delete proposed['phone']
-    delete proposed['email']
     if (!isBlankImportValue(incoming['studentIds'])) {
       const previousLinks: ImportRecord[] = []
       const nextLinks: ImportRecord[] = []
@@ -405,18 +378,6 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
         current['studentRelationships'] = previousLinks
       proposed['studentRelationships'] = nextLinks
     }
-  }
-  if (row.type === 'guardian_contacts') {
-    const owner = existing ? existingData : await ctx.reference('guardians', incoming['guardianId'], row)
-    row.targetId = text(owner['id'])
-    const old = (owner['contactMethods'] ?? []) as ImportRecord[]
-    const previous = old.find(item => contactKey(item) === contactKey(incoming))
-    const contactData = applyImportScalars(previous ?? {}, defined(incoming, ['type', 'value', 'label', 'isPrimary', 'allowsNotifications']), previous ? row.effectiveMode : 'M', new Set(['label']))
-    const contact = importJson(new GuardianContactMethod(contactData as unknown as ConstructorParameters<typeof GuardianContactMethod>[0]))
-    current = previous ? { ...previous, guardianId: row.targetId } : null
-    proposed = { ...contact, guardianId: row.targetId }
-    if (incoming['completeCollection'] === true)
-      proposed['completeCollection'] = true
   }
   if (row.type === 'class_offerings') {
     if (!existing && !row.dependencies.length)
@@ -581,7 +542,7 @@ export async function executeImportRow(ctx: ImportBusinessContext, row: ImportRo
     }
     case 'guardians': {
       if (row.current)
-        await service.studentWorkflow.updateGuardianContactMethods({ ...fields, guardianId: id, contactMethods: data['contactMethods'] } as Parameters<typeof service.studentWorkflow.updateGuardianContactMethods>[0])
+        await service.studentWorkflow.updateGuardianProfile({ ...fields, guardianId: id } as Parameters<typeof service.studentWorkflow.updateGuardianProfile>[0])
       else
         await service.studentWorkflow.registerGuardian({ ...data, id, schoolId, hasAccess: false, sendAccountInvitation: false } as Parameters<typeof service.studentWorkflow.registerGuardian>[0])
       for (const relation of (data['studentRelationships'] ?? []) as ImportRecord[]) {
@@ -595,12 +556,6 @@ export async function executeImportRow(ctx: ImportBusinessContext, row: ImportRo
           result['guardianLinksCreated'] = Number(result['guardianLinksCreated'] ?? 0) + 1
         }
       }
-      break
-    }
-    case 'guardian_contacts': {
-      const guardian = await ctx.readable('guardians', text(data['guardianId']))
-      const contacts = applyImportCollection(importJson(guardian)['contactMethods'] as ImportRecord[], [defined(data, ['type', 'value', 'label', 'isPrimary', 'allowsNotifications'])], row.current ? row.effectiveMode : 'M', false, contactKey)
-      await service.studentWorkflow.updateGuardianContactMethods({ guardianId: guardian.id, contactMethods: contacts } as Parameters<typeof service.studentWorkflow.updateGuardianContactMethods>[0])
       break
     }
     case 'guardian_relationships':

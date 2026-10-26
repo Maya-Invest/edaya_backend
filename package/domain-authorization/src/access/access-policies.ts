@@ -295,9 +295,8 @@ export class AccessPolicies {
     if (this.actor.kind === 'guardian' && (resource === 'guardians' || resource === 'guardianLinks')) {
       if (!existing)
         denied('Guardians may update existing preferences only')
-      // phone/email are projections of contactMethods in Guardian.data.
       const editable = new Set(resource === 'guardians'
-        ? ['photoUrl', 'contactMethods', 'phone', 'email']
+        ? ['photoUrl', 'phone', 'alternativePhone', 'email', 'emailNotificationsEnabled', 'smsNotificationsEnabled', 'pushNotificationsEnabled']
         : ['receivesAcademicReports', 'receivesAttendanceAlerts'])
       const before = existing.data as unknown as Record<string, unknown>
       const after = entity.data as unknown as Record<string, unknown>

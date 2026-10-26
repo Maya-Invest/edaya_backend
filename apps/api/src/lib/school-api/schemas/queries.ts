@@ -6,7 +6,7 @@ import { marksCorrectionResponseSchema } from "./marks-corrections";
 export const getSchoolOverviewQuerySchema = z.object({
   schoolId: z.string().min(1),
   academicYearId: z.string().min(1),
-  academicPeriodId: z.string().min(1),
+  academicPeriodId: z.string().min(1).optional(),
   referenceDate: z.string().date().optional(),
 }).openapi("GetSchoolOverviewQuery");
 
@@ -64,9 +64,9 @@ export const dashboardAreaHealthStudentsSchema = z.object({
 
 export const dashboardAreaHealthAcademicsSchema = z.object({
   gradingCompletionPercent: z.number().nullable(),
-  publishedReportCards: z.number().int().nonnegative(),
-  totalReportCards: z.number().int().nonnegative(),
-  incompleteGradingClassCount: z.number().int().nonnegative(),
+  publishedReportCards: z.number().int().nonnegative().nullable(),
+  totalReportCards: z.number().int().nonnegative().nullable(),
+  incompleteGradingClassCount: z.number().int().nonnegative().nullable(),
 }).openapi("DashboardAreaHealthAcademics");
 
 export const dashboardAreaHealthFinanceSchema = z.object({
@@ -95,14 +95,14 @@ export const schoolOverviewKpisSchema = z.object({
   staffCount: z.number().int().nonnegative(),
   overdueFeeCount: z.number().int().nonnegative(),
   overdueFeeAmount: z.number().int().nonnegative(),
-  publishedReportCardCount: z.number().int().nonnegative(),
-  unpublishedReportCardCount: z.number().int().nonnegative(),
+  publishedReportCardCount: z.number().int().nonnegative().nullable(),
+  unpublishedReportCardCount: z.number().int().nonnegative().nullable(),
   attendanceRateToday: z.number().nullable(),
   absencesToday: z.number().int().nonnegative(),
   openIncidentCount: z.number().int().nonnegative(),
   highSeverityIncidentCount: z.number().int().nonnegative(),
   pendingJustificationCount: z.number().int().nonnegative(),
-  incompleteGradingClassCount: z.number().int().nonnegative(),
+  incompleteGradingClassCount: z.number().int().nonnegative().nullable(),
 }).openapi("SchoolOverviewKpis");
 
 export const timetableEventSchema = z.object({
@@ -171,7 +171,7 @@ export const resolvedTimetableSpaceResponseSchema = z.array(resolvedTimetableCel
 export const schoolOverviewResponseSchema = z.object({
   schoolId: z.string().min(1),
   academicYearId: z.string().min(1),
-  academicPeriodId: z.string().min(1),
+  academicPeriodId: z.string().min(1).nullable(),
   referenceDate: z.string().date(),
   generatedAt: z.string().datetime(),
   kpis: schoolOverviewKpisSchema,

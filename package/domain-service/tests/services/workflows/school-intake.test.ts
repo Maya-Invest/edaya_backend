@@ -75,12 +75,14 @@ describe('school intake profiles', () => {
 
   test('guardian occupation and original name survive contact updates', async () => {
     const { service, repositories } = await createStudentTransitionContext()
-    await repositories.guardians.save(new Guardian({ id: 'guardian', schoolId: 'sch1', firstName: 'Test', lastName: 'Guardian', occupation: 'Engineer', sourceFullName: '  ORIGINAL NAME ', contactMethods: [{ type: 'phone' as never, value: '001', label: 'Work', allowsNotifications: false }, { type: 'whatsapp' as never, value: '002' }] }))
-    await service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'guardian', firstName: 'Changed' })
+    await repositories.guardians.save(new Guardian({ id: 'guardian', schoolId: 'sch1', firstName: 'Test', lastName: 'Guardian', occupation: 'Engineer', sourceFullName: '  ORIGINAL NAME ', phone: '001', alternativePhone: '002', smsNotificationsEnabled: false }))
+    await service.studentWorkflow.updateGuardianProfile({ guardianId: 'guardian', firstName: 'Changed' })
     const guardian = await repositories.guardians.findById('guardian')
     expect(guardian?.occupation).toBe('Engineer')
     expect(guardian?.sourceFullName).toBe('  ORIGINAL NAME ')
-    expect(guardian?.contactMethods).toHaveLength(2)
+    expect(guardian?.phone).toBe('+1')
+    expect(guardian?.alternativePhone).toBe('+2')
+    expect(guardian?.smsNotificationsEnabled).toBe(false)
   })
   test('subjects share the teacher catalogue and preserve unmapped legacy subjects', async () => {
     const { service, repositories } = await createStudentTransitionContext()

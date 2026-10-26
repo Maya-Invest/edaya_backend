@@ -75,7 +75,7 @@ const schoolRepositories = {
       id: 'gua1',
       schoolId: 'sch1',
       subjectId: 'subject-gua1',
-      contactMethods: [{ allowsNotifications: true }],
+      hasAccess: true,
     }),
   },
   activityEnrollments: {

@@ -1,6 +1,6 @@
 /* eslint dot-notation: "off" -- Import snapshots are index-signature records. */
 import type { ImportFormatPort, ParsedImportTable } from '@edaya/core'
-import { BusinessRuleViolationError, CatalogServiceStatus, ClassGroup, createInMemoryFileStorage, Guardian, GuardianContactMethodType, GuardianStudentLink, noOpNotificationGateway, StaffMember, Student, StudentClassEnrollmentStatus } from '@edaya/core'
+import { BusinessRuleViolationError, CatalogServiceStatus, ClassGroup, createInMemoryFileStorage, Guardian, GuardianStudentLink, noOpNotificationGateway, StaffMember, Student, StudentClassEnrollment, StudentClassEnrollmentStatus } from '@edaya/core'
 import { dispatchAutoBilling, dispatchSchoolImports, SchoolApplication } from '@edaya/service'
 import { expect, spyOn, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
@@ -83,8 +83,7 @@ test('catalogues, classes, subjects, people, annual declarations, links, offerin
   await f.submit('subjects', ['name', 'grade', 'code', 'discipline_code', 'category', 'coefficient'], [['Science', 'grade1', 'SC1', 'SCI', 'category', 2]])
   await f.submit('students', ['matricule', 'first_name', 'last_name', 'class', 'placement_status_code', 'is_repeating'], [['0001', 'Compound Name', 'Student', 'New class', 'AFF', false]])
   await f.submit('teachers', ['code', 'first_name', 'last_name', 'discipline_codes', 'declared_hours'], [['T1', 'First', 'Teacher', 'SCI', 0]])
-  await f.submit('guardians', ['code', 'first_name', 'last_name', 'phone'], [['G1', 'First', 'Guardian', '0001']])
-  await f.submit('guardian_contacts', ['guardian', 'type', 'value', 'allows_notifications'], [['G1', 'email', 'g@example.test', false]])
+  await f.submit('guardians', ['code', 'first_name', 'last_name', 'phone', 'email', 'email_notifications_enabled'], [['G1', 'First', 'Guardian', '0001', 'g@example.test', false]])
   await f.submit('guardian_relationships', ['guardian', 'student', 'is_primary', 'legal_guardian'], [['G1', '0001', true, false]])
   await f.submit('class_offerings', ['class', 'subject', 'is_offered'], [['New class', 'SC1', true]])
   await f.submit('teacher_assignments', ['teacher', 'class', 'subject', 'responsibility'], [['T1', 'New class', 'SC1', 'Lead']])
@@ -133,27 +132,30 @@ test('new duplicate business keys block every conflicting row and capacity never
   expect(preview.rows.filter(row => row.type === 'staff').every(row => row.issues.some(issue => issue.code === 'IMPORT_DUPLICATE_TARGET'))).toBe(true)
   expect(preview.rows.filter(row => row.type === 'students').every(row => row.issues.some(issue => issue.code === 'IMPORT_CLASS_CAPACITY_CONFLICT'))).toBe(true)
 })
-test('overwrite of a partial child file preserves other contacts; complete declaration replaces them atomically', async () => {
+test('flat guardian overwrite clears explicit contacts and preserves omitted preferences', async () => {
   const f = await fixture()
-  await f.submit('guardians', ['code', 'first_name', 'last_name', 'phone'], [['G1', 'First', 'Guardian', '0001']])
-  await f.run()
-  const batch = await f.imports.create({ academicYearId: 'ay1', defaultOnExisting: 'O' })
-  const upload = async (complete: boolean) => f.imports.submit({ batchId: batch.id, type: 'guardian_contacts', fileName: `contacts-${complete}.csv`, bytes: new TextEncoder().encode(JSON.stringify({ headers: ['guardian', 'type', 'value', 'complete_collection'], rows: [{ row: 2, cells: ['G1', 'email', 'g@example.test', complete] }] })) })
-  const execute = async () => {
-    const preview = await f.imports.validate({ batchId: batch.id,
-    })
-    await f.imports.confirm({ batchId: batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest!,
-    })
-    await dispatchSchoolImports(f.application)
-  }
-  const file = await upload(false)
-  await execute()
-  expect((await f.repositories.guardians.findOne({ code: 'G1' }))!.contactMethods).toHaveLength(2)
-  const detail = await f.imports.detail(batch.id)
-  await f.imports.submit({ batchId: batch.id, fileId: file.fileId, type: 'guardian_contacts', fileName: 'contacts-corrected.csv', bytes: new TextEncoder().encode(JSON.stringify({ headers: ['row_id', 'guardian', 'type', 'value', 'complete_collection'], rows: [{ row: 2, cells: [detail.rows[0]!.id, 'G1', 'email', 'g@example.test', true] }] })) })
-  await execute()
-  expect((await f.imports.detail(batch.id)).rows.map(row => [row.outcome, row.issues])).toEqual([['updated', []]])
-  expect((await f.repositories.guardians.findOne({ code: 'G1' }))!.contactMethods).toHaveLength(1)
+  await f.repositories.guardians.save(new Guardian({ id: 'flat', schoolId: 'sch1', code: 'FLAT', firstName: 'First', lastName: 'Guardian', phone: '+2250001', alternativePhone: '+2250002', email: 'g@example.test', smsNotificationsEnabled: false }))
+  await f.submit('guardians', ['code', 'phone', 'on_existing'], [['FLAT', '', 'O']])
+  const result = await f.run()
+  expect(result.rows[0]!.outcome).toBe('updated')
+  const saved = (await f.repositories.guardians.findById('flat'))!
+  expect(saved.phone).toBeUndefined()
+  expect(saved.alternativePhone).toBe('+2250002')
+  expect(saved.email).toBe('g@example.test')
+  expect(saved.smsNotificationsEnabled).toBe(false)
+  await dispatchSchoolImports(f.application)
+  expect((await f.imports.detail(f.batch.id)).counts).toEqual(result.counts)
+})
+
+test('removed guardian contact collections block validation and corrected scalar files retain explicit opt-outs', async () => {
+  const f = await fixture()
+  const file = await f.submit('guardians', ['code', 'last_name', 'contact_methods'], [['FLAT', 'Parent', '[]']])
+  const blocked = await f.imports.validate({ batchId: f.batch.id })
+  expect(blocked.rows[0]!.issues).toContainEqual({ code: 'IMPORT_COLUMN_UNSUPPORTED', column: 'contact_methods', severity: 'error' })
+  await f.imports.submit({ batchId: f.batch.id, fileId: file.fileId, type: 'guardians', fileName: 'guardians.csv', bytes: new TextEncoder().encode(JSON.stringify({ headers: ['code', 'last_name', 'phone', 'alternative_phone', 'email_notifications_enabled', 'sms_notifications_enabled', 'push_notifications_enabled'], rows: [{ row: 2, cells: ['FLAT', 'Parent', '+225 01020304', '+225 05060708', false, false, false] }] })) })
+  const result = await f.run()
+  expect(result.counts['created']).toBe(1)
+  expect((await f.repositories.guardians.findOne({ code: 'FLAT' }))!.data).toMatchObject({ phone: '+22501020304', alternativePhone: '+22505060708', emailNotificationsEnabled: false, smsNotificationsEnabled: false, pushNotificationsEnabled: false })
 })
 
 test('duplicate confirmation and concurrent dispatch resume bounded pages without duplicate people', async () => {
@@ -236,7 +238,7 @@ test('a within-year import transfer preserves the annual profile and is not copi
 test('guardian shorthand previews retain per-child rights and detect a relationship change before committing', async () => {
   const f = await fixture()
   await f.repositories.students.save(new Student({ id: 'stu2', schoolId: 'sch1', firstName: 'Second', lastName: 'Child', matricule: 'CHILD2' }))
-  await f.repositories.guardians.save(new Guardian({ id: 'guardian', schoolId: 'sch1', code: 'G', firstName: 'First', lastName: 'Guardian', contactMethods: [] }))
+  await f.repositories.guardians.save(new Guardian({ id: 'guardian', schoolId: 'sch1', code: 'G', firstName: 'First', lastName: 'Guardian' }))
   const original = new GuardianStudentLink({ id: 'link1', schoolId: 'sch1', guardianId: 'guardian', studentId: 'stu1', legalGuardian: true })
   await f.repositories.guardianLinks.save(original)
   await f.repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link2', schoolId: 'sch1', guardianId: 'guardian', studentId: 'stu2', legalGuardian: false }))
@@ -253,13 +255,14 @@ test('guardian shorthand previews retain per-child rights and detect a relations
 
 test('omitted codes on explicit existing people and blank contact shorthand preserve unmentioned values', async () => {
   const f = await fixture()
-  await f.repositories.guardians.save(new Guardian({ id: 'known-guardian', schoolId: 'sch1', code: 'KEEP', firstName: 'First', lastName: 'Guardian', contactMethods: [{ type: GuardianContactMethodType.Phone, value: '001', isPrimary: true }, { type: GuardianContactMethodType.Phone, value: '002', isPrimary: false }] }))
+  await f.repositories.guardians.save(new Guardian({ id: 'known-guardian', schoolId: 'sch1', code: 'KEEP', firstName: 'First', lastName: 'Guardian', phone: '001', alternativePhone: '002' }))
   await f.submit('guardians', ['target_id', 'occupation', 'phone', 'on_existing'], [['known-guardian', 'Teacher', '', 'O']])
   const complete = await f.run()
   expect(complete.rows[0]!.outcome).toBe('updated')
   const guardian = (await f.repositories.guardians.findById('known-guardian'))!
   expect(guardian.code).toBe('KEEP')
-  expect(guardian.contactMethods.map(contact => contact.value)).toEqual(['001', '002'])
+  expect(guardian.phone).toBeUndefined()
+  expect(guardian.alternativePhone).toBe('+2')
   expect(guardian.occupation).toBe('Teacher')
 })
 
@@ -318,7 +321,6 @@ test('conflicting class updates block dependent placements while unrelated ready
 test('single-token guardians save/reload with normalized phones and resolve dependent contacts without duplication', async () => {
   const f = await fixture()
   await f.submit('guardians', ['code', 'first_name', 'last_name', 'source_full_name', 'phone'], [['SINGLE', '', 'Koné', ' Koné ', '#2250012345678']])
-  await f.submit('guardian_contacts', ['guardian', 'type', 'value', 'is_primary'], [['SINGLE', 'phone', '+2250012345678', true]])
   const result = await f.run()
   const row = result.rows.find(row => row.type === 'guardians')!
   const saved = (await f.repositories.guardians.findById(row.targetId))!
@@ -326,7 +328,7 @@ test('single-token guardians save/reload with normalized phones and resolve depe
   expect(saved.fullName).toBe('Koné')
   expect(saved.sourceFullName).toBe(' Koné ')
   expect(saved.hasAccess).toBe(false)
-  expect(saved.contactMethods.map(contact => contact.value)).toEqual(['+2250012345678'])
+  expect(saved.phone).toBe('+2250012345678')
   await f.imports.validate({ batchId: f.batch.id })
   expect(await f.repositories.guardians.count({ code: 'SINGLE' })).toBe(1)
 })
@@ -489,7 +491,11 @@ test('complete collections larger than the candidate page commit all outcomes in
   const f = await fixture()
   await f.repositories.guardians.save(new Guardian({ id: 'large-guardian', schoolId: 'sch1', code: 'LARGE', firstName: 'First', lastName: 'Last' }))
   await f.imports.settings({ batchId: f.batch.id, defaultOnExisting: 'O' })
-  await f.submit('guardian_contacts', ['guardian', 'type', 'value', 'complete_collection'], Array.from({ length: 21 }, (_, i) => ['LARGE', 'email', `contact-${i}@example.test`, true]))
+  for (let i = 0; i < 21; i++) {
+    await f.repositories.students.save(new Student({ id: `child-${i}`, schoolId: 'sch1', matricule: `C${i}`, firstName: 'Child', lastName: String(i) }))
+    await f.repositories.enrollments.save(new StudentClassEnrollment({ id: `placement-${i}`, studentId: `child-${i}`, classGroupId: 'cg1', academicYearId: 'ay1', enrollmentIndex: 1 }))
+  }
+  await f.submit('guardian_relationships', ['guardian', 'student', 'complete_collection'], Array.from({ length: 21 }, (_, i) => ['LARGE', `C${i}`, true]))
   const preview = await f.imports.validate({ batchId: f.batch.id })
   expect(preview.counts['pending']).toBe(21)
   await f.imports.confirm({ batchId: f.batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! })
@@ -498,8 +504,9 @@ test('complete collections larger than the candidate page commit all outcomes in
   const after = await f.imports.status(f.batch.id)
   expect(after.batch.state).toBe('completed')
   expect(after.version).toBe(before.version + 1)
+  expect((await f.imports.detail(f.batch.id)).rows.map(row => ({ outcome: row.outcome, issues: row.issues }))).toEqual(Array.from({ length: 21 }, () => ({ outcome: 'created', issues: [] })))
   expect(after.counts['created']).toBe(21)
-  expect((await f.repositories.guardians.findById('large-guardian'))?.contactMethods).toHaveLength(21)
+  expect(await f.repositories.guardianLinks.count({ guardianId: 'large-guardian' })).toBe(21)
   expect((await f.imports.detail(f.batch.id)).counts).toEqual(after.counts)
 }, 30000)
 
@@ -525,10 +532,12 @@ test('a restarted dispatcher recovers an expired lease after a lost completion r
   expect(await f.imports.status(f.batch.id)).toEqual(final)
 }, 30000)
 
-test('contact preview shares permission reads and uses exact resolved guardian IDs', async () => {
+test('relationship preview shares permission reads and uses exact resolved guardian IDs', async () => {
   const f = await fixture()
   await f.repositories.guardians.save(new Guardian({ id: 'Parent-ID', schoolId: 'sch1', code: 'G1', firstName: 'First', lastName: 'Parent' }))
-  await f.submit('guardian_contacts', ['guardian', 'type', 'value'], Array.from({ length: 24 }, (_, i) => [' ｇ１ ', 'email', `contact-${i}@example.test`]))
+  for (let i = 0; i < 24; i++)
+    await f.repositories.students.save(new Student({ id: `child-${i}`, schoolId: 'sch1', matricule: `C${i}`, firstName: 'Child', lastName: String(i) }))
+  await f.submit('guardian_relationships', ['guardian', 'student'], Array.from({ length: 24 }, (_, i) => [' ｇ１ ', `C${i}`]))
   let permissionReads = 0
   let normalizedOwnerReads = 0
   const originalTransaction = f.db.transaction.bind(f.db)
@@ -547,7 +556,7 @@ test('contact preview shares permission reads and uses exact resolved guardian I
   try {
     const preview = await f.imports.validate({ batchId: f.batch.id })
     expect(preview.counts['pending']).toBe(24)
-    expect(preview.rows.every(row => row.targetId === 'Parent-ID')).toBe(true)
+    expect(preview.rows.every(row => row.proposed?.['guardianId'] === 'Parent-ID')).toBe(true)
     expect(permissionReads).toBeLessThan(40)
     expect(normalizedOwnerReads).toBe(0)
   }
@@ -555,7 +564,7 @@ test('contact preview shares permission reads and uses exact resolved guardian I
   const staff = (await f.repositories.staffMembers.findById('user1'))!
   await f.repositories.staffMembers.save(new StaffMember({ ...staff.data, isActive: false }))
   await expect(f.imports.validate({ batchId: f.batch.id })).rejects.toThrow()
-  expect((await f.repositories.guardians.findById('Parent-ID'))!.contactMethods).toHaveLength(0)
+  expect(await f.repositories.guardianLinks.count({ guardianId: 'Parent-ID' })).toBe(0)
 })
 
 test('resolved relationship IDs remain distinct while ambiguous external codes are rejected', async () => {
@@ -570,7 +579,7 @@ test('resolved relationship IDs remain distinct while ambiguous external codes a
   expect((await f.repositories.guardianLinks.findById('link-Parent-ID'))!.legalGuardian).toBe(true)
   expect((await f.repositories.guardianLinks.findById('link-parent-id'))!.legalGuardian).toBe(false)
   const other = (await f.repositories.guardians.findById('parent-id'))!
-  await f.repositories.guardians.save(new Guardian({ ...other.data, contactMethods: [...other.contactMethods], code: 'g1' }))
+  await f.repositories.guardians.save(new Guardian({ ...other.data, code: 'g1' }))
   const preview = await f.imports.validate({ batchId: f.batch.id })
   expect(preview.rows[0]!.issues.map(issue => issue.code)).toContain('IMPORT_REFERENCE_AMBIGUOUS')
 })
@@ -581,7 +590,7 @@ test('execution context sees entity changes and permission revocation between co
   await f.atomicExecution.execute(async () => {
     const ctx = new ImportBusinessContext(f.service, f.batch)
     const before = await ctx.readable('guardians', 'parent')
-    await f.repositories.guardians.save(new Guardian({ ...before.data, contactMethods: [...before.contactMethods], firstName: 'After' }))
+    await f.repositories.guardians.save(new Guardian({ ...before.data, firstName: 'After' }))
     expect((await ctx.readable('guardians', 'parent')).firstName).toBe('After')
     const staff = (await f.repositories.staffMembers.findById('user1'))!
     await f.repositories.staffMembers.save(new StaffMember({ ...staff.data, isActive: false }))

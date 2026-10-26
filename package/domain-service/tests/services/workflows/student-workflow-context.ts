@@ -34,7 +34,7 @@ export async function createStudentTransitionContext({ activeEnrollmentId = 'enr
 export async function createStudentAdminContext({ inviteBaseUrl, accountInvitationsEnabled = true }: { inviteBaseUrl?: string, accountInvitationsEnabled?: boolean } = {}) {
   const fixture = await createStudentTransitionContext()
   const { repositories } = fixture
-  await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', contactMethods: [], subjectId: 'subject-gua1' }))
+  await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', subjectId: 'subject-gua1' }))
   await repositories.schools.save(new School({ id: 'other-school', name: 'Other', timeZone: 'UTC' }))
   await repositories.academicYears.save(new AcademicYear({ id: 'ay-other', schoolId: 'other-school', name: 'Foreign', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'grade-other', schoolId: 'other-school', name: 'Foreign', label: 'F', order: 1 }))
@@ -47,7 +47,7 @@ export async function createGuardianLinkContext({ existingLink = false, enrolled
   const fixture = await createStudentAdminContext()
   const existingCreatedAt = new Date('2026-01-01T00:00:00Z')
   const guardian = (await fixture.guardians.findById('gua1'))!
-  await fixture.guardians.save(new Guardian({ ...guardian.data, contactMethods: [...guardian.contactMethods], schoolId: guardianSchoolId }))
+  await fixture.guardians.save(new Guardian({ ...guardian.data, schoolId: guardianSchoolId }))
   const student = (await fixture.students.findById('stu1'))!
   await fixture.students.save(new Student({ ...student.data, schoolId: studentSchoolId }))
   if (!enrolledInSchool)

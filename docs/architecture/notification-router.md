@@ -63,3 +63,7 @@ Provider channel identities are SHA-256 digests of the transport job, subject an
 The router is shared with Account OTP delivery and reads `sms_routes` from the current environment config. Notification dispatch uses a database executor independent of command transactions. A lease-fenced `sending` marker commits before SMS network access; an expired unfinished attempt becomes `uncertain`, including when the job has exhausted all claims. Held and permanently rejected SMS channels cannot be retried automatically. Confirmed temporary rejections may retry within the existing job limit; other channels continue independently. Jobs with no retryable work become terminal.
 
 Status lookups and delivery events map held SMS to `failed` with `SMS_DELIVERY_UNCERTAIN`; an active sending marker is not exposed as a confirmed failure. Accepted provider IDs are stored as `sms:v1:` plus JSON `[providerId,messageId]`. No database migration or automatic provider failover is introduced. See [SMS rollout and rollback](../reference/phone-verification.md#router-rollout-and-rollback) before deploying or reverting.
+
+## Guardian destinations
+
+Guardian notifications use only the profile email and main phone. The alternative phone is for manual contact. Independent email, SMS and push switches gate outgoing channels; in-app messages remain available under existing source, relationship and account access rules. Guardian routing does not fall back to login identifiers or accept delivery-only contact overrides.

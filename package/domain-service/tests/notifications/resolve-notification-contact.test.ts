@@ -47,7 +47,7 @@ describe('resolveNotificationContact', () => {
       },
     }, { email: 'auth@example.com' })
 
-    expect(enriched.email).toBe('auth@example.com')
+    expect(enriched.email).toBe('school@example.com')
     expect(enriched.phone).toBeUndefined()
   })
 })

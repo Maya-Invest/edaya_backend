@@ -82,6 +82,25 @@ describe('SchoolService aggregate and timetable queries', () => {
     await expect(service.getPublishedReportCardCount('school-a')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
+  test('year-only overview keeps scoped counts without inventing period metrics or actions', async () => {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.STUDENT_READ, scopes: [{ kind: 'student', studentId: 'student-a' }] }))
+    const input = { schoolId: 'school-a', academicYearId: 'year-a' }
+    const overview = await service.getSchoolOverview(input)
+    expect(overview.academicPeriodId).toBeNull()
+    expect(overview.kpis.studentCount).toBe(1)
+    expect(overview.kpis.publishedReportCardCount).toBeNull()
+    expect(overview.kpis.unpublishedReportCardCount).toBeNull()
+    expect(overview.areaHealth.academics).toEqual({ gradingCompletionPercent: null, publishedReportCards: null, totalReportCards: null, incompleteGradingClassCount: null })
+    expect(overview.actionItems.some(item => ['unpublished_report_cards', 'incomplete_grading'].includes(item.key))).toBe(false)
+    expect(overview.upcoming.some(item => ['exam', 'report_card_deadline'].includes(item.kind))).toBe(false)
+    await expect(service.getSchoolOverview({ ...input, academicYearId: 'year-b' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.getSchoolOverview({ ...input, academicPeriodId: 'missing' })).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.staffPermissionAssignments.delete('overview')
+    expect((await service.getSchoolOverview(input)).kpis.studentCount).toBe(0)
+    await fixture.db.exec('UPDATE staff_members SET is_active = false WHERE id = \'staff-a\'')
+    await expect(service.getSchoolOverview(input)).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
   test('overview and shell counts reject foreign years, periods and class ids before aggregation', async () => {
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.STUDENT_READ, scopes: [{ kind: 'all', grain: 'student' }] }))
     for (const permission of [Permission.CLASS_READ, Permission.ENROLLMENT_READ])

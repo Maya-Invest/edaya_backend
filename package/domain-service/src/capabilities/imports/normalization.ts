@@ -70,15 +70,8 @@ export function normalizeImportValues(type: ImportType, values: ImportValues): I
   // Excel-friendly international prefix, only on declared phone fields. Raw cells stay intact.
   if (typeof result['phone'] === 'string')
     result['phone'] = normalizeImportPhone(result['phone'])
-  if (type === 'guardian_contacts' && result['type'] === 'phone' && typeof result['value'] === 'string')
-    result['value'] = normalizeImportPhone(result['value'])
-  if (type === 'guardians' && Array.isArray(result['contactMethods'])) {
-    result['contactMethods'] = result['contactMethods'].map((contact) => {
-      if (contact && typeof contact === 'object' && !Array.isArray(contact) && contact['type'] === 'phone' && typeof contact['value'] === 'string')
-        return { ...contact, value: normalizeImportPhone(contact['value']) }
-      return contact
-    })
-  }
+  if (typeof result['alternativePhone'] === 'string')
+    result['alternativePhone'] = normalizeImportPhone(result['alternativePhone'])
   if (type === 'payments' && typeof result['method'] === 'string') {
     const aliases: Record<string, string> = { cash: 'cash', especes: 'cash', espèces: 'cash', card: 'card', carte: 'card', bank_transfer: 'bank_transfer', virement: 'bank_transfer', mobile: 'mobile_money', mobile_money: 'mobile_money', other: 'other', autre: 'other' }
     result['method'] = aliases[result['method'].toLowerCase()] ?? result['method']

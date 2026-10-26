@@ -2,7 +2,7 @@
 export const IMPORT_TEMPLATE_VERSION = 1
 export const IMPORT_MAX_FILE_BYTES = 5 * 1024 * 1024
 export const IMPORT_MAX_ROWS = 10000
-export const IMPORT_TYPES = ['academic_disciplines', 'placement_statuses', 'classes', 'subjects', 'students', 'guardians', 'teachers', 'staff', 'guardian_contacts', 'guardian_relationships', 'class_offerings', 'teacher_assignments', 'chapters', 'billing', 'payments'] as const
+export const IMPORT_TYPES = ['academic_disciplines', 'placement_statuses', 'classes', 'subjects', 'students', 'guardians', 'teachers', 'staff', 'guardian_relationships', 'class_offerings', 'teacher_assignments', 'chapters', 'billing', 'payments'] as const
 export type ImportType = typeof IMPORT_TYPES[number]
 export type ImportExistingMode = 'S' | 'M' | 'O'
 export type ImportCell = string | number | boolean | null

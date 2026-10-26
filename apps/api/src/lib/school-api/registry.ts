@@ -213,7 +213,7 @@ export const coreCommands = [
   command("upsert-student-health-profile", "upsertStudentHealthProfile", commandSchemas.upsertStudentHealthProfileCommandSchema),
   command("create-student-note", "createStudentNote", commandSchemas.createStudentNoteCommandSchema),
   command("update-student-note", "updateStudentNote", commandSchemas.updateStudentNoteCommandSchema),
-  command("update-guardian-contact-methods", "updateGuardianContactMethods", commandSchemas.updateGuardianContactMethodsCommandSchema),
+  command("update-guardian-profile", "updateGuardianProfile", commandSchemas.updateGuardianProfileCommandSchema),
   command("update-guardian-student-link", "updateGuardianStudentLink", commandSchemas.updateGuardianStudentLinkCommandSchema),
   command("configure-subject", "configureSubject", commandSchemas.subjectConfigCommandSchema),
   command("configure-academic-discipline", "configureAcademicDiscipline", commandSchemas.configureAcademicDisciplineCommandSchema),

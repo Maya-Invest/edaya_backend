@@ -122,7 +122,7 @@ export type SchoolCommandKey
     | 'upsertStudentHealthProfile'
     | 'createStudentNote'
     | 'updateStudentNote'
-    | 'updateGuardianContactMethods'
+    | 'updateGuardianProfile'
     | 'updateGuardianStudentLink'
     | 'createSchedule'
     | 'saveSchedule'
@@ -337,7 +337,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'upsertStudentHealthProfile',
   'createStudentNote',
   'updateStudentNote',
-  'updateGuardianContactMethods',
+  'updateGuardianProfile',
   'updateGuardianStudentLink',
   'createSchedule',
   'saveSchedule',
