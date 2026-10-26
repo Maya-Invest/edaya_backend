@@ -1,9 +1,9 @@
 import type { S2sClient } from '@edaya/core'
 import {
-  CHILDREN_AI_S2S_CLIENT_ID,
+  EDAYA_SPARK_S2S_CLIENT_ID,
   encodeS2sApiKey,
-  localChildrenAiS2sApiKey,
-  provisionChildrenAiReadS2sClient,
+  localEdayaSparkS2sApiKey,
+  provisionEdayaSparkReadS2sClient,
 } from '@edaya/authorization'
 import { describe, expect, mock, test } from 'bun:test'
 
@@ -34,14 +34,14 @@ function createS2sRepository() {
   }
 }
 
-describe('children-ai onboarding S2S', () => {
+describe('edaya-spark onboarding S2S', () => {
   test('mints a deterministic local key from schoolId', async () => {
     const schoolId = '550e8400-e29b-41d4-a716-446655440000'
-    const expected = 's2s_live_local_550e8400e29b41d4a716446655440000_children_ai01'
-    expect(localChildrenAiS2sApiKey(schoolId)).toBe(expected)
+    const expected = 's2s_live_local_550e8400e29b41d4a716446655440000_edaya_spark01'
+    expect(localEdayaSparkS2sApiKey(schoolId)).toBe(expected)
 
     const { repository } = createS2sRepository()
-    const created = await provisionChildrenAiReadS2sClient(repository as never, {
+    const created = await provisionEdayaSparkReadS2sClient(repository as never, {
       schoolId,
       createdBySubjectId: 'owner-1',
       keyMode: 'deterministic',
@@ -49,19 +49,19 @@ describe('children-ai onboarding S2S', () => {
 
     expect(created.created).toBe(true)
     expect(created.apiKey).toBe(expected)
-    expect(created.client.clientId).toBe(CHILDREN_AI_S2S_CLIENT_ID)
+    expect(created.client.clientId).toBe(EDAYA_SPARK_S2S_CLIENT_ID)
     expect(created.client.accessClass).toBe('read')
     expect(created.client.keyHash).toBe(encodeS2sApiKey(expected).hash)
   })
 
-  test('is idempotent when a children-ai client already exists', async () => {
+  test('is idempotent when a edaya-spark client already exists', async () => {
     const { repository } = createS2sRepository()
-    const first = await provisionChildrenAiReadS2sClient(repository as never, {
+    const first = await provisionEdayaSparkReadS2sClient(repository as never, {
       schoolId: 'school-1',
       createdBySubjectId: 'owner-1',
       keyMode: 'deterministic',
     })
-    const second = await provisionChildrenAiReadS2sClient(repository as never, {
+    const second = await provisionEdayaSparkReadS2sClient(repository as never, {
       schoolId: 'school-1',
       createdBySubjectId: 'owner-1',
       keyMode: 'random',

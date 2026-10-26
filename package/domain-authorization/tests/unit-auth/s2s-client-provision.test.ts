@@ -26,7 +26,7 @@ describe('s2s client provision', () => {
     const { repositories: repository, atomic } = fixture
     const created = await createS2sClient(repository, actor, {
       schoolId: 'school-a',
-      clientId: 'children-ai',
+      clientId: 'edaya-spark',
       accessClass: 'read',
     }, atomic)
 
@@ -52,13 +52,13 @@ describe('s2s client provision', () => {
     const { repositories: repository, atomic } = fixture
     await createS2sClient(repository, actor, {
       schoolId: 'school-a',
-      clientId: 'children-ai',
+      clientId: 'edaya-spark',
       accessClass: 'write',
       apiKey: `${S2S_API_KEY_PREFIX}fixed-s2s-key-16xx`,
     }, atomic)
     await expect(createS2sClient(repository, actor, {
       schoolId: 'school-a',
-      clientId: 'children-ai',
+      clientId: 'edaya-spark',
       accessClass: 'read',
     }, atomic)).rejects.toMatchObject({ code: 'S2S_CLIENT_ID_CONFLICT' })
   })

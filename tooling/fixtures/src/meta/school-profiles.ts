@@ -7,7 +7,7 @@ export const SEED_SCHOOL_PROFILES = [
     city: 'Abidjan',
     timeZone: 'Africa/Abidjan',
     seedingApiKey: 'sk_live_dev_edaya_ci_cocody_seeding_integration_key',
-    childrenAiS2sApiKey: 's2s_live_dev_edaya_ci_cocody_children_ai_key01',
+    edayaSparkS2sApiKey: 's2s_live_dev_edaya_ci_cocody_edaya_spark_key01',
   },
   {
     id: 'sch-edaya-central',
@@ -37,10 +37,10 @@ export function resolveSeedingApiKeyForSchool(schoolId: string): string {
   return profile.seedingApiKey
 }
 
-export function resolveChildrenAiS2sApiKeyForSchool(schoolId: string): string | undefined {
+export function resolveEdayaSparkS2sApiKeyForSchool(schoolId: string): string | undefined {
   const profile = SEED_SCHOOL_PROFILES.find(entry => entry.id === schoolId)
-  if (!profile || !('childrenAiS2sApiKey' in profile)) {
+  if (!profile || !('edayaSparkS2sApiKey' in profile)) {
     return undefined
   }
-  return profile.childrenAiS2sApiKey
+  return profile.edayaSparkS2sApiKey
 }

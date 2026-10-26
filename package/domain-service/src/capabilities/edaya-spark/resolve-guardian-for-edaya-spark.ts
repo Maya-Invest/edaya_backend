@@ -1,25 +1,31 @@
 import { StudentClassEnrollmentStatus, type CoreEntityRepositories, type GradeLevel } from "@edaya/core";
 
-export const CHILDREN_AI_RESOLVE_SECRET_HEADER = "x-children-ai-resolve-secret";
+export const EDAYA_SPARK_RESOLVE_SECRET_HEADER = "x-edaya-spark-resolve-secret";
 
-export type ChildrenAiGradeId = "6e" | "5e" | "4e" | "3e";
+export interface EdayaSparkGradeLevel {
+  id: string;
+  name: string;
+  label: string;
+  order: number;
+  cycle?: string;
+}
 
-export interface ChildrenAiResolvedChild {
+export interface EdayaSparkResolvedChild {
   studentId: string;
   schoolId: string;
   firstName: string;
   lastName: string;
   classLabel?: string;
-  grade?: ChildrenAiGradeId;
+  gradeLevel?: EdayaSparkGradeLevel;
 }
 
-export interface ChildrenAiResolvedGuardian {
+export interface EdayaSparkResolvedGuardian {
   schoolId: string;
   displayName: string;
-  children: ChildrenAiResolvedChild[];
+  children: EdayaSparkResolvedChild[];
 }
 
-export const EMPTY_CHILDREN_AI_GUARDIAN: ChildrenAiResolvedGuardian = {
+export const EMPTY_EDAYA_SPARK_GUARDIAN: EdayaSparkResolvedGuardian = {
   schoolId: "",
   displayName: "",
   children: [],
@@ -32,21 +38,21 @@ type ResolveGuardianRepositories = Pick<
 
 type ClassPlacement = {
   classLabel: string;
-  grade?: ChildrenAiGradeId;
+  gradeLevel?: EdayaSparkGradeLevel;
 };
 
-export async function resolveGuardianForChildrenAi(
+export async function resolveGuardianForEdayaSpark(
   repositories: ResolveGuardianRepositories,
   subjectId: string,
-): Promise<ChildrenAiResolvedGuardian> {
+): Promise<EdayaSparkResolvedGuardian> {
   const trimmed = subjectId.trim();
   if (!trimmed) {
-    return EMPTY_CHILDREN_AI_GUARDIAN;
+    return EMPTY_EDAYA_SPARK_GUARDIAN;
   }
 
   const guardian = await repositories.guardians.findOne({ subjectId: trimmed });
   if (!guardian?.hasAccess) {
-    return EMPTY_CHILDREN_AI_GUARDIAN;
+    return EMPTY_EDAYA_SPARK_GUARDIAN;
   }
 
   const links = await repositories.guardianLinks.list({
@@ -67,7 +73,7 @@ export async function resolveGuardianForChildrenAi(
     resolveClassPlacements(repositories, guardian.schoolId, studentIds),
   ]);
   const byId = new Map(students.map(student => [student.id, student]));
-  const children: ChildrenAiResolvedChild[] = [];
+  const children: EdayaSparkResolvedChild[] = [];
   for (const studentId of studentIds) {
     const student = byId.get(studentId);
     if (!student || student.schoolId !== guardian.schoolId) {
@@ -80,7 +86,7 @@ export async function resolveGuardianForChildrenAi(
       firstName: student.firstName,
       lastName: student.lastName,
       ...(placement?.classLabel ? { classLabel: placement.classLabel } : {}),
-      ...(placement?.grade ? { grade: placement.grade } : {}),
+      ...(placement?.gradeLevel ? { gradeLevel: placement.gradeLevel } : {}),
     });
   }
 
@@ -126,29 +132,22 @@ async function resolveClassPlacements(
     }
     placements.set(enrollment.studentId, {
       classLabel: classGroup.name,
-      grade: mapCollegeGrade(gradeLevelById.get(classGroup.gradeLevelId)),
+      gradeLevel: copyGradeLevel(gradeLevelById.get(classGroup.gradeLevelId)),
     });
   }
 
   return placements;
 }
 
-function mapCollegeGrade(gradeLevel: GradeLevel | undefined): ChildrenAiGradeId | undefined {
+function copyGradeLevel(gradeLevel: GradeLevel | undefined): EdayaSparkGradeLevel | undefined {
   if (!gradeLevel) {
     return undefined;
   }
-  const haystack = `${gradeLevel.label} ${gradeLevel.name}`.toLowerCase();
-  if (haystack.includes("3e") || haystack.includes("3ème") || haystack.includes("troisi")) {
-    return "3e";
-  }
-  if (haystack.includes("4e") || haystack.includes("4ème") || haystack.includes("quatr")) {
-    return "4e";
-  }
-  if (haystack.includes("5e") || haystack.includes("5ème") || haystack.includes("cinq")) {
-    return "5e";
-  }
-  if (haystack.includes("6e") || haystack.includes("6ème") || haystack.includes("sixi")) {
-    return "6e";
-  }
-  return undefined;
+  return {
+    id: gradeLevel.id,
+    name: gradeLevel.name,
+    label: gradeLevel.label,
+    order: gradeLevel.order,
+    ...(gradeLevel.cycle ? { cycle: gradeLevel.cycle } : {}),
+  };
 }

@@ -100,6 +100,29 @@ describe("onboarding register-school route", () => {
     expect(await secondRegister.json()).toMatchObject({ code: "SUBJECT_ALREADY_LINKED" });
   });
 
+  it("lets the platform bootstrap owner register the first school", async () => {
+    const email = "owner@school.edu";
+    const { app, runtime } = await createCoreRouteTestApp({
+      env: { PLATFORM_BOOTSTRAP_EMAILS: email },
+    });
+    await signUpAuthUser(runtime, { email, name: "Ada Owner" });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
+
+    const response = await app.request(createAppRequest("/core/onboarding/register-school", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        name: "Bootstrap School",
+        timeZone: "Europe/Paris",
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+  });
+
   it("returns 503 when public school registration is disabled", async () => {
     const { runtime, env } = await createCoreRouteTestApp();
     const email = "blocked@school.edu";

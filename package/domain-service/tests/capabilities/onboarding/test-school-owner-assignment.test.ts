@@ -1,4 +1,4 @@
-import { CHILDREN_AI_S2S_CLIENT_ID, encodeS2sApiKey, localChildrenAiS2sApiKey } from '@edaya/authorization'
+import { EDAYA_SPARK_S2S_CLIENT_ID, encodeS2sApiKey, localEdayaSparkS2sApiKey } from '@edaya/authorization'
 import { noOpFileStorage, noOpNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
@@ -24,8 +24,8 @@ describe('school registration with a central identity owner', () => {
     expect(result.school.pendingOwnerStaffId).toBeUndefined()
     expect((await fixture.repositories.staffMembers.findById('new-staff'))?.subjectId).toBe('new-owner')
     expect(await fixture.repositories.staffPermissionAssignments.count()).toBe(0)
-    const s2s = await fixture.repositories.s2sClients.findActiveBySchoolAndClientId(result.school.id, CHILDREN_AI_S2S_CLIENT_ID)
-    expect(s2s?.keyHash).toBe(encodeS2sApiKey(localChildrenAiS2sApiKey(result.school.id)).hash)
+    const s2s = await fixture.repositories.s2sClients.findActiveBySchoolAndClientId(result.school.id, EDAYA_SPARK_S2S_CLIENT_ID)
+    expect(s2s?.keyHash).toBe(encodeS2sApiKey(localEdayaSparkS2sApiKey(result.school.id)).hash)
   })
 
   it('rejects an identity already linked to a school profile', async () => {

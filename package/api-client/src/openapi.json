@@ -2034,7 +2034,7 @@
           "items"
         ]
       },
-      "ChildrenAiResolveGuardianResponse": {
+      "EdayaSparkResolveGuardianResponse": {
         "type": "object",
         "properties": {
           "schoolId": {
@@ -2064,13 +2064,30 @@
                   "type": "string",
                   "minLength": 1
                 },
-                "grade": {
-                  "type": "string",
-                  "enum": [
-                    "6e",
-                    "5e",
-                    "4e",
-                    "3e"
+                "gradeLevel": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "order": {
+                      "type": "integer"
+                    },
+                    "cycle": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "label",
+                    "order"
                   ]
                 }
               },
@@ -2089,7 +2106,7 @@
           "children"
         ]
       },
-      "ChildrenAiResolveGuardianRequest": {
+      "EdayaSparkResolveGuardianRequest": {
         "type": "object",
         "properties": {
           "subjectId": {
@@ -32249,18 +32266,18 @@
         }
       }
     },
-    "/internal/children-ai/resolve-guardian": {
+    "/internal/edaya-spark/resolve-guardian": {
       "post": {
         "tags": [
           "Internal"
         ],
-        "summary": "Resolve a guardian and linked students for Children AI (sibling secret)",
+        "summary": "Resolve a guardian and linked students for Edaya Spark (sibling secret)",
         "requestBody": {
           "description": "Identity subject to resolve",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ChildrenAiResolveGuardianRequest"
+                "$ref": "#/components/schemas/EdayaSparkResolveGuardianRequest"
               }
             }
           }
@@ -32271,7 +32288,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChildrenAiResolveGuardianResponse"
+                  "$ref": "#/components/schemas/EdayaSparkResolveGuardianResponse"
                 }
               }
             }

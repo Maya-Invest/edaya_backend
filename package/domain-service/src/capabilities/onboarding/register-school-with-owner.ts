@@ -2,7 +2,7 @@ import type { School } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import { randomUUID } from 'node:crypto'
-import { createSchoolBootstrapActor, provisionChildrenAiReadS2sClient, type ChildrenAiS2sKeyMode } from '@edaya/authorization'
+import { createSchoolBootstrapActor, provisionEdayaSparkReadS2sClient, type EdayaSparkS2sKeyMode } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 
 export interface RegisterSchoolOwnerSession {
@@ -27,7 +27,7 @@ export interface RegisterSchoolWithOwnerInput {
   ownerFirstName?: string
   ownerLastName?: string
   ownerEmail?: string
-  childrenAiS2sKeyMode?: ChildrenAiS2sKeyMode
+  edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
 }
 
 export interface RegisterSchoolWithOwnerResult {
@@ -125,10 +125,10 @@ export async function registerSchoolWithOwner(
       )
     }
 
-    await provisionChildrenAiReadS2sClient(application.repositories.s2sClients, {
+    await provisionEdayaSparkReadS2sClient(application.repositories.s2sClients, {
       schoolId,
       createdBySubjectId: subjectId,
-      keyMode: input.childrenAiS2sKeyMode ?? 'deterministic',
+      keyMode: input.edayaSparkS2sKeyMode ?? 'deterministic',
     })
 
     return { school: persistedSchool ?? school }

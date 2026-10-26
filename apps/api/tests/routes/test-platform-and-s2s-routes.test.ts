@@ -71,7 +71,7 @@ describe("platform actor and s2s client routes", () => {
       headers: platformHeaders(token, { "content-type": "application/json" }),
       body: JSON.stringify({
         schoolId: SEED_SCHOOL_ID,
-        clientId: "children-ai-read",
+        clientId: "edaya-spark-read",
         accessClass: "read",
       }),
     }));
@@ -84,7 +84,7 @@ describe("platform actor and s2s client routes", () => {
       headers: platformHeaders(token, { "content-type": "application/json" }),
       body: JSON.stringify({
         schoolId: SEED_SCHOOL_ID,
-        clientId: "children-ai-write",
+        clientId: "edaya-spark-write",
         accessClass: "write",
       }),
     }));

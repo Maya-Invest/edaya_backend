@@ -2,8 +2,8 @@ import type { AppRouteHandler } from "@/http/types";
 import { Buffer } from "node:buffer";
 import { timingSafeEqual } from "node:crypto";
 import {
-  CHILDREN_AI_RESOLVE_SECRET_HEADER,
-  resolveGuardianForChildrenAi,
+  EDAYA_SPARK_RESOLVE_SECRET_HEADER,
+  resolveGuardianForEdayaSpark,
 } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -14,7 +14,7 @@ const commandMessageSchema = createMessageObjectSchema();
 
 const resolveGuardianRequestSchema = z.object({
   subjectId: z.string().trim().min(1),
-}).openapi("ChildrenAiResolveGuardianRequest");
+}).openapi("EdayaSparkResolveGuardianRequest");
 
 const resolveGuardianResponseSchema = z.object({
   schoolId: z.string(),
@@ -25,15 +25,21 @@ const resolveGuardianResponseSchema = z.object({
     firstName: z.string(),
     lastName: z.string(),
     classLabel: z.string().min(1).optional(),
-    grade: z.enum(["6e", "5e", "4e", "3e"]).optional(),
+    gradeLevel: z.object({
+      id: z.string(),
+      name: z.string(),
+      label: z.string(),
+      order: z.number().int(),
+      cycle: z.string().optional(),
+    }).optional(),
   })),
-}).openapi("ChildrenAiResolveGuardianResponse");
+}).openapi("EdayaSparkResolveGuardianResponse");
 
-export const childrenAiResolveGuardianRoute = createRoute({
+export const edayaSparkResolveGuardianRoute = createRoute({
   method: "post",
-  path: "/internal/children-ai/resolve-guardian",
+  path: "/internal/edaya-spark/resolve-guardian",
   tags: ["Internal"],
-  summary: "Resolve a guardian and linked students for Children AI (sibling secret)",
+  summary: "Resolve a guardian and linked students for Edaya Spark (sibling secret)",
   request: {
     body: jsonContent(resolveGuardianRequestSchema, "Identity subject to resolve"),
   },
@@ -44,13 +50,13 @@ export const childrenAiResolveGuardianRoute = createRoute({
   },
 });
 
-export const childrenAiResolveGuardianHandler: AppRouteHandler<typeof childrenAiResolveGuardianRoute> = async (c) => {
-  if (!resolveSecretMatches(c.req.header(CHILDREN_AI_RESOLVE_SECRET_HEADER), c.env.CHILDREN_AI_RESOLVE_SECRET)) {
+export const edayaSparkResolveGuardianHandler: AppRouteHandler<typeof edayaSparkResolveGuardianRoute> = async (c) => {
+  if (!resolveSecretMatches(c.req.header(EDAYA_SPARK_RESOLVE_SECRET_HEADER), c.env.EDAYA_SPARK_RESOLVE_SECRET)) {
     return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
   }
 
   const body = c.req.valid("json");
-  const listing = await resolveGuardianForChildrenAi(c.var.schoolApp.repositories, body.subjectId);
+  const listing = await resolveGuardianForEdayaSpark(c.var.schoolApp.repositories, body.subjectId);
   return c.json(listing, HttpStatusCodes.OK);
 };
 

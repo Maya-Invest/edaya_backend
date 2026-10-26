@@ -28,7 +28,7 @@ flowchart LR
     SchoolRoutes["/core entity routes"]
   end
   subgraph machines [Machines]
-    Sibling[Children AI backend]
+    Sibling[Edaya Spark backend]
   end
   Op -->|Bearer JWT + X-Actor-Kind platform| Identity
   Identity --> PlatformUsers
@@ -61,7 +61,7 @@ Further operators: `POST /core/platform-users` `{ email, permissions? }` looks u
 
 ## S2S keys
 
-`POST /core/s2s-clients` takes `schoolId`, `clientId` (stable name such as `children-ai`), and `accessClass` (`read` | `write`). The plaintext key is returned once on create and rotate.
+`POST /core/s2s-clients` takes `schoolId`, `clientId` (stable name such as `edaya-spark`), and `accessClass` (`read` | `write`). The plaintext key is returned once on create and rotate.
 
 - **read** — school `*_READ` and `QUERY_*` actions
 - **write** — school actions except `HUMAN_ONLY`, `SERVICE_ACCOUNT_*`, `ACCESS_CONTROL_*`, and `PLATFORM_REGISTER_SCHOOL`

@@ -20,8 +20,8 @@ import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-
 import { canUseSeedingServiceAccount, createEmptyHttpSeedResults } from '../helpers'
 import { createHttpAccessSeedPort, createHttpDomainSeedPorts } from '../http-domain-ports'
 import {
-  logProvisionedChildrenAiS2sClient,
-  provisionChildrenAiS2sClientHttp,
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
 } from '../../bootstrap/s2s-client'
 
 /** Fresh-database `all` path: auth → bootstrap session → roles → service account → school → access. */
@@ -114,10 +114,10 @@ export async function tryRunAllFreshBootstrap(
   }
 
   await runSeedProgressStep(progress, async () => {
-    const s2s = await provisionChildrenAiS2sClientHttp(client, {
+    const s2s = await provisionEdayaSparkS2sClientHttp(client, {
       schoolId: seedContext.schoolId,
     })
-    logProvisionedChildrenAiS2sClient(s2s)
+    logProvisionedEdayaSparkS2sClient(s2s)
   })
 
   if (options.log) {

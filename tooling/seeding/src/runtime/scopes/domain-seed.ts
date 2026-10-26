@@ -11,8 +11,8 @@ import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-
 import { createEmptyHttpSeedResults, maybeProvisionSeedingServiceAccount } from '../helpers'
 import { createHttpAccessSeedPort, createHttpDomainSeedPorts } from '../http-domain-ports'
 import {
-  logProvisionedChildrenAiS2sClient,
-  provisionChildrenAiS2sClientHttp,
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
 } from '../../bootstrap/s2s-client'
 
 export async function runDomainSeedScope(ctx: HttpSeedRuntimeContext): Promise<RunHttpDevSeedsResults> {
@@ -68,10 +68,10 @@ export async function runDomainSeedScope(ctx: HttpSeedRuntimeContext): Promise<R
 
   if (scope === 'all') {
     await maybeProvisionSeedingServiceAccount(options, serviceAccountApiKey)
-    const s2s = await provisionChildrenAiS2sClientHttp(client, {
+    const s2s = await provisionEdayaSparkS2sClientHttp(client, {
       schoolId: ctx.seedContext.schoolId,
     })
-    logProvisionedChildrenAiS2sClient(s2s)
+    logProvisionedEdayaSparkS2sClient(s2s)
   }
 
   if (options.log) {

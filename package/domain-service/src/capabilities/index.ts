@@ -1,4 +1,4 @@
-export * from './children-ai'
+export * from './edaya-spark'
 export * from './documents'
 export * from './files'
 export * from './invitations'

@@ -3,51 +3,51 @@ import { randomUUID } from 'node:crypto'
 import { S2sClient } from '@edaya/core'
 import { encodeS2sApiKey, generateS2sApiKey } from '../service-accounts/api-key-crypto'
 
-export const CHILDREN_AI_S2S_CLIENT_ID = 'children-ai'
+export const EDAYA_SPARK_S2S_CLIENT_ID = 'edaya-spark'
 
-export type ChildrenAiS2sKeyMode = 'deterministic' | 'random'
+export type EdayaSparkS2sKeyMode = 'deterministic' | 'random'
 
-export function resolveChildrenAiS2sKeyMode(nodeEnv: string): ChildrenAiS2sKeyMode {
+export function resolveEdayaSparkS2sKeyMode(nodeEnv: string): EdayaSparkS2sKeyMode {
   return nodeEnv === 'production' ? 'random' : 'deterministic'
 }
 
-/** Local/dev plaintext; Children AI derives the same string from `schoolId`. */
-export function localChildrenAiS2sApiKey(schoolId: string): string {
-  return `s2s_live_local_${schoolId.replaceAll('-', '')}_children_ai01`
+/** Local/dev plaintext; Edaya Spark derives the same string from `schoolId`. */
+export function localEdayaSparkS2sApiKey(schoolId: string): string {
+  return `s2s_live_local_${schoolId.replaceAll('-', '')}_edaya_spark01`
 }
 
-export interface ProvisionChildrenAiReadS2sClientInput {
+export interface ProvisionEdayaSparkReadS2sClientInput {
   schoolId: string
   createdBySubjectId: string
-  keyMode: ChildrenAiS2sKeyMode
+  keyMode: EdayaSparkS2sKeyMode
 }
 
-export interface ProvisionChildrenAiReadS2sClientResult {
+export interface ProvisionEdayaSparkReadS2sClientResult {
   client: S2sClient
   created: boolean
   apiKey?: string
 }
 
-export async function provisionChildrenAiReadS2sClient(
+export async function provisionEdayaSparkReadS2sClient(
   repository: S2sClientRepository,
-  input: ProvisionChildrenAiReadS2sClientInput,
-): Promise<ProvisionChildrenAiReadS2sClientResult> {
+  input: ProvisionEdayaSparkReadS2sClientInput,
+): Promise<ProvisionEdayaSparkReadS2sClientResult> {
   const existing = await repository.findActiveBySchoolAndClientId(
     input.schoolId,
-    CHILDREN_AI_S2S_CLIENT_ID,
+    EDAYA_SPARK_S2S_CLIENT_ID,
   )
   if (existing) {
     return { client: existing, created: false }
   }
 
   const generated = input.keyMode === 'deterministic'
-    ? encodeS2sApiKey(localChildrenAiS2sApiKey(input.schoolId))
+    ? encodeS2sApiKey(localEdayaSparkS2sApiKey(input.schoolId))
     : generateS2sApiKey()
 
   const client = new S2sClient({
     id: randomUUID(),
     schoolId: input.schoolId,
-    clientId: CHILDREN_AI_S2S_CLIENT_ID,
+    clientId: EDAYA_SPARK_S2S_CLIENT_ID,
     accessClass: 'read',
     keyPrefix: generated.prefix,
     keyHash: generated.hash,

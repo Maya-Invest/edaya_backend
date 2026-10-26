@@ -7,7 +7,7 @@ import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { RegisterSchoolOwnerSession } from './register-school-with-owner'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
 import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
-import { ActorAssuranceLevel, createStaffActorMetadata, type ChildrenAiS2sKeyMode } from '@edaya/authorization'
+import { ActorAssuranceLevel, createStaffActorMetadata, type EdayaSparkS2sKeyMode } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { digestCommandRequest } from '../../services/commands/command-execution'
 import { applyStructureTemplate } from './apply-structure-template'
@@ -275,7 +275,7 @@ async function executeProvision(
   options: {
     existingActor?: ActorMetadata
     inviteBaseUrl?: string
-    childrenAiS2sKeyMode?: ChildrenAiS2sKeyMode
+    edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
   },
   schoolId: string,
   requestId: string,
@@ -308,8 +308,8 @@ async function executeProvision(
         city: input.school.city,
         country: input.school.country,
         requestId,
-        ...(options.childrenAiS2sKeyMode
-          ? { childrenAiS2sKeyMode: options.childrenAiS2sKeyMode }
+        ...(options.edayaSparkS2sKeyMode
+          ? { edayaSparkS2sKeyMode: options.edayaSparkS2sKeyMode }
           : {}),
       })
     })
@@ -387,7 +387,7 @@ export async function provisionOnboarding(
     existingActor?: ActorMetadata
     inviteBaseUrl?: string
     allowPublicSchoolRegistration: boolean
-    childrenAiS2sKeyMode?: ChildrenAiS2sKeyMode
+    edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
   },
 ): Promise<ProvisionOnboardingResult> {
   if (!options.allowPublicSchoolRegistration && options.existingActor?.kind !== 'staff') {

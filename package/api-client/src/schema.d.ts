@@ -473,7 +473,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/internal/children-ai/resolve-guardian": {
+    "/internal/edaya-spark/resolve-guardian": {
         parameters: {
             query?: never;
             header?: never;
@@ -482,7 +482,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Resolve a guardian and linked students for Children AI (sibling secret) */
+        /** Resolve a guardian and linked students for Edaya Spark (sibling secret) */
         post: {
             parameters: {
                 query?: never;
@@ -493,7 +493,7 @@ export interface paths {
             /** @description Identity subject to resolve */
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["ChildrenAiResolveGuardianRequest"];
+                    "application/json": components["schemas"]["EdayaSparkResolveGuardianRequest"];
                 };
             };
             responses: {
@@ -503,7 +503,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ChildrenAiResolveGuardianResponse"];
+                        "application/json": components["schemas"]["EdayaSparkResolveGuardianResponse"];
                     };
                 };
                 /** @description Invalid resolve secret */
@@ -12784,7 +12784,7 @@ export interface components {
                 })[];
             }[];
         };
-        ChildrenAiResolveGuardianResponse: {
+        EdayaSparkResolveGuardianResponse: {
             schoolId: string;
             displayName: string;
             children: {
@@ -12793,11 +12793,16 @@ export interface components {
                 firstName: string;
                 lastName: string;
                 classLabel?: string;
-                /** @enum {string} */
-                grade?: "6e" | "5e" | "4e" | "3e";
+                gradeLevel?: {
+                    id: string;
+                    name: string;
+                    label: string;
+                    order: number;
+                    cycle?: string;
+                };
             }[];
         };
-        ChildrenAiResolveGuardianRequest: {
+        EdayaSparkResolveGuardianRequest: {
             subjectId: string;
         };
         School: {
