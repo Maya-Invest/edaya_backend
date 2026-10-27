@@ -21,16 +21,11 @@
       ]
     },
     "test": {
-      "dependsOn": [
-        "^check"
-      ]
+      "cache": false
     },
     "lint": {},
     "lint:fix": {},
     "test:integration": {
-      "dependsOn": [
-        "^check"
-      ],
       "cache": false
     }
   },

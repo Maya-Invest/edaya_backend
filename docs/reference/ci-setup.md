@@ -5,11 +5,11 @@ Each repository verifies and releases its own revision. Backend changes do not r
 | Event | Required behavior |
 | --- | --- |
 | PR into `main` or `staging` | Full verification and integrations; no deployment |
-| Other branch push | Repository checks, lint/types, builds and unit/tooling tests; SQL/composition suites excluded |
+| Other branch push | Quality and unit/tooling tests in parallel; no integration or release build |
 | Push to `staging` | Qualify that commit, release staging |
 | Push to `main` | Qualify that commit, release production |
 | Manual deployment | Select revision in the environment's deployment workflow; use the same qualification and deployment jobs |
-| Manual validation | Select environment, revision, and optionally a backend reference; never deploy |
+| Manual validation | Select environment and revision; never migrate or deploy |
 
 Deployments are serialized per repository/environment without cancelling active deployments. They depend on successful qualification; failure, cancellation or skipped qualification cannot deploy. Artifact restoration selects the unique qualified artifact from the same run and attempt, checks out its recorded source commit, restores frozen dependencies, and verifies file checksums. Deployment never resolves another backend branch or generates another client.
 
@@ -17,7 +17,7 @@ Deployments are serialized per repository/environment without cancelling active 
 
 Replacement deployment jobs require repository variable `ENABLE_INDEPENDENT_RELEASES=true`. Leave it unset until full local verification, both destination builds, all integration suites, artifact handoff, and non-deploying GitHub rehearsals pass. No production release is implied by installing this tooling.
 
-Deploy the backend tooling changes to the destination branches before consumers qualify against those branches: consumer integration uses the backend's typed fixture command. Configure branch protection to require **qualification / Full validation** from the PR workflow (confirm the exact displayed check name on the first rehearsal). Remove obsolete coordinator/publication checks only after that required check succeeds. GitHub may display the caller workflow name as an additional prefix.
+Deploy the backend tooling changes to the destination branches before consumers qualify against those branches: consumer integration uses the backend's typed fixture command. Configure branch protection to require **Full validation** from the PR workflow (confirm the exact displayed check name on the first rehearsal). Remove obsolete coordinator/publication checks only after that required check succeeds. GitHub may display the caller workflow name as an additional prefix. The old reusable job may appear as `qualification / Full validation`; confirm the new caller job `Full validation` on a non-deploying rehearsal before replacing the required check. No branch-protection settings are changed by this commit.
 
 Bun remains pinned to 1.3.14, Flutter to 3.44.8. Ubuntu CI and macOS development use native Git, Node.js 22+ for the third-party Wrangler CLI, archive tools and PostgreSQL binaries where needed. Validators are downloaded at pinned versions and verified against committed SHA-256 checksums. No first-party Python or Node operational runtime is required.
 
@@ -37,7 +37,7 @@ bun run repo build staging
 bun run repo ci qualify staging
 ```
 
-`ci qualify` runs verification, package SQL/composition tests, service/HTTP, seed and native PostgreSQL integrations, then the separate handwritten API regressions, an informational historical schema comparison and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
+`ci qualify` composes quality, units, one workspace/release build, three integration groups and finalization. Compatibility tests and informational historical schema comparison belong exclusively to the adapters/HTTP group. Each destination push freshly qualifies its actual commit before migrating and deploying. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
 
 Clients are expected to upgrade with the backend; compatibility with older clients does not block release. Checksum-pinned oasdiff 1.11.7 reports historical contract changes in `.ci-evidence/contract-changes.json`. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment, falling back to the preserved `tooling/repo/fixtures/compatibility/bootstrap.json` snapshot when no successful deployment exists. Comparison/tool errors still fail qualification. The existing `compatibility` evidence key requires the handwritten HTTP, actor-assurance and tenant-scope regression suites to pass; schema changes cannot suppress those tests. Current OpenAPI drift, generated-client and application regression checks also remain mandatory. Qualify matching frontend and mobile clients before rolling out a contract change.
 
@@ -94,3 +94,15 @@ The complete `ci qualify staging` command passed against the local working tree:
 Staging and production Worker bundles both passed deployment dry runs using the already built bundle and explicit application configuration. No deployment, database migration, reset or reseed was performed against a hosted environment. Local evidence identifies the working tree and must not be treated as a qualified committed release candidate.
 
 GitHub-hosted qualification, artifact handoff, deployment-history permissions, environment configuration and matching-client qualification remain required before enabling the adoption gate.
+
+## Reusable task composition
+
+Six reusable workflows own quality, unit tests, integration tests, build, migration and deployment. Event workflows expose that graph directly. Each event first resolves one immutable SHA. Quality, units and build run independently on PR/release/manual validation; integration waits for quality and units. The final `Full validation` job uses `always()` and explicitly refuses any unsuccessful prerequisite. Feature pushes run quality and units only.
+
+The integration matrix has three independent runners, with sequential execution inside each: `services` (service/authorization and headless integration), `adapters-http` (remaining adapters, API/HTTP and compatibility), and `seed-native` (seed and native PostgreSQL). Each group is selectable with `bun run repo test integration --group <group>`; the default runs all three once. Discovery rejects unknown integration locations and excludes only explicit benchmark/live suites. No Bun file concurrency is added. Unit and integration results are uncached: removing dependency type-check tasks must not let imported workspace changes reuse stale test results.
+
+Stage reports carry commit, target, run ID, attempt, result and elapsed time. Finalization invalidates any older qualification first, requires exactly one successful report per required stage, and qualifies the existing build. Starting a new local qualification also clears the previous success. Migration and deployment restore the same qualified artifact; deployment also requires matching migration evidence. These jobs preserve the existing environment protections and deployment adoption flag. Environments used by both jobs retain their configured review rules.
+
+The local setup composite verifies checkout identity and shares pinned Bun/frozen installation. A checkout step precedes it because GitHub must load local actions from an existing checkout. Migration and deployment each receive only their required credentials.
+
+For rollout, run the PR/manual graph without deployment first, verify all three integration groups and the final check display name, and then update branch protection if needed. Existing deployment concurrency and staging maintenance serialization remain in place.

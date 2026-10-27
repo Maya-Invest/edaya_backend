@@ -54,10 +54,13 @@ async function main() {
         },
       })
       const interrupt = () => child.kill('SIGINT')
+      const terminate = () => child.kill('SIGTERM')
       process.once('SIGINT', interrupt)
+      process.once('SIGTERM', terminate)
       child.once('error', reject)
       child.once('exit', (code) => {
         process.removeListener('SIGINT', interrupt)
+        process.removeListener('SIGTERM', terminate)
         resolve(code ?? 130)
       })
     })

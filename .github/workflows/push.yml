@@ -4,15 +4,32 @@ on:
     branches-ignore: [main, staging]
 permissions:
   contents: read
+  actions: read
   deployments: read
 concurrency:
   group: branch-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  verification:
-    uses: ./.github/workflows/_qualify.yml
+  source:
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  quality:
+    needs: source
+    uses: ./.github/workflows/_quality-check.yml
     with:
+      source_ref: ${{ needs.source.outputs.sha }}
       target: staging
-      source_ref: ${{ github.sha }}
-      full: false
-    secrets: inherit
+  unit:
+    needs: source
+    uses: ./.github/workflows/_unit-test.yml
+    with:
+      source_ref: ${{ needs.source.outputs.sha }}
+      target: staging

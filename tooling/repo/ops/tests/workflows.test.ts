@@ -4,49 +4,53 @@ import { expect, test } from 'bun:test'
 import { root } from '../runtime'
 
 const workflow = (name: string) => Bun.YAML.parse(readFileSync(resolve(root, '.github/workflows', name), 'utf8')) as Record<string, any>
-test('feature pushes select unit verification while destination pushes retain release qualification', () => {
+test('feature pushes run quality and unit independently without integration or build', () => {
   const push = workflow('push.yml')
   expect(push.on.push['branches-ignore']).toEqual(['main', 'staging'])
-  expect(push.jobs.verification.with.full).toBe(false)
-  const qualify = workflow('_qualify.yml')
-  expect(qualify.jobs.qualification.steps.some((step: any) => step.run === 'bun run repo ci verify' && step.if?.includes('!inputs.full'))).toBe(true)
-  expect(qualify.jobs.qualification.steps.find((step: any) => step.run === 'bun run repo ci setup').if).toBe('inputs.full')
+  expect(Object.keys(push.jobs)).toEqual(['source', 'quality', 'unit'])
+  expect(push.jobs.quality.needs).toBe('source')
+  expect(push.jobs.unit.needs).toBe('source')
 })
-test('PRs into both destinations always qualify without deployment', () => {
+test('PR qualification joins all tasks and refuses failed or skipped predecessors', () => {
   const pr = workflow('deploy_pr.yml')
   expect(pr.on.pull_request.branches).toEqual(['main', 'staging'])
-  expect(Object.values(pr.jobs).every((job: any) => job.uses === './.github/workflows/_qualify.yml')).toBe(true)
-  expect(pr.jobs.qualification.with.full).not.toBe(false)
+  expect(pr.jobs.integration.needs).toEqual(['source', 'quality', 'unit'])
+  expect(pr.jobs.qualification.needs).toEqual(['source', 'quality', 'unit', 'build', 'integration'])
+  expect(pr.jobs.qualification.if).toBe('always()')
+  expect(pr.jobs.qualification.steps[0].run).toContain('.result == "success"')
+  expect(pr.jobs.migration).toBeUndefined()
+  expect(pr.jobs.deployment).toBeUndefined()
 })
-test('releases serialize, require successful qualification, and support exact manual revisions', () => {
+test('releases serialize and require fresh qualification, migration, then exact-artifact deployment', () => {
   for (const [environment, branch] of [['staging', 'staging'], ['production', 'main']]) {
     const release = workflow(`deploy-${environment}.yml`)
     expect(release.on.push.branches).toEqual([branch])
-    expect(release.on.workflow_dispatch.inputs.source_ref).toBeDefined()
     expect(release.concurrency['cancel-in-progress']).toBe(false)
-    expect(release.jobs.deploy.needs).toBe('qualify')
-    expect(release.jobs.deploy.if).toBe('vars.ENABLE_INDEPENDENT_RELEASES == \'true\'')
-    expect(release.jobs.deploy.with.target).toBe(environment)
+    expect(release.jobs.migration.needs).toEqual(['source', 'qualification'])
+    expect(release.jobs.deployment.needs).toEqual(['source', 'migration'])
+    expect(release.jobs.migration.if).toBe('vars.ENABLE_INDEPENDENT_RELEASES == \'true\'')
+    expect(release.jobs.deployment.if).toBe(release.jobs.migration.if)
+    for (const name of ['migration', 'deployment']) {
+      const definition = workflow(`_${name}.yml`)
+      expect(definition.jobs[name].environment).toContain('inputs.target')
+      const commands = definition.jobs[name].steps.map((step: any) => step.run ?? '').join('\n')
+      expect(commands).toContain('restore.ts')
+      expect(commands).not.toMatch(/ci qualify|test integration|ci build|generate client/)
+    }
   }
 })
-test('artifact handoff cannot resolve a backend branch or regenerate a client at deployment', () => {
-  const deployment = workflow('_deploy.yml')
-  const steps = deployment.jobs.deploy.steps as {
-    run?: string
-    uses?: string
-  }[]
-  expect(steps.some(step => step.run?.includes('restore'))).toBe(true)
-  expect(steps.some(step => step.run?.includes('generate client'))).toBe(false)
-  expect(JSON.stringify(deployment)).not.toContain('edaya_backend')
-  expect(workflow('validate.yml').on.workflow_dispatch).toBeDefined()
-  const qualification = workflow('_qualify.yml')
-  expect(qualification.on.workflow_call.inputs.full.default).toBe(true)
-  expect(qualification.jobs.qualification.steps.some((step: any) => step.run?.includes('ci qualify') && step.if === 'inputs.full')).toBe(true)
+test('integration groups use independent runners with bounded concurrency and all reports retained', () => {
+  const integration = workflow('_integration-test.yml').jobs.integration
+  expect(integration.strategy['max-parallel']).toBe(3)
+  expect(integration.strategy['fail-fast']).toBe(false)
+  expect(integration.strategy.matrix.group).toEqual(['services', 'adapters-http', 'seed-native'])
 })
-test('maintenance is manual, shares staging serialization and is absent from normal deploys', () => {
+test('manual validation never deploys; maintenance stays manual and serialized with staging releases', () => {
+  const validation = workflow('validate.yml')
+  expect(validation.on.workflow_dispatch).toBeDefined()
+  expect(validation.jobs.migration).toBeUndefined()
   const maintenance = workflow('maintenance-staging.yml')
   expect(Object.keys(maintenance.on)).toEqual(['workflow_dispatch'])
   expect(maintenance.concurrency.group).toBe(workflow('deploy-staging.yml').concurrency.group)
   expect(maintenance.on.workflow_dispatch.inputs.dry_run.default).toBe(true)
-  expect(JSON.stringify(workflow('_deploy.yml'))).not.toMatch(/reset|reseed|maintenance/)
 })

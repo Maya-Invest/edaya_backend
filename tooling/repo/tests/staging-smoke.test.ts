@@ -82,6 +82,9 @@ describe('runSmokeStaging', () => {
         return new Response(null, { status: 204 })
       }
 
+      if (url.endsWith('/auth/edaya/terms?locale=en'))
+        return Response.json({ enforced: true, document: { version: 'draft-terms', locale: 'en', status: 'draft' } })
+
       if (url.endsWith('/auth/edaya/otp/start'))
         return Response.json({ challenge: 'mock-challenge' })
       if (url.includes('/auth/edaya/testing/otp'))
@@ -130,8 +133,8 @@ describe('runSmokeStaging', () => {
 
     const result = await runSmokeStaging()
 
+    expect(result.checks.filter(check => check.status === 'failed')).toEqual([])
     expect(result.passed).toBe(true)
-    expect(result.checks.filter(check => check.status === 'failed')).toHaveLength(0)
     expect(result.checks.find(check => check.id === 'S7')?.status).toBe('passed')
 
     // Ensure mocked client path still works for direct usage.

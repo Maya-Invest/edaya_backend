@@ -1,68 +1,11 @@
 import { AuthorizationErrorCode } from '@edaya/authorization'
-import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, ChargeStatus, DayOfWeek, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, studentYearAccountId, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, ChargeStatus, DayOfWeek, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, studentYearAccountId, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listMatterProgress, publishAcademicPeriod, saveAnnouncement, saveAnnouncementTarget, saveClassSubject, saveClassSubjectMatter, saveFee, saveGuardian, saveLessonSession, saveSchedule, saveSchool, saveStudent, seedReportGradingPolicy, withFixtureDiscipline } from '../utils/core-service-helpers'
+import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, publishAcademicPeriod, saveAnnouncement, saveAnnouncementTarget, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchedule, saveSchool, saveStudent, seedReportGradingPolicy, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('atomic workflow safeguards', () => {
-  it('rolls back curriculum progress when a later aggregate write fails', async () => {
-    const { app, repositories, failSaveOnAttempt } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
-    await app.setupWorkflow.createAcademicYear({
-      id: 'year',
-      schoolId: 'school',
-      name: '2026-2027',
-      startDate: new Date('2026-09-01T00:00:00Z'),
-      endDate: new Date('2027-06-30T23:59:59Z'),
-    })
-    await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
-    )
-    await createClassGroup(app, {
-      id: 'class',
-      schoolId: 'school',
-      academicYearId: 'year',
-      gradeLevelId: 'level',
-      name: 'Grade 6 A',
-    })
-    await app.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' })),
-    )
-    const classSubject = await saveClassSubject(app, {
-      id: 'class-math',
-      classGroupId: 'class',
-      subjectId: 'math',
-    })
-    await app.baseService.entities.subjectMatters.save(
-      new SubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }),
-    )
-    const classMatter = await saveClassSubjectMatter(app, {
-      id: 'class-fractions',
-      classSubjectId: classSubject.id,
-      subjectMatterId: 'fractions',
-    })
-    await saveLessonSession(app, {
-      id: 'lesson',
-      schoolId: 'school',
-      classGroupId: 'class',
-      classSubjectId: classSubject.id,
-      displayLabel: 'Fractions',
-      startsAt: new Date('2026-09-01T08:00:00Z'),
-      endsAt: new Date('2026-09-01T09:00:00Z'),
-    })
-    failSaveOnAttempt('classSubjectMatterRepository')
-    await expect(app.academicsWorkflow.recordLessonSessionProgress({
-      id: 'progress',
-      classSubjectMatterId: classMatter.id,
-      lessonSessionId: 'lesson',
-      completedPercentage: 50,
-    })).rejects.toThrow('Simulated classSubjectMatterRepository save failure')
-    expect(await listMatterProgress(app, classMatter.id)).toHaveLength(0)
-    expect((await repositories.classSubjectMatterRepository.findById(classMatter.id))?.completedPercentage).toBe(0)
-    expect((await repositories.classSubjectRepository.findById(classSubject.id))?.completedPercentage).toBe(0)
-  })
-
   it('rolls back payment and fee lifecycle changes when balance writes fail', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })

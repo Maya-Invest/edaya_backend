@@ -28,6 +28,44 @@ import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
 import { describeWithSeededSchool, describeWithSeededSchoolData, unwrapEntityList } from '../support/seeded-route-test-context'
 
+describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => {
+  it('populates executive dashboard KPIs at the narrative reference date', async () => {
+    const { application } = getContext()
+
+    const referenceDate = parseSeedDate(resolveSeedReferenceDate())
+    const overview = await buildSchoolOverview(application.repositories.dashboardProjections, await application.forActor(createSystemActorMetadata({ systemId: 'fixture-seed', schoolId: SEED_SCHOOL_ID, requestId: 'overview-test', reason: 'Fixture verification' })).baseService.access.overview.scopes(), {
+      schoolId: SEED_SCHOOL_ID,
+      academicYearId: demoCiDataset.entities.academicYear?.id ?? '',
+      academicPeriodId: DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
+      referenceDate,
+    })
+
+    expect(overview.kpis.studentCount).toBeGreaterThan(0)
+    expect(overview.kpis.staffCount).toBeGreaterThan(0)
+    expect(overview.kpis.attendanceRateToday).not.toBeNull()
+    expect(overview.kpis.overdueFeeCount).toBeGreaterThan(0)
+    expect(overview.kpis.openIncidentCount).toBeGreaterThan(0)
+    expect(overview.kpis.pendingJustificationCount).toBeGreaterThan(0)
+    // This period's sheets are complete: submission filled missing roster rows
+    // with explicit absences. Other periods retain unfinished Draft examples.
+    expect(overview.kpis.incompleteGradingClassCount).toBe(0)
+    const sheets = await application.repositories.assessments.list()
+    expect(new Set(sheets.map(sheet => sheet.marksStatus))).toEqual(new Set(['draft', 'submitted']))
+    const corrections = (await Promise.all(sheets.map(sheet => application.repositories.marksCorrections.forAssessment(SEED_SCHOOL_ID, sheet.id)))).flat()
+    expect(new Set(corrections.map(row => row.status))).toEqual(new Set(['pending', 'approved', 'rejected']))
+    expect(overview.upcoming.length).toBeGreaterThanOrEqual(3)
+
+    const actionKeys = overview.actionItems.map(item => item.key)
+    expect(actionKeys).toContain('overdue_fees')
+    expect(actionKeys).toContain('pending_justifications')
+    expect(actionKeys).toContain('high_severity_incidents')
+    expect(actionKeys).not.toContain('incomplete_grading')
+
+    expect(overview.upcoming.some(item => item.kind === 'calendar')).toBe(true)
+    expect(overview.upcoming.some(item => item.kind === 'fee_due')).toBe(true)
+  })
+})
+
 describeWithSeededSchool('dev seed contract', (getContext) => {
   it('lists all seeded entities through staff HTTP routes', async () => {
     const { app, authHeaders } = getContext()
@@ -155,6 +193,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     })
     expect(await application.repositories.messageDeliveries.count()).toBe(beforeCount)
     const retained = await application.repositories.messageDeliveries.findById(delivery!.id)
+    expect(retained?.data).toEqual(delivery!.data)
     expect(retained?.status).toBe(MessageDeliveryStatus.Read)
     expect(retained?.readAt).toEqual(delivery!.readAt)
     expect(await application.repositories.messageDeliveries.findById('duplicate-seed-id')).toBeUndefined()
@@ -249,43 +288,5 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
     expect(staffAssignments.some(assignment => assignment.id === 'sa-ci-st3-6a' && assignment.classGroupId === 'ci-6a')).toBe(true)
     expect(staffAssignments.some(assignment => assignment.id === 'sa-ci-st3-5a' && assignment.classGroupId === 'ci-5a')).toBe(true)
-  })
-})
-
-describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => {
-  it('populates executive dashboard KPIs at the narrative reference date', async () => {
-    const { application } = getContext()
-
-    const referenceDate = parseSeedDate(resolveSeedReferenceDate())
-    const overview = await buildSchoolOverview(application.repositories.dashboardProjections, await application.forActor(createSystemActorMetadata({ systemId: 'fixture-seed', schoolId: SEED_SCHOOL_ID, requestId: 'overview-test', reason: 'Fixture verification' })).baseService.access.overview.scopes(), {
-      schoolId: SEED_SCHOOL_ID,
-      academicYearId: demoCiDataset.entities.academicYear?.id ?? '',
-      academicPeriodId: DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
-      referenceDate,
-    })
-
-    expect(overview.kpis.studentCount).toBeGreaterThan(0)
-    expect(overview.kpis.staffCount).toBeGreaterThan(0)
-    expect(overview.kpis.attendanceRateToday).not.toBeNull()
-    expect(overview.kpis.overdueFeeCount).toBeGreaterThan(0)
-    expect(overview.kpis.openIncidentCount).toBeGreaterThan(0)
-    expect(overview.kpis.pendingJustificationCount).toBeGreaterThan(0)
-    // This period's sheets are complete: submission filled missing roster rows
-    // with explicit absences. Other periods retain unfinished Draft examples.
-    expect(overview.kpis.incompleteGradingClassCount).toBe(0)
-    const sheets = await application.repositories.assessments.list()
-    expect(new Set(sheets.map(sheet => sheet.marksStatus))).toEqual(new Set(['draft', 'submitted']))
-    const corrections = (await Promise.all(sheets.map(sheet => application.repositories.marksCorrections.forAssessment(SEED_SCHOOL_ID, sheet.id)))).flat()
-    expect(new Set(corrections.map(row => row.status))).toEqual(new Set(['pending', 'approved', 'rejected']))
-    expect(overview.upcoming.length).toBeGreaterThanOrEqual(3)
-
-    const actionKeys = overview.actionItems.map(item => item.key)
-    expect(actionKeys).toContain('overdue_fees')
-    expect(actionKeys).toContain('pending_justifications')
-    expect(actionKeys).toContain('high_severity_incidents')
-    expect(actionKeys).not.toContain('incomplete_grading')
-
-    expect(overview.upcoming.some(item => item.kind === 'calendar')).toBe(true)
-    expect(overview.upcoming.some(item => item.kind === 'fee_due')).toBe(true)
   })
 })

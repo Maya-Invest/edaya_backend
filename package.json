@@ -18,7 +18,7 @@
     "lint:fix": "bun x --bun turbo run --log-order=stream --log-prefix=task lint:fix",
     "test": "bun x --bun turbo run --log-order=stream --log-prefix=task test --concurrency=1",
     "test:coverage": "bun x --bun turbo run --log-order=stream --log-prefix=task test --force -- --coverage --coverage-reporter=lcov",
-    "test:integration": "bun x --bun turbo run --log-order=stream --log-prefix=task test:integration --concurrency=1",
+    "test:integration": "bun run repo test integration",
     "test:integration:api": "bun --filter @edaya/integration-tests test:integration:api",
     "test:integration:http": "bun --filter @edaya/integration-tests test:integration:http",
     "test:integration:seed": "bun --filter @edaya/integration-tests test:integration:seed",

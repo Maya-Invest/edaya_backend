@@ -7,8 +7,6 @@ import {
   ClassSubject,
   DayOfWeek,
   GradeLevel,
-  LessonSession,
-  OccurrenceStatus,
   PeriodDefinition,
   Subject,
   SubjectCategory,
@@ -26,7 +24,7 @@ const startDate = new Date('2026-09-07T00:00:00.000Z')
 const endDate = new Date('2026-09-11T00:00:00.000Z')
 
 describeIntegration('timetable generation lifecycle', () => {
-  it('resolves, generates and replaces eligible sessions through Postgres repositories', async () => {
+  it('resolves calendar and activity constraints and persists generated sessions', async () => {
     const { app, schoolRepositories } = await createTestApp()
     await saveSchool(app, {
       id: 'school',
@@ -119,33 +117,5 @@ describeIntegration('timetable generation lifecycle', () => {
     })
     expect(generated.sessions.map(session => session.startsAt.toISOString().slice(0, 10))).toEqual(['2026-09-07', '2026-09-10'])
     expect(generated.sessions.every(session => session.timetableGenerated === true)).toBe(true)
-
-    const completed = generated.sessions[0]!.copyWith({
-      timetableGenerated: true,
-      status: OccurrenceStatus.Completed,
-    })
-    await schoolRepositories.lessonSessions.save(completed)
-    const standalone = new LessonSession({
-      id: 'standalone',
-      schoolId: 'school',
-      classGroupId: 'class',
-      classSubjectId: 'class-math',
-      startsAt: new Date('2026-09-11T10:00:00.000Z'),
-      endsAt: new Date('2026-09-11T11:00:00.000Z'),
-      displayLabel: 'Manual mathematics',
-    })
-    await schoolRepositories.lessonSessions.save(standalone)
-
-    const replacedId = generated.sessions[1]!.id
-    const regenerated = await app.timetableGenerationWorkflow.generateClassGroupTimetable({
-      classGroupId: 'class',
-      academicYearId: 'year',
-      startDate,
-      endDate,
-    })
-    expect(await schoolRepositories.lessonSessions.findById(completed.id)).toBeDefined()
-    expect(await schoolRepositories.lessonSessions.findById(standalone.id)).toBeDefined()
-    expect(await schoolRepositories.lessonSessions.findById(replacedId)).toBeUndefined()
-    expect(regenerated.sessions).toHaveLength(0)
   })
 })

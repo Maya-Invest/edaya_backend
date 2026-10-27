@@ -58,6 +58,8 @@ bun repo ops seed staging --clean       # prompts; add --yes for automation
 2. Seed: `bun repo ops seed`
 3. Log in at http://localhost:5173/login
 
+Local fixture OTP sign-in reads and acknowledges the current draft terms when preview mode is enabled. Published terms require operator-authenticated sessions supplied through `SEED_AUTH_SESSIONS_FILE`; the seeder does not accept published agreements automatically.
+
 After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
 
 ### Profile photos

@@ -3,9 +3,9 @@ import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-
 import { DEMO_CI_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithMinimalSchool } from '../support/minimal-route-test-context'
 
-describeWithLightSchool('teacher unavailability routes', (getContext) => {
+describeWithMinimalSchool('teacher unavailability routes', (getContext) => {
   it('saves, lists, gets, and deletes a weekly rule through the generated client', async () => {
     const { application, app, authHeaders } = getContext()
     const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
@@ -43,4 +43,4 @@ describeWithLightSchool('teacher unavailability routes', (getContext) => {
     await client.entities.teacherUnavailabilities.delete({ id: input.id })
     await expect(client.entities.teacherUnavailabilities.get(input.id)).rejects.toMatchObject({ status: 404 })
   })
-}, { isolate: true })
+})
