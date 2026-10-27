@@ -220,7 +220,7 @@ for (const template of TEMPLATES) {
 import type { TemplateAssets, TemplateManifest } from "../load-assets";
 import manifestJson from "./manifest.json";
 import schemaJson from "./schema.json";
-import styles from "./styles.css";
+import styles from "./styles.css" with { type: "text" };
 import templateSpec from "./template.precompiled.js";
 
 export const ${constName(template.key)}: TemplateAssets = {
