@@ -4,6 +4,14 @@ import { expect, test } from 'bun:test'
 import { root } from '../runtime'
 
 const workflow = (name: string) => Bun.YAML.parse(readFileSync(resolve(root, '.github/workflows', name), 'utf8')) as Record<string, any>
+test('feature pushes select unit verification while destination pushes retain release qualification', () => {
+  const push = workflow('push.yml')
+  expect(push.on.push['branches-ignore']).toEqual(['main', 'staging'])
+  expect(push.jobs.verification.with.full).toBe(false)
+  const qualify = workflow('_qualify.yml')
+  expect(qualify.jobs.qualification.steps.some((step: any) => step.run === 'bun run repo ci verify' && step.if?.includes('!inputs.full'))).toBe(true)
+  expect(qualify.jobs.qualification.steps.find((step: any) => step.run === 'bun run repo ci setup').if).toBe('inputs.full')
+})
 test('PRs into both destinations always qualify without deployment', () => {
   const pr = workflow('deploy_pr.yml')
   expect(pr.on.pull_request.branches).toEqual(['main', 'staging'])

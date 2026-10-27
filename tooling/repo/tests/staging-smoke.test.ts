@@ -1,9 +1,9 @@
 import type { HttpFetch } from '@edaya/seeding/http'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { HttpSeedClient } from '@edaya/seeding/http'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { loadSmokeStagingEnv } from './load-smoke-env'
-import { runSmokeStaging } from './run-smoke-staging'
+import { SEED_SCHOOL_ID } from '../../fixtures/src/shared/ids'
+import { loadSmokeStagingEnv } from '../../integration-tests/src/staging/load-smoke-env'
+import { runSmokeStaging } from '../../integration-tests/src/staging/run-smoke-staging'
 
 const originalEnv = { ...process.env }
 

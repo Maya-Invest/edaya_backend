@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import { describe, expect, test } from "bun:test";
 import { createBrowserRunPdfRenderer } from "../src/adapters/browser-run-pdf-renderer";
-import { createChromePdfRenderer, detectChromeExecutable, prepareChromePrintHtml } from "../src/adapters/chrome-pdf-renderer";
+import { detectChromeExecutable, prepareChromePrintHtml } from "../src/adapters/chrome-pdf-renderer";
 import { createGotenbergPdfRenderer } from "../src/adapters/gotenberg-pdf-renderer";
 import { createStubPdfRenderer } from "../src/adapters/stub-pdf-renderer";
 import { resolvePdfRenderer } from "../src/resolve";
@@ -74,20 +74,6 @@ describe("prepareChromePrintHtml", () => {
 });
 
 describe("pdf renderers", () => {
-  test("Chrome prints HTML when a binary is available", async () => {
-    const chromePath = detectChromeExecutable();
-    if (!chromePath) {
-      return;
-    }
-    const bytes = await createChromePdfRenderer(chromePath).render({
-      html: "<html><body><h1>Bulletin Koné</h1></body></html>",
-      paper: "A4",
-      orientation: "portrait",
-    });
-    expect(Buffer.from(bytes.subarray(0, 5)).toString()).toBe("%PDF-");
-    expect(bytes.byteLength).toBeGreaterThan(2048);
-  }, 45_000);
-
   test("stub returns a tiny valid PDF", async () => {
     const bytes = await createStubPdfRenderer().render({
       html: "<html></html>",

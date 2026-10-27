@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { nativeTestExitCode } from '../native/test-result'
+import { nativeTestExitCode } from '../../integration-tests/src/native/test-result'
 
 test('native runner rejects reported failures even when the child exits zero', () => {
   expect(nativeTestExitCode(0, '<testsuites><testsuite tests="8" failures="1" /></testsuites>')).toBe(1)

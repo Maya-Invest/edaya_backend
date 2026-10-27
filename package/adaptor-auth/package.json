@@ -25,7 +25,8 @@
     "auth:db:push": "drizzle-kit push --config drizzle.auth.config.ts",
     "lint": "bun x --bun eslint src drizzle.auth.config.ts",
     "lint:fix": "bun x --bun eslint src drizzle.auth.config.ts --fix",
-    "test": "bun test"
+    "test": "bun test --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts",
+    "test:integration": "NODE_ENV=test bun test .integration.test.ts --timeout 120000"
   },
   "dependencies": {
     "drizzle-orm": "^0.39.0"

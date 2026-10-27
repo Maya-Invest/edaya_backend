@@ -5,13 +5,14 @@ import { PostgresDashboardProjections } from '@edaya/adaptor-postgres'
 import { expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { buildSchoolOverview as referenceOverview } from '../../../../package/domain-service/tests/support/overview-reference'
-import { fixture } from './support/marks-fixture'
+import { fixture } from '../native/support/marks-fixture'
 
 const output = process.env.EDAYA_BENCHMARK_OUTPUT
 const evidence: unknown[] = []
-const benchmark = output ? test : test.skip
+if (!output)
+  throw new Error('Run benchmarks through test:benchmarks')
 for (const size of [30, 300, 3000]) {
-  benchmark(`dashboard projection benchmark ${size} students`, async () => {
+  test(`dashboard projection benchmark ${size} students`, async () => {
     const f = await fixture(`benchmark-${size}`)
     const db = f.handles[0]!.db as { execute: (query: SQL) => Promise<{ rows: Record<string, unknown>[] }> }
     // Thirty students per class, one submitted sheet and one partially settled charge per student.

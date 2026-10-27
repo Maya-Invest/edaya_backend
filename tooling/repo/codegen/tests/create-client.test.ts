@@ -1,6 +1,6 @@
-import type { Transport, TransportRequestOptions } from '../runtime/transport'
+import type { Transport, TransportRequestOptions } from '../../../../package/api-client/src/runtime/transport'
 import { describe, expect, test } from 'bun:test'
-import { createSchoolClient } from './create-client'
+import { createSchoolClient } from '../../../../package/api-client/src/generated/create-client'
 
 interface RequestRecord {
 	method: string
@@ -32,7 +32,7 @@ describe('createSchoolClient', () => {
 			},
 		}).entities)[0]
 		if (!firstEntityKey) {
-			return
+			throw new Error('Generated client has no entity bindings')
 		}
 
 		const { requests, transport } = createRecordingTransport([[]])

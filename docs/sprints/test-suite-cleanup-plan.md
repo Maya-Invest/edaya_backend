@@ -1,49 +1,97 @@
 # Backend test suite analysis and cleanup plan
 
-**Status:** Proposal · **Date:** 2026-10-26 · **Scope:** Backend tests, CI qualification and deployment triggers
+**Status:** Lane cleanup implemented; consolidation backlog remains · **Updated:** 2026-10-27 · **Audit base:** `53a45742` · **Scope:** Backend tests, CI qualification and deployment triggers
 
-The backend needs a clear separation between fast unit feedback and tests that compose databases, services and HTTP. The current CI events largely match the requested workflow, but the suite called “unit” contains substantial integration work. The first cleanup should correct that boundary and remove proven repeat execution. Consolidation and retirement should follow only where the surviving test covers the same failure.
+The committed optimizations improve fixture reuse, cleanup, task orchestration and visibility. They resolve the duplicate tooling invocation and reduce database setup work. The remaining cleanup is primarily a separation between fast unit feedback and tests that compose databases, services and HTTP, plus repeated integration execution and historical test consolidation.
 
 The requested outcome is unit tests on branch pushes, strong integration coverage on PRs into `staging` or `main`, and deployment on pushes to those destination branches. Coverage means protection of important behavior; the historical near-100% line-coverage campaign should remain closed.
 
+## Implemented cleanup
+
+The implementation following this audit keeps package ownership and uses explicit `*.integration.test.ts` selectors. There are **292 unit files**, **203 integration files** (including the separate handwritten compatibility suite), **two opt-in benchmark files**, and **one explicit live R2 file**. Of the integration files, 157 belong to their application/adaptor/domain packages; composed cross-package journeys remain in `tooling/integration-tests`.
+
+- Push verification runs package unit commands with an exclusion for integration files and a preload that rejects PGlite allocation and listening servers. SQL cleanup hooks load only for service integration.
+- Pure timetable solver/resolver cases, local-file token/object-store cases and mocked PDF transport cases remain on push. SQL workflows, listening HTTP storage and real Chrome rendering run as integration.
+- `bun run test:integration` and `bun run repo test integration` select the same complete package/service/HTTP/seed/native aggregate. Qualification delegates once to that aggregate, with seed/native selected there instead of through additional root invocations.
+- Compatibility comparison runs its separate handwritten HTTP suite once. Production-session actor and school-repository scope cases execute only in their HTTP slice.
+- `bun run test:benchmarks` selects a separate benchmark directory on disposable native PostgreSQL. Ordinary native/seed runs remove inherited benchmark-output variables and retain the small enrollment query-count/persistence check. Required native results still reject failures, empty reports and unexpected skips.
+- API unit discovery now includes all `src` test folders, executing the two import-recovery tests. The generated-client assertion now executes in repo codegen tests, rejects missing bindings and is no longer emitted as an unexecuted generated source file. Pure native-result and mocked-smoke tests also run in the tooling unit lane.
+- PRs into staging/main retain full qualification. Pushes to staging/main retain full qualification, exact-artifact restoration, migrations and deployment with the existing adoption gate. No hosted setting, deployment or migration was applied during implementation.
+
+Final verification on Bun 1.3.14 passed **1,372 unit tests across all 292 unit files** and **1,288 integration tests across 203 files** across the aggregate and affected-slice rerun. `bun run verify` passed repository/workflow checks, lint/types, builds and units; its test phase took 20.39 seconds and its complete cold verification about 4½ minutes locally. The initial complete integration aggregate took about 23 minutes and exposed two stale native publication fixtures. After supplying reviewed-draft tokens and an explicit two-decimal grading scale, all 76 native tests passed in a full native-slice rerun. The race tests now exercise admitted reviewed requests, reject stale publication and verify successful publication after regeneration/review. Production rules were not changed. The already passing package, service/HTTP and seed slices were not redundantly rerun. The separate handwritten compatibility suite passed three tests. [Execution evidence](../../../bin/backend-test-suite-audit-2026-10-27/implementation-verification.json) records the results and initial failure. Large benchmarks and live R2 tests were not run. The proposed ten-minute PR integration budget remains unproven; further runtime work should target fixture startup, seed cost and bounded parallelism. The earlier findings and measurements below describe the audit base before this implementation; the completed execution changes are no longer backlog items. Behavioral consolidation and retirement of historical migrations remain separate follow-up work.
+
+## Optimization review
+
+Commit `53a45742` contains the earlier pending optimizations. Most of that implementation was already present in the first audit's working tree and timing samples; those samples must not be presented as an unoptimized baseline.
+
+| Change | Current assessment | Effect on the cleanup plan |
+| --- | --- | --- |
+| Explicit tooling run removed from `ci verify` | Resolved; tooling participates once through the workspace graph | Remove duplicate-tooling work from the backlog |
+| Root quality invokes Turbo `lint check` directly | Implemented; explicit check tasks can share dependency results instead of repeating nested package quality scripts | Preserve the orchestration change |
+| Shared PGlite pool and file-scoped lease hooks | Implemented across authorization, repository, service and API cases | Preserve fixture reuse; SQL cases still belong to integration |
+| New repository and transaction wrappers per lease | Implemented and exercised by isolation tests | Reuse storage without retaining application wrappers |
+| Reset covers secondary application schemas | Implemented; application tables and sequences are cleared while migration history remains | Preserve the targeted regression test; it protects fixture correctness |
+| Pool failure cleanup, leak detection and checkpoints | Implemented and exercised by pool/lifecycle tests | Retain these protections when relocating the harness |
+| Streaming logs, phase durations and pool metrics | Implemented | Use existing diagnostics instead of creating another timing framework |
+| Shared fixture directories included in Turbo global inputs | Implemented; fixture changes invalidate cached dependent work across package boundaries | Preserve cache correctness; broad invalidation is a deliberate tradeoff, not a reason to remove the dependency inputs |
+| Unit versus integration selection | Still pending | Highest remaining structural priority |
+| Two repeated compatibility regression suites | Still pending | Remove duplicate execution while preserving required outcomes |
+| Large dashboard benchmarks in native default | Still pending | Separate benchmark selection from required integration |
+
+No test files were added, removed or moved relative to the first audit's working-tree inventory. One secondary-schema isolation case was added to an existing pool test file: **20 lines and one lexical declaration**. That focused protection supports the optimization rather than indicating renewed coverage-driven expansion.
+
 ## Inventory and measurements
 
-The working tree contains **493 TypeScript test files**, **52,002 lines in those files**, and **2,373 lexical test declarations**. Parameterized tests and loops expand at runtime, so declarations are not executed test counts. Support files and snapshots are not included in the line total.
+The audited revision contains **493 TypeScript test files**, **52,022 lines in those files**, and **2,374 lexical test declarations**. Parameterized tests and loops expand at runtime, so declarations are not executed test counts. Support files and snapshots are not included in the line total.
 
 | Area | Files | Test code lines | Files with detected PGlite dependencies |
 | --- | ---: | ---: | ---: |
 | Domain core | 65 | 4,143 | 0 |
 | Domain service | 137 | 21,078 | 77 |
 | API including identity tests | 83 | 8,407 | At least 17 |
-| Postgres adaptor | 40 | 3,236 | 28 |
+| Postgres adaptor | 40 | 3,256 | 28 |
 | Authorization | 19 | 1,845 | 10 |
 | Integration package | 49 | 6,285 | Not a classification metric for this package |
 | Other packages and tooling | 100 | 7,008 | At least 7 |
 
-At least **139 files outside the integration package** reach a PGlite fixture, representing 22,196 lines of test code. This is a dependency-based lower bound: the scan follows local test/support imports and does not follow every production composition path. A file can mix pure and database cases; the count does not mean every test in it uses SQL. API identity/runtime tests require additional manual classification.
+At least **139 files outside the integration package** reach a PGlite fixture, representing 22,216 lines of test code. This is a dependency-based lower bound: the scan follows local test/support imports and does not follow every production composition path. A file can mix pure and database cases; the count does not mean every test in it uses SQL. API identity/runtime tests require additional manual classification. Pooling reduces setup work but does not change this classification.
 
-There are 491 committed test files at `5d20b668`; two additional pool tests are untracked. Existing modifications span test fixtures, test callers, CI documentation and verification orchestration. This proposal preserves that work.
+All 493 test files are now committed at `53a45742`; the working tree was clean when the refresh began. The earlier audit used committed base `5d20b668` plus pending fixture/orchestration changes, including two then-untracked pool test files.
 
-Sequential local samples on the current working tree passed:
+Fresh sequential samples using **Bun 1.3.14**, the CI-pinned version, passed at the audited revision:
 
 | Sample | Executed tests | Process wall time | Fixture observation |
 | --- | ---: | ---: | --- |
-| Entire core package | 330 | 0.18 s | Pure domain tests |
-| Entire authorization package | 112 | 29.36 s | Ten SQL pools initialized |
-| Guardian relationship policy file | 3 | 2.10 s | One initialization, three leases |
-| Mixed timetable generation file | 45 | 7.58 s | One initialization, 31 leases |
-| Pure timetable solver equivalence file | 24 | 0.34 s | No SQL fixture |
-| API command-policy parity file | 4 | 3.17 s | One initialization, four leases |
+| Entire core package | 330 | 0.29 s | Pure domain tests |
+| Entire authorization package | 112 | 20.33 s | Ten initializations for 65 leases |
+| Guardian relationship policy file | 3 | 4.48 s | One initialization, three leases |
+| Mixed timetable generation file | 45 | 6.71 s | One initialization, 31 leases |
+| Pure timetable solver equivalence file | 24 | 0.40 s | No SQL fixture |
+| API command-policy parity file | 4 | 5.59 s | One initialization, four leases |
+| Shared pool isolation and failure lifecycle | 8 | 12.34 s | Includes secondary-schema reset and cleanup after intentionally failed child tests |
+| Service pool and preload lifecycle | 3 | 1.96 s | One initialization, six leases |
+| Verification runtime and workflow contracts | 14 | 3.77 s | Process supervision and CI/deployment contracts |
+| Import recovery file run explicitly | 2 | 0.07 s | Pure async lifecycle tests currently outside the API package selector |
 
-These **518 passing tests** are diagnostic samples, not a full qualification. Local Bun is **1.4.4** while CI pins **1.3.14**; use the pinned runtime for acceptance measurements. Existing pooling changes are included. Retained Turbo logs separately show service at 371 s, API at 212 s and Postgres at 105 s, but those logs span different executions and fixture revisions; adding them would not produce a valid current CI duration.
+These **545 passing tests** are diagnostic samples, not a full qualification. Process wall times include startup. The initial repeat used local Bun 1.4.4; the table uses a separate run with the already installed Bun 1.3.14, including that executable on child-process PATH. Single-run variation and runtime differences prevent a controlled comparison with the first audit's samples.
 
-The [inventory and diagnostic logs](../../../bin/backend-test-suite-audit-2026-10-26/) preserve file classifications, dependency paths, timings and methodology.
+Newer retained Turbo logs provide supporting evidence that the expensive packages are faster:
+
+| Package | Earlier retained duration quoted by first audit | Newer retained duration | Tests in newer log |
+| --- | ---: | ---: | ---: |
+| Service | 371.25 s | 223.93 s | 1,013 |
+| API | 211.82 s | 144.24 s | 416 |
+| Postgres | 105.22 s | 80.57 s | 236 |
+
+The newer logs report Bun 1.3.14 and were written before the optimization commit. They support the working-tree optimization results, but are not exact-commit CI proof or a controlled before/after benchmark. Do not sum these package times into a claimed pipeline duration. No fresh full push, PR or release qualification was run for this documentation refresh.
+
+The [refreshed inventory and diagnostic logs](../../../bin/backend-test-suite-audit-2026-10-27/) preserve classifications, inventory differences, current task-graph inputs and measurements. The [first audit evidence](../../../bin/backend-test-suite-audit-2026-10-26/) remains available for historical comparison.
 
 ## What changed from the original design
 
 The July [test pyramid plan](test-pyramid-plan.md) called for hermetic package unit tests, explicit integration slices, and operational smokes outside the unit gate. The [current unit-test policy](../reference/unit-test-coverage.md) already says to keep a test only when it is the cheapest protection for a distinct behavior. Those remain sound principles.
 
-Committed test files grew from 357 at the July 7 snapshot to 407 on September 25, 443 on October 11 and 491 at the current HEAD. Historical package counts are affected by the core/service/authorization split and package removals, so file growth alone does not establish waste. The clearer drift is that shared helpers now compose production SQL, while package scripts still call the resulting suites unit tests.
+Committed test files grew from 357 at the July 7 snapshot to 407 on September 25, 443 on October 11, 491 at the first audit's committed base and 493 at `53a45742`. Historical package counts are affected by the core/service/authorization split and package removals, so file growth alone does not establish waste. The clearer drift is that shared helpers compose production SQL, while package scripts still call the resulting suites unit tests.
 
 ### Database composition has entered the unit lane
 
@@ -64,7 +112,7 @@ The current preload imports service database cleanup for all root test files and
 
 Those two files already run in the HTTP integration slice. Their second execution is confirmed overlap. The handwritten `src/compatibility` tests are a separate suite and must still run once.
 
-Committed verification also runs the tooling suite explicitly before running the workspace test graph, which includes tooling. Existing uncommitted changes already remove that extra invocation. Do not redo that fix. The current working tree also changes root quality from package `quality` scripts to separate lint/check tasks; retain its intended removal of repeated type checking through the Turbo dependency graph.
+The earlier duplicate tooling invocation is resolved in committed verification. Root quality now uses separate lint/check tasks, allowing type-check dependencies to participate in the Turbo graph. These completed optimizations should stay out of the remaining backlog.
 
 **Treatment:** define one integration aggregation path, execute each required suite once, and derive qualification evidence from those outcomes. Keep schema comparison reporting independent from execution of behavioral tests.
 
@@ -95,15 +143,17 @@ The root integration command includes service/HTTP slices but excludes seed, nat
 
 `package/api-client/src/generated/create-client.test.ts` has no workspace `test` script and is excluded by root Bun discovery. It can return successfully without asserting anything if bindings are empty. Preserve useful generated-client behavior in the existing codegen or HTTP contract owner, assert that expected bindings exist, and remove the orphan once that protection is established.
 
+The refresh also identified a pre-existing API discovery gap: `apps/api/src/runtime/local/tests/import-recovery.test.ts` contains two useful retry/shutdown tests, but the API package script only selects `./tests` and `./src/identity/tests`. The retained API run lists 82 files against 83 files in the inventory. Both recovery tests pass when run explicitly. Give this file an executing unit owner during the selector cleanup; this gap was not introduced by the optimization commit.
+
 `unit-test-coverage.md` says PRs run an informational coverage job, but current workflows do not invoke coverage. Root Turbo test tasks also declare no lcov outputs for cache restoration. Fix documentation and reporting together; avoid a second full test pass on every push merely to collect coverage.
 
 ## Desired test ownership
 
 Use package-local unit tests for domain invariants, calculations, parsers, policy composition with small port fakes, transport mapping and error translation. Tests that require production repository behavior remain integration tests. An in-process HTTP request with mocked ports can be a unit test; an in-process request composing identity, services and SQL is integration even without a listening server.
 
-Use `tooling/integration-tests` as the final home for composed backend tests, restoring the existing pyramid plan. Its support code owns shared SQL and application fixtures rather than importing another package's private test harness. Keep test fixtures narrowly scoped and preserve separation between school and identity persistence.
+Keep package-specific SQL/composition tests with their owners and select them explicitly by the integration suffix. Use `tooling/integration-tests` for cross-package journeys and native concurrency. This avoids a large fixture relocation solely to change CI selection. Keep fixtures narrowly scoped and preserve separation between school and identity persistence.
 
-Proposed integration folders describe responsibilities: `persistence`, `services`, `http`, `migrations`, `native`, and `seed`. Keep large `benchmarks` outside the ordinary integration selector. These folders do not require a new abstraction framework or a registry entry for every test.
+Cross-package integration folders describe responsibilities: `persistence`, `services`, `http`, `migrations`, `native`, and `seed`. Keep large `benchmarks` outside the ordinary integration selector. These folders do not require a new abstraction framework or a registry entry for every test.
 
 | Behavior | Primary owner | Additional protection worth retaining |
 | --- | --- | --- |
@@ -139,11 +189,14 @@ Full demo seeding should be required for PR changes affecting seeding, fixtures,
 
 ### Phase 1 Establish the baseline and remove confirmed repetition
 
-1. Record the current working tree and preserve the pending pool/orchestration changes as a separate baseline.
-2. Measure uncached push and PR lanes on pinned Bun 1.3.14. Record suite counts, initialization counts and wall time; include cold fixture startup.
-3. Confirm tooling executes once, remove the two repeated compatibility invocations, and retain the handwritten HTTP regressions once.
-4. Separate large dashboard benchmarks from mandatory native integration. Keep the small enrollment query-count regression.
-5. Correct stale coverage and benchmark documentation.
+Completed at `53a45742`: shared pool implementation and isolation safeguards, fixture cache invalidation, single tooling invocation, explicit lint/check task orchestration, streaming logs and phase/pool diagnostics. The refreshed audit also records pinned-runtime sample results. Preserve this baseline; do not reimplement it.
+
+Remaining work:
+
+1. Measure complete uncached push and PR lanes on pinned Bun 1.3.14, recording suite counts, initialization counts and wall time. The refreshed samples do not replace those complete lane measurements.
+2. Remove the two repeated compatibility invocations and retain the handwritten HTTP regressions once.
+3. Separate large dashboard benchmarks from mandatory native integration. Keep the small enrollment query-count regression.
+4. Correct stale coverage and benchmark documentation. Fixture/execution documentation has already been updated.
 
 Acceptance: identical required behavioral coverage, each required suite executes once, no large benchmark activated merely by choosing an evidence output path, and no change to release approval/evidence requirements.
 
@@ -153,7 +206,7 @@ Acceptance: identical required behavioral coverage, each required suite executes
 2. Pilot the split in authorization and the mixed timetable file. Keep pure solver/resolver cases on push; move SQL policy scope and workflow cases to integration without weakening assertions.
 3. Move service SQL cases, repository/migration cases, notification persistence and composed API cases in small package-sized batches. A temporary `tests/unit` versus `tests/integration` split is acceptable while moving to the central integration owner.
 4. Relocate shared fixtures before updating callers. Pure unit bootstrap must not own SQL cleanup. Integration bootstrap must clean its own databases after failed cases.
-5. Give `test`/`test:unit` unambiguous unit-only semantics and one documented PR integration aggregate. Keep explicit diagnostic slices; do not add overlapping default entrypoints.
+5. Give `test`/`test:unit` unambiguous unit-only semantics and one documented PR integration aggregate. Include the currently undiscovered import-recovery tests. Keep explicit diagnostic slices; do not add overlapping default entrypoints.
 6. Fold a small fixture-import rule into the existing boundary checker to prevent SQL harnesses returning to the unit selector.
 
 Acceptance: the push test selector initializes no database, launches no application server and requires no provider credentials. Every relocated case appears in the PR selector. Files mixing pure and SQL tests are split rather than moved wholesale. Integration continues to cover both staff and family/teacher portals.
@@ -196,4 +249,4 @@ Acceptance: supported migrations run against native PostgreSQL; destination push
 - Every test file is intentionally owned by an executing lane, an explicit opt-in suite or a documented retirement. Unexpected zero-test success and unexpected required skips remain failures.
 - The default local commands, CI commands and documentation describe the same lanes. `AGENTS.md`, package scripts, Bun configuration, repo CLI, Turbo tasks and required check names change together where necessary.
 
-The recommended first implementation is Phases 1 and 2. Most immediate value comes from correcting execution ownership while preserving assertions. Phase 3 then reduces actual maintenance duplication, and Phase 4 retires history only where operational evidence supports it.
+The execution work in Phases 1 and 2 is implemented through package-owned integration selectors. Further fixture relocation is optional, rather than a prerequisite for separation. Phase 3 behavioral consolidation and Phase 4 historical-migration retirement remain follow-up work requiring their own surviving-assertion and operational evidence.

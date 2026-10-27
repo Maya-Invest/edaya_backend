@@ -16,7 +16,8 @@
     "db:push": "drizzle-kit push",
     "lint": "bun x --bun eslint src tests",
     "lint:fix": "bun x --bun eslint src tests --fix",
-    "test": "bun test tests --timeout 30000"
+    "test": "bun test tests --timeout 30000 --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts",
+    "test:integration": "NODE_ENV=test bun test .integration.test.ts --timeout 120000"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",

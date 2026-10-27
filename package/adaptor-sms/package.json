@@ -13,7 +13,7 @@
     "check": "bun x --bun tsc --noEmit",
     "lint": "bun x --bun eslint src tests",
     "quality": "bun run lint && bun run check",
-    "test": "bun test tests"
+    "test": "bun test tests --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts"
   },
   "dependencies": {
     "@edaya/core": "workspace:*"

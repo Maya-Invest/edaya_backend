@@ -1,10 +1,11 @@
 env = false
 
 [test]
-preload = ["./tooling/test-support/preload.ts"]
-# PGlite WASM cold-start on GitHub Actions often exceeds Bun's 5s default.
+preload = ["./tooling/test-support/unit-preload.ts"]
+# Allow bounded CLI/process tests alongside fast domain tests.
 timeout = 30_000
 pathIgnorePatterns = [
+  "**/*.integration.test.ts",
   "**/dist/**",
   "**/node_modules/**",
   "package/api-client/**",

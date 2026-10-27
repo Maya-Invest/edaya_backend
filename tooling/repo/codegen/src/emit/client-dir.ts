@@ -72,55 +72,6 @@ export type AuthClient = ReturnType<typeof createAuthClient>
 	: ''}`
 }
 
-export function formatCreateClientTestTypeScript(): string {
-	return `import type { Transport, TransportRequestOptions } from '../runtime/transport'
-import { describe, expect, test } from 'bun:test'
-import { createSchoolClient } from './create-client'
-
-interface RequestRecord {
-	method: string
-	path: string
-	options?: TransportRequestOptions
-}
-
-function createRecordingTransport(responses: unknown[]): {
-	requests: RequestRecord[]
-	transport: Transport
-} {
-	const requests: RequestRecord[] = []
-	return {
-		requests,
-		transport: {
-			async request<T>(method: string, path: string, options?: TransportRequestOptions): Promise<T> {
-				requests.push({ method, path, options })
-				return responses.shift() as T
-			},
-		},
-	}
-}
-
-describe('createSchoolClient', () => {
-	test('records entity list requests against generated bindings', async () => {
-		const firstEntityKey = Object.keys(createSchoolClient<Record<string, unknown>>({
-			async request<T>(): Promise<T> {
-				return [] as T
-			},
-		}).entities)[0]
-		if (!firstEntityKey) {
-			return
-		}
-
-		const { requests, transport } = createRecordingTransport([[]])
-		const client = createSchoolClient<Record<string, unknown>>(transport)
-		await client.entities[firstEntityKey as keyof typeof client.entities].list({})
-
-		expect(requests[0]?.method).toBe('POST')
-		expect(requests[0]?.path).toMatch(/^\\/core\\/entities\\//)
-	})
-})
-`
-}
-
 export function getClientDirectoryArtifacts(
 	clientDir: string,
 	options: { includeSchema?: boolean } = {},
@@ -130,7 +81,6 @@ export function getClientDirectoryArtifacts(
 		'openapi.json',
 		'generated/client-bindings.ts',
 		'generated/create-client.ts',
-		'generated/create-client.test.ts',
 		...RUNTIME_TEMPLATE_FILES.map(fileName => `runtime/${fileName}`),
 	]
 
@@ -159,11 +109,6 @@ export async function generateClientDirectory(
 	writeCreateClientTypeScript(bindings, join(generatedDir, 'create-client.ts'), {
 		banner: options.clientBanner ?? DEFAULT_CLIENT_BANNER,
 	})
-
-	writeFileSync(
-		join(generatedDir, 'create-client.test.ts'),
-		formatCreateClientTestTypeScript(),
-	)
 
 	writeFileSync(join(clientDir, 'index.ts'), formatClientIndexTypeScript('auth' in bindings))
 

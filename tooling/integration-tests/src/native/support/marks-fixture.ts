@@ -30,7 +30,8 @@ export async function fixture(prefix: string) {
   await r.students.save(new Student({ id: id('student'), schoolId: id('school'), firstName: 'Native', lastName: 'Student' }))
   await r.enrollments.save(new StudentClassEnrollment({ id: id('enrollment'), studentId: id('student'), classGroupId: id('class'), academicYearId: id('year'), enrollmentIndex: 1, enrolledAt: dates.startDate }))
   await r.subjectEnrollments.save(new StudentSubjectEnrollment({ id: id('participation'), studentClassEnrollmentId: id('enrollment'), classSubjectId: id('subject'), enrolledAt: dates.startDate, endedAt: new Date('2027-01-01'), source: 'automatic' }))
-  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, intervalConvention: 'continuous', ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] }))
+  // Quarter-point marks in these journeys require an explicit two-decimal report scale.
+  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, decimalPlaces: 2, intervalConvention: 'continuous', ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] }))
   const scale = (await r.gradeScales.findById(id('scale')))!
   const level = (await r.gradeLevels.findById(id('grade')))!
   await r.gradeLevels.save(new GradeLevel({ ...level.data, gradingPolicies: [{ academicYearId: id('year'), revision: 1, mode: 'numeric-first', aggregateLabel: 'Average', status: 'completed', scale: { ...scale.data, ranges: [...scale.ranges] } }] }))

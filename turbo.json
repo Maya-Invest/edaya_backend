@@ -26,11 +26,18 @@
       ]
     },
     "lint": {},
-    "lint:fix": {}
+    "lint:fix": {},
+    "test:integration": {
+      "dependsOn": [
+        "^check"
+      ],
+      "cache": false
+    }
   },
   "globalDependencies": [
     "package/adaptor-postgres/tests/support/**",
     "package/domain-service/tests/support/**",
-    "tooling/test-support/**"
+    "tooling/test-support/**",
+    ".github/workflows/**"
   ]
 }

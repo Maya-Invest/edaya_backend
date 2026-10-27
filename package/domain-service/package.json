@@ -12,14 +12,15 @@
   "scripts": {
     "check": "bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "bun test --timeout 30000",
-    "test:coverage": "bun test --coverage",
+    "test": "bun test --timeout 30000 --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts",
+    "test:coverage": "bun run test --coverage --coverage-reporter=lcov",
     "lint": "bun x --bun eslint src tests",
     "lint:fix": "bun x --bun eslint src tests --fix",
     "preview:timetable": "bun scripts/preview-timetable.ts",
     "benchmark:timetable": "bun scripts/benchmark-timetable.ts",
     "benchmark:timetable:solver": "bun scripts/benchmark-timetable-solver.ts",
-    "benchmark:timetable:baseline": "bun scripts/prepare-timetable-baseline.ts"
+    "benchmark:timetable:baseline": "bun scripts/prepare-timetable-baseline.ts",
+    "test:integration": "NODE_ENV=test bun test .integration.test.ts --timeout 120000 --preload ../../tooling/test-support/preload.ts"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",

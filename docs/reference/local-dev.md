@@ -221,7 +221,7 @@ bun --filter @edaya/api test
 
 Webapp tests run from **edaya_frontend** (`bun --filter @edaya/webapp test`).
 
-Before opening a pull request, run `bun run verify`. For integration coverage (HTTP routes, PGlite services), also run `bun run test:integration`. See [repo-cli.md](./repo-cli.md) and [test-pyramid-plan.md](../sprints/test-pyramid-plan.md).
+Before opening a pull request, run `bun run verify`. For integration coverage (package SQL/composition, HTTP routes, seed and native PostgreSQL), also run `bun run test:integration`. Large performance datasets run separately through `bun run test:benchmarks`. See [repo-cli.md](./repo-cli.md) and [test-pyramid-plan.md](../sprints/test-pyramid-plan.md).
 
 | Location | Scope |
 |----------|-------|

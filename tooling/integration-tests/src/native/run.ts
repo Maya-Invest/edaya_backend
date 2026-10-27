@@ -9,6 +9,9 @@ import { nativeTestExitCode } from './test-result'
 // Always create a new local cluster. Never load a project DATABASE_URL or reset
 // a database that this process did not create.
 const seedSuite = process.argv.includes('--seed')
+const benchmarkSuite = process.argv.includes('--benchmarks')
+if (seedSuite && benchmarkSuite)
+  throw new Error('Choose either seed integration or benchmarks')
 const directory = mkdtempSync(join(tmpdir(), 'edaya-rc-postgres-'))
 const data = join(directory, 'data')
 let started = false
@@ -40,11 +43,12 @@ async function main() {
     started = true
     const reportPath = join(directory, 'results.xml')
     const exitCode = await new Promise<number>((resolve, reject) => {
-      const child = spawn('bun', ['test', seedSuite ? 'src/seed' : 'src/native', '--parallel=1', '--reporter=junit', `--reporter-outfile=${reportPath}`, ...process.argv.slice(2).filter(arg => arg !== '--seed')], {
+      const child = spawn('bun', ['test', seedSuite ? 'src/seed' : benchmarkSuite ? 'src/benchmarks' : 'src/native', '--parallel=1', '--reporter=junit', `--reporter-outfile=${reportPath}`, ...process.argv.slice(2).filter(arg => arg !== '--seed' && arg !== '--benchmarks')], {
         stdio: 'inherit',
         env: {
           ...process.env,
-          EDAYA_BENCHMARK_OUTPUT: process.env.EDAYA_BENCHMARK_OUTPUT ?? resolvePath(import.meta.dirname, '../../../../.ci-evidence/dashboard-benchmark.json'),
+          EDAYA_BENCHMARK_OUTPUT: benchmarkSuite ? process.env.EDAYA_BENCHMARK_OUTPUT ?? resolvePath(import.meta.dirname, '../../../../.ci-evidence/dashboard-benchmark.json') : undefined,
+          EDAYA_IMPORT_BENCHMARK_OUTPUT: benchmarkSuite ? process.env.EDAYA_IMPORT_BENCHMARK_OUTPUT ?? resolvePath(import.meta.dirname, '../../../../.ci-evidence/enrollment-benchmark.json') : undefined,
           EDAYA_NATIVE_SEED: seedSuite ? '1' : '',
           EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres`,
         },

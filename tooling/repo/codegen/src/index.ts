@@ -50,7 +50,6 @@ export { formatCreateClientTypeScript, writeCreateClientTypeScript } from './emi
 export {
 	copyRuntimeTemplates,
 	formatClientIndexTypeScript,
-	formatCreateClientTestTypeScript,
 	generateClientDirectory,
 	getClientDirectoryArtifacts,
 	RUNTIME_TEMPLATE_FILES,

@@ -56,8 +56,7 @@ export async function executeCommand(args: string[]): Promise<void> {
       return
     }
     if (name === 'integration') {
-      for (const task of ['test:integration', 'test:integration:seed', 'test:integration:native'])
-        await run(['bun', 'run', task], { timeout: 60 * 60000 })
+      await run(['bun', 'run', 'test:integration'], { timeout: 120 * 60000 })
       return
     }
   }

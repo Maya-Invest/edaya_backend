@@ -14,7 +14,8 @@
     "quality": "bun run lint && bun run check",
     "lint": "bun x --bun eslint src tests",
     "lint:fix": "bun x --bun eslint src tests --fix",
-    "test": "bun test tests --dots"
+    "test": "bun test tests --dots --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts",
+    "test:integration": "NODE_ENV=test bun test .integration.test.ts --timeout 120000"
   },
   "dependencies": {
     "@edaya/core": "workspace:*",

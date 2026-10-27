@@ -42,7 +42,9 @@ jobs:
         with:
           bun-version: 1.3.14
       - run: bun install --ignore-scripts --frozen-lockfile
-      - run: bun run repo ci setup
+      - name: Set up native PostgreSQL
+        if: inputs.full
+        run: bun run repo ci setup
       - name: Verify candidate
         env:
           TARGET: ${{ inputs.target }}

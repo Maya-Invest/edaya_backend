@@ -19,8 +19,8 @@ test('historical schema changes are reported while current behavior remains mand
       if (command[0] !== 'bun')
         return run(command, options)
       expect(command).toContain('src/compatibility')
-      expect(command).toContain('src/auth/production-session-actor.integration.test.ts')
-      expect(command).toContain('src/routes/test-school-repository-scope.integration.test.ts')
+      expect(command).not.toContain('src/auth/production-session-actor.integration.test.ts')
+      expect(command).not.toContain('src/routes/test-school-repository-scope.integration.test.ts')
       behaviorRuns++
       return ''
     }

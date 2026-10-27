@@ -47,7 +47,9 @@ bun run verify           # repo hygiene, then quality + build + unit tests
 bun run test:integration
 ```
 
-For seed HTTP paths, also run `bun run test:integration:seed`.
+`test:integration` includes package integration, service/HTTP, seed and native PostgreSQL suites. Use `test:integration:seed` to iterate on seed paths alone. Large benchmarks run only through `bun run test:benchmarks`.
+
+Package `test` scripts exclude `*.integration.test.ts` and load the unit guard, which rejects PGlite allocation and listening servers. Mark SQL/application-composition tests with that suffix and run them through the package `test:integration` script. Keep pure calculations and mocked-port branches in ordinary `*.test.ts` files. The service integration command owns its database cleanup preload.
 
 Ad-hoc Turbo iteration: `bun run lint`, `bun run check`, `bun run test`, etc. Repo hygiene only: `bun run repo check`.
 

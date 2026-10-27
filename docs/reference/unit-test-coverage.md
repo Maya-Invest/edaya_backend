@@ -9,7 +9,7 @@ How to run coverage, interpret reports, and add tests in the backend monorepo.
 bun run test:coverage
 
 # Raw Turbo (use lcov reporter; text table breaks Turbo on large packages)
-turbo run test -- --coverage --coverage-reporter=lcov
+turbo run test --force -- --coverage --coverage-reporter=lcov
 
 # Single package
 bun --filter @edaya/core test --coverage --coverage-reporter=lcov
@@ -29,7 +29,7 @@ bun run verify
 | `@edaya/core` | Informational only (no enforced floor yet) | 95% T1 |
 | Other packages | Informational only (root `coverageThreshold = 0`) | See [unit-test-coverage-plan](../sprints/unit-test-coverage-plan.md) |
 
-CI runs `bun run test:coverage` as an **informational** job on pull requests. No package fails the build on coverage today.
+Coverage is collected explicitly with `bun run test:coverage`; the current CI workflows do not run a separate coverage job. The command bypasses Turbo test caches so lcov files are produced. No package fails the build on coverage today.
 
 ## Exclusions
 
@@ -38,6 +38,7 @@ Ignored from coverage reports (see `bunfig.toml`):
 - Barrel `index.ts` re-exports
 - `package/api-client/**`
 - `tooling/integration-tests/**` (scene harness, not unit tests)
+- `*.integration.test.ts` files are excluded by package unit selectors, so their execution is outside unit coverage
 - `@edaya/core`: `src/ports/**` (interface-only ports)
 
 Add new exclusions only with justification in the sprint plan or PR description.

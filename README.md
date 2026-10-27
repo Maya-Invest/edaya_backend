@@ -207,8 +207,9 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 | `bun run build` | Build generated API-client JavaScript and declarations |
 | `bun run quality` | `lint` + `check` per package |
 | `bun run test:coverage` | Unit coverage (informational) |
-| `bun run test:integration` | Integration api + http slices |
-| `bun run test:integration:seed` | Integration seed slice (slow, opt-in) |
+| `bun run test:integration` | All package SQL/composition suites, service/HTTP, seed and native integration |
+| `bun run test:integration:seed` | Seed integration slice alone |
+| `bun run test:benchmarks` | Opt-in dashboard and enrollment benchmarks on disposable PostgreSQL |
 
 ### Pre-PR verification
 
@@ -232,7 +233,7 @@ Then `bun run verify` before opening a PR. Webapp tests run from **edaya_fronten
 
 ## Testing
 
-Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun run test:integration`** runs in-memory integration slices (see [test-pyramid-plan.md](./docs/sprints/test-pyramid-plan.md)).
+Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun run test:integration`** runs package SQL/composition tests plus service, HTTP, seed and native PostgreSQL slices (see [test-pyramid-plan.md](./docs/sprints/test-pyramid-plan.md)).
 
 | Layer | Package / path | What to test here |
 |-------|----------------|-------------------|
