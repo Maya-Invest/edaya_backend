@@ -35,7 +35,7 @@
   "ACCOUNT_INVITATIONS_ENABLED": "true",
   "PROFILE_PHOTO_MAX_BYTES": "1048576",
   "PLATFORM_BOOTSTRAP_EMAILS": "",
-  "R2_BUCKET_NAME": "edaya-files-staging",
+  "R2_BUCKET_NAME": "edaya-staging",
   "ACCOUNT_SECURITY_KEY_VERSION": "v1",
-  "R2_ENDPOINT": "https://ca013c820d015639e8769dc09e2566ec.r2.cloudflarestorage.com"
+  "R2_ENDPOINT": "https://909d0c6bd332023be902a0e432d2bed7.r2.cloudflarestorage.com"
 }

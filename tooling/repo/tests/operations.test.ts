@@ -40,7 +40,7 @@ test('secret previews validate locally; uploads put values in stdin, never args/
     expect(await operateSecrets(parsed, f.credentials, f.run, root)).toEqual({ names: ['BETTER_AUTH_SECRET'], applied: false })
     expect(f.reads()).toBe(0)
     const result = await operateSecrets({ ...parsed, dryRun: false }, f.credentials, f.run, root)
-    expect(f.calls[0].args).toEqual(['secret', 'bulk', '--env', 'prod', '--name', 'worker'])
+    expect(f.calls[0].args).toEqual(['secret', 'bulk', '--name', 'worker'])
     expect(f.calls[0].input).toContain('sensitive-value')
     expect(JSON.stringify([result, f.calls[0].args])).not.toContain('sensitive-value')
     writeFileSync(join(root, 'secrets.prod.json'), '{"PHONE_AUTH_MODE":"disabled"}')

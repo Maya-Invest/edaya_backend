@@ -37,7 +37,8 @@ export async function operateSecrets(
   }
   if (parsed.action === 'delete' && !state.bindings.some(b => b.name === parsed.name))
     return { names: [], applied: false }
-  const args = ['secret', 'bulk', '--env', parsed.target === 'production' ? 'prod' : 'staging', '--name', credentials.worker]
+  // Wrangler appends `--env` to `--name` (`edaya-api-staging` + `staging`). The name is already environment-specific.
+  const args = ['secret', 'bulk', '--name', credentials.worker]
   const result = await runWrangler(args, JSON.stringify(payload))
   if (result !== 0)
     throw new Error('Wrangler secret update failed')

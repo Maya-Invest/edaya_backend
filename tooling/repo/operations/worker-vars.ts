@@ -17,7 +17,7 @@ export function workerTarget(target: string, root = apiRoot) {
   return name
 }
 
-export function planVariableUpdate(bindings: Binding[], values: Record<string, string> = {}, deletes: string[] = [], replaceSecrets: string[] = [], versionId?: string): VariablePlan {
+export function planVariableUpdate(bindings: Binding[], values: Record<string, string> = {}, deletes: string[] = [], replaceSecrets: string[] = []): VariablePlan {
   validateRuntimeConfig(values, 'Worker variables', 'staging')
   const replacements = new Set(replaceSecrets)
   for (const name of replacements) {
@@ -54,7 +54,8 @@ export function planVariableUpdate(bindings: Binding[], values: Record<string, s
   const removed = new Set(deletes)
   const result: Binding[] = bindings.filter(b => !removed.has(b.name)).map(binding => changed.has(binding.name)
     ? { name: binding.name, type: 'plain_text', text: values[binding.name] }
-    : { name: binding.name, type: 'inherit', ...(versionId ? { version_id: versionId } : {}) })
+    // The script settings API rejects a version UUID here and accepts only "latest".
+    : { name: binding.name, type: 'inherit', version_id: 'latest' })
   for (const [name, text] of Object.entries(values)) {
     if (!byName.has(name))
       result.push({ name, type: 'plain_text', text })
@@ -118,7 +119,7 @@ export async function updateWorkerVariables(options: WorkerCredentials & { value
   if (versions?.items?.[0]?.id !== deployment.versionId)
     throw new Error('Latest Worker version is not the active version; resolve the pending deployment before changing variables')
   const before = await cloud('/settings')
-  const plan = planVariableUpdate(before.bindings, values, deletes, replaceSecrets, deployment.versionId)
+  const plan = planVariableUpdate(before.bindings, values, deletes, replaceSecrets)
   if (dryRun || !plan.changes.length)
     return { worker, ...plan, applied: false }
   // Optimistic concurrency: abort if another release or settings update has occurred.

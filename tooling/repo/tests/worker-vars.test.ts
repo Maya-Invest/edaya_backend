@@ -56,9 +56,9 @@ describe('deployed variable updates', () => {
     const result = await updateWorkerVariables({ ...credentials, values: { LOG_LEVEL: 'debug', PHONE_AUTH_MODE: 'disabled' }, request: f.request })
     expect(result.applied).toBe(true)
     expect(f.writes()).toBe(1)
-    expect(f.payload()?.bindings).toContainEqual({ name: 'BETTER_AUTH_SECRET', type: 'inherit', version_id: 'version' })
-    expect(f.payload()?.bindings).toContainEqual({ name: 'HYPERDRIVE', type: 'inherit', version_id: 'version' })
-    expect(f.payload()?.bindings).toContainEqual({ name: 'UNLISTED', type: 'inherit', version_id: 'version' })
+    expect(f.payload()?.bindings).toContainEqual({ name: 'BETTER_AUTH_SECRET', type: 'inherit', version_id: 'latest' })
+    expect(f.payload()?.bindings).toContainEqual({ name: 'HYPERDRIVE', type: 'inherit', version_id: 'latest' })
+    expect(f.payload()?.bindings).toContainEqual({ name: 'UNLISTED', type: 'inherit', version_id: 'latest' })
     expect(JSON.stringify(f.payload())).not.toContain('private-token')
   })
   test('dry-run and no-op updates do not write', async () => {
@@ -105,9 +105,9 @@ describe('deployed variable updates', () => {
 test('pause transitions preserve unrelated variables and secrets', async () => {
   const f = fixture()
   await updateWorkerVariables({ ...credentials, values: { PAUSE_API: 'true', PAUSE_SCHEDULER: '1', PAUSE_JOBS: 'true' }, request: f.request })
-  expect(f.payload()?.bindings).toContainEqual({ name: 'LOG_LEVEL', type: 'inherit', version_id: 'version' })
-  expect(f.payload()?.bindings).toContainEqual({ name: 'PHONE_AUTH_MODE', type: 'inherit', version_id: 'version' })
-  expect(f.payload()?.bindings).toContainEqual({ name: 'BETTER_AUTH_SECRET', type: 'inherit', version_id: 'version' })
+  expect(f.payload()?.bindings).toContainEqual({ name: 'LOG_LEVEL', type: 'inherit', version_id: 'latest' })
+  expect(f.payload()?.bindings).toContainEqual({ name: 'PHONE_AUTH_MODE', type: 'inherit', version_id: 'latest' })
+  expect(f.payload()?.bindings).toContainEqual({ name: 'BETTER_AUTH_SECRET', type: 'inherit', version_id: 'latest' })
   for (const legacy of ['STAGING_NOTIFICATION_EMAILS', 'STAGING_MAINTENANCE', 'STAGING_PAUSE_JOBS']) {
     expect(() => planVariableUpdate([], { [legacy]: 'false' })).toThrow('unknown or secret key')
   }
