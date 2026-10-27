@@ -54,3 +54,20 @@ test('manual validation never deploys; maintenance stays manual and serialized w
   expect(maintenance.concurrency.group).toBe(workflow('deploy-staging.yml').concurrency.group)
   expect(maintenance.on.workflow_dispatch.inputs.dry_run.default).toBe(true)
 })
+
+test('quality caches accelerate analysis without skipping any phase or caching qualification evidence', () => {
+  const steps = workflow('_quality-check.yml').jobs['quality-check'].steps
+  for (const part of ['checks', 'lint', 'types']) {
+    const step = steps.find((step: any) => step.run === `bun run repo ci quality ${part}`)
+    expect(step).toBeDefined()
+    expect(step.if).toBeUndefined()
+  }
+  expect(steps.find((step: any) => step.run === 'bun run repo ci quality finalize').if).toBe('always()')
+  const cache = steps.find((step: any) => step.name === 'Restore quality caches')
+  expect(cache.with.path).toContain('.cache/quality/')
+  expect(cache.with.path).not.toMatch(/\.release|\.ci-evidence|node_modules/)
+  const setup = Bun.YAML.parse(readFileSync(resolve(root, '.github/actions/setup/action.yml'), 'utf8')) as Record<string, any>
+  const install = setup.runs.steps.find((step: any) => step.run === 'bun install --ignore-scripts --frozen-lockfile')
+  expect(install).toBeDefined()
+  expect(install.if).toBeUndefined()
+})

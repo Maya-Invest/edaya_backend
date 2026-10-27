@@ -1,6 +1,6 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AccessSeedPort } from '../port'
-import { StaffAssignment } from '@edaya/core'
+import { BusinessRuleViolationError, StaffAssignment } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -10,7 +10,13 @@ export function createInProcessAccessSeedPort(application: SeedApplication): Acc
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await application.repositories.schools.findById(schoolId))),
     saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
-      await service.accessControlWorkflow.assignStaffPermission({ ...record, customScopes: record.scopes.filter(scope => scope.kind !== 'school'), useDefaultScopes: false })
+      try {
+        await service.accessControlWorkflow.assignStaffPermission({ ...record, customScopes: record.scopes.filter(scope => scope.kind !== 'school'), useDefaultScopes: false })
+      }
+      catch (error) {
+        if (!(error instanceof BusinessRuleViolationError) || error.code !== 'PROFILE_GRANT_DUPLICATE')
+          throw error
+      }
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       await service.baseService.entities.staffAssignments.save(new StaffAssignment({

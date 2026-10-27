@@ -2,8 +2,10 @@ import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { AccessSeedPort, StaffAssignmentSeedRecord } from '../port'
 import { Permission } from '@edaya/core'
+import { ApiError } from '@maya-invest/edaya-api-client'
 import { SeedPortError, withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand, postEntityFindById, postEntityList } from '../../../transport/http/core-entity'
+import { createSeedSchoolClient } from '../../../transport/http/school-client'
 
 export interface CreateHttpAccessSeedPortOptions {
   client: HttpSeedClient
@@ -51,7 +53,15 @@ export function createHttpAccessSeedPort(options: CreateHttpAccessSeedPortOption
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await postEntityFindById(requestOptions, 'schools', schoolId))),
     saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
-      await postCoreCommand(requestOptions, 'assignStaffPermission', { ...record, customScopes: record.scopes.filter(scope => scope.kind !== 'school'), useDefaultScopes: false })
+      try {
+        await createSeedSchoolClient(options.client, requestOptions).commands.assignStaffPermission({ ...record, customScopes: record.scopes.filter(scope => scope.kind !== 'school'), useDefaultScopes: false })
+      }
+      catch (error) {
+        // The command has already authorized and resolved these exact scopes.
+        // A repeat seed need not add a manual grant over the existing profile.
+        if (!(error instanceof ApiError) || error.status !== 409 || !error.body || typeof error.body !== 'object' || !('code' in error.body) || error.body.code !== 'PROFILE_GRANT_DUPLICATE')
+          throw error
+      }
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       const { command, payload } = staffAssignmentCommand(record)

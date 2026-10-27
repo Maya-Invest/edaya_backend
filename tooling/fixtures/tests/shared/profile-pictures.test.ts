@@ -3,9 +3,17 @@ import {
   createRandomProfilePictureAllocator,
   listProfilePictureFiles,
   PROFILE_PICTURE_FILE_PATTERN,
+  profilePictureForOwner,
 } from '../../src/shared/profile-pictures'
 
 describe('profile picture fixtures', () => {
+  test('an owner gets the same valid picture regardless of seed order', () => {
+    const first = profilePictureForOwner('student', 'one')
+    profilePictureForOwner('guardian', 'two')
+    expect(profilePictureForOwner('student', 'one')).toBe(first)
+    expect(listProfilePictureFiles()).toContain(first)
+    expect(new Set(Array.from({ length: 20 }, (_, id) => profilePictureForOwner('student', String(id)))).size).toBeGreaterThan(1)
+  })
   test('lists pic####.jpg fixtures from the pictures directory root', () => {
     const files = listProfilePictureFiles()
     expect(files.length).toBeGreaterThan(0)

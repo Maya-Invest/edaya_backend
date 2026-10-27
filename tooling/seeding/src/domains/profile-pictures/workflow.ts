@@ -6,7 +6,7 @@ import { AttachmentOwnerKind } from '@edaya/core'
 import { demoCiSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   buildSeedProfileAttachmentId,
-  createRandomProfilePictureAllocator,
+  profilePictureForOwner,
   resolveProfilePicturePath,
   SEED_PROFILE_PHOTO_FILE_NAME,
   SEED_PROFILE_PHOTO_MIME_TYPE,
@@ -44,10 +44,9 @@ async function seedProfilePhotoForOwner(
   schoolId: string,
   ownerKind: AttachmentOwnerKind.Staff | AttachmentOwnerKind.Guardian | AttachmentOwnerKind.Student | AttachmentOwnerKind.Teacher,
   ownerId: string,
-  pickPictureFile: () => string,
   setPhotoUrl: (photoUrl: string) => Promise<void>,
 ): Promise<void> {
-  const pictureFileName = pickPictureFile()
+  const pictureFileName = profilePictureForOwner(ownerKind, ownerId)
   const body = await readFile(resolveProfilePicturePath(pictureFileName))
   const attachmentId = buildSeedProfileAttachmentId(ownerKind, ownerId)
 
@@ -71,7 +70,6 @@ export async function seedDevProfilePictures(
   options: SeedDevProfilePicturesOptions,
   dataset: FixtureDataset,
 ): Promise<{ profilePhotos: number }> {
-  const pickPictureFile = createRandomProfilePictureAllocator()
   const staffMembers = dataset.entities.staffMembers ?? []
   const students = dataset.entities.students ?? []
   const guardians = dataset.entities.guardians ?? []
@@ -105,7 +103,6 @@ export async function seedDevProfilePictures(
       dataset.schoolId,
       target.ownerKind,
       target.ownerId,
-      pickPictureFile,
       target.setPhotoUrl,
     )
     options.onProgress?.()
@@ -119,7 +116,6 @@ export async function seedDevDemoStaffProfilePictures(
   port: ProfilePicturesSeedPort,
   context: Pick<DevSeedContext, 'schoolId' | 'staffAccounts' | 'dataset'>,
 ): Promise<number> {
-  const pickPictureFile = createRandomProfilePictureAllocator()
   const demoStaffIds = new Set(context.staffAccounts.map(account => account.staffId))
   const staffMembers = (context.dataset.entities.staffMembers ?? []).filter(member => demoStaffIds.has(member.id))
 
@@ -129,7 +125,6 @@ export async function seedDevDemoStaffProfilePictures(
       context.schoolId,
       AttachmentOwnerKind.Staff,
       staff.id,
-      pickPictureFile,
       photoUrl => port.setStaffPhotoUrl(staff.id, photoUrl),
     )
   })

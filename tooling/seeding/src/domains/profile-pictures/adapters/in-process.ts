@@ -29,7 +29,7 @@ export function createInProcessProfilePicturesSeedPort(
       if (!attachmentId)
         throw new Error('Portrait URL must be a private content projection')
       await service.studentWorkflow.publishStudentPhoto({
-        requestId: `seed-publish-student-photo-${studentId}`,
+        requestId: `seed-publish-student-photo-${studentId}-${attachmentId}`,
         studentId,
         attachmentId,
       })

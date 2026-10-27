@@ -1,6 +1,8 @@
+import { readFile } from 'node:fs/promises'
+import { AttachmentOwnerKind } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
-import { buildSeedProfileAttachmentId } from '@edaya/fixtures/shared/profile-pictures'
-import { runHttpDevSeeds } from '@edaya/seeding/http'
+import { buildSeedProfileAttachmentId, profilePictureForOwner, resolveProfilePicturePath } from '@edaya/fixtures/shared/profile-pictures'
+import { createHttpProfilePicturesSeedPort, HttpSeedClient, runHttpDevSeeds } from '@edaya/seeding/http'
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { createCoreRouteTestApp } from '../../support/api-route-harness'
 import { bootstrapHttpSeedForDiagnostics } from '../../support/http-seed-bootstrap'
@@ -56,5 +58,46 @@ describe('dev seed validation harness — HTTP validate scope', () => {
     expect(doctor.doctor?.status).not.toBe('broken')
     for (const code of ['auth-present', 'demo-school-present', 'service-account-ready'])
       expect(doctor.doctor?.findings.some(entry => entry.code === code)).toBe(true)
+  })
+
+  it('recovers an interrupted portrait and a lost completion response through real HTTP commands', async () => {
+    const ownerId = demoCiDataset.entities.guardians![0]!.id
+    const body = new Uint8Array(await readFile(resolveProfilePicturePath(profilePictureForOwner('guardian', ownerId))))
+    const attachmentId = `${buildSeedProfileAttachmentId('guardian', ownerId)}-interrupted`
+    const apiUrl = createHttpClientForApp(context.app).origin
+    const headers = { 'authorization': `Bearer ${serviceAccountApiKey}`, 'content-type': 'application/json' }
+    const input = { attachmentId, ownerKind: AttachmentOwnerKind.Guardian, ownerId, fileName: 'profile.jpg', mimeType: 'image/jpeg', sizeBytes: body.byteLength }
+    const started = await createHttpClientForApp(context.app).request('/core/commands/create-profile-photo-upload', { method: 'POST', headers, body: JSON.stringify({ ...input, sizeBytes: body.byteLength + 1 }) })
+    expect(started.status).toBe(200)
+    let lostCompletion = false
+    let creates = 0
+    let completions = 0
+    const client = new HttpSeedClient({ baseUrl: apiUrl, fetch: async (url, init) => {
+      const target = new URL(String(url))
+      if (target.origin !== apiUrl)
+        return fetch(url, init)
+      if (target.pathname.endsWith('create-profile-photo-upload'))
+        creates++
+      const response = await context.app.request(`${target.pathname}${target.search}`, init)
+      if (target.pathname.endsWith('complete-profile-photo-upload')) {
+        completions++
+        if (response.ok && !lostCompletion) {
+          lostCompletion = true
+          await response.body?.cancel()
+          throw Object.assign(new Error('Lost completion response'), { code: 'ECONNRESET' })
+        }
+      }
+      return response
+    } })
+    const port = createHttpProfilePicturesSeedPort({ client, serviceAccountApiKey })
+    const upload = { ...input, schoolId: demoCiDataset.schoolId, body }
+    const recovered = await port.uploadProfilePhoto(upload)
+    expect(recovered.attachmentId).toStartWith(`${attachmentId}-retry-`)
+    expect(creates).toBe(2)
+    expect(completions).toBe(2)
+    await port.setGuardianPhotoUrl(ownerId, recovered.photoUrl)
+    expect(await port.uploadProfilePhoto(upload)).toEqual(recovered)
+    expect(creates).toBe(2)
+    expect(completions).toBe(2)
   })
 })

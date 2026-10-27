@@ -749,15 +749,61 @@ Options:
 Examples:
   bun repo ci verify
 
-Usage: bun repo ci quality
+Usage: bun repo ci quality [command]
 
 Run repository checks, workflow lint, lint and type checks.
+
+Commands:
+  checks                   Run repository and workflow checks.
+  lint                     Run workspace ESLint checks.
+  types                    Run complete incremental workspace type checks.
+  finalize                 Join successful quality phases without rerunning checks.
 
 Options:
   -h, --help               Show help for this command.
 
 Examples:
   bun repo ci quality
+
+Usage: bun repo ci quality checks
+
+Run repository and workflow checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality checks
+
+Usage: bun repo ci quality lint
+
+Run workspace ESLint checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality lint
+
+Usage: bun repo ci quality types
+
+Run complete incremental workspace type checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality types
+
+Usage: bun repo ci quality finalize
+
+Join successful quality phases without rerunning checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality finalize
 
 Usage: bun repo ci build <staging|production>
 

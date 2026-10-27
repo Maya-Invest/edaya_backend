@@ -17,10 +17,10 @@ export interface StageEvidence {
 export async function stageContext(target = process.env.CI_TARGET ?? 'staging') {
   return { sourceCommit: sha(await run(['git', 'rev-parse', 'HEAD'], { quiet: true })), environment: environment(target), runId: process.env.GITHUB_RUN_ID ?? 'local', attempt: process.env.GITHUB_RUN_ATTEMPT ?? process.env.EDAYA_QUALIFICATION_ATTEMPT ?? 'local' }
 }
-export function validateStageEvidence(records: StageEvidence[], expected: Omit<StageEvidence, 'stage' | 'status' | 'durationMs'>): void {
-  if (records.length !== requiredStages.length)
+export function validateStageEvidence(records: StageEvidence[], expected: Omit<StageEvidence, 'stage' | 'status' | 'durationMs'>, stages: readonly string[] = requiredStages): void {
+  if (records.length !== stages.length)
     throw new Error('Missing or duplicate qualification stages')
-  for (const stage of requiredStages) {
+  for (const stage of stages) {
     const matches = records.filter(record => record.stage === stage)
     if (matches.length !== 1 || matches[0]!.status !== 'passed'
       || Object.entries(expected).some(([key, value]) => matches[0]![key as keyof StageEvidence] !== value)) {
@@ -28,10 +28,10 @@ export function validateStageEvidence(records: StageEvidence[], expected: Omit<S
     }
   }
 }
-export async function recordStage(stage: string, action: () => Promise<unknown>, target?: string): Promise<void> {
+export async function recordStage(stage: string, action: () => Promise<unknown>, target?: string, directory: 'stages' | 'quality' = 'stages'): Promise<void> {
   const context = await stageContext(target)
   const record: StageEvidence = { ...context, stage, status: 'running', durationMs: 0 }
-  const path = resolve(root, `.ci-evidence/stages/${stage}.json`)
+  const path = resolve(root, `.ci-evidence/${directory}/${stage}.json`)
   writeJson(path, record)
   const started = performance.now()
   try {

@@ -132,11 +132,34 @@ export async function executeCommand(args: string[]): Promise<void> {
       return
     }
     if (name === 'quality') {
-      await recordStage('quality', async () => {
-        await verificationPhase('repository checks', () => main(['check']))
-        await verificationPhase('workflow lint', () => main(['ci', 'workflows']))
-        await verificationPhase('lint and type checks', () => run(['bun', 'run', 'quality']))
+      const { finalizeQuality, qualityParts, recordQualityPart, resetQuality } = await import('./quality')
+      const part = rest[0]
+      const executePart = (part: typeof qualityParts[number]) => recordQualityPart(part, async () => {
+        if (part === 'checks') {
+          await verificationPhase('repository checks', () => main(['check']))
+          await verificationPhase('workflow lint', () => main(['ci', 'workflows']))
+        }
+        else {
+          await verificationPhase(part === 'lint' ? 'ESLint' : 'TypeScript', () => run(['bun', 'run', part === 'lint' ? 'lint' : 'check']))
+        }
       })
+      if (part === 'checks')
+        resetQuality()
+      if (part === 'finalize') {
+        await finalizeQuality()
+      }
+      else if (part && qualityParts.includes(part as typeof qualityParts[number])) {
+        await executePart(part as typeof qualityParts[number])
+      }
+      else if (!part) {
+        resetQuality()
+        try {
+          for (const part of qualityParts)
+            await executePart(part)
+        }
+        finally { await finalizeQuality() }
+      }
+      else { throw new Error('Unknown quality phase') }
       return
     }
     if (name === 'build') {

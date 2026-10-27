@@ -77,3 +77,6 @@ __pycache__/
 .release/
 .ci-evidence/
 .cache/repo-tools/
+
+# Incremental quality data (never release evidence)
+.cache/quality/

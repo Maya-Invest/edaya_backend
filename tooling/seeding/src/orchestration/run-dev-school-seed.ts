@@ -208,6 +208,12 @@ export async function runDevSchoolSeed(
     await runSchoolSeedStep(options?.progress, async () => {
       await seedDevSchoolBranding(schoolBrandingPort, seedDataset)
     })
+    if (!options?.skipProfilePhotos) {
+      await runSchoolSeedStep(options?.progress, async tick => seedDevProfilePictures(profilePicturesPort, {
+        apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
+        onProgress: tick,
+      }, seedDataset))
+    }
     if (options?.auth) {
       await syncDevAuthAndGuardianInboxProbes(
         options.authLinkPort ?? createInProcessAuthLinkSeedPort(
