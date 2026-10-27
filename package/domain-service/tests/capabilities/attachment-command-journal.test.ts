@@ -3,12 +3,14 @@ import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileSt
 import { completeAttachmentUpload, createAttachmentUpload, SchoolApplication } from '@edaya/service'
 import { expect, onTestFinished, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
-import { createRepositoryDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createRepositoryDatabase, releaseDatabase } = usePooledDatabases()
 
 const bytes = new TextEncoder().encode('%PDF-1.7\nSynthetic command audit body\n%%EOF')
 async function fixture() {
   const f = await createRepositoryDatabase()
-  onTestFinished(() => f.db.close())
+  onTestFinished(() => releaseDatabase(f.db))
   const journal = new PostgresCommandJournal()
   const storage = createInMemoryFileStorage()
   const actor = createStaffActorMetadata({ schoolId: 'journal-school', subjectId: 'journal-owner', staffMemberId: 'journal-staff', requestId: 'ephemeral-http-request', authenticatedAt: new Date() })

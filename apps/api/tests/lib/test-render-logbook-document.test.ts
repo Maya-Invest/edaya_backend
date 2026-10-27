@@ -5,14 +5,17 @@ import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetad
 import { LessonSession, noOpFileStorage, noOpNotificationGateway, Permission, StaffAssignment, StaffPermissionAssignment } from "@edaya/core";
 import { SchoolApplication } from "@edaya/service";
 import { describe, expect, onTestFinished, test } from "bun:test";
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { usePooledDatabases } from "../../../../package/adaptor-postgres/tests/support/pooled-database";
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases();
 
 const identity = { schoolId: "school-a", subjectId: "person-a", academicYearId: "year-a", requestId: "logbook-document", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified };
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: "staff-a" });
 
 async function fixture(actor: SchoolScopedActorMetadata = staff) {
   const { db, connection, repositories, atomic } = await createAuthorizationDatabase();
-  onTestFinished(() => db.close());
+  onTestFinished(() => releaseDatabase(db));
   await seedAuthorizationRelationships(db);
   for (const [id, classGroupId, classSubjectId, note] of [["math", "class-a", "math-a", "Math lesson"], ["french", "class-a", "french-a", "French lesson"], ["other", "class-other", "math-other", "Other class"], ["foreign", "class-b", "math-b", "Foreign class"]]) {
     await repositories.lessonSessions.save(new LessonSession({ id: id!, schoolId: id === "foreign" ? "school-b" : "school-a", classGroupId: classGroupId!, classSubjectId: classSubjectId!, displayLabel: note!, sessionNote: note!, startsAt: new Date("2026-05-01T08:00:00Z"), endsAt: new Date("2026-05-01T09:00:00Z") }));

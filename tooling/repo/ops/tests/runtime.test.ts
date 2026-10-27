@@ -77,18 +77,19 @@ test('moving the source branch cannot change a detached backend input', async ()
     rmSync(directory, { recursive: true, force: true })
   }
 })
-test('cancellation terminates an owned child and fails the supervisor', async () => {
+test.each(['SIGINT', 'SIGTERM'] as const)('%s terminates an owned child and reports the signal', async (signal) => {
   const directory = mkdtempSync(resolve(tmpdir(), 'edaya-cancellation-'))
   try {
     const marker = resolve(directory, 'leaked')
     const script = resolve(directory, 'supervisor.ts')
     writeFileSync(script, `import {run} from ${JSON.stringify(resolve(import.meta.dirname, '../runtime.ts'))}; await run(['bun','-e', ${JSON.stringify(`require('fs').writeFileSync(${JSON.stringify(resolve(directory, 'ready'))}, 'ready'); setTimeout(() => require('fs').writeFileSync(${JSON.stringify(marker)}, 'leaked'), 1200)`)}], {quiet:true});`)
-    const supervisor = Bun.spawn(['bun', script], { stdout: 'ignore', stderr: 'ignore' })
+    const supervisor = Bun.spawn(['bun', script], { stdout: 'ignore', stderr: 'pipe' })
     for (let attempt = 0; attempt < 100 && !existsSync(resolve(directory, 'ready')); attempt++)
       await Bun.sleep(20)
     expect(existsSync(resolve(directory, 'ready'))).toBe(true)
-    supervisor.kill('SIGTERM')
+    supervisor.kill(signal)
     expect(await supervisor.exited).not.toBe(0)
+    expect(await new Response(supervisor.stderr).text()).toContain(`interrupted by ${signal}`)
     await Bun.sleep(1300)
     expect(existsSync(marker)).toBe(false)
   }

@@ -13,7 +13,9 @@ test('service test fixture can persist data during a test', async () => {
 
 test('the next service test receives the same emptied database', async () => {
   const next = await acquireDatabase()
-  expect(next === first).toBe(true)
+  expect(next.db).toBe(first.db)
+  expect(next.repositories).not.toBe(first.repositories)
+  expect(next.atomic).not.toBe(first.atomic)
   expect(await next.repositories.schools.count()).toBe(0)
 })
 
@@ -27,7 +29,7 @@ test('repeated resets reclaim deferred relation files before final teardown', as
   await resetServiceTestDatabases()
   const baseline = await relationFileCount()
   for (let i = 0; i < 3; i++) {
-    expect(await acquireDatabase()).toBe(fixture)
+    expect((await acquireDatabase()).db).toBe(fixture.db)
     await fixture.db.exec('INSERT INTO schools (id, name, short_name, time_zone, created_at) VALUES (\'reset-check\', \'Fixture\', \'Fixture\', \'UTC\', now())')
     await resetServiceTestDatabases()
     expect(await fixture.repositories.schools.count()).toBe(0)

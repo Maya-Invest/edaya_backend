@@ -2,8 +2,10 @@ import { EDAYA_SPARK_S2S_CLIENT_ID, encodeS2sApiKey, localEdayaSparkS2sApiKey } 
 import { noOpFileStorage, noOpNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { registerSchoolWithOwner } from '../../../src/capabilities/onboarding/register-school-with-owner'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('school registration with a central identity owner', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -15,7 +17,7 @@ describe('school registration with a central identity owner', () => {
     application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage, accountInvitationsEnabled: false })
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   it('registers the school and links its human owner through the identity policy', async () => {

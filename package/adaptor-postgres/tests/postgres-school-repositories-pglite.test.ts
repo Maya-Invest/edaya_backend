@@ -1,21 +1,23 @@
+import type { PGlite } from '@electric-sql/pglite'
+import type { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevel, LessonSession, PeriodDefinition, ReportCardResult, School, Subject, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
-import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { drizzle } from 'drizzle-orm/pglite'
-import { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
+import { usePooledDatabases } from './support/pooled-database'
+
+const { createRepositoryDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('PostgresSchoolRepositories with PGlite', () => {
   let pglite: PGlite
   let repos: PostgresSchoolRepositories
 
   beforeEach(async () => {
-    pglite = new PGlite()
-    repos = new PostgresSchoolRepositories(drizzle(pglite))
-    await repos.init({ driver: 'pglite' })
+    const fixture = await createRepositoryDatabase()
+    pglite = fixture.db
+    repos = fixture.repositories
   })
 
   afterEach(async () => {
-    await pglite.close()
+    await releaseDatabase(pglite)
   })
 
   test('round-trips optional report thresholds without losing three-decimal precision', async () => {

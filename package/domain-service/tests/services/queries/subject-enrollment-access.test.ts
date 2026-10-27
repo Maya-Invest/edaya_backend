@@ -1,9 +1,12 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { AttendanceRecord, AttendanceStatus, LessonSession, noOpNotificationGateway, Permission, StaffPermissionAssignment } from '@edaya/core'
 import { expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 test('student participation queries retain assigned-subject teacher scope and family historical access', async () => {
   const fixture = await createAuthorizationDatabase()
@@ -33,7 +36,7 @@ test('student participation queries retain assigned-subject teacher scope and fa
     expect((await guardian.getStudentSubjectEnrollments({ studentId: 'student-a' })).enrollments).toHaveLength(0)
     await expect(guardian.getStudentTimetable({ ...range, studentId: 'student-b' })).rejects.toBeInstanceOf(AuthorizationError)
   }
-  finally { await fixture.db.close() }
+  finally { await releaseDatabase(fixture.db) }
 }, 30000)
 
 test('enrollment read grants authorize participation reads without unrelated student or curriculum grants', async () => {
@@ -47,5 +50,5 @@ test('enrollment read grants authorize participation reads without unrelated stu
     await expect(service.getStudentSubjectEnrollments({ studentId: 'student-other' })).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.getClassSubjectRoster({ classSubjectId: 'math-other', at: new Date('2026-05-01') })).rejects.toBeInstanceOf(AuthorizationError)
   }
-  finally { await fixture.db.close() }
+  finally { await releaseDatabase(fixture.db) }
 }, 30000)

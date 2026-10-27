@@ -2,9 +2,11 @@ import { AuthorizationError, createSystemActorMetadata } from '@edaya/authorizat
 import { MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus, noOpNotificationGateway, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { reconcilePendingDeliveries } from '../../src/capabilities/scheduling-jobs/jobs/reconcile-pending-deliveries'
 import { testFileStorage } from '../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('delivery reconciliation uses its explicit job authority', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -15,7 +17,7 @@ describe('delivery reconciliation uses its explicit job authority', () => {
     for (const suffix of ['a', 'b']) await fixture.repositories.messageDeliveries.save(new MessageDelivery({ id: `delivery-${suffix}`, schoolId: `school-${suffix}`, subjectId: `person-${suffix}`, title: 'News', body: 'Private', recipientKind: MessageDeliveryRecipientKind.Staff, recipientId: `staff-${suffix}` }))
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   test('reconciles only its school and rejects unrelated job identities', async () => {

@@ -3,10 +3,13 @@ import { createSystemActorMetadata } from '@edaya/authorization'
 import { Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createNotifyNotificationGateway, createNotifyRuntimeFromDrizzle, drainPendingSchoolNotifications } from '../../../adaptor-notify/src'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { resolveNotificationDispatchRecipient } from '../../src/capabilities/notifications'
 import { BaseSchoolService } from '../../src/services/base-school-service'
 import { testFileStorage } from '../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const guardian = MessageDeliveryRecipientKind.Guardian
 const staff = MessageDeliveryRecipientKind.Staff
@@ -37,7 +40,7 @@ describe('delayed notification dispatch uses current business facts', () => {
     await fixture.repositories.announcements.save(new Announcement({ id: 'notice', schoolId: 'school-a', title: 'Private', content: 'Class news', status: AnnouncementStatus.Published, publishedAt: new Date() }))
     await fixture.repositories.announcementTargets.save(new AnnouncementTarget({ id: 'target', announcementId: 'notice', targetKind: AnnouncementTargetKind.ClassGroup, targetId: 'class-a' }))
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
 
   async function request(kind = guardian, eventKey = 'announcement.published', metadata: Record<string, string> = {}, sourceKey = 'notice'): Promise<NotificationDispatchRequest> {
     const deliveryId = `dispatch-${kind}`

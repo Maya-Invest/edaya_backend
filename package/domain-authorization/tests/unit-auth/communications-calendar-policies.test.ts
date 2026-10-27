@@ -2,7 +2,10 @@ import type { MessageDeliveryRecipientKind } from '@edaya/core'
 import { AccessPolicies, ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Announcement, AnnouncementStatus, AnnouncementTarget, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, Guardian, MessageDelivery, Permission, StaffPermissionAssignment, AnnouncementTargetKind as Target } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'communications', authenticatedAt: new Date() }
 const actors = [
@@ -20,7 +23,7 @@ describe('communications and calendar scope boundaries', () => {
     await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   async function announcement(id: string, targetKind: Target, targetId?: string, extra = {}) {

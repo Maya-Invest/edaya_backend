@@ -1,7 +1,10 @@
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata, describeActionGrants } from '@edaya/authorization'
 import { Assessment, LessonSession, Permission, StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('authority from current staff assignments', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -11,7 +14,7 @@ describe('authority from current staff assignments', () => {
     await seedAuthorizationRelationships(fixture.db)
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   function assignment(target: { classGroupId?: string, classSubjectId?: string, lessonSessionId?: string, assessmentId?: string }, permission = Permission.GRADE_MANAGE) {

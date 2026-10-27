@@ -1,7 +1,9 @@
 import { AccessFacts, ActorAssuranceLevel, assertGrantDelegation, createStaffActorMetadata } from '@edaya/authorization'
 import { Permission, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('delegation of typed manual authority', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -12,7 +14,7 @@ describe('delegation of typed manual authority', () => {
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...grant, id: 'held', schoolId: 'school-a', staffId: 'staff-a' }))
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
   function facts() {
     return new AccessFacts(createStaffActorMetadata({ schoolId: 'school-a', subjectId: 'person-a', staffMemberId: 'staff-a', requestId: 'delegation', authenticatedAt: now, assuranceLevel: ActorAssuranceLevel.Verified }), fixture.repositories, now)

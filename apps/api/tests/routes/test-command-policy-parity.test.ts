@@ -5,7 +5,9 @@ import { dispatchSchoolCommand } from "@edaya/service";
 import { expect, test } from "bun:test";
 import { coreCommands } from "@/lib/school-api/registry";
 import { hashInvitationToken } from "../../../../package/domain-service/src/capabilities/invitations/invitation-token";
-import { createNativePolicyApp } from "../support/native-policy-app";
+import { useNativePolicyApps } from "../support/native-policy-app";
+
+const createNativePolicyApp = useNativePolicyApps();
 
 const identity = { schoolId: "school-a", staffMemberId: "staff-a", subjectId: "person-a", authenticatedAt: new Date(), requestId: "command-parity", assuranceLevel: ActorAssuranceLevel.Strong };
 const commands: Array<{ method: SchoolCommandKey; input: Record<string, unknown> }> = [

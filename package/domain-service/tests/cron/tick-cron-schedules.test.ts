@@ -4,13 +4,15 @@ import { SchoolApplication } from '@edaya/service'
 import { expect, onTestFinished, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { PostgresDurableWork } from '../../../adaptor-postgres/src/stores/durable-work-store'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { executeCronOccurrence } from '../../src/capabilities/scheduling-jobs/durable-cron'
 import { tickCronSchedules } from '../../src/capabilities/scheduling-jobs/tick-cron-schedules'
 
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
+
 async function fixture() {
   const fixture = await createAuthorizationDatabase()
-  onTestFinished(() => fixture.db.close())
+  onTestFinished(() => releaseDatabase(fixture.db))
   const application = new SchoolApplication({
     repositories: fixture.repositories,
     atomicExecution: fixture.atomic,

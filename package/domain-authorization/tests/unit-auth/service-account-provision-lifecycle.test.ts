@@ -11,7 +11,9 @@ import {
 } from '@edaya/authorization'
 import { Permission, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('service accounts with live grants and transactions', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -22,7 +24,7 @@ describe('service accounts with live grants and transactions', () => {
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
   const create = (elevated = false) => createServiceAccount(fixture.repositories, actor, {
     serviceId: 'reports',

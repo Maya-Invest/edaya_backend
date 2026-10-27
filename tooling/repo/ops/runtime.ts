@@ -55,9 +55,11 @@ export async function run(command: readonly string[], options: RunOptions = {}):
   return new Promise((accept, reject) => {
     const child = spawn(executable, args, { cwd: options.cwd ?? root, env: options.inheritEnv === false ? options.env : { ...process.env, ...options.env }, stdio: [options.input !== undefined ? 'pipe' : options.inheritInput ? 'inherit' : 'ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32', windowsHide: true })
     let output = ''
-    let interrupted = false
-    const kill = () => {
-      interrupted = true
+    let interruption: string | undefined
+    const kill = (reason: string) => {
+      if (interruption)
+        return
+      interruption = reason
       if (child.pid) {
         try {
           process.kill(process.platform === 'win32' ? child.pid : -child.pid, 'SIGTERM')
@@ -74,15 +76,16 @@ export async function run(command: readonly string[], options: RunOptions = {}):
         force.unref()
       }
     }
-    const timer = options.timeout === 0 ? undefined : setTimeout(kill, options.timeout ?? 30 * 60000)
-    const signal = () => kill()
-    process.once('SIGINT', signal)
-    process.once('SIGTERM', signal)
+    const timer = options.timeout === 0 ? undefined : setTimeout(kill, options.timeout ?? 30 * 60000, `timed out after ${options.timeout ?? 30 * 60000}ms`)
+    const interrupt = () => kill('interrupted by SIGINT')
+    const terminate = () => kill('interrupted by SIGTERM')
+    process.once('SIGINT', interrupt)
+    process.once('SIGTERM', terminate)
     const cleanup = () => {
       if (timer)
         clearTimeout(timer)
-      process.off('SIGINT', signal)
-      process.off('SIGTERM', signal)
+      process.off('SIGINT', interrupt)
+      process.off('SIGTERM', terminate)
     }
     child.stdout!.on('data', (chunk: Buffer) => {
       output += chunk.toString()
@@ -103,10 +106,10 @@ export async function run(command: readonly string[], options: RunOptions = {}):
       cleanup()
       reject(new Error(`Could not start ${executable}`))
     })
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
       cleanup()
-      if (code !== 0 || interrupted)
-        reject(new Error(`${executable} ${interrupted ? 'interrupted or timed out' : `exited ${code}`}`))
+      if (code !== 0 || interruption)
+        reject(new Error(`${executable} ${interruption ?? (signal ? `terminated by ${signal}` : `exited ${code}`)}`))
       else
         accept(output.trim())
     })
@@ -163,5 +166,21 @@ export async function assertCommittedSource(allowed: string[] = []): Promise<voi
     const paths = await run(['git', ...args], { quiet: true })
     if (paths.split('\n').some(path => path && !allowed.includes(path)))
       throw new Error('Deployment requires an unchanged qualified checkout')
+  }
+}
+
+/** Only fixed phase labels are logged; command arguments can contain credentials. */
+export async function verificationPhase<T>(label: string, action: () => Promise<T>): Promise<T> {
+  const started = performance.now()
+  const log = (status: string) => process.stdout.write(`${new Date().toISOString()} [verification] ${redact(label)} ${status} (${((performance.now() - started) / 1000).toFixed(2)}s)\n`)
+  log('started')
+  try {
+    const result = await action()
+    log('passed')
+    return result
+  }
+  catch (error) {
+    log('failed')
+    throw error
   }
 }

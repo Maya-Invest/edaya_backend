@@ -2,14 +2,16 @@ import { AuthorizationError, createSystemActorMetadata } from '@edaya/authorizat
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, noOpNotificationGateway, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, describe, expect, mock, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { expireAccountInvitations } from '../../src/capabilities/scheduling-jobs/jobs/expire-account-invitations'
 import { testFileStorage } from '../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('invitation expiry uses tenant-bound job policies', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
   test('expires only pending invitations for this school and cannot run under a notification principal', async () => {
     fixture = await createAuthorizationDatabase()

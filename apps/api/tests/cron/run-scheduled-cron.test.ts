@@ -7,7 +7,9 @@ import {
   runCronHeartbeatWithRuntime,
   runScheduledCronWithRuntime,
 } from "@/cron/run-scheduled-cron";
-import { createNativePolicyApp } from "../support/native-policy-app";
+import { useNativePolicyApps } from "../support/native-policy-app";
+
+const createNativePolicyApp = useNativePolicyApps();
 
 describe("parseCronJobKeysFilter", () => {
   test("returns undefined when unset or empty", () => {

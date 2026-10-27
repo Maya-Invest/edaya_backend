@@ -1,6 +1,8 @@
 import { Permission, StaffPermissionAssignment } from "@edaya/core";
 import { describe, expect, it } from "bun:test";
-import { createNativePolicyApp } from "../support/native-policy-app";
+import { useNativePolicyApps } from "../support/native-policy-app";
+
+const createNativePolicyApp = useNativePolicyApps();
 
 describe("authorization routes", () => {
   it("projects current persisted grants and reflects immediate revocation", async () => {

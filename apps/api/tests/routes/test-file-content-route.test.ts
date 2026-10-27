@@ -1,6 +1,8 @@
 import { Attachment, AttachmentOwnerKind, AttachmentStatus, Permission, StaffPermissionAssignment } from "@edaya/core";
 import { describe, expect, it } from "bun:test";
-import { createNativePolicyApp } from "../support/native-policy-app";
+import { useNativePolicyApps } from "../support/native-policy-app";
+
+const createNativePolicyApp = useNativePolicyApps();
 
 describe("file content route", () => {
   it("denies anonymous access to profile images", async () => {

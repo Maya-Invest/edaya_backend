@@ -2,8 +2,11 @@ import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetada
 import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, DayOfWeek, LessonSession, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentCharge, StudentServiceEnrollment, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('SchoolService aggregate and timetable queries', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -15,7 +18,7 @@ describe('SchoolService aggregate and timetable queries', () => {
     service = new SchoolService({ actor: createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'query', authenticatedAt: new Date() }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   test('fee aggregate uses the same student scope as lists and single records, with live revocation', async () => {

@@ -1,6 +1,9 @@
 import { LessonSession, resourceAccessScope } from '@edaya/core'
 import { expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from './support/authorization-database'
+import { seedAuthorizationRelationships } from './support/authorization-database'
+import { usePooledDatabases } from './support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 test('family participation filters direct reads, lists and counts by occurrence dates while retaining historical offerings', async () => {
   const fixture = await createAuthorizationDatabase()
@@ -24,5 +27,5 @@ test('family participation filters direct reads, lists and counts by occurrence 
     const sibling = repositories.lessonSessions.forAccess(resourceAccessScope('school-a', 'lessonSessions', [{ target: { kind: 'student', studentId: 'student-other' }, academicYearId: 'year-a' }]))
     expect(await sibling.count()).toBe(0)
   }
-  finally { await fixture.db.close() }
+  finally { await releaseDatabase(fixture.db) }
 }, 30000)

@@ -1,19 +1,36 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "EDAYA_TEST_POOL_METRICS"
+  ],
   "tasks": {
     "build": {
-      "outputs": ["dist/**", "build/**"]
+      "outputs": [
+        "dist/**",
+        "build/**"
+      ]
     },
     "check": {
-      "dependsOn": ["^check"]
+      "dependsOn": [
+        "^check"
+      ]
     },
     "quality": {
-      "dependsOn": ["^check"]
+      "dependsOn": [
+        "^check"
+      ]
     },
     "test": {
-      "dependsOn": ["^check"]
+      "dependsOn": [
+        "^check"
+      ]
     },
     "lint": {},
     "lint:fix": {}
-  }
+  },
+  "globalDependencies": [
+    "package/adaptor-postgres/tests/support/**",
+    "package/domain-service/tests/support/**",
+    "tooling/test-support/**"
+  ]
 }

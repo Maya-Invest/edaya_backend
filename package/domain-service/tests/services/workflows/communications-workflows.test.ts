@@ -3,9 +3,12 @@ import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, c
 import { Announcement, AnnouncementStatus, AnnouncementTarget, BusinessRuleViolationError, MessageDelivery, Permission, MessageDeliveryRecipientKind as Recipient, RecordingNotificationGateway, StaffPermissionAssignment, MessageDeliveryStatus as Status, AnnouncementTargetKind as Target } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, cancelNotificationDeliveries, deliverNotification } from '../../../src/capabilities/notifications'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'communications-workflow', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
@@ -23,7 +26,7 @@ describe('communications workflows with production policies and transactions', (
     gateway = new RecordingNotificationGateway()
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   function service(actor: SchoolScopedActorMetadata = staff) {

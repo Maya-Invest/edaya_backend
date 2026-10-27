@@ -9,7 +9,9 @@ import {
 } from '@edaya/authorization'
 import { ALL_PLATFORM_PERMISSIONS, PlatformUser } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
 const actor = createPlatformActorMetadata({ subjectId: 'subject-op', actorId: 'platform-op', requestId: 'test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified, email: 'op@edaya.test' })
@@ -18,7 +20,7 @@ beforeEach(async () => {
   await fixture.repositories.platformUsers.save(new PlatformUser({ id: actor.actorId, subjectId: actor.subjectId, email: actor.email, permissions: [...ALL_PLATFORM_PERMISSIONS], isActive: true, createdBySubjectId: 'bootstrap' }))
 })
 afterEach(async () => {
-  await fixture.db.close()
+  await releaseDatabase(fixture.db)
 })
 
 describe('s2s client provision', () => {

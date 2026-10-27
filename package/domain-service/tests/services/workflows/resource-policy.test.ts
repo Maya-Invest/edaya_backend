@@ -1,9 +1,12 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Activity, ActivityCategory, ActivitySession, Assessment, AssessmentKind, BusinessRuleViolationError, LessonSession, noOpNotificationGateway, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, ScheduleKind, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'resource', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
@@ -29,7 +32,7 @@ describe('resource policies and atomic placement invariants', () => {
     await fixture.repositories.activitySessions.save(new ActivitySession({ id: 'activity', schoolId: 'school-a', classGroupId: 'class-a', scheduleId: 'activity-schedule', activityId: 'club', startsAt, endsAt, displayLabel: 'Club' }))
     await fixture.repositories.assessments.save(new Assessment({ id: 'exam', classGroupId: 'class-a', classSubjectId: 'math-a', periodId: 'period-a', title: 'Exam', kind: AssessmentKind.Quiz, maxScore: 20, startsAt, endsAt }))
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
 
   test('read scope includes each valid placement kind and excludes other years and schools before counts', async () => {
     await grant(Permission.RESOURCE_ASSIGNMENT_READ)

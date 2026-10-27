@@ -2,7 +2,9 @@ import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorizat
 import { noOpFileStorage, noOpNotificationGateway, Permission, StaffPermissionAssignment } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('permission administration actions', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -11,7 +13,7 @@ describe('permission administration actions', () => {
     fixture = await createAuthorizationDatabase()
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
   const grant = (permission: Permission) => new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: [{ kind: 'school' }] })
   function service() {

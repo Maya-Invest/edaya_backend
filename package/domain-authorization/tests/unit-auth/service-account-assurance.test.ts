@@ -1,7 +1,9 @@
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createServiceStaffActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
 import { corePermissionDefinition, Permission, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('assurance and account kind in complete policies', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -9,7 +11,7 @@ describe('assurance and account kind in complete policies', () => {
     fixture = await createAuthorizationDatabase()
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   const identity = { schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'assurance', authenticatedAt: new Date() }

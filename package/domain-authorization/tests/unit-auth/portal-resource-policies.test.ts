@@ -1,7 +1,10 @@
 import { AccessPolicies, createGuardianActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Attachment, AttachmentOwnerKind, AttendanceSummary, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, GradeScale, Payment, PaymentKind, PaymentMethod, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StudentCharge, StudentServiceEnrollment, StudentYearAccount, studentYearAccountId, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('portal actions use current relationships and publication', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -15,7 +18,7 @@ describe('portal actions use current relationships and publication', () => {
     await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   async function finance() {

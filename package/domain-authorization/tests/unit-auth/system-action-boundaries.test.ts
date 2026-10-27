@@ -1,7 +1,9 @@
 import { AccessPolicies, AuthorizationError, createSystemActorMetadata } from '@edaya/authorization'
 import { Permission as P } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 // These are the intended job contracts, independently checked against the complete action vocabulary.
 const jobs = [
@@ -25,7 +27,7 @@ describe('named internal actors have finite school-bound action contracts', () =
     fixture = await createAuthorizationDatabase()
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   test.each(jobs)('$id cannot exercise another job’s actions or cross the school boundary', async ({ id, actions }) => {

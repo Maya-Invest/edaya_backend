@@ -2,9 +2,11 @@ import { ActorAssuranceLevel, createStaffActorMetadata, createSystemActorMetadat
 import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { initializeFixtureSchoolOwner } from '../../src/capabilities/onboarding/initialize-fixture-school-owner'
 import { SchoolApplication } from '../../src/services/school-application'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('admitted fixture owner initialization', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -19,7 +21,7 @@ describe('admitted fixture owner initialization', () => {
     journal = new PostgresCommandJournal()
     application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: journal, fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
 
   test('initializes once, preserves settings, and replays only the same currently linked owner', async () => {
     const school = (await fixture.repositories.schools.findById(input.schoolId))!

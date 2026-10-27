@@ -41,6 +41,14 @@ bun run repo ci qualify staging
 
 Clients are expected to upgrade with the backend; compatibility with older clients does not block release. Checksum-pinned oasdiff 1.11.7 reports historical contract changes in `.ci-evidence/contract-changes.json`. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment, falling back to the preserved `tooling/repo/fixtures/compatibility/bootstrap.json` snapshot when no successful deployment exists. Comparison/tool errors still fail qualification. The existing `compatibility` evidence key requires the handwritten HTTP, actor-assurance and tenant-scope regression suites to pass; schema changes cannot suppress those tests. Current OpenAPI drift, generated-client and application regression checks also remain mandatory. Qualify matching frontend and mobile clients before rolling out a contract change.
 
+## Verification execution and test fixtures
+
+`ci verify` runs repository/workflow checks, root `quality` (Turbo lint and type-check tasks), builds, and the workspace test graph. The tooling suite is part of that graph and runs once. Package-level `quality` commands remain available for targeted development. CI output streams with task prefixes and timestamped verification phase durations. Command failures distinguish a timeout from `SIGINT` or `SIGTERM`; shutdown signals are not reported as timeouts.
+
+Ordinary SQL tests can call `usePooledDatabases()` at test-file scope to borrow migrated PGlite databases. Each lease gets new repository/transaction wrappers. Release clears tables and sequences, restores initialized cron schedules, and checkpoints deferred relation files. The service application helper uses the explicit empty baseline. File hooks release leases after failed tests and close owned storage; callers can release a database earlier through `releaseDatabase(db)`. Do not use pooled fixtures for migration, schema-changing, initialization or shutdown tests. Those keep fresh constructors, as do native PostgreSQL concurrency suites.
+
+For measurements, set `EDAYA_TEST_POOL_METRICS=true` to print initialization and acquisition counts at pool shutdown. This diagnostic variable passes through Turbo without changing task inputs. Shared fixture support is included in Turbo global inputs so fixture changes invalidate cached checks and tests across package boundaries. Compare verification with caches bypassed and the same Bun/runtime settings; retain test counts and isolation checks alongside timings.
+
 ## Cloudflare and migrations
 
 Configure environment secrets `CLOUDFLARE_API_TOKEN`, `STAGING_DATABASE_URL`, `STAGING_AUTH_DATABASE_URL`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_AUTH_DATABASE_URL` as applicable, and environment variable `CLOUDFLARE_ACCOUNT_ID`. The deployment job explicitly migrates identity and school databases before deploying the verified Worker bundle. Normal deployment never resets or seeds.

@@ -1,15 +1,18 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
+import type { PGlite } from '@electric-sql/pglite'
+import type { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
-import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
 import { hashInvitationToken } from '../../domain-service/src/capabilities/invitations/invitation-token'
 import { PostgresAtomicExecution } from '../src/lib/transaction'
-import { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
 import { PostgresCommandJournal } from '../src/stores/command-journal-store'
 import { seedAuthorizationPlacement, seedAuthorizationRelationships } from './support/authorization-database'
+import { usePooledDatabases } from './support/pooled-database'
+
+const { createRepositoryDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('authorization policies against native repository scopes', () => {
   let db: PGlite
@@ -18,14 +21,14 @@ describe('authorization policies against native repository scopes', () => {
   const teacher = createTeacherActorMetadata({ schoolId: 'school-a', teacherId: 'teacher-a', subjectId: 'person-a', authenticatedAt: new Date(), requestId: 'request' })
   const guardian = createGuardianActorMetadata({ schoolId: 'school-a', guardianId: 'guardian-a', subjectId: 'person-a', authenticatedAt: new Date(), requestId: 'request' })
   beforeEach(async () => {
-    db = new PGlite()
-    repositories = new PostgresSchoolRepositories(drizzle(db))
-    await repositories.init({ driver: 'pglite' })
+    const fixture = await createRepositoryDatabase()
+    db = fixture.db
+    repositories = fixture.repositories
     await seedAuthorizationPlacement(db)
     await seedAuthorizationRelationships(db)
   })
   afterEach(async () => {
-    await db.close()
+    await releaseDatabase(db)
   })
 
   function schoolService(actor: SchoolScopedActorMetadata = staff) {

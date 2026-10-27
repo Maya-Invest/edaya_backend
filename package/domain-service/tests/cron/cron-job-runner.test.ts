@@ -1,15 +1,18 @@
 import { Assessment, AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { buildNotificationDeliveryId } from '../../src/capabilities/notifications'
 import { runCronJobs } from '../../src/capabilities/scheduling-jobs/cron-job-runner'
 import { testFileStorage } from '../support/test-file-storage'
 
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
+
 describe('scheduled notification runner with native scopes', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
   test('runs each school with the due-notification principal and produces correctly linked deliveries', async () => {
     fixture = await createAuthorizationDatabase()

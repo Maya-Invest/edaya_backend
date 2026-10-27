@@ -3,9 +3,12 @@ import type { GrantScope } from '@edaya/core'
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, corePermissionDefinition, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', academicYearId: 'year-a', requestId: 'resource-matrix', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
@@ -20,7 +23,7 @@ describe('remaining resource policies against native SQL and transactions', () =
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
   function service(actor: SchoolScopedActorMetadata = staff) {
     return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   }

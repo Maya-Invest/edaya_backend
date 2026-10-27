@@ -5,11 +5,13 @@ import { expect, onTestFinished, test } from 'bun:test'
 import { transactionContext } from '../../../adaptor-postgres/src/lib/transaction'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { PostgresDurableWork } from '../../../adaptor-postgres/src/stores/durable-work-store'
-import { createRepositoryDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createRepositoryDatabase, releaseDatabase } = usePooledDatabases()
 
 async function fixture() {
   const f = await createRepositoryDatabase()
-  onTestFinished(() => f.db.close())
+  onTestFinished(() => releaseDatabase(f.db))
   const storage = createInMemoryFileStorage()
   const actor = createStaffActorMetadata({ schoolId: 'file-school', subjectId: 'file-owner', staffMemberId: 'file-staff', requestId: 'file-test', authenticatedAt: new Date() })
   await f.repositories.schools.save(new School({ id: actor.schoolId, name: 'Files', ownerSubjectId: actor.subjectId, timeZone: 'UTC' }))

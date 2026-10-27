@@ -1,9 +1,12 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { DisciplinaryAction, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, Permission, StaffPermissionAssignment, StudentDisciplinaryAction, StudentIncidentInvolvement } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'discipline', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
 const teacher = createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' })
@@ -30,7 +33,7 @@ describe('discipline policies authorize the incident and its participants', () =
       await fixture.repositories.studentDisciplinaryActions.save(new StudentDisciplinaryAction({ id: incidentId, schoolId: 'school-a', incidentId, studentId: 'student-a', disciplinaryActionId: 'catalog', assignedByStaffId: 'staff-a' }))
     }
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
 
   test('subject reads apply incident, lesson and year constraints to list, count and single records', async () => {
     expect((await service.baseService.entities.incidents.list()).map(row => row.id).sort()).toEqual(['class', 'lesson-only', 'math'])

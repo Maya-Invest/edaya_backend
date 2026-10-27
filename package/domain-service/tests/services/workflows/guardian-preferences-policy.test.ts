@@ -1,9 +1,12 @@
 import { AuthorizationError, createGuardianActorMetadata } from '@edaya/authorization'
 import { Guardian, GuardianStudentLink, noOpNotificationGateway } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('guardian preference policies through persisted workflows and entities', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -20,7 +23,7 @@ describe('guardian preference policies through persisted workflows and entities'
       fileStorage: testFileStorage,
     })
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
 
   test('updates own contacts without child links and preserves independent channel preferences', async () => {
     await fixture.repositories.guardianLinks.delete('guardian-link')

@@ -3,7 +3,9 @@ import type { ApiRuntime } from "@/runtime/types";
 import { expect, mock, test } from "bun:test";
 import { runCronQueueBatch } from "@/cron/run-cron-queue-consumer";
 import { runCronHeartbeat } from "@/cron/run-scheduled-cron";
-import { createNativePolicyApp } from "../support/native-policy-app";
+import { useNativePolicyApps } from "../support/native-policy-app";
+
+const createNativePolicyApp = useNativePolicyApps();
 
 function message(body: unknown) {
   return { id: crypto.randomUUID(), timestamp: new Date(), body, attempts: 1, ack: mock(() => {}), retry: mock(() => {}) };

@@ -3,7 +3,8 @@ import type { Assessment } from '@edaya/core'
 import { createSystemActorMetadata } from '@edaya/authorization'
 import { AssessmentKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway, StudentClassEnrollmentStatus, StudentSubjectEnrollment } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import {
   assessmentDueSoonDeliverAfter,
   assessmentDueSoonIdempotencyKey,
@@ -14,6 +15,8 @@ import {
   withNotificationPostSaveHook,
 } from '../../src/capabilities/notifications'
 import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 function createTestTemplateService(): NotificationTemplateService {
   return new NotificationTemplateService({
@@ -170,7 +173,7 @@ describe('assessmentDueSoonTrigger resolver', () => {
       expect(input).toBeNull()
       expect(gateway.cancelled).toEqual(['original-provider-id'])
     }
-    finally { await fixture.db.close() }
+    finally { await releaseDatabase(fixture.db) }
   })
 })
 

@@ -1,15 +1,17 @@
-import { PostgresCommandJournal } from "@edaya/adaptor-postgres";
-import { describe, expect, it } from "bun:test";
-import { AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember } from "@edaya/core";
-import { parseEnv } from "@/runtime";
 import type { AppBindings } from "@/http/types";
-import indexRouter from "@/app-router";
-import { contentDisposition } from "@/routes/file-storage.routes";
-import { Hono } from "hono";
-import { ApiSchoolApplication } from "@/lib/school-api/application";
+import { PostgresCommandJournal } from "@edaya/adaptor-postgres";
 import { createStaffActorMetadata } from "@edaya/authorization";
+import { AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember } from "@edaya/core";
 import { createAttachmentUpload } from "@edaya/service";
-import { createAuthorizationDatabase } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { describe, expect, it } from "bun:test";
+import { Hono } from "hono";
+import indexRouter from "@/app-router";
+import { ApiSchoolApplication } from "@/lib/school-api/application";
+import { contentDisposition } from "@/routes/file-storage.routes";
+import { parseEnv } from "@/runtime";
+import { usePooledDatabases } from "../../../../package/adaptor-postgres/tests/support/pooled-database";
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases();
 
 const localEnv = parseEnv({
   RUNTIME: "in-memory",
@@ -70,7 +72,7 @@ describe("memory file storage routes", () => {
       expect((await app.request(contentUrl)).status).toBe(401);
     }
     finally {
-      await fixture.db.close();
+      await releaseDatabase(fixture.db);
     }
   });
 

@@ -3,8 +3,11 @@ import { AttendanceStatus, LessonSession, noOpNotificationGateway, TeacherAssign
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const actor = createTeacherActorMetadata({ schoolId: 'school-a', teacherId: 'teacher-a', subjectId: 'person-a', requestId: 'teacher-workflows', authenticatedAt: new Date() })
 const startsAt = new Date('2026-06-01T09:00:00Z')
@@ -22,7 +25,7 @@ describe('teacher attendance and logbook writes use current subject and homeroom
     await fixture.repositories.lessonSessions.save(lesson)
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   test('subject teacher submits a private complete call; unrelated students and removed assignments are denied', async () => {

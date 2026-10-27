@@ -1,6 +1,8 @@
 import { Teacher } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { createRepositoryDatabase } from './support/authorization-database'
+import { usePooledDatabases } from './support/pooled-database'
+
+const { createRepositoryDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('teacher original-name persistence', () => {
   test('preserves source spelling and whitespace through save, unrelated edits and explicit clearing', async () => {
@@ -29,6 +31,6 @@ describe('teacher original-name persistence', () => {
       expect((await repositories.teachers.findById(teacher.id))?.sourceFullName).toBeUndefined()
       expect((await db.query('SELECT source_full_name FROM teachers WHERE id = $1', [teacher.id])).rows[0]).toEqual({ source_full_name: null })
     }
-    finally { await db.close() }
+    finally { await releaseDatabase(db) }
   })
 })

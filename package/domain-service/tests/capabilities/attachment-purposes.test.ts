@@ -4,11 +4,14 @@ import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetad
 import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, noOpNotificationGateway, resourceAccessScope } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { completeAttachmentUpload, createAttachmentUpload } from '../../src/capabilities/files/attachment-uploads'
 import { grantAttachmentDownload } from '../../src/capabilities/files/grant-attachment-download'
 import { loadAttachmentAsset } from '../../src/capabilities/files/load-attachment-asset'
 import { SchoolService } from '../../src/services/school-service'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', academicYearId: 'year-a', requestId: 'purpose-matrix', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
@@ -27,7 +30,7 @@ describe('purpose-restricted private attachments', () => {
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'; UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
   function service(actor: SchoolScopedActorMetadata = staff) {
     return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: new PostgresCommandJournal(), notificationGateway: noOpNotificationGateway, fileStorage: storage })
   }

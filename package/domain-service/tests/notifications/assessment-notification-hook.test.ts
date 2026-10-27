@@ -1,9 +1,12 @@
 import { Assessment, AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { createTestStaffActor } from '../support/test-actor'
 import { testFileStorage } from '../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const dueAt = new Date('2026-06-20T00:00:00Z')
 function assessment() {
@@ -22,7 +25,7 @@ describe('assessment notification postSave hook through native authorization', (
     service = new SchoolService({ actor: createTestStaffActor('school-a', 'staff-a'), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   test('saves the assessment and profile-bound delivery before enqueueing a due-soon job', async () => {

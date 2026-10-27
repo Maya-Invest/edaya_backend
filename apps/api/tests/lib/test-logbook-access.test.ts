@@ -3,7 +3,10 @@ import { ActorAssuranceLevel, createStaffActorMetadata, createTeacherActorMetada
 import { LessonSession, noOpFileStorage, noOpNotificationGateway, Permission, StaffPermissionAssignment } from "@edaya/core";
 import { SchoolApplication } from "@edaya/service";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { usePooledDatabases } from "../../../../package/adaptor-postgres/tests/support/pooled-database";
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases();
 
 describe("logbook issuance uses native authorization scopes", () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>;
@@ -15,7 +18,7 @@ describe("logbook issuance uses native authorization scopes", () => {
     }
   });
   afterEach(async () => {
-    await fixture.db.close();
+    await releaseDatabase(fixture.db);
   });
 
   function application() {

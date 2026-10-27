@@ -1,9 +1,11 @@
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata, createSystemActorMetadata } from '@edaya/authorization'
 import { BusinessRuleViolationError, noOpNotificationGateway, School } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('school ownership policies and invariants', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -19,7 +21,7 @@ describe('school ownership policies and invariants', () => {
       fileStorage: testFileStorage,
     })
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
 
   test.each([null, 'person-b'])('commands and direct saves reject invalid owner %s', async (ownerSubjectId) => {
     const before = (await fixture.repositories.schools.findById('school-a'))!

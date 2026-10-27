@@ -1,7 +1,9 @@
 import { AccessFacts, ActorAssuranceLevel, createStaffActorMetadata, renderGrantScopes, renderScopeSelections } from '@edaya/authorization'
 import { Permission } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 describe('typed grant scope labels', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
@@ -9,7 +11,7 @@ describe('typed grant scope labels', () => {
     fixture = await createAuthorizationDatabase()
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
   function facts() {
     return new AccessFacts(createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'labels', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }), fixture.repositories)

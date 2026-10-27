@@ -12,7 +12,9 @@ import {
   requireSchoolInteractiveActor,
   serializeActorAuthorization,
 } from "@/lib/authorization/serialize-grants";
-import { createAuthorizationDatabase } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { usePooledDatabases } from "../../../../package/adaptor-postgres/tests/support/pooled-database";
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases();
 
 describe("authorization display serialization", () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>;
@@ -21,7 +23,7 @@ describe("authorization display serialization", () => {
     fixture = await createAuthorizationDatabase();
   });
   afterEach(async () => {
-    await fixture.db.close();
+    await releaseDatabase(fixture.db);
   });
 
   test("serializes canonical actions, typed placement and validity from live manual grants", async () => {

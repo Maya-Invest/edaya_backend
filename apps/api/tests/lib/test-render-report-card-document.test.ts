@@ -6,14 +6,17 @@ import { Attachment, AttachmentOwnerKind, AttachmentStatus, GradeScale, noOpFile
 import { SchoolService } from "@edaya/service";
 import { describe, expect, mock, onTestFinished, test } from "bun:test";
 import { renderReportCardDocument } from "@/lib/documents/render-report-card-document";
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import { usePooledDatabases } from "../../../../package/adaptor-postgres/tests/support/pooled-database";
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases();
 
 const identity = { schoolId: "school-a", subjectId: "person-a", academicYearId: "year-a", requestId: "report-document", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified };
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: "staff-a" });
 
 async function fixture(actor: SchoolScopedActorMetadata = staff) {
   const { db, repositories, atomic } = await createAuthorizationDatabase();
-  onTestFinished(() => db.close());
+  onTestFinished(() => releaseDatabase(db));
   await seedAuthorizationRelationships(db);
   await db.exec("UPDATE academic_periods SET is_published = true WHERE id = 'period-a'");
   await repositories.gradeScales.save(new GradeScale({ id: "scale", schoolId: "school-a", name: "20 points", minScore: 0, maxScore: 20, ranges: [{ letter: "A", minScore: 0, maxScore: 20 }] }));

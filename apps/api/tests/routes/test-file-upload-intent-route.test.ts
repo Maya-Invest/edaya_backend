@@ -1,13 +1,15 @@
-import { PostgresCommandJournal } from "@edaya/adaptor-postgres";
 import type { AppBindings } from "@/http/types";
-import indexRouter from "@/app-router";
-import { parseEnv } from "@/runtime";
+import { PostgresCommandJournal } from "@edaya/adaptor-postgres";
 import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
 import { AttachmentOwnerKind, noOpNotificationGateway, Permission, StaffPermissionAssignment } from "@edaya/core";
-import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { Hono } from "hono";
-import { createAuthorizationDatabase } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
+import indexRouter from "@/app-router";
+import { ApiSchoolApplication } from "@/lib/school-api/application";
+import { parseEnv } from "@/runtime";
+import { usePooledDatabases } from "../../../../package/adaptor-postgres/tests/support/pooled-database";
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases();
 
 const baseEnv = parseEnv({ RUNTIME: "in-memory", NODE_ENV: "test", PORT: 9999, LOG_LEVEL: "silent", DATABASE_URL: "postgres://admin:admin@localhost:5432/test_db" });
 const staff = createStaffActorMetadata({ schoolId: "school-a", subjectId: "person-a", staffMemberId: "staff-a", requestId: "upload", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Standard });
@@ -20,7 +22,7 @@ describe("file upload intent with current authorization", () => {
     requests = 0;
   });
   afterEach(async () => {
-    await fixture.db.close();
+    await releaseDatabase(fixture.db);
   });
 
   function application(authenticated = true) {

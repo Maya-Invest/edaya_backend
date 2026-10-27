@@ -4,7 +4,7 @@ import { clientArguments, seedArguments } from './arguments'
 import { commandDocs } from './command-docs'
 import { main, reference } from './main'
 import { buildRelease, deployRelease, qualifyRelease, validateRelease } from './release'
-import { assertCommittedSource, environment, githubOutput, root, run, sha, writeJson } from './runtime'
+import { assertCommittedSource, environment, githubOutput, root, run, sha, verificationPhase, writeJson } from './runtime'
 import { tool } from './tools'
 
 export async function executeCommand(args: string[]): Promise<void> {
@@ -119,12 +119,11 @@ export async function executeCommand(args: string[]): Promise<void> {
       return
     }
     if (name === 'verify') {
-      await main(['check'])
-      await main(['ci', 'workflows'])
-      await main(['test', 'tooling'])
-      await run(['bun', 'run', 'quality'])
-      await run(['bun', 'run', 'build'])
-      await main(['test', 'unit'])
+      await verificationPhase('repository checks', () => main(['check']))
+      await verificationPhase('workflow lint', () => main(['ci', 'workflows']))
+      await verificationPhase('lint and type checks', () => run(['bun', 'run', 'quality']))
+      await verificationPhase('workspace build', () => run(['bun', 'run', 'build']))
+      await verificationPhase('workspace tests (including tooling)', () => main(['test', 'unit']))
       return
     }
     if (name === 'fixture') {

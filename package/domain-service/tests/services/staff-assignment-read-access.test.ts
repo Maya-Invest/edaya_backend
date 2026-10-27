@@ -1,7 +1,9 @@
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
 import { Permission, StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const actor = createStaffActorMetadata({ subjectId: 'person-a', staffMemberId: 'staff-a', schoolId: 'school-a', requestId: 'own-assignments', authenticatedAt: new Date() })
 
@@ -14,7 +16,7 @@ describe('staff assignment visibility', () => {
       await fixture.repositories.staffAssignments.save(new StaffAssignment({ id, staffId, academicYearId, classGroupId, responsibility: 'Supervision' }))
   })
   afterEach(async () => {
-    await fixture.db.close()
+    await releaseDatabase(fixture.db)
   })
 
   test('staff see their own business assignments, without access to another staff profile or permission administration', async () => {

@@ -1,9 +1,12 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
 import { Guardian, GuardianStudentLink, noOpNotificationGateway, Permission, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
+
+const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
 const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'guardian-link', authenticatedAt: new Date() }
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
@@ -17,7 +20,7 @@ describe('guardian linking uses its own action and shared enrollment validation'
     await fixture.repositories.guardians.save(new Guardian({ id: 'new-guardian', schoolId: 'school-a', firstName: 'Another', lastName: 'Guardian' }))
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
-  afterEach(async () => fixture.db.close())
+  afterEach(async () => releaseDatabase(fixture.db))
   async function grant(permission: Permission) {
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: permission === Permission.PARENT_READ ? [{ kind: 'all', grain: 'student' }] : [{ kind: 'school' }] }))
   }
