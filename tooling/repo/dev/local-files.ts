@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
+import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import {
@@ -37,9 +38,13 @@ console.log(`  port:   ${port}`)
 console.log(`  cors:   ${(config.allowedOrigins ?? []).join(', ') || '*'}`)
 
 const server = Bun.serve({
+  hostname: '127.0.0.1',
   port,
   fetch: app.fetch,
 })
+
+if (process.env['NODE_ENV'] === 'test' && process.env['EDAYA_FIXTURE_READY_FILE'] && process.env['EDAYA_FIXTURE_READY_TOKEN'])
+  writeFileSync(process.env['EDAYA_FIXTURE_READY_FILE'], JSON.stringify({ pid: process.pid, token: process.env['EDAYA_FIXTURE_READY_TOKEN'] }), { mode: 0o600 })
 
 process.on('SIGINT', () => {
   server.stop()

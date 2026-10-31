@@ -1,15 +1,15 @@
-import { localOperations } from "../../../configuration/local-operations.ts";
-import api from "@/app";
-import { parseRuntimeEnv } from "@/runtime/shared/env";
-import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
-import { attachIdentityRuntime } from "../runtime";
-import { resetApiRuntimesForTests } from "@/runtime/local/registry";
 import { readFileSync, writeFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
-import { parseTestingEnv } from "./env";
+import api from "@/app";
+import { resetApiRuntimesForTests } from "@/runtime/local/registry";
+import { parseRuntimeEnv } from "@/runtime/shared/env";
+import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
+import { localOperations } from "../../../configuration/local-operations.ts";
 import { createAuthEmailSenders } from "../email";
 import { createAppLogger } from "../logger";
+import { attachIdentityRuntime } from "../runtime";
 import { createTestingIdentity } from "./composition";
+import { parseTestingEnv } from "./env";
 
 /** Disposable identity configuration; only email settings come from local .env. */
 export async function startTestingServer(source: Record<string, string | undefined>) {
@@ -58,6 +58,15 @@ export async function startTestingServer(source: Record<string, string | undefin
       return test.app.fetch(request, env);
     return api.fetch(request, apiEnv);
   } });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.once("listening", () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+  if (source.EDAYA_FIXTURE_READY_FILE && source.EDAYA_FIXTURE_READY_TOKEN)
+    writeFileSync(source.EDAYA_FIXTURE_READY_FILE, JSON.stringify({ pid: process.pid, token: source.EDAYA_FIXTURE_READY_TOKEN }), { mode: 0o600 });
   let closing: Promise<void> | undefined;
   const close = () => closing ??= new Promise<void>((resolve, reject) => server.close(() => {
     void resetApiRuntimesForTests().then(() => test.close()).then(resolve, reject);
