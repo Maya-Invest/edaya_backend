@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { expect, test } from 'bun:test'
+import { startFixtureBackgroundTasks } from '../../../../apps/api/src/identity/testing/background'
 import { buildDownloadTokenPayload, buildUploadTokenPayload, createLocalFileStorageApp, createLocalFileToken } from '../../../../package/adaptor-local-fs/src'
 import { fixturePort, fixtureSecret, waitForOwnedService } from '../../../repo/ops/fixture-inputs'
 import { root, run, waitForUrl } from '../../../repo/ops/runtime'
@@ -118,3 +119,50 @@ test('real fixture overrides inherited secrets consistently and publishes owned 
     rmSync(directory, { recursive: true, force: true })
   }
 }, 65000)
+
+test('fixture background work continues serially and teardown waits for owned work', async () => {
+  let calls = 0
+  let active = 0
+  let maximumActive = 0
+  const stop = startFixtureBackgroundTasks(async () => {
+    calls += 1
+    maximumActive = Math.max(maximumActive, ++active)
+    await Bun.sleep(30)
+    active -= 1
+  }, () => { throw new Error('unexpected background failure') }, 5)
+  try {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (calls >= 3)
+        break
+      await Bun.sleep(5)
+    }
+    expect(calls).toBeGreaterThanOrEqual(3)
+    await stop()
+    const finishedCalls = calls
+    expect(active).toBe(0)
+    expect(maximumActive).toBe(1)
+    await Bun.sleep(50)
+    expect(calls).toBe(finishedCalls)
+  }
+  finally { await stop() }
+})
+
+test('background failure reports once and stops future fixture heartbeats', async () => {
+  let calls = 0
+  let failures = 0
+  const stop = startFixtureBackgroundTasks(async () => {
+    calls += 1
+    throw new Error('failed')
+  }, () => { failures += 1 }, 5)
+  try {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (failures)
+        break
+      await Bun.sleep(5)
+    }
+    await Bun.sleep(30)
+    expect(calls).toBe(1)
+    expect(failures).toBe(1)
+  }
+  finally { await stop() }
+})

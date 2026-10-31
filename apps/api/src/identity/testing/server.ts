@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
 import api from "@/app";
-import { resetApiRuntimesForTests } from "@/runtime/local/registry";
+import { getApiRuntime, resetApiRuntimesForTests } from "@/runtime/local/registry";
 import { parseRuntimeEnv } from "@/runtime/shared/env";
 import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
 import { localOperations } from "../../../configuration/local-operations.ts";
@@ -10,6 +10,8 @@ import { createAppLogger } from "../logger";
 import { attachIdentityRuntime } from "../runtime";
 import { createTestingIdentity } from "./composition";
 import { parseTestingEnv } from "./env";
+import { startFixtureBackgroundTasks } from "./background";
+import { runCronHeartbeatWithRuntime } from "@/cron/run-scheduled-cron";
 
 /** Disposable identity configuration; only email settings come from local .env. */
 export async function startTestingServer(source: Record<string, string | undefined>) {
@@ -65,12 +67,27 @@ export async function startTestingServer(source: Record<string, string | undefin
       resolve();
     });
   });
-  if (source.EDAYA_FIXTURE_READY_FILE && source.EDAYA_FIXTURE_READY_TOKEN)
-    writeFileSync(source.EDAYA_FIXTURE_READY_FILE, JSON.stringify({ pid: process.pid, token: source.EDAYA_FIXTURE_READY_TOKEN }), { mode: 0o600 });
+  let stopBackground: (() => Promise<void>) | undefined;
   let closing: Promise<void> | undefined;
-  const close = () => closing ??= new Promise<void>((resolve, reject) => server.close(() => {
-    void resetApiRuntimesForTests().then(() => test.close()).then(resolve, reject);
-  }));
+  const close = () => closing ??= (async () => {
+    await stopBackground?.();
+    await new Promise<void>((resolve, reject) => server.close(() => {
+      void resetApiRuntimesForTests().then(() => test.close()).then(resolve, reject);
+    }));
+  })();
+  if (source.EDAYA_FIXTURE_READY_FILE && source.EDAYA_FIXTURE_READY_TOKEN) {
+    // HTTP nudges process bounded work batches. The owned fixture also needs
+    // subsequent heartbeats to finish grading, billing, imports and documents.
+    stopBackground = startFixtureBackgroundTasks(async () => {
+      const runtime = await getApiRuntime(apiEnv);
+      const asOf = new Date();
+      await runCronHeartbeatWithRuntime(runtime, { asOf, requestIdPrefix: `fixture:${asOf.toISOString()}` });
+    }, () => {
+      console.error("Owned fixture background processing failed");
+      void close().finally(() => process.exit(1));
+    });
+    writeFileSync(source.EDAYA_FIXTURE_READY_FILE, JSON.stringify({ pid: process.pid, token: source.EDAYA_FIXTURE_READY_TOKEN }), { mode: 0o600 });
+  }
   process.once("SIGTERM", () => {
     void close().then(() => process.exit(0));
   });
