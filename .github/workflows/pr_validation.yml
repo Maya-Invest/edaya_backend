@@ -1,0 +1,60 @@
+name: pr_validation
+on:
+  pull_request:
+    branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      target:
+        type: choice
+        options: [staging, production]
+        default: staging
+      source_ref:
+        description: Source revision (empty uses selected workflow revision)
+        type: string
+        default: ''
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('validation-{0}-{1}', github.ref, inputs.target) }}
+  cancel-in-progress: true
+jobs:
+  source:
+    uses: ./.github/workflows/_prepare.yml
+    with:
+      target: ${{ github.event_name == 'pull_request' && (github.base_ref == 'main' && 'production' || 'staging') || inputs.target }}
+      source_ref: ${{ inputs.source_ref || github.sha }}
+  quality:
+    needs: source
+    uses: ./.github/workflows/_quality_check.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.event_name == 'pull_request' && (github.base_ref == 'main' && 'production' || 'staging') || inputs.target }}
+  unit:
+    needs: source
+    uses: ./.github/workflows/_unit_test.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.event_name == 'pull_request' && (github.base_ref == 'main' && 'production' || 'staging') || inputs.target }}
+  build:
+    needs: source
+    uses: ./.github/workflows/_build.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.event_name == 'pull_request' && (github.base_ref == 'main' && 'production' || 'staging') || inputs.target }}
+  integration:
+    needs: [source, quality, unit]
+    uses: ./.github/workflows/_integration_test.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.event_name == 'pull_request' && (github.base_ref == 'main' && 'production' || 'staging') || inputs.target }}
+      baseline_sha: ${{ github.event.pull_request.base.sha || '' }}
+  qualification:
+    if: always()
+    needs: [source, quality, unit, build, integration]
+    uses: ./.github/workflows/_finalize.yml
+    with:
+      source_sha: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.event_name == 'pull_request' && (github.base_ref == 'main' && 'production' || 'staging') || inputs.target }}
+      job_results: ${{ toJSON(needs) }}

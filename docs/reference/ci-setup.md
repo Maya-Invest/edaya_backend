@@ -8,16 +8,16 @@ Each repository verifies and releases its own revision. Backend changes do not r
 | Other branch push | Quality and unit/tooling tests in parallel; no integration or release build |
 | Push to `staging` | Qualify that commit, release staging |
 | Push to `main` | Qualify that commit, release production |
-| Manual deployment | Select revision in the environment's deployment workflow; use the same qualification and deployment jobs |
-| Manual validation | Select environment and revision; never migrate or deploy |
+| Manual deployment | Run `deploy.yml` on workflow branch `staging` or `main`; optionally override the source revision |
+| Manual validation | Run `pr_validation.yml`; select target (default `staging`) and optional source revision; never migrate or deploy |
 
 Deployments are serialized per repository/environment without cancelling active deployments. They depend on successful qualification; failure, cancellation or skipped qualification cannot deploy. Artifact restoration selects the unique qualified artifact from the same run and attempt, checks out its recorded source commit, restores frozen dependencies, and verifies file checksums. Deployment never resolves another backend branch or generates another client.
 
-## Adoption gate
+## Deployment prerequisites
 
-Replacement deployment jobs require repository variable `ENABLE_INDEPENDENT_RELEASES=true`. Leave it unset until full local verification, both destination builds, all integration suites, artifact handoff, and non-deploying GitHub rehearsals pass. No production release is implied by installing this tooling.
+Release workflows proceed automatically after successful qualification and migration. Migration and deployment retain their configured GitHub environment approvals and protections. No additional repository opt-in variable is required.
 
-Deploy the backend tooling changes to the destination branches before consumers qualify against those branches: consumer integration uses the backend's typed fixture command. Configure branch protection to require **Full validation** from the PR workflow (confirm the exact displayed check name on the first rehearsal). Remove obsolete coordinator/publication checks only after that required check succeeds. GitHub may display the caller workflow name as an additional prefix. The old reusable job may appear as `qualification / Full validation`; confirm the new caller job `Full validation` on a non-deploying rehearsal before replacing the required check. No branch-protection settings are changed by this commit.
+Deploy the backend tooling changes to the destination branches before consumers qualify against those branches: consumer integration uses the backend's typed fixture command. The `pr_validation` entry point retains caller job ID `qualification` and the reusable finalizer's inner name **Full validation**. Extracting the finalizer can change the displayed required-check context, for example to `qualification / Full validation`. Confirm the exact context on a non-deploying PR/manual rehearsal before any separately authorized branch-protection update. This consolidation does not change required checks.
 
 Bun remains pinned to 1.3.14, Flutter to 3.44.8. Ubuntu CI and macOS development use native Git, Node.js 22+ for the third-party Wrangler CLI, archive tools and PostgreSQL binaries where needed. Validators are downloaded at pinned versions and verified against committed SHA-256 checksums. No first-party Python or Node operational runtime is required.
 
@@ -60,7 +60,7 @@ The HTTP slice owns production-session actor and school-repository scope regress
 
 Large dashboard/enrollment benchmarks require `bun run test:benchmarks`. The native runner selects a separate benchmark directory and only sets benchmark output variables in that mode; inherited output variables cannot activate large datasets in normal integration. Normal native tests retain a small enrollment query-count/persistence regression. Required native results still fail on errors, empty reports or skipped tests. Live R2 checks remain explicit through `bun --filter @edaya/adaptor-r2 test:live`.
 
-PRs into `staging` or `main` and release qualification run the complete integration aggregate. Feature pushes run unit verification. Destination pushes retain full qualification, exact-artifact restoration, migrations and deployment; deployment remains gated by `ENABLE_INDEPENDENT_RELEASES`.
+PRs into `staging` or `main` and release qualification run the complete integration aggregate. Feature pushes run unit verification. Destination pushes retain full qualification, exact-artifact restoration, migrations and deployment; deployment requires successful qualification and migration, plus any configured GitHub environment approvals.
 
 ## Cloudflare and migrations
 
@@ -70,7 +70,7 @@ For an emergency use `bun repo ops emergency-deploy staging --dry-run`, then an 
 
 ## Separate staging maintenance
 
-The **Staging maintenance** workflow shares the staging deployment concurrency group. Its default is a read-only dry run. Applying reset/reseed or recovery requires typing `STAGING MAINTENANCE` and turning dry run off. It requires dedicated staging DB roles, direct TLS connections, and deployed Hyperdrive bindings matching the configured targets.
+The **staging maintenance** workflow (`staging_maintenance.yml`) shares the staging deployment concurrency group. Its default is a read-only dry run. Applying reset/reseed or recovery requires typing `STAGING MAINTENANCE` and turning dry run off. It requires dedicated staging DB roles, direct TLS connections, and deployed Hyperdrive bindings matching the configured targets.
 
 Configure non-secret environment variables `STAGING_DATABASE_HOST`, `STAGING_SCHOOL_DATABASE`, `STAGING_IDENTITY_DATABASE`, `STAGING_IDENTITY_ROLE`, plus the staging database/Cloudflare credentials. Seed authentication uses the existing seed configuration. Queue edit and Worker settings permissions are required for maintenance only.
 
@@ -96,15 +96,28 @@ The complete `ci qualify staging` command passed against the local working tree:
 
 Staging and production Worker bundles both passed deployment dry runs using the already built bundle and explicit application configuration. No deployment, database migration, reset or reseed was performed against a hosted environment. Local evidence identifies the working tree and must not be treated as a qualified committed release candidate.
 
-GitHub-hosted qualification, artifact handoff, deployment-history permissions, environment configuration and matching-client qualification remain required before enabling the adoption gate.
+GitHub-hosted qualification, artifact handoff, deployment-history permissions, environment configuration and matching-client qualification remain operational release prerequisites.
 
 ## Reusable task composition
 
-Six reusable workflows own quality, unit tests, integration tests, build, migration and deployment. Event workflows expose that graph directly. Each event first resolves one immutable SHA. Quality, units and build run independently on PR/release/manual validation; integration waits for quality and units. The final `Full validation` job uses `always()` and explicitly refuses any unsuccessful prerequisite. Feature pushes run quality and units only.
+Every entry-point job calls a reusable workflow directly; entry points contain no inline execution jobs.
+
+| File / workflow name | Triggers | Reusable jobs |
+| --- | --- | --- |
+| `branche_check.yml` / `branche_check` | Branch pushes outside `main`/`staging` | `_prepare` → `_quality_check` + `_unit_test` |
+| `pr_validation.yml` / `pr_validation` | PRs into `main`/`staging`, manual dispatch | `_prepare` → quality + unit + build → integration → `_finalize` |
+| `deploy.yml` / `deploy` | Pushes to `main`/`staging`, manual dispatch | Full qualification → `_migration` → `_deployment` |
+| `staging_maintenance.yml` / `staging maintenance` | Manual dispatch only | `_maintenance` |
+
+`_prepare.yml` resolves one immutable source SHA. Quality, units and build start independently after preparation; integration waits for quality and units. Caller `qualification` runs with `always()` and passes all prerequisite results to `_finalize.yml`. Its first step requires every named prerequisite to exist and succeed before checkout or artifact restoration. Failed, cancelled, skipped or missing jobs cannot publish a qualified artifact. Branch checks have no build, integration or finalization jobs.
+
+PR validation uses the PR merge SHA and base branch (`main` → production, `staging` → staging), retaining the base SHA for compatibility checks. Manual validation accepts `target` (default `staging`) and optional `source_ref`, without migration or deployment. Branch and PR runs cancel superseded runs; manual validation has a separate `validation-<workflow-ref>-<target>` cancellation group.
+
+Deployment has no environment selector. Its selected workflow branch determines the destination, even when `source_ref` selects another revision. `_prepare.yml` rejects tags, branches other than `main`/`staging`, and a target that disagrees with that branch before checkout or qualification. Both push and manual release use `deploy-staging` or `deploy-production` with cancellation disabled. `_maintenance.yml` keeps the staging environment gate, reset/reseed and recovery commands, dry-run default and explicit confirmation; its entry point shares `deploy-staging`.
 
 The integration matrix has three independent runners, with sequential execution inside each: `services` (service/authorization and headless integration), `adapters-http` (remaining adapters, API/HTTP and compatibility), and `seed-native` (seed and native PostgreSQL). Each group is selectable with `bun run repo test integration --group <group>`; the default runs all three once. Discovery rejects unknown integration locations and excludes only explicit benchmark/live suites. No Bun file concurrency is added. Unit and integration results are uncached: removing dependency type-check tasks must not let imported workspace changes reuse stale test results.
 
-Stage reports carry commit, target, run ID, attempt, result and elapsed time. Finalization invalidates any older qualification first, requires exactly one successful report per required stage, and qualifies the existing build. Starting a new local qualification also clears the previous success. Migration and deployment restore the same qualified artifact; deployment also requires matching migration evidence. These jobs preserve the existing environment protections and deployment adoption flag. Environments used by both jobs retain their configured review rules.
+Stage reports carry commit, target, run ID, attempt, result and elapsed time. Finalization invalidates any older qualification first, requires exactly one successful report per required stage, and qualifies the existing build. Starting a new local qualification also clears the previous success. Migration and deployment restore the same qualified artifact; deployment also requires matching migration evidence. These jobs preserve the existing environment protections and successful prerequisite requirements. Environments used by both jobs retain their configured review rules.
 
 The local setup composite verifies checkout identity and shares pinned Bun/frozen installation. A checkout step precedes it because GitHub must load local actions from an existing checkout. Migration and deployment each receive only their required credentials.
 
