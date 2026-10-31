@@ -1,7 +1,7 @@
 import { AcademicDiscipline, AcademicPeriod, AcademicYear, Assessment, AssessmentKind, AssessmentResult, AttendanceRecord, AttendanceStatus, ClassGroup, ClassSubject, GradeLevel, LessonSession, OccurrenceStatus, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, Student, StudentSubjectEnrollment, Subject } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, it, setSystemTime, spyOn } from 'bun:test'
 import { reconcilePlacement } from '../../../src/capabilities/subject-enrollment/reconcile'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
 async function context(optional = false) {
@@ -12,7 +12,7 @@ async function context(optional = false) {
   await repositories.gradeLevels.save(new GradeLevel({ id: 'grade', schoolId: 'sch1', name: 'Grade', label: '1', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'class', schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: 'Class' }))
   await repositories.students.save(new Student({ id: 'student', schoolId: 'sch1', firstName: 'Ada', lastName: 'Lovelace' }))
-  await fixture.app.academicsWorkflow.configureSubject({ id: 'art', schoolId: 'sch1', disciplineId: 'discipline', gradeLevelId: 'grade', academicYearId: 'year', name: 'Art', isOptional: optional })
+  await fixture.app.academicsWorkflow.configureSubject({ categoryId: 'test-category', id: 'art', schoolId: 'sch1', disciplineId: 'discipline', gradeLevelId: 'grade', academicYearId: 'year', name: 'Art', isOptional: optional })
   const offering = (await repositories.classSubjects.findOne({ subjectId: 'art' }))!
   if (optional)
     await fixture.app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: offering.id, expectedParticipationRevision: offering.participationRevision, isOffered: true })
@@ -65,7 +65,7 @@ describe('current subject selections', () => {
   it('loads shared compulsory context once for a placement transaction with many subjects', async () => {
     const ctx = await context()
     for (let index = 0; index < 10; index++) {
-      await ctx.repositories.subjects.save(new Subject({ id: `extra-${index}`, schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: `Extra ${index}`, isOptional: false }))
+      await ctx.repositories.subjects.save(new Subject({ categoryId: 'test-category', id: `extra-${index}`, schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: `Extra ${index}`, isOptional: false }))
       await ctx.repositories.classSubjects.save(new ClassSubject({ id: `offering-${index}`, classGroupId: 'class', subjectId: `extra-${index}` }))
     }
     const placement = (await ctx.repositories.enrollments.findById('placement'))!
@@ -97,7 +97,7 @@ describe('current subject selections', () => {
 
   it('rolls back compulsory selections and invalidations if offering revision persistence fails', async () => {
     const ctx = await context()
-    await ctx.repositories.subjects.save(new Subject({ id: 'extra', schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: 'Extra' }))
+    await ctx.repositories.subjects.save(new Subject({ categoryId: 'test-category', id: 'extra', schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: 'Extra' }))
     await ctx.repositories.classSubjects.save(new ClassSubject({ id: 'extra-offering', classGroupId: 'class', subjectId: 'extra' }))
     const placement = (await ctx.repositories.enrollments.findById('placement'))!
     const before = await ctx.repositories.subjectEnrollments.list({ studentClassEnrollmentId: placement.id })
@@ -389,7 +389,7 @@ describe('lifecycle and concurrency', () => {
     const ctx = await context(true)
     await ctx.repositories.students.save(new Student({ id: 'second', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper' }))
     await ctx.app.studentWorkflow.enrollStudent({ id: 'second-placement', studentId: 'second', classGroupId: 'class', enrolledAt: new Date('2026-09-01') })
-    await ctx.app.academicsWorkflow.configureSubject({ id: 'music', schoolId: 'sch1', disciplineId: 'discipline', gradeLevelId: 'grade', academicYearId: 'year', name: 'Music', isOptional: true })
+    await ctx.app.academicsWorkflow.configureSubject({ categoryId: 'test-category', id: 'music', schoolId: 'sch1', disciplineId: 'discipline', gradeLevelId: 'grade', academicYearId: 'year', name: 'Music', isOptional: true })
     const music = (await ctx.repositories.classSubjects.findOne({ subjectId: 'music' }))!
     await ctx.app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: music.id, expectedParticipationRevision: music.participationRevision, isOffered: true })
     const input = {

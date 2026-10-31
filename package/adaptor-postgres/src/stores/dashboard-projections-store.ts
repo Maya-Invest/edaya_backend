@@ -133,8 +133,11 @@ export class PostgresDashboardProjections implements DashboardProjectionPort {
     const eventsQuery = sql`with calendar as (${this.source('calendarEvents', scopes, sql`${tables.calendarEvents.academicYearId}=${year} and ${tables.calendarEvents.startDate}>=${day}::timestamp and ${tables.calendarEvents.startDate}<${until.toISOString()}::timestamp`)}), period as (${this.source('academicPeriods', scopes, sql`${tables.academicPeriods.id}=${period}`)})
       select * from (
         select id,start_date::date::text as date,title,case when is_non_school_day then 'holiday' else 'calendar' end as kind,is_non_school_day as highlight from calendar
-        union all select id,due_date::date::text,'Fee payment due','fee_due',false from charges where status not in ('cancelled','paid','waived') and due_date>=${day}::timestamp and due_date<${until.toISOString()}::timestamp
-        union all select 'period-end-'||id,end_date::date::text,name||' report cards due','report_card_deadline',true from period where end_date>=${day}::timestamp and end_date<${until.toISOString()}::timestamp
+        union all select c.id,i.due::date::text,c.label,'fee_due',false from installments i join charges c on c.id=i.id
+          where c.status not in ('cancelled','paid','waived') and i.due>=${day}::timestamp and i.due<${until.toISOString()}::timestamp
+            and greatest(0,i.amount-greatest(0,i.allocated_amount-i.prior))>0
+          group by c.id,i.due::date,c.label
+        union all select 'period-end-'||id,end_date::date::text,name,'report_card_deadline',true from period where end_date>=${day}::timestamp and end_date<${until.toISOString()}::timestamp
         union all select id,coalesce(due_at,starts_at)::date::text,title,'exam',false from evaluations where coalesce(due_at,starts_at)>=${day}::timestamp and coalesce(due_at,starts_at)<${until.toISOString()}::timestamp
       ) events order by date,title,id limit 14
     `

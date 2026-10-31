@@ -1,9 +1,22 @@
+import type { SubjectInput } from '@edaya/core'
 import { Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('Subject entity', () => {
+  test('requires an explicit category ID even when a legacy category name is supplied', () => {
+    expect(() => new Subject({
+      id: 'subject',
+      schoolId: 'school',
+      gradeLevelId: 'grade',
+      academicYearId: 'year',
+      name: 'Math',
+      category: 'Scientifique',
+    } as unknown as SubjectInput)).toThrow()
+  })
+
   test('copyWith should copy with new values', () => {
     const subject = new Subject({
+      categoryId: 'test-category',
       id: 'sub1',
       schoolId: 'school1',
       gradeLevelId: 'grade1',
@@ -33,6 +46,7 @@ describe('Subject entity', () => {
 
   test('copyWith should retain old values if not provided', () => {
     const subject = new Subject({
+      categoryId: 'test-category',
       id: 'sub1',
       schoolId: 'school1',
       gradeLevelId: 'grade1',
@@ -49,8 +63,9 @@ describe('Subject entity', () => {
     expect(updated.coefficient).toBe(2)
   })
 
-  test('copyWith should allow unsetting optional values', () => {
+  test('copyWith retains optional values when overrides are undefined', () => {
     const subject = new Subject({
+      categoryId: 'test-category',
       id: 'sub1',
       schoolId: 'school1',
       gradeLevelId: 'grade1',
@@ -65,10 +80,6 @@ describe('Subject entity', () => {
       coefficient: undefined,
     })
 
-    // copyWith implementation: `code !== undefined ? code : this.code`
-    // Wait, the implementation of copyWith explicitly uses `!== undefined`.
-    // So passing undefined won't actually unset it in the current implementation.
-    // Let's test the behavior as is:
     expect(updated.code).toBe('MATH101')
     expect(updated.coefficient).toBe(2)
   })

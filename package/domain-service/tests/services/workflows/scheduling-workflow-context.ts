@@ -1,6 +1,6 @@
 import type { ActivitySession, AttendanceRecord, CalendarEventInput, NotificationGatewayPort, ScheduleInput } from '@edaya/core'
 import { AcademicYear, Activity, ActivityCategory, Attendance, AttendanceMode, CalendarEvent, ClassGroup, ClassSubject, DayOfWeek, GradeLevel, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, Schedule, ScheduleKind, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createTestStaffActor } from '../../support/test-actor'
 
@@ -13,7 +13,7 @@ export async function createSchedulingContext({ classGroupAttendanceMode = Atten
   await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: 'sch1', name: 'Grade', label: 'G', order: 1 }))
   for (const [id, attendanceMode] of [['cg_daily', classGroupAttendanceMode], ['cg_session', AttendanceMode.Session]] as const) await repositories.classGroups.save(new ClassGroup({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: id, attendanceMode }))
   for (const [id, name] of [['cs1', 'Math'], ['cs2', 'Science lab'], ['cs3', 'History']] as const) {
-    await repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: `subj-${id}`, schoolId: 'sch1', name }))
+    await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: `subj-${id}`, schoolId: 'sch1', name }))
     await repositories.classSubjects.save(new ClassSubject({ id, classGroupId: 'cg_daily', subjectId: `subj-${id}` }))
   }
   await repositories.activities.save(new Activity({ id: 'act1', schoolId: 'sch1', name: 'Chess Club', category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Thursday', description: 'Chess', participants: 0, capacity: 30, startDate: academicYear.startDate, endDate: academicYear.endDate }))

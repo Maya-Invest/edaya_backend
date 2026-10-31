@@ -3832,6 +3832,26 @@
             },
             "minItems": 1
           },
+          "subjectCategories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "code",
+                "name"
+              ]
+            }
+          },
           "subjects": {
             "type": "array",
             "items": {
@@ -3851,6 +3871,10 @@
                 },
                 "defaultCoefficient": {
                   "type": "number"
+                },
+                "categoryCode": {
+                  "type": "string",
+                  "minLength": 1
                 }
               },
               "required": [
@@ -3932,6 +3956,529 @@
           "countryCode",
           "templates"
         ]
+      },
+      "OnboardingDatasetChoices": {
+        "type": "object",
+        "properties": {
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "isDefault": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "countryCode",
+                "label",
+                "isDefault"
+              ]
+            }
+          }
+        },
+        "required": [
+          "datasets"
+        ]
+      },
+      "OnboardingDataset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "schemaVersion": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "countryCode": {
+            "type": "string",
+            "enum": [
+              "CI",
+              "FR"
+            ]
+          },
+          "disciplines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "code",
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "subjectCategories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "code",
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "gradeScales": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minScore": {
+                  "type": "number",
+                  "enum": [
+                    0
+                  ]
+                },
+                "maxScore": {
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "decimalPlaces": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 3
+                },
+                "roundingMode": {
+                  "type": "string",
+                  "enum": [
+                    "nearest",
+                    "truncate"
+                  ]
+                },
+                "intervalConvention": {
+                  "type": "string",
+                  "enum": [
+                    "continuous"
+                  ]
+                },
+                "ranges": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minScore": {
+                        "type": "number"
+                      },
+                      "maxScore": {
+                        "type": "number"
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "points": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "minScore",
+                      "maxScore",
+                      "label"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "code",
+                "name",
+                "minScore",
+                "maxScore",
+                "decimalPlaces",
+                "roundingMode",
+                "intervalConvention",
+                "ranges"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "calendarProfiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "periodType": {
+                  "type": "string",
+                  "enum": [
+                    "trimester",
+                    "semester"
+                  ]
+                },
+                "periods": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "weight": {
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "name",
+                      "weight"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "code",
+                "periodType",
+                "periods"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cycle": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "calendarProfileCode": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reportPresentation": {
+                  "type": "object",
+                  "properties": {
+                    "includeSummary": {
+                      "type": "boolean"
+                    },
+                    "includeComments": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "includeSummary",
+                    "includeComments"
+                  ],
+                  "additionalProperties": false
+                },
+                "gradeLevels": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "shortLabel": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "examYear": {
+                        "type": "boolean"
+                      },
+                      "examName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "shortName": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "disciplineCode": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "categoryCode": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "coefficient": {
+                              "type": "number",
+                              "minimum": 0,
+                              "exclusiveMinimum": true
+                            },
+                            "isOptional": {
+                              "type": "boolean"
+                            },
+                            "chapters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "code": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "order": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "exclusiveMinimum": true
+                                  }
+                                },
+                                "required": [
+                                  "code",
+                                  "title",
+                                  "order"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "reportModuleCode": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "reportOrder": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "name",
+                            "shortName",
+                            "disciplineCode",
+                            "categoryCode",
+                            "coefficient",
+                            "isOptional",
+                            "chapters",
+                            "reportOrder"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "minItems": 1
+                      },
+                      "reportModules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "order": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "exclusiveMinimum": true
+                            },
+                            "weightingMode": {
+                              "type": "string",
+                              "enum": [
+                                "subject_coefficients",
+                                "explicit"
+                              ]
+                            },
+                            "explicitWeight": {
+                              "type": "number",
+                              "minimum": 0,
+                              "exclusiveMinimum": true
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "name",
+                            "order",
+                            "weightingMode"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "gradingPolicy": {
+                        "type": "object",
+                        "properties": {
+                          "gradeScaleCode": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "numeric-first",
+                              "mention-first"
+                            ]
+                          },
+                          "aggregateLabel": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "passThreshold": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "gradeScaleCode",
+                          "mode",
+                          "aggregateLabel",
+                          "passThreshold"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "code",
+                      "name",
+                      "shortLabel",
+                      "order",
+                      "subjects",
+                      "reportModules",
+                      "gradingPolicy"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "description",
+                "cycle",
+                "calendarProfileCode",
+                "reportPresentation",
+                "gradeLevels"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "schemaVersion",
+          "countryCode",
+          "disciplines",
+          "subjectCategories",
+          "gradeScales",
+          "calendarProfiles",
+          "templates"
+        ],
+        "additionalProperties": false
       },
       "OnboardingAccountStatusResponse": {
         "type": "object",
@@ -4019,30 +4566,25 @@
       "OnboardingApplyStructureTemplateRequest": {
         "type": "object",
         "properties": {
-          "disciplineMappings": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "subjectCode": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "disciplineCode": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "disciplineName": {
-                  "type": "string",
-                  "minLength": 1
-                }
+          "dataset": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
               },
-              "required": [
-                "subjectCode",
-                "disciplineCode",
-                "disciplineName"
-              ]
-            }
+              "version": {
+                "type": "string",
+                "pattern": "^\\d+\\.\\d+\\.\\d+$"
+              }
+            },
+            "required": [
+              "id",
+              "version"
+            ]
+          },
+          "datasetSnapshot": {
+            "$ref": "#/components/schemas/OnboardingDataset"
           },
           "templates": {
             "type": "array",
@@ -4052,11 +4594,9 @@
             },
             "minItems": 1
           },
-          "templateSnapshots": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureTemplateDefinition"
-            }
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
           },
           "levels": {
             "type": "array",
@@ -4329,30 +4869,25 @@
           "structure": {
             "type": "object",
             "properties": {
-              "disciplineMappings": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "subjectCode": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "disciplineCode": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "disciplineName": {
-                      "type": "string",
-                      "minLength": 1
-                    }
+              "dataset": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
                   },
-                  "required": [
-                    "subjectCode",
-                    "disciplineCode",
-                    "disciplineName"
-                  ]
-                }
+                  "version": {
+                    "type": "string",
+                    "pattern": "^\\d+\\.\\d+\\.\\d+$"
+                  }
+                },
+                "required": [
+                  "id",
+                  "version"
+                ]
+              },
+              "datasetSnapshot": {
+                "$ref": "#/components/schemas/OnboardingDataset"
               },
               "templates": {
                 "type": "array",
@@ -26691,6 +27226,10 @@
       "ConversationsQuery": {
         "type": "object",
         "properties": {
+          "search": {
+            "type": "string",
+            "maxLength": 200
+          },
           "destination": {
             "type": "string",
             "enum": [
@@ -36943,6 +37482,278 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OnboardingListStructureTemplatesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/datasets": {
+      "get": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "List published onboarding datasets",
+        "operationId": "onboarding.listDatasets",
+        "x-edaya-kind": "onboarding",
+        "x-edaya-client-key": "listDatasets",
+        "x-edaya-client-path": "onboarding/datasets",
+        "x-edaya-response-schema": "OnboardingDatasetChoices",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "country",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published datasets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDatasetChoices"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/datasets/{id}/{version}": {
+      "get": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Read an exact onboarding dataset version",
+        "operationId": "onboarding.getDataset",
+        "x-edaya-kind": "onboarding",
+        "x-edaya-client-key": "getDataset",
+        "x-edaya-client-path": "onboarding/datasets/{id}/{version}",
+        "x-edaya-response-schema": "OnboardingDataset",
+        "x-edaya-path-params": [
+          "id",
+          "version"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "version",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canonical dataset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDataset"
                 }
               }
             }

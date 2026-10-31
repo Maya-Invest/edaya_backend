@@ -50,8 +50,12 @@ import {
   onboardingApplyStructureTemplateRoute,
   onboardingCompleteWizardHandler,
   onboardingCompleteWizardRoute,
+  onboardingGetDatasetHandler,
+  onboardingGetDatasetRoute,
   onboardingInviteStaffMembersHandler,
   onboardingInviteStaffMembersRoute,
+  onboardingListDatasetsHandler,
+  onboardingListDatasetsRoute,
   onboardingListStructureTemplatesHandler,
   onboardingListStructureTemplatesRoute,
   onboardingProvisionHandler,
@@ -119,6 +123,8 @@ router
   .openapi(edayaSparkResolveGuardianRoute, edayaSparkResolveGuardianHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
+  .openapi(onboardingListDatasetsRoute, onboardingListDatasetsHandler)
+  .openapi(onboardingGetDatasetRoute, onboardingGetDatasetHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
   .openapi(onboardingCompleteWizardRoute, onboardingCompleteWizardHandler)

@@ -1,5 +1,6 @@
 import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
-import { AttendanceMode, DayOfWeek, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AttendanceMode, DayOfWeek, defaultSubjectCategoryId, SubjectColor } from '@edaya/core'
+import { IVORY_COAST_ONBOARDING_DATASET } from '../../onboarding/ivory-coast/parse-ivory-coast-templates'
 import { classNameFromLabel } from '../../onboarding/registry'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
@@ -107,16 +108,23 @@ export const demoCiClassGroups = [
   { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: demoCiClassName('ci-gl-3', 0), capacity: 35, attendanceMode: AttendanceMode.Daily },
 ] as const satisfies readonly ClassGroupInput[]
 
+function demoCiCategoryId(code: string): string {
+  const category = IVORY_COAST_ONBOARDING_DATASET.subjectCategories.find(row => row.code === code)
+  if (!category)
+    throw new Error(`Unknown demo category: ${code}`)
+  return defaultSubjectCategoryId(DEMO_CI_SCHOOL_ID, category.name)
+}
+
 /** Matières du collège ivoirien (cf. template ci-college). */
 const demoCiSubjectTemplates = [
-  { id: 'ci-subj-fr', schoolId: DEMO_CI_SCHOOL_ID, name: 'Français', code: 'FR', coefficient: 3, category: SubjectCategory.Literary, color: SubjectColor.Warm },
-  { id: 'ci-subj-math', schoolId: DEMO_CI_SCHOOL_ID, name: 'Mathématiques', code: 'MATH', coefficient: 3, category: SubjectCategory.Scientific, color: SubjectColor.Mint },
-  { id: 'ci-subj-pc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Physique-Chimie', code: 'PC', coefficient: 2, category: SubjectCategory.Scientific, color: SubjectColor.Sky },
-  { id: 'ci-subj-svt', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sciences de la Vie et de la Terre', code: 'SVT', coefficient: 2, category: SubjectCategory.Scientific, color: SubjectColor.Mint },
-  { id: 'ci-subj-ang', schoolId: DEMO_CI_SCHOOL_ID, name: 'Anglais', code: 'ANG', coefficient: 2, category: SubjectCategory.Languages, color: SubjectColor.Sky },
-  { id: 'ci-subj-hg', schoolId: DEMO_CI_SCHOOL_ID, name: 'Histoire-Géographie', code: 'HG', coefficient: 2, category: SubjectCategory.Humanities, color: SubjectColor.Warm },
-  { id: 'ci-subj-edhc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation aux Droits de l\'Homme et à la Citoyenneté', code: 'EDHC', coefficient: 1, category: SubjectCategory.Humanities, color: SubjectColor.Warm },
-  { id: 'ci-subj-eps', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation Physique et Sportive', code: 'EPS', coefficient: 1, category: SubjectCategory.Sport, color: SubjectColor.Mint },
+  { id: 'ci-subj-fr', schoolId: DEMO_CI_SCHOOL_ID, name: 'Français', code: 'FR', coefficient: 3, categoryId: demoCiCategoryId('LITERARY'), color: SubjectColor.Warm },
+  { id: 'ci-subj-math', schoolId: DEMO_CI_SCHOOL_ID, name: 'Mathématiques', code: 'MATH', coefficient: 3, categoryId: demoCiCategoryId('SCIENTIFIC'), color: SubjectColor.Mint },
+  { id: 'ci-subj-pc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Physique-Chimie', code: 'PC', coefficient: 2, categoryId: demoCiCategoryId('SCIENTIFIC'), color: SubjectColor.Sky },
+  { id: 'ci-subj-svt', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sciences de la Vie et de la Terre', code: 'SVT', coefficient: 2, categoryId: demoCiCategoryId('SCIENTIFIC'), color: SubjectColor.Mint },
+  { id: 'ci-subj-ang', schoolId: DEMO_CI_SCHOOL_ID, name: 'Anglais', code: 'ANG', coefficient: 2, categoryId: demoCiCategoryId('LANGUAGES'), color: SubjectColor.Sky },
+  { id: 'ci-subj-hg', schoolId: DEMO_CI_SCHOOL_ID, name: 'Histoire-Géographie', code: 'HG', coefficient: 2, categoryId: demoCiCategoryId('HUMANITIES'), color: SubjectColor.Warm },
+  { id: 'ci-subj-edhc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation aux Droits de l\'Homme et à la Citoyenneté', code: 'EDHC', coefficient: 1, categoryId: demoCiCategoryId('HUMANITIES'), color: SubjectColor.Warm },
+  { id: 'ci-subj-eps', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation Physique et Sportive', code: 'EPS', coefficient: 1, categoryId: demoCiCategoryId('SPORT'), color: SubjectColor.Mint },
 ] as const
 
 const demoCiClassSubjectDefinitions = [

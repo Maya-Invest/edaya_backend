@@ -1,9 +1,11 @@
 import type { FixtureDataset } from '../types'
+import { defaultSubjectCategoryId } from '@edaya/core'
 import {
   DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
   DEMO_CI_SCHEDULING_REFERENCE_WEEK_START,
   DEMO_CI_SEED_REFERENCE_DATE,
 } from '../../meta/dates'
+import { IVORY_COAST_ONBOARDING_DATASET } from '../../onboarding/ivory-coast/parse-ivory-coast-templates'
 import { DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { demoCiActivities, demoCiActivityEnrollments, demoCiClassActivityEnrollments } from './domains/activities'
 import {
@@ -81,6 +83,7 @@ export const demoCiDataset = {
     enrollments: demoCiEnrollments,
     guardians: demoCiGuardians,
     guardianLinks: demoCiGuardianLinks,
+    subjectCategories: IVORY_COAST_ONBOARDING_DATASET.subjectCategories.map(row => ({ id: defaultSubjectCategoryId(DEMO_CI_SCHOOL_ID, row.name), schoolId: DEMO_CI_SCHOOL_ID, name: row.name })),
     academicDisciplines: [{ id: 'ci-discipline-demo', schoolId: DEMO_CI_SCHOOL_ID, code: 'DEMO', name: 'Demonstration curriculum' }],
     subjects: demoCiSubjects.map(subject => ({ ...subject, disciplineId: 'ci-discipline-demo' })),
     subjectMatters: demoCiSubjectMatters,

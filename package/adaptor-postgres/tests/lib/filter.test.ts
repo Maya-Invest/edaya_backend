@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { integer, pgTable, text } from 'drizzle-orm/pg-core'
+import { integer, PgDialect, pgTable, text } from 'drizzle-orm/pg-core'
 import { buildWhereClause } from '../../src/lib/filter'
 
 const students = pgTable('students', {
@@ -19,6 +19,15 @@ describe('buildWhereClause', () => {
     expect(buildWhereClause(students, { schoolId: 'school-1' })).toBeDefined()
     expect(buildWhereClause(students, { score: { $gte: 10, $lt: 20 } })).toBeDefined()
     expect(buildWhereClause(students, { status: { $ne: 'inactive' } })).toBeDefined()
+  })
+
+  test('uses parameterized, case-insensitive literal substring matching', () => {
+    const clause = buildWhereClause(students, { schoolId: 'school-1', $or: [{ status: { $contains: 'Frais 100%_' } }, { id: { $contains: 'x\'); drop table students;--' } }] })!
+    const compiled = new PgDialect().sqlToQuery(clause)
+    expect(compiled.sql).toContain('strpos(lower(')
+    expect(compiled.sql).not.toContain('drop table')
+    expect(compiled.params).toEqual(['Frais 100%_', 'x\'); drop table students;--', 'school-1'])
+    expect(() => buildWhereClause(students, { score: { $contains: '10' } } as never)).toThrow('$contains requires a text field and value')
   })
 
   test('builds membership and existence operators', () => {

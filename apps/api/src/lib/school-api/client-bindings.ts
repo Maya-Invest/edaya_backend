@@ -42,6 +42,8 @@ const manualClientRoutes: Pick<
     },
   },
   onboarding: {
+    listDatasets: { method: "GET", path: "onboarding/datasets", responseSchemaName: "OnboardingDatasetChoices" },
+    getDataset: { method: "GET", path: "onboarding/datasets/{id}/{version}", pathParams: ["id", "version"], responseSchemaName: "OnboardingDataset" },
     registerSchool: {
       method: "POST",
       path: "onboarding/register-school",

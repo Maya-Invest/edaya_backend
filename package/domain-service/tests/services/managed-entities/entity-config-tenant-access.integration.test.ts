@@ -5,7 +5,7 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { actor } from './managed-entity-test-context'
 
 describe('Entity config tenant and access gates', () => {
@@ -42,7 +42,7 @@ describe('Entity config tenant and access gates', () => {
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
     }))
-    await repositories.subjectRepository.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'Math' }))
+    await repositories.subjectRepository.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'Math' }))
     await repositories.subjectMatterRepository.save(new SubjectMatter({
       id: 'subject-matter-unassigned-1',
       subjectId: 'subject-1',
@@ -132,7 +132,7 @@ describe('Entity config tenant and access gates', () => {
 
     await repositories.gradeLevelRepository.save(new GradeLevel({ id: 'grade-1', schoolId: 'school', name: '6ème', label: '6ème', order: 1 }))
     await repositories.academicYearRepository.save(new AcademicYear({ id: 'year-1', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-    await repositories.subjectRepository.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'Math' }))
+    await repositories.subjectRepository.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'Math' }))
     const subjectMatter = new SubjectMatter({
       id: 'matter-1',
       subjectId: 'subject-1',

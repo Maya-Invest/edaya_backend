@@ -36,6 +36,8 @@ describe('shared two-school authorization scenario', () => {
     await arrange(repositories.guardians, scenario.guardians)
     await arrange(repositories.guardianLinks, scenario.guardianLinks)
     await arrange(repositories.teachers, scenario.teachers)
+    await arrange(repositories.subjectCategories, scenario.subjectCategories)
+    await arrange(repositories.academicDisciplines, scenario.academicDisciplines)
     await arrange(repositories.subjects, scenario.subjects)
     await arrange(repositories.classSubjects, scenario.classSubjects)
     await arrange(repositories.teacherAssignments, scenario.teacherAssignments)

@@ -795,6 +795,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/onboarding/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List published onboarding datasets */
+        get: operations["onboarding.listDatasets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/onboarding/datasets/{id}/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an exact onboarding dataset version */
+        get: operations["onboarding.getDataset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/onboarding/account-status": {
         parameters: {
             query?: never;
@@ -13680,11 +13714,16 @@ export interface components {
                     includeComments?: boolean;
                 };
             }[];
+            subjectCategories?: {
+                code: string;
+                name: string;
+            }[];
             subjects: {
                 code: string;
                 shortName: string;
                 domain: string;
                 defaultCoefficient: number;
+                categoryCode?: string;
             }[];
             curriculum: {
                 levelCode: string;
@@ -13698,6 +13737,111 @@ export interface components {
             /** @enum {string} */
             countryCode: "CI" | "FR";
             templates: components["schemas"]["StructureTemplateDefinition"][];
+        };
+        OnboardingDatasetChoices: {
+            datasets: {
+                id: string;
+                version: string;
+                countryCode: string;
+                label: string;
+                isDefault: boolean;
+            }[];
+        };
+        OnboardingDataset: {
+            id: string;
+            version: string;
+            /** @enum {number} */
+            schemaVersion: 1;
+            /** @enum {string} */
+            countryCode: "CI" | "FR";
+            disciplines: {
+                code: string;
+                name: string;
+            }[];
+            subjectCategories: {
+                code: string;
+                name: string;
+            }[];
+            gradeScales: {
+                code: string;
+                name: string;
+                /** @enum {number} */
+                minScore: 0;
+                maxScore: number;
+                decimalPlaces: number;
+                /** @enum {string} */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                intervalConvention: "continuous";
+                ranges: {
+                    code: string;
+                    minScore: number;
+                    maxScore: number;
+                    label: string;
+                    points?: number;
+                }[];
+            }[];
+            calendarProfiles: {
+                code: string;
+                /** @enum {string} */
+                periodType: "trimester" | "semester";
+                periods: {
+                    code: string;
+                    name: string;
+                    weight: number;
+                }[];
+            }[];
+            templates: {
+                id: string;
+                label: string;
+                description: string;
+                cycle: string;
+                calendarProfileCode: string;
+                reportPresentation: {
+                    includeSummary: boolean;
+                    includeComments: boolean;
+                };
+                gradeLevels: {
+                    id: string;
+                    code: string;
+                    name: string;
+                    shortLabel: string;
+                    order: number;
+                    examYear?: boolean;
+                    examName?: string;
+                    subjects: {
+                        code: string;
+                        name: string;
+                        shortName: string;
+                        disciplineCode: string;
+                        categoryCode: string;
+                        coefficient: number;
+                        isOptional: boolean;
+                        chapters: {
+                            code: string;
+                            title: string;
+                            order: number;
+                        }[];
+                        reportModuleCode?: string;
+                        reportOrder: number;
+                    }[];
+                    reportModules: {
+                        code: string;
+                        name: string;
+                        order: number;
+                        /** @enum {string} */
+                        weightingMode: "subject_coefficients" | "explicit";
+                        explicitWeight?: number;
+                    }[];
+                    gradingPolicy: {
+                        gradeScaleCode: string;
+                        /** @enum {string} */
+                        mode: "numeric-first" | "mention-first";
+                        aggregateLabel: string;
+                        passThreshold: number;
+                    };
+                }[];
+            }[];
         };
         OnboardingAccountStatusResponse: {
             wizardCompleted: boolean;
@@ -13715,13 +13859,13 @@ export interface components {
             reportSubjectAssignmentCount: number;
         };
         OnboardingApplyStructureTemplateRequest: {
-            disciplineMappings?: {
-                subjectCode: string;
-                disciplineCode: string;
-                disciplineName: string;
-            }[];
+            dataset?: {
+                id: string;
+                version: string;
+            };
+            datasetSnapshot?: components["schemas"]["OnboardingDataset"];
             templates: string[];
-            templateSnapshots?: components["schemas"]["StructureTemplateDefinition"][];
+            academicYearId?: string;
             levels: {
                 gradeLevelId: string;
                 classCount: number;
@@ -13783,11 +13927,11 @@ export interface components {
                 }[];
             };
             structure: {
-                disciplineMappings?: {
-                    subjectCode: string;
-                    disciplineCode: string;
-                    disciplineName: string;
-                }[];
+                dataset?: {
+                    id: string;
+                    version: string;
+                };
+                datasetSnapshot?: components["schemas"]["OnboardingDataset"];
                 templates: string[];
                 levels: {
                     gradeLevelId: string;
@@ -18899,6 +19043,7 @@ export interface components {
             limit: number;
         };
         ConversationsQuery: {
+            search?: string;
             /** @enum {string} */
             destination?: "school" | "teacher";
             /** @enum {string} */
@@ -23168,6 +23313,157 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OnboardingListStructureTemplatesResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "onboarding.listDatasets": {
+        parameters: {
+            query?: {
+                country?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published datasets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingDatasetChoices"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "onboarding.getDataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Canonical dataset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingDataset"];
                 };
             };
             /** @description Invalid request payload */

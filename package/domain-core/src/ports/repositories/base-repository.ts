@@ -5,6 +5,7 @@ export type FieldFilter<V>
     | ({
       /** Candidate prefilter for normalized text matching; callers must compare normalizeImportKey on returned values. */
       $normalizedCandidate?: NonNullable<V> extends string ? string : never
+      $contains?: NonNullable<V> extends string ? string : never
       $eq?: V
       $ne?: V
       $in?: V[]

@@ -1,7 +1,7 @@
 import type { DocumentRendererPort, NotificationGatewayPort } from '@edaya/core'
 import { AcademicYear, ClassGroup, createInMemoryFileStorage, EnrollmentEndReason, GradeLevel, Guardian, GuardianStudentLink, noOpNotificationGateway, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 

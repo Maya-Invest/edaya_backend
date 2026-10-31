@@ -1,243 +1,617 @@
 {
+  "id": "ci-lycee:1ERA",
   "code": "1ERA",
   "name": "Première A",
-  "short_label": "1ère A",
-  "sections": [
+  "shortLabel": "1ère A",
+  "order": 3,
+  "reportModules": [
     {
-      "role": "subjects",
-      "label": "Bilan Lettre",
+      "code": "MODULE_1",
+      "name": "Bilan Lettre",
       "order": 1,
-      "subject_codes": [
-        "FR",
-        "ANG",
-        "ALL",
-        "ESP",
-        "HG",
-        "PHILO"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan Science",
+      "code": "MODULE_2",
+      "name": "Bilan Science",
       "order": 2,
-      "subject_codes": [
-        "MATH",
-        "PC",
-        "SVT",
-        "TICE"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan autres",
+      "code": "MODULE_3",
+      "name": "Bilan autres",
       "order": 3,
-      "subject_codes": [
-        "EDHC",
-        "AP",
-        "MUS",
-        "EPS"
-      ]
-    },
-    {
-      "role": "comments",
-      "label": "Appréciations",
-      "order": 4
+      "weightingMode": "subject_coefficients"
     }
   ],
+  "gradingPolicy": {
+    "gradeScaleCode": "NUMERIC_20",
+    "mode": "numeric-first",
+    "aggregateLabel": "Moyenne générale",
+    "passThreshold": 10
+  },
   "subjects": [
     {
       "code": "FR",
       "name": "Français",
-      "domain": "Langues",
+      "shortName": "Français",
+      "disciplineCode": "FR",
+      "categoryCode": "LANGUAGES",
       "coefficient": 3,
-      "matters": [
-        "Étude de textes littéraires et argumentatifs",
-        "Grammaire et stylistique avancées",
-        "Expression écrite : dissertation et commentaire",
-        "Oral et méthodologie de l'épreuve de français",
-        "Histoire littéraire et mouvements",
-        "Lecture méthodique et interprétation"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Étude de textes littéraires et argumentatifs",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Grammaire et stylistique avancées",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Expression écrite : dissertation et commentaire",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Oral et méthodologie de l'épreuve de français",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Histoire littéraire et mouvements",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Lecture méthodique et interprétation",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 1
     },
     {
       "code": "ANG",
       "name": "Anglais",
-      "domain": "Langues",
+      "shortName": "Anglais",
+      "disciplineCode": "ANG",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension orale et expression orale",
-        "Compréhension écrite de textes authentiques",
-        "Vocabulaire thématique et expressions utiles",
-        "Grammaire : temps, structures et concordance",
-        "Production écrite guidée et libre",
-        "Civilisation et documents culturels"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension orale et expression orale",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Compréhension écrite de textes authentiques",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Vocabulaire thématique et expressions utiles",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Grammaire : temps, structures et concordance",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Production écrite guidée et libre",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Civilisation et documents culturels",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 2
     },
     {
       "code": "ALL",
       "name": "Allemand",
-      "domain": "Langues",
+      "shortName": "Allemand",
+      "disciplineCode": "ALL",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension et expression orale de base",
-        "Vocabulaire et structures grammaticales essentielles",
-        "Lecture de textes simples",
-        "Production écrite courte",
-        "Civilisation germanophone",
-        "Interaction en situations quotidiennes"
+      "isOptional": true,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension et expression orale de base",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vocabulaire et structures grammaticales essentielles",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de textes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Production écrite courte",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Civilisation germanophone",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Interaction en situations quotidiennes",
+          "order": 6
+        }
       ],
-      "optional": true
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 3
     },
     {
       "code": "ESP",
       "name": "Espagnol",
-      "domain": "Langues",
+      "shortName": "Espagnol",
+      "disciplineCode": "ESP",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension et expression orale de base",
-        "Vocabulaire et structures grammaticales essentielles",
-        "Lecture de textes simples",
-        "Production écrite courte",
-        "Civilisation hispanophone",
-        "Interaction en situations quotidiennes"
+      "isOptional": true,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension et expression orale de base",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vocabulaire et structures grammaticales essentielles",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de textes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Production écrite courte",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Civilisation hispanophone",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Interaction en situations quotidiennes",
+          "order": 6
+        }
       ],
-      "optional": true
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 4
     },
     {
       "code": "HG",
       "name": "Histoire-Géographie",
-      "domain": "Univers Social",
+      "shortName": "Histoire-Géographie",
+      "disciplineCode": "HG",
+      "categoryCode": "HUMANITIES",
       "coefficient": 2,
-      "matters": [
-        "Repères chronologiques et sociétés",
-        "Territoires, populations et activités",
-        "Lecture de cartes, frises et documents",
-        "Afrique et Côte d'Ivoire dans le monde",
-        "Enjeux contemporains",
-        "Méthodologie de l'étude de documents"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Repères chronologiques et sociétés",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Territoires, populations et activités",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de cartes, frises et documents",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Afrique et Côte d'Ivoire dans le monde",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Enjeux contemporains",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Méthodologie de l'étude de documents",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 5
     },
     {
       "code": "PHILO",
       "name": "Philosophie",
-      "domain": "Univers Social",
+      "shortName": "Philosophie",
+      "disciplineCode": "PHILO",
+      "categoryCode": "HUMANITIES",
       "coefficient": 4,
-      "matters": [
-        "Introduction générale à la philosophie : mythe, religion, science et philosophie",
-        "La conscience, l'inconscient et le désir",
-        "Le travail, l'art, la technique",
-        "Autrui, la société, l'État, le Droit et la Justice",
-        "La liberté et le devoir moral",
-        "Vérité, Raison et Croyance",
-        "Méthodologie de la dissertation philosophique",
-        "Méthodologie du commentaire de texte philosophique"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Introduction générale à la philosophie : mythe, religion, science et philosophie",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "La conscience, l'inconscient et le désir",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Le travail, l'art, la technique",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Autrui, la société, l'État, le Droit et la Justice",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "La liberté et le devoir moral",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Vérité, Raison et Croyance",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Méthodologie de la dissertation philosophique",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Méthodologie du commentaire de texte philosophique",
+          "order": 8
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 6
     },
     {
       "code": "MATH",
       "name": "Mathématiques",
-      "domain": "Sciences",
+      "shortName": "Mathématiques",
+      "disciplineCode": "MATH",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 2,
-      "matters": [
-        "Suites arithmétiques et géométriques",
-        "Étude de fonctions polynômes, rationnelles, logarithme népérien et exponentielle base e",
-        "Dénombrement et probabilités simples",
-        "Statistiques descriptives à une et deux variables"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Suites arithmétiques et géométriques",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Étude de fonctions polynômes, rationnelles, logarithme népérien et exponentielle base e",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Dénombrement et probabilités simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Statistiques descriptives à une et deux variables",
+          "order": 4
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 1
     },
     {
       "code": "PC",
       "name": "Physique-Chimie",
-      "domain": "Sciences",
-      "matters": [
-        "Mesures, grandeurs et incertitudes",
-        "Électricité : circuits et sécurité",
-        "Chimie : espèces chimiques et solutions",
-        "Mouvements et interactions élémentaires"
+      "shortName": "Physique-Chimie",
+      "disciplineCode": "PC",
+      "categoryCode": "SCIENTIFIC",
+      "coefficient": 2,
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Mesures, grandeurs et incertitudes",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Électricité : circuits et sécurité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Chimie : espèces chimiques et solutions",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Mouvements et interactions élémentaires",
+          "order": 4
+        }
       ],
-      "coefficient": 2
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 2
     },
     {
       "code": "SVT",
       "name": "Sciences de la Vie et de la Terre",
-      "domain": "Sciences",
-      "matters": [
-        "Organisation et diversité du vivant",
-        "Fonctions de nutrition et de relation",
-        "Environnement et enjeux de santé",
-        "Méthodologie expérimentale et documents scientifiques"
+      "shortName": "Sciences de la Vie et de la Terre",
+      "disciplineCode": "SVT",
+      "categoryCode": "SCIENTIFIC",
+      "coefficient": 2,
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Organisation et diversité du vivant",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Fonctions de nutrition et de relation",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Environnement et enjeux de santé",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Méthodologie expérimentale et documents scientifiques",
+          "order": 4
+        }
       ],
-      "coefficient": 2
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 3
     },
     {
       "code": "EDHC",
       "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
-      "domain": "Univers Social",
+      "shortName": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+      "disciplineCode": "EDHC",
+      "categoryCode": "HUMANITIES",
       "coefficient": 1,
-      "matters": [
-        "Droits et devoirs du citoyen",
-        "Vivre ensemble et respect de la diversité",
-        "Institutions et vie démocratique",
-        "Santé, hygiène et responsabilité sociale",
-        "Développement durable",
-        "Engagement et solidarité"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Droits et devoirs du citoyen",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vivre ensemble et respect de la diversité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Institutions et vie démocratique",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Santé, hygiène et responsabilité sociale",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Développement durable",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Engagement et solidarité",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 1
     },
     {
       "code": "EPS",
       "name": "Éducation Physique et Sportive",
-      "domain": "Développement Physique",
+      "shortName": "Éducation Physique et Sportive",
+      "disciplineCode": "EPS",
+      "categoryCode": "SPORT",
       "coefficient": 1,
-      "matters": [
-        "Activités athlétiques et motricité",
-        "Sports collectifs",
-        "Gymnastique et expression corporelle",
-        "Condition physique et santé",
-        "Règles de sécurité et fair-play",
-        "Préparation et évaluation des APSA"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Activités athlétiques et motricité",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Sports collectifs",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Gymnastique et expression corporelle",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Condition physique et santé",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Règles de sécurité et fair-play",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Préparation et évaluation des APSA",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 4
     },
     {
       "code": "TICE",
       "name": "TICE",
-      "domain": "Sciences",
+      "shortName": "TICE",
+      "disciplineCode": "TICE",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 1,
-      "matters": [
-        "Système d'exploitation et fichiers",
-        "Traitement de texte et présentation",
-        "Recherche d'information et sources",
-        "Tableurs et multimédia",
-        "Citoyenneté et sécurité numériques",
-        "Collaboration et outils en ligne"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Système d'exploitation et fichiers",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Traitement de texte et présentation",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Recherche d'information et sources",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Tableurs et multimédia",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Citoyenneté et sécurité numériques",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Collaboration et outils en ligne",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 4
     },
     {
       "code": "AP",
       "name": "Arts Plastiques",
-      "domain": "Arts",
+      "shortName": "Arts Plastiques",
+      "disciplineCode": "AP",
+      "categoryCode": "ARTS",
       "coefficient": 1,
-      "matters": [
-        "Dessin et représentation",
-        "Couleurs, formes et composition",
-        "Techniques plastiques",
-        "Lecture d'œuvres",
-        "Expression créative",
-        "Projet plastique personnel"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Dessin et représentation",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Couleurs, formes et composition",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Techniques plastiques",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Lecture d'œuvres",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Expression créative",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Projet plastique personnel",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 2
     },
     {
       "code": "MUS",
       "name": "Éducation Musicale",
-      "domain": "Arts",
+      "shortName": "Éducation Musicale",
+      "disciplineCode": "MUS",
+      "categoryCode": "ARTS",
       "coefficient": 1,
-      "matters": [
-        "Écoute et discrimination sonore",
-        "Chant et rythme",
-        "Notions de solfège de base",
-        "Musiques traditionnelles et contemporaines",
-        "Pratique collective",
-        "Culture musicale"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Écoute et discrimination sonore",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Chant et rythme",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Notions de solfège de base",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Musiques traditionnelles et contemporaines",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Pratique collective",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Culture musicale",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 3
     }
   ]
 }

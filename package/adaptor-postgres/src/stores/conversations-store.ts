@@ -28,7 +28,13 @@ export class PostgresConversations implements ConversationsPort {
   }
 
   async list(scope: ConversationReadScope, input: Parameters<ConversationsPort['list']>[1]) {
-    const filter = sql`${this.ids(scope)} ${input.destination ? sql`and c.destination=${input.destination}` : sql``} ${input.status ? sql`and c.status=${input.status}` : sql``}`
+    const search = input.search?.trim()
+    const matching = search
+      ? sql`and (strpos(lower(concat_ws(' ',c.payload->>'subject',c.payload->>'guardianName',c.payload->>'teacherName',c.payload->>'studentName',c.payload->>'schoolName')),lower(${search}))>0
+      or exists(select 1 from conversation_messages m where m.school_id=c.school_id and m.conversation_id=c.id
+        and strpos(lower(concat_ws(' ',m.payload->>'body',m.payload->>'authorName')),lower(${search}))>0))`
+      : sql``
+    const filter = sql`${this.ids(scope)} ${matching} ${input.destination ? sql`and c.destination=${input.destination}` : sql``} ${input.status ? sql`and c.status=${input.status}` : sql``}`
     const [page, counts] = await Promise.all([
       this.executor().execute(sql`select c.payload,${this.unreadSql(scope)} as unread from conversations c where ${filter} order by ${input.order === 'oldest_awaiting' ? sql`case when c.status='awaiting_school' then 0 else 1 end,c.awaiting_since asc` : sql`c.updated_at desc`},c.id limit ${input.limit} offset ${input.offset}`),
       this.executor().execute(sql`select count(*) as total,count(*) filter(where ${this.unreadSql(scope)}) as unread_count from conversations c where ${filter}`),

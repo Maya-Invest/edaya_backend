@@ -1,4 +1,4 @@
-import { resolveStructureTemplates } from "@edaya/fixtures/onboarding";
+import { resolveOnboardingDataset } from "@edaya/fixtures/onboarding";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -21,7 +21,6 @@ const typicalProvisionBody = {
   },
   structure: {
     templates: ["ci-college"],
-    disciplineMappings: resolveStructureTemplates(["ci-college"]).flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: "TEST", disciplineName: "Reviewed test discipline" })),
     levels: [
       { gradeLevelId: "ci-college:4EME", classCount: 1, capacity: 30, classNamingMode: "numerical" },
     ],
@@ -41,7 +40,7 @@ describe("onboarding provision route", () => {
     expect(body.success).toBe(false);
   });
 
-  it("returns 422 for legacy template ids", async () => {
+  it("returns 422 for obsolete custom snapshots", async () => {
     const { app } = await createCoreRouteTestApp();
     const response = await app.request(createAppRequest("/core/onboarding/provision", {
       method: "POST",
@@ -51,7 +50,8 @@ describe("onboarding provision route", () => {
         requestId: crypto.randomUUID(),
         ...typicalProvisionBody,
         structure: {
-          templates: ["college"],
+          templates: ["ci-college"],
+          templateSnapshots: [],
           levels: typicalProvisionBody.structure.levels,
         },
       }),
@@ -157,5 +157,74 @@ describe("onboarding provision route", () => {
     expect(ownerStaff?.schoolId).toBe(payload.schoolId);
     expect(ownerStaff?.onboardingWizardCompletedAt).toBeTruthy();
     expect(await application.repositories.staffMembers.count({ schoolId })).toBe(1);
+  });
+});
+
+describe("canonical onboarding request contracts", () => {
+  it("rejects ambiguous selection and obsolete custom snapshots during request validation", async () => {
+    const { app } = await createCoreRouteTestApp();
+    for (const selection of [
+      { dataset: { id: "ci-general-secondary", version: "1.0.0" }, datasetSnapshot: resolveOnboardingDataset("ci-general-secondary", "1.0.0") },
+      { templateSnapshots: [] },
+    ]) {
+      const response = await app.request(createAppRequest("/core/onboarding/provision", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ schoolId: crypto.randomUUID(), requestId: crypto.randomUUID(), ...typicalProvisionBody, structure: { ...typicalProvisionBody.structure, ...selection } }),
+      }));
+      expect(response.status).toBe(422);
+    }
+  });
+
+  it("rejects unknown dataset versions and template selections before creating a school", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    const email = "dataset-validation@school.edu";
+    await signUpAuthUser(runtime, { email, name: "Dataset Owner" });
+    const token = await signInWithBearerThroughApp(app, { email });
+    for (const selection of [
+      { dataset: { id: "ci-general-secondary", version: "9.9.9" } },
+      { templates: ["unknown-template"] },
+    ]) {
+      const schoolId = crypto.randomUUID();
+      const response = await app.request(createAppRequest("/core/onboarding/provision", {
+        method: "POST",
+        headers: { "content-type": "application/json", "authorization": `Bearer ${token}` },
+        body: JSON.stringify({ schoolId, requestId: crypto.randomUUID(), ...typicalProvisionBody, structure: { ...typicalProvisionBody.structure, ...selection } }),
+      }));
+      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(response.status).toBeLessThan(500);
+      expect(await application.repositories.schools.findById(schoolId)).toBeUndefined();
+    }
+  });
+
+  it("provisions a canonical custom dataset without CI template IDs and preserves semesters", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    const email = "custom-dataset@school.edu";
+    await signUpAuthUser(runtime, { email, name: "Custom Dataset Owner" });
+    const token = await signInWithBearerThroughApp(app, { email });
+    const datasetSnapshot = resolveOnboardingDataset("ci-general-secondary", "1.0.0");
+    datasetSnapshot.id = "custom-secondary";
+    datasetSnapshot.templates = [datasetSnapshot.templates[0]!];
+    const template = datasetSnapshot.templates[0]!;
+    template.id = "custom-college";
+    for (const level of template.gradeLevels) level.id = `${template.id}:${level.code}`;
+    const schoolId = crypto.randomUUID();
+    const response = await app.request(createAppRequest("/core/onboarding/provision", {
+      method: "POST",
+      headers: { "content-type": "application/json", "authorization": `Bearer ${token}` },
+      body: JSON.stringify({
+        schoolId,
+        requestId: crypto.randomUUID(),
+        school: { ...typicalProvisionBody.school, periodType: "semester", periods: [{ label: "Semestre 1", start: "2026-09-01", end: "2027-01-31" }, { label: "Semestre 2", start: "2027-02-01", end: "2027-07-03" }] },
+        structure: { datasetSnapshot, templates: [template.id], levels: [{ gradeLevelId: `${template.id}:4EME`, classCount: 1, capacity: 30 }] },
+      }),
+    }));
+    expect(response.status).toBe(200);
+    const periods = await application.repositories.academicPeriods.list({ schoolId });
+    expect(periods).toHaveLength(2);
+    expect(periods.every(period => period.type === "semester")).toBe(true);
+    const scales = await application.repositories.gradeScales.list({ schoolId });
+    expect(scales).toHaveLength(1);
+    expect(scales[0]!.findRange(18)?.interpretation).toBe("Excellent");
   });
 });

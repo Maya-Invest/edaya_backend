@@ -6,7 +6,7 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
 const NOW = new Date('2026-04-15T10:00:00Z')
@@ -319,7 +319,7 @@ test('generated timetables issue class and teacher PDFs immediately without prot
   const { app, application, schoolRepositories: repositories } = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true, documentRenderer: renderer(), fileStorage: createInMemoryFileStorage() })
   await seedSchooling(repositories)
   await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Ada', lastName: 'Teacher' }))
-  await repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math' }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'math', classGroupId: 'cg1', subjectId: 'subject-math' }))
   const lesson = new LessonSession({ id: 'generated', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'math', timetableGenerated: true, timetableTeacherIds: ['teacher'], displayLabel: 'Math', startsAt: new Date('2026-04-15T08:00Z'), endsAt: new Date('2026-04-15T09:00Z') })
   await repositories.lessonSessions.save(lesson)

@@ -9,7 +9,6 @@ import {
   GradeLevel,
   PeriodDefinition,
   Subject,
-  SubjectCategory,
   SubjectColor,
   TeacherAssignment,
   TeacherAssignmentKind,
@@ -17,7 +16,7 @@ import {
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { saveSchool } from '../utils/core-service-helpers'
+import { createFixtureSubjectCategory, saveSchool } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 const startDate = new Date('2026-09-07T00:00:00.000Z')
@@ -54,7 +53,7 @@ describeIntegration('timetable generation lifecycle', () => {
       gradeLevelId: 'grade',
       name: 'Grade 6 A',
     }))
-    await schoolRepositories.subjects.save(new Subject({ gradeLevelId: 'grade', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics', category: SubjectCategory.Scientific, color: SubjectColor.Mint }))
+    await schoolRepositories.subjects.save(new Subject({ gradeLevelId: 'grade', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics', categoryId: (await createFixtureSubjectCategory(app, 'school')).id, color: SubjectColor.Mint }))
     await schoolRepositories.classSubjects.save(new ClassSubject({
       id: 'class-math',
       classGroupId: 'class',

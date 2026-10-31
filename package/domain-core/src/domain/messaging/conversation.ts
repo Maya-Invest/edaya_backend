@@ -54,6 +54,7 @@ export const replyConversationSchema = z.object({ requestId: id, conversationId:
 export const resolveConversationSchema = replyConversationSchema.omit({ body: true })
 export const markConversationReadSchema = z.object({ conversationId: id, throughSequence: z.number().int().nonnegative() })
 export const conversationsQuerySchema = z.object({
+  search: z.string().trim().max(200).optional(),
   destination: z.enum(['school', 'teacher']).optional(),
   status: conversationStatusSchema.optional(),
   order: z.enum(['latest', 'oldest_awaiting']).default('latest'),

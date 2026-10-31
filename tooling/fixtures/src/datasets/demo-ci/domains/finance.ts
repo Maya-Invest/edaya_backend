@@ -9,6 +9,9 @@ const termInstallments = [
   { label: 'Mai', percentage: 33.34, dueDate: '2027-05-14T12:00:00.000Z' },
 ] as const
 
+// The dashboard ages installments, so the saved installment and charge due date must agree.
+const sportsDueDate = `${seedUpcomingDate(2, DEMO_CI_SEED_REFERENCE_DATE)}T12:00:00.000Z`
+
 const active = CatalogServiceStatus.Active
 
 export const demoCiCatalogServices = [
@@ -49,7 +52,7 @@ export const demoCiCatalogServices = [
     category: CatalogServiceCategory.Activities,
     defaultPrice: 25_000,
     currency: 'XOF',
-    billingTerms: { kind: 'one_time', installments: [{ label: 'Trimestre', percentage: 100, dueDate: '2027-01-15T12:00:00.000Z' }] },
+    billingTerms: { kind: 'one_time', installments: [{ label: 'Trimestre', percentage: 100, dueDate: sportsDueDate }] },
     status: active,
   },
   {
@@ -112,7 +115,7 @@ export const demoCiStudentServiceEnrollments = [
   { id: 'ci-svc-s4-transport', studentId: 'ci-s4', catalogServiceId: 'ci-cat-transport' },
   { id: 'ci-svc-s5-tuition', studentId: 'ci-s5', catalogServiceId: 'ci-cat-tuition' },
   { id: 'ci-svc-s6-meals', studentId: 'ci-s6', catalogServiceId: 'ci-cat-meals', priceOverride: 162_000, dueDate: '2026-10-01T12:00:00.000Z' },
-  { id: 'ci-svc-s11-sports', studentId: 'ci-s11', catalogServiceId: 'ci-cat-sports', dueDate: `${seedUpcomingDate(2, DEMO_CI_SEED_REFERENCE_DATE)}T12:00:00.000Z` },
+  { id: 'ci-svc-s11-sports', studentId: 'ci-s11', catalogServiceId: 'ci-cat-sports', dueDate: sportsDueDate },
   { id: 'ci-svc-s12-supplies', studentId: 'ci-s12', catalogServiceId: 'ci-cat-supplies' },
   { id: 'ci-svc-s17-tuition', studentId: 'ci-s17', catalogServiceId: 'ci-cat-tuition' },
   { id: 'ci-svc-s22-tuition', studentId: 'ci-s22', catalogServiceId: 'ci-cat-tuition' },

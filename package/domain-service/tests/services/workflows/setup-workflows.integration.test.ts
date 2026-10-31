@@ -137,7 +137,7 @@ describe('SchoolService setup workflows', () => {
     expect((await schools.findById('sch-new'))?.name).toBe('New School')
     expect(await schoolNotificationTemplates.findById('sch-new')).toBeDefined()
     expect(await staffPermissionProfiles.count({ schoolId: 'sch-new' })).toBeGreaterThan(0)
-    expect(await subjectCategories.count({ schoolId: 'sch-new' })).toBe(6)
+    expect(await subjectCategories.count({ schoolId: 'sch-new' })).toBe(0)
   })
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {

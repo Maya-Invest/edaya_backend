@@ -1,4 +1,3 @@
-import { resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -112,7 +111,7 @@ describe("onboarding apply-structure-template route", () => {
       },
       body: JSON.stringify({
         templates: ["ci-college"],
-        disciplineMappings: resolveStructureTemplates(["ci-college"]).flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: "TEST", disciplineName: "Reviewed test discipline" })),
+        disciplineMappings: [{ subjectCode: "MATH", disciplineCode: "STALE", disciplineName: "Ignored wizard mapping" }],
         levels: [
           { gradeLevelId: "ci-college:4EME", classCount: 2, capacity: 30 },
           { gradeLevelId: "ci-college:3EME", classCount: 1, capacity: 30, classNamingMode: "alphabetical" },
@@ -142,6 +141,10 @@ describe("onboarding apply-structure-template route", () => {
     expect(modules.every(module => module.weightingMode === "subject_coefficients")).toBe(true);
     expect(gradeScales).toHaveLength(1);
     expect(gradeScales[0]?.maxScore).toBe(20);
+    expect(gradeScales[0]?.ranges.map(row => row.letter)).toEqual(["TF", "F", "TI", "I", "P", "AB", "B", "TB", "EX"]);
+    const disciplines = await application.repositories.academicDisciplines.list({ schoolId: school.id });
+    expect(disciplines).toHaveLength(15);
+    expect(disciplines.some(row => row.code === "STALE")).toBe(false);
 
     const academicPeriods = (await application.repositories.academicPeriods.list()).filter(entry => entry.schoolId === schoolId);
     expect(academicPeriods).toHaveLength(3);
@@ -219,7 +222,7 @@ describe("onboarding apply-structure-template route", () => {
       },
       body: JSON.stringify({
         templates: ["ci-college"],
-        disciplineMappings: resolveStructureTemplates(["ci-college"]).flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: "TEST", disciplineName: "Reviewed test discipline" })),
+        disciplineMappings: [{ subjectCode: "MATH", disciplineCode: "STALE", disciplineName: "Ignored wizard mapping" }],
         levels: [
           { gradeLevelId: "ci-college:6EME", classCount: 1, capacity: 30 },
         ],
@@ -239,6 +242,10 @@ describe("onboarding apply-structure-template route", () => {
     expect(modules.every(module => module.weightingMode === "subject_coefficients")).toBe(true);
     expect(gradeScales).toHaveLength(1);
     expect(gradeScales[0]?.maxScore).toBe(20);
+    expect(gradeScales[0]?.ranges.map(row => row.letter)).toEqual(["TF", "F", "TI", "I", "P", "AB", "B", "TB", "EX"]);
+    const disciplines = await application.repositories.academicDisciplines.list({ schoolId: school.id });
+    expect(disciplines).toHaveLength(15);
+    expect(disciplines.some(row => row.code === "STALE")).toBe(false);
     expect(subjects.some(subject => subject.name.includes("Français"))).toBe(true);
     expect(subjects.some(subject => subject.name.includes("Mathématiques"))).toBe(true);
   });

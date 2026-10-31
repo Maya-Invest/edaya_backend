@@ -62,7 +62,11 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     expect(actionKeys).not.toContain('incomplete_grading')
 
     expect(overview.upcoming.some(item => item.kind === 'calendar')).toBe(true)
-    expect(overview.upcoming.some(item => item.kind === 'fee_due')).toBe(true)
+    expect(overview.upcoming.find(item => item.id === 'ci-svc-s11-sports')).toMatchObject({
+      kind: 'fee_due',
+      title: 'Club sportif',
+      date: '2026-09-19',
+    })
   })
 })
 

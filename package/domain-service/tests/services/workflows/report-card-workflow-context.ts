@@ -8,7 +8,7 @@ export async function createReportCardContext({ existingReportCard, notification
   const { repositories } = fixture
   for (const id of ['per1', 'per-t1', 'per-unpublished']) await repositories.academicPeriods.save(new AcademicPeriod({ id, schoolId: 'sch1', academicYearId: 'ay1', name: id, type: AcademicPeriodType.Trimester, isPublished: academicPeriodPublished && id !== 'per-unpublished', startDate: new Date('2026-01-01'), endDate: new Date('2026-03-31') }))
   await repositories.reportModules.save(new ReportModule({ id: 'sec-root', schoolId: 'sch1', gradeLevelId: 'grade1', academicYearId: 'ay1', name: 'Academics', order: 1 }))
-  await repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math', coefficient: 1, reportModuleId: 'sec-root' }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math', coefficient: 1, reportModuleId: 'sec-root' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject-math', coefficient: 1, isOffered: true, completedPercentage: 0 }))
   await repositories.gradeScales.save(new GradeScale({ id: 'grade-scale', schoolId: 'sch1', name: '20 points', minScore: 0, maxScore: 20, ranges: [{ id: 'pass', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }], intervalConvention: 'continuous' }))
   const level = (await repositories.gradeLevels.findById('grade1'))!

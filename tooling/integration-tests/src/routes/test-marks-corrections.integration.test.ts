@@ -14,7 +14,7 @@ describeWithLightSchool('submitted marks correction HTTP contract', (getContext)
     const period = (await repositories.academicPeriods.list({ academicYearId: group.academicYearId, $limit: 1 }))[0]!
     const startsAt = new Date((period.startDate.getTime() + period.endDate.getTime()) / 2)
     await repositories.classGroups.save(new ClassGroup({ ...group.data, id: 'correction-route-class', name: 'Correction contract' }))
-    await repositories.subjects.save(new Subject({ gradeLevelId: group.gradeLevelId, academicYearId: group.academicYearId, id: 'correction-route-subject', schoolId: group.schoolId, name: 'Contract subject' }))
+    await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: group.gradeLevelId, academicYearId: group.academicYearId, id: 'correction-route-subject', schoolId: group.schoolId, name: 'Contract subject' }))
     await repositories.classSubjects.save(new ClassSubject({ id: 'correction-route-cs', classGroupId: 'correction-route-class', subjectId: 'correction-route-subject', coefficient: 1 }))
     await repositories.students.save(new Student({ id: 'correction-route-student', schoolId: group.schoolId, firstName: 'Contract', lastName: 'Student' }))
     await repositories.enrollments.save(new StudentClassEnrollment({ id: 'correction-route-enrollment', studentId: 'correction-route-student', classGroupId: 'correction-route-class', academicYearId: group.academicYearId, enrollmentIndex: 1, enrolledAt: period.startDate }))

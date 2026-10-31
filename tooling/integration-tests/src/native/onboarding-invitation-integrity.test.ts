@@ -14,7 +14,7 @@ import {
   StaffMember,
   StaffPermissionAssignment,
 } from '@edaya/core'
-import { resolveStructureTemplates } from '@edaya/fixtures/onboarding'
+import { resolveOnboardingDataset } from '@edaya/fixtures/onboarding'
 import { provisionOnboarding, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
@@ -41,8 +41,8 @@ const targetStaffId = 'invite-integrity-target'
 const adminSubject = 'invite-integrity-admin'
 
 function typicalProvisionInput(schoolId: string, requestId: string) {
-  const templates = resolveStructureTemplates(['ci-college'])
-  const level = templates[0]?.gradeLevels[0]
+  const dataset = resolveOnboardingDataset('ci-general-secondary', '1.0.0')
+  const level = dataset.templates[0]?.gradeLevels[0]
   if (!level) {
     throw new Error('Missing CI college template')
   }
@@ -61,9 +61,8 @@ function typicalProvisionInput(schoolId: string, requestId: string) {
       periods: [{ label: 'Trimestre 1', start: '2026-09-01', end: '2026-12-19' }],
     },
     structure: {
-      disciplineMappings: templates.flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: 'TEST', disciplineName: 'Reviewed test discipline' })),
       templates: ['ci-college'],
-      templateSnapshots: templates,
+      dataset,
       levels: [{
         gradeLevelId: level.id,
         classCount: 1,

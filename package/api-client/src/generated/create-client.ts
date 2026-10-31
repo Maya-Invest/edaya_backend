@@ -87,6 +87,8 @@ type ImportsClients<TSchemas extends Record<string, unknown>> = {
 type OnboardingClients<TSchemas extends Record<string, unknown>> = {
   registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => Promise<SchemaName<TSchemas, 'School'>>
   listStructureTemplates: () => Promise<SchemaName<TSchemas, 'OnboardingListStructureTemplatesResponse'>>
+  listDatasets: () => Promise<SchemaName<TSchemas, 'OnboardingDatasetChoices'>>
+  getDataset: (params: { id: string, version: string }) => Promise<SchemaName<TSchemas, 'OnboardingDataset'>>
   accountStatus: () => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
   applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingApplyStructureTemplateResponse'>>
   completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
@@ -225,6 +227,8 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     onboarding: {
     registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/register-school'), { body: payload }),
     listStructureTemplates: () => transport.request('GET', resolveClientRoutePath('onboarding/structure-templates')),
+    listDatasets: () => transport.request('GET', resolveClientRoutePath('onboarding/datasets')),
+    getDataset: (params: { id: string, version: string }) => transport.request('GET', resolveClientRoutePath('onboarding/datasets/{id}/{version}', params)),
     accountStatus: () => transport.request('GET', resolveClientRoutePath('onboarding/account-status')),
     applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/apply-structure-template'), { body: payload }),
     completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/complete-wizard'), { body: payload }),

@@ -1,8 +1,7 @@
 import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
-import { BusinessRuleViolationError } from '@edaya/core'
 
 export function isStructureTemplateId(value: string): value is StructureTemplateId {
-  return value.startsWith('ci-')
+  return value.trim().length > 0 && !value.includes(':')
 }
 
 export function parseGradeLevelTemplateId(gradeLevelId: string): {
@@ -56,22 +55,4 @@ export function classDisplayName(
     throw new Error(`Unknown grade level ${levelCode} for template ${template.id}`)
   }
   return classNameFromLabel(level.shortLabel, index, mode)
-}
-
-export function resolveOnboardingStructureTemplates(
-  templateIds: StructureTemplateId[],
-  snapshots: StructureTemplateDefinition[] = [],
-): StructureTemplateDefinition[] {
-  const snapshotById = new Map(snapshots.map(snapshot => [snapshot.id, snapshot]))
-
-  return templateIds.map((templateId) => {
-    const snapshot = snapshotById.get(templateId)
-    if (snapshot) {
-      return snapshot
-    }
-    throw new BusinessRuleViolationError(
-      'UNKNOWN_STRUCTURE_TEMPLATE',
-      `Unknown structure template: ${templateId}`,
-    )
-  })
 }

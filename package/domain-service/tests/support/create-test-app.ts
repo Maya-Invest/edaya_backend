@@ -247,3 +247,16 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     db,
   }
 }
+
+/** Explicit curriculum fixture setup; generic school fixtures remain category-free. */
+export async function createCurriculumTestApp(...args: Parameters<typeof createTestApp>) {
+  const fixture = await createTestApp(...args)
+  const { subjectCategories } = (await import('../../../../tooling/fixtures/src/onboarding/ivory-coast/parse-ivory-coast-templates')).IVORY_COAST_ONBOARDING_DATASET
+  const { ensureDatasetSubjectCategories } = await import('../../src/capabilities/academics/dataset-subject-categories')
+  const { SubjectCategoryEntity } = await import('@edaya/core')
+  for (const school of await fixture.schoolRepositories.schools.list()) {
+    await ensureDatasetSubjectCategories(fixture.schoolRepositories, school.id, subjectCategories)
+    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity({ id: 'test-category', schoolId: school.id, name: 'Fixture category' }))
+  }
+  return fixture
+}

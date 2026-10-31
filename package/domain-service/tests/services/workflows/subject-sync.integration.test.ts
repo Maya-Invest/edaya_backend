@@ -1,6 +1,6 @@
 import { AcademicDiscipline, AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
 async function createContext(owner = true) {
@@ -15,13 +15,13 @@ async function createContext(owner = true) {
 async function createWorkloadContext(owner = true) {
   const context = await createContext(owner)
   const { repositories } = context
-  await repositories.subjects.save(new Subject({ id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math', code: 'MATH', coefficient: 2, periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2 }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math', code: 'MATH', coefficient: 2, periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2 }))
   for (const id of ['6a', '6b']) {
     await repositories.classGroups.save(new ClassGroup({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: id }))
     await repositories.classSubjects.save(new ClassSubject({ id: `cs-${id}`, classGroupId: id, subjectId: 'subj-math', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2, completedPercentage: 25, isOffered: id === '6a' }))
   }
   await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-5', schoolId: 'sch1', name: '5', label: '5', order: 5 }))
-  await repositories.subjects.save(new Subject({ id: 'other-math', schoolId: 'sch1', name: 'Math', gradeLevelId: 'gl-5', academicYearId: 'ay1', periodsPerWeek: 7 }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', id: 'other-math', schoolId: 'sch1', name: 'Math', gradeLevelId: 'gl-5', academicYearId: 'ay1', periodsPerWeek: 7 }))
   return context
 }
 
@@ -87,7 +87,7 @@ describe('subject inheritance through native policies', () => {
 
   it('creates subjects and chapters before classes, then mirrors them without resetting progress', async () => {
     const { service, repositories } = await createContext()
-    await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math', coefficient: 2.5, periodsPerWeek: 5 })
+    await service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math', coefficient: 2.5, periodsPerWeek: 5 })
     await service.academicsWorkflow.configureSubjectMatter({ id: 'chapter', subjectId: 'subj-math', name: 'Algebra', sequenceOrder: 1 })
     expect(await repositories.classSubjects.count()).toBe(0)
     for (const id of ['6a', '6b'])
@@ -110,17 +110,17 @@ describe('subject inheritance through native policies', () => {
     await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-5', schoolId: 'sch1', name: '5', label: '5', order: 5 }))
     await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next year', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' }))
     for (const [id, gradeLevelId, academicYearId] of [['first', 'gl-6', 'ay1'], ['second', 'gl-6', 'ay1'], ['other-grade', 'gl-5', 'ay1'], ['other-year', 'gl-6', 'ay2']] as const)
-      await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id, schoolId: 'sch1', gradeLevelId, academicYearId, name: 'Math' })
+      await service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id, schoolId: 'sch1', gradeLevelId, academicYearId, name: 'Math' })
     await service.setupWorkflow.createClassGroup({ id: '6a', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6A' })
     expect((await repositories.classSubjects.list()).map(row => row.subjectId).sort()).toEqual(['first', 'second'])
     await service.academicsWorkflow.updateSubject({ subjectId: 'first', name: 'Mathematics' })
     expect((await repositories.subjects.findById('second'))?.name).toBe('Math')
-    await expect(service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'first', schoolId: 'sch1', gradeLevelId: 'gl-5', academicYearId: 'ay1', name: 'Math' })).rejects.toThrow()
+    await expect(service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id: 'first', schoolId: 'sch1', gradeLevelId: 'gl-5', academicYearId: 'ay1', name: 'Math' })).rejects.toThrow()
   })
 
   it('defaults optional offerings to disabled and preserves per-class toggles on metadata changes', async () => {
     const { service, repositories } = await createContext()
-    await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'optional', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'German', isOptional: true })
+    await service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id: 'optional', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'German', isOptional: true })
     await service.setupWorkflow.createClassGroup({ id: '6a', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6A' })
     const offering = (await repositories.classSubjects.findOne({ subjectId: 'optional' }))!
     expect(offering.isOffered).toBe(false)
@@ -133,7 +133,7 @@ describe('subject inheritance through native policies', () => {
 
   it('rejects standalone offerings and deletes unused subjects with their mirrors', async () => {
     const { service, repositories } = await createContext()
-    await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math' })
+    await service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id: 'math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math' })
     await service.academicsWorkflow.configureSubjectMatter({ id: 'chapter', subjectId: 'math', name: 'Core', sequenceOrder: 1 })
     await service.setupWorkflow.createClassGroup({ id: '6a', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6A' })
     await expect(service.baseService.entities.classSubjects.save(new ClassSubject({ id: 'custom', classGroupId: '6a', subjectId: 'math' }))).rejects.toThrow()

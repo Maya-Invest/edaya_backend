@@ -37,6 +37,7 @@ describe('timetable preparation domain contracts', () => {
 
   test('accepts nullable weekly workload on grade and class subjects', () => {
     const gradeSubject = new Subject({
+      categoryId: 'test-category',
       id: 'subject-1',
       schoolId: 'school-1',
       name: 'Math',

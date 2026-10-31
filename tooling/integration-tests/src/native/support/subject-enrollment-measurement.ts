@@ -12,7 +12,7 @@ export async function measureCompulsoryPersistence(size: number) {
   for (const [mode, reconcile] of [['baseline', reconcilePlacementReference], ['candidate', reconcilePlacement]] as const) {
     const f = await fixture(`participation-${mode === 'baseline' ? 'base' : 'next'}-${size}`)
     for (let i = 1; i < 10; i++) {
-      await f.r.subjects.save(new Subject({ id: f.id(`subject-${i}`), schoolId: f.id('school'), gradeLevelId: f.id('grade'), academicYearId: f.id('year'), name: `Subject ${i}` }))
+      await f.r.subjects.save(new Subject({ categoryId: 'test-category', id: f.id(`subject-${i}`), schoolId: f.id('school'), gradeLevelId: f.id('grade'), academicYearId: f.id('year'), name: `Subject ${i}` }))
       await f.r.classSubjects.save(new ClassSubject({ id: f.id(`offering-${i}`), classGroupId: f.id('class'), subjectId: f.id(`subject-${i}`) }))
     }
     await f.r.students.batchSave(Array.from({ length: size }, (_, i) => new Student({ id: f.id(`child-${i}`), schoolId: f.id('school'), firstName: 'Benchmark', lastName: String(i) })))

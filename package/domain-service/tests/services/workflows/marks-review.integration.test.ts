@@ -134,7 +134,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-    await f.repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art', coefficient: 1 }))
+    await f.repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art', coefficient: 1 }))
     await f.repositories.classSubjects.save(new ClassSubject({ ...(await f.repositories.classSubjects.findById('cs1'))!.data, id: 'cs-art', subjectId: 'art' }))
     await f.repositories.assessments.save(new Assessment({ ...(await f.repositories.assessments.findById('ass1'))!.data, id: 'ass-art', classSubjectId: 'cs-art' }))
     await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar-art', assessmentId: 'ass-art', studentId: 'stu1', score: 50 }))

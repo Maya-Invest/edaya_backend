@@ -16,7 +16,6 @@ import {
   School,
   StaffPermissionAssignment,
   Subject,
-  SubjectCategory,
   SubjectColor,
   Teacher,
   TeacherAssignment,
@@ -28,7 +27,7 @@ import {
 import { describe, expect, test } from 'bun:test'
 import { BaseSchoolService } from '../../../src/services/base-school-service'
 import { TimetableGenerationServiceWorkflow } from '../../../src/services/workflows/timetable-generation'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
 const weekStart = new Date('2026-09-07T00:00:00.000Z')
@@ -82,7 +81,7 @@ async function createWorkflowContext(
     }),
     new ClassGroup({ id: 'class-2', schoolId: school.id, academicYearId: academicYear.id, gradeLevelId: grade.id, name: 'B' }),
   ]
-  const subject = new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: school.id, name: 'Mathematics', category: SubjectCategory.Scientific, color: SubjectColor.Mint })
+  const subject = new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: school.id, name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Mint })
   const classSubjects = groups.map((group, index) => new ClassSubject({
     id: `class-subject-${index + 1}`,
     classGroupId: group.id,
@@ -238,7 +237,7 @@ describe('timetable generation workflow', () => {
     await repositories.academicYears.save(new AcademicYear({ id: 'foreign-year', schoolId: 'foreign-school', name: '2026', startDate: weekStart, endDate: weekEnd, status: 'published' }))
     await repositories.gradeLevels.save(new GradeLevel({ id: 'foreign-grade', schoolId: 'foreign-school', name: 'Grade 1', label: 'G1', order: 1 }))
     await repositories.classGroups.save(new ClassGroup({ id: 'foreign-class', schoolId: 'foreign-school', academicYearId: 'foreign-year', gradeLevelId: 'foreign-grade', name: 'Other class' }))
-    await repositories.subjects.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'foreign-subject', schoolId: 'foreign-school', name: 'Mathematics', category: SubjectCategory.Scientific, color: SubjectColor.Mint }))
+    await repositories.subjects.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'foreign-subject', schoolId: 'foreign-school', name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Mint }))
     await repositories.classSubjects.save(new ClassSubject({ id: 'foreign-class-subject', classGroupId: 'foreign-class', subjectId: 'foreign-subject', periodsPerWeek: 1 }))
     const existing = new LessonSession({ id: 'foreign-generated', schoolId: 'foreign-school', classGroupId: 'foreign-class', classSubjectId: 'foreign-class-subject', displayLabel: 'Existing generated', startsAt: new Date('2026-09-07T08:00:00Z'), endsAt: new Date('2026-09-07T09:00:00Z'), timetableGenerated: true })
     await repositories.lessonSessions.save(existing)

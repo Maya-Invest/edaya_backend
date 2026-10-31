@@ -44,7 +44,7 @@ beforeAll(async () => {
   await repositories.academicPeriods.save(new AcademicPeriod({ id: 'report-period', schoolId: school.id, academicYearId: 'report-year', name: 'Term', isPublished: true, ...dates }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'report-grade', schoolId: school.id, name: 'Grade', label: 'Grade', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'report-class', schoolId: school.id, academicYearId: 'report-year', gradeLevelId: 'report-grade', name: 'Class' }))
-  await repositories.subjects.save(new Subject({ gradeLevelId: 'report-grade', academicYearId: 'report-year', id: 'report-math', schoolId: school.id, name: 'Math' }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'report-grade', academicYearId: 'report-year', id: 'report-math', schoolId: school.id, name: 'Math' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'report-math-class', classGroupId: 'report-class', subjectId: 'report-math' }))
   await repositories.students.save(new Student({ id: 'report-student', schoolId: school.id, firstName: 'Synthetic', lastName: 'Student' }))
   await repositories.enrollments.save(new StudentClassEnrollment({ id: 'report-enrollment', studentId: 'report-student', classGroupId: 'report-class', academicYearId: 'report-year', enrollmentIndex: 1 }))
