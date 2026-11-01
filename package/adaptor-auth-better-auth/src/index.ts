@@ -6,6 +6,7 @@ import { authSchema } from '@edaya/adaptor-auth'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { emailOTP, phoneNumber } from 'better-auth/plugins'
+import { createEmailDispatch } from './email-dispatch'
 /** Provider handlers are deliberately private: only AccountService can complete authentication. */
 export function createBetterAuthAdapter(database: unknown, options: {
   secret: string
@@ -13,8 +14,8 @@ export function createBetterAuthAdapter(database: unknown, options: {
   generation: string
   delivery: OtpDeliveryPort
 }): AuthenticationProviderPort {
-  interface Dispatch { channel: OtpChannel, attemptId?: string, delivery?: Promise<void> }
-  const context = new AsyncLocalStorage<Dispatch>()
+  const emailDispatch = createEmailDispatch(options.delivery)
+  const context = new AsyncLocalStorage<OtpChannel>()
   const preparation = new AsyncLocalStorage<{ code?: string }>()
   const hashOtp = (value: string) => createHmac('sha256', options.secret).update(`edaya:otp:${value}`).digest('hex')
   const auth = betterAuth({
@@ -24,18 +25,7 @@ export function createBetterAuthAdapter(database: unknown, options: {
     emailAndPassword: { enabled: false },
     session: { storeSessionInDatabase: true, cookieCache: { enabled: false } },
     plugins: [
-      emailOTP({ otpLength: 6, expiresIn: 300, allowedAttempts: 5, storeOTP: { hash: async otp => hashOtp(otp) }, sendVerificationOTP: async ({ email, otp }) => {
-        const dispatch = context.getStore()
-        if (!dispatch)
-          throw new Error('Missing email dispatch context')
-        dispatch.delivery = Promise.resolve().then(async () => {
-          const result = await options.delivery.send({ channel: 'email', destination: email, code: otp, attemptId: dispatch.attemptId })
-          if (result && result.status !== 'accepted')
-            throw new Error('Email dispatch rejected')
-        })
-        // Better Auth catches callback failures. The owning request observes the original promise.
-        await dispatch.delivery.catch(() => {})
-      } }),
+      emailOTP({ otpLength: 6, expiresIn: 300, allowedAttempts: 5, storeOTP: { hash: async otp => hashOtp(otp) }, sendVerificationOTP: emailDispatch.callback }),
       phoneNumber({ otpLength: 6, expiresIn: 300, allowedAttempts: 5, sendOTP: async ({ phoneNumber: destination, code }, ctx) => {
         if (!ctx)
           throw new Error('Phone verification context required')
@@ -46,7 +36,7 @@ export function createBetterAuthAdapter(database: unknown, options: {
           prepared.code = code
           return
         }
-        const selected = context.getStore()?.channel
+        const selected = context.getStore()
         if (selected !== 'sms' && selected !== 'whatsapp')
           throw new Error('Phone delivery channel is required')
         await options.delivery.send({ channel: selected, destination, code })
@@ -76,27 +66,11 @@ export function createBetterAuthAdapter(database: unknown, options: {
       return prepared.code
     },
     async sendOtp(input) {
-      const dispatch: Dispatch = { channel: input.channel, attemptId: input.attemptId }
-      await context.run(dispatch, async () => {
-        if (input.kind === 'email') {
-          try {
-            await auth.api.sendVerificationOTP({ body: { email: input.value, type: 'sign-in' } })
-            if (!dispatch.delivery)
-              throw new Error('Missing email dispatch callback')
-            await dispatch.delivery
-          }
-          catch (error) {
-            const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
-            // Workers adds request correlation to this event. Do not log the destination, challenge or provider message.
-            const providerCode = typeof code === 'number' && Number.isSafeInteger(code) ? code : 'email_dispatch_failed'
-            console.error('auth_email_delivery_failed', { providerCode })
-            throw new Error('Email delivery unavailable')
-          }
-        }
-        else {
-          await auth.api.sendPhoneNumberOTP({ body: { phoneNumber: input.value } })
-        }
-      })
+      if (input.kind === 'email') {
+        await emailDispatch.send(input.attemptId, () => auth.api.sendVerificationOTP({ body: { email: input.value, type: 'sign-in' } }))
+        return
+      }
+      await context.run(input.channel, () => auth.api.sendPhoneNumberOTP({ body: { phoneNumber: input.value } }))
     },
     async verifyOtp(input) {
       try {
