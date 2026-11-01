@@ -12,7 +12,7 @@ describe('dev seed validation harness — HTTP validate scope', () => {
   let context: Awaited<ReturnType<typeof createCoreRouteTestApp>>
   let serviceAccountApiKey: string
   beforeAll(async () => {
-    context = await createCoreRouteTestApp({ withEmbeddedLocalFiles: true, autoCleanup: false, identity: 'live' })
+    context = await createCoreRouteTestApp({ withEmbeddedLocalFiles: true, autoCleanup: false, identity: 'live', env: { ALLOW_PUBLIC_ACCOUNT_REGISTRATION: true } })
     serviceAccountApiKey = await bootstrapHttpSeedForDiagnostics(createHttpClientForApp(context.app), { withProfilePhotos: true })
   }, 600_000)
   afterAll(async () => {
