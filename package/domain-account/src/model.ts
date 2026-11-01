@@ -57,7 +57,16 @@ export interface AuthSession {
   generation: string
   method: IdentifierKind
 }
+export interface RegistrationOffer {
+  state: 'registration_required'
+  challenge: string
+  proof: string
+  expiresAt: number
+  eligible: boolean
+}
 export interface AuthChallenge {
+  invitationHash?: string
+  registration?: { digest: string, expiresAt: number, evidence: PrimaryEvidence, consumed: boolean }
   terms?: AcceptedTerms
   id: string
   kind: IdentifierKind

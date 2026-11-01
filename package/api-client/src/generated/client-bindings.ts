@@ -2170,6 +2170,13 @@ export const clientBindings = {
         "responseSchemaName": "AuthPrimaryStatus",
         "basePath": "root"
       },
+      "completeRegistration": {
+        "method": "POST",
+        "path": "/auth/edaya/registration/complete",
+        "requestSchemaName": "AuthRegistrationInput",
+        "responseSchemaName": "AuthOutcome",
+        "basePath": "root"
+      },
       "verifyOtp": {
         "method": "POST",
         "path": "/auth/edaya/otp/verify",

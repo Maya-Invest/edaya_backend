@@ -40,6 +40,7 @@ type AuthClients<TSchemas extends Record<string, unknown>> = {
   startOtp: (payload: SchemaName<TSchemas, 'AuthStart'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
   statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
   resendOtp: (payload: SchemaName<TSchemas, 'AuthResend'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
+  completeRegistration: (payload: SchemaName<TSchemas, 'AuthRegistrationInput'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
   verifyOtp: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
   verifyTotp: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
   enroll: (payload: SchemaName<TSchemas, 'AuthEnrollmentInput'>) => Promise<SchemaName<TSchemas, 'AuthEnrollment'>>
@@ -184,6 +185,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     startOtp: (payload: SchemaName<TSchemas, 'AuthStart'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/start', {}, 'root'), { body: payload }),
     statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/status', {}, 'root'), { body: payload }),
     resendOtp: (payload: SchemaName<TSchemas, 'AuthResend'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/resend', {}, 'root'), { body: payload }),
+    completeRegistration: (payload: SchemaName<TSchemas, 'AuthRegistrationInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/registration/complete', {}, 'root'), { body: payload }),
     verifyOtp: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/verify', {}, 'root'), { body: payload }),
     verifyTotp: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/verify', {}, 'root'), { body: payload }),
     enroll: (payload: SchemaName<TSchemas, 'AuthEnrollmentInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/enroll', {}, 'root'), { body: payload }),

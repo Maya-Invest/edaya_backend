@@ -35,6 +35,7 @@ export interface CreateIdentityRuntimeOptions {
   /** Account expiration tests can advance time without waiting in real time. */
   now?: () => number;
   /** Test composition can enforce policy for isolated fixture accounts. */
+  invitedEmail?: (email: string, tokenHash: string) => Promise<boolean>;
   privilegedPolicy?: PrivilegedAccountPolicyPort;
 }
 const attached = new WeakMap<object, IdentityRuntime | Promise<IdentityRuntime>>();
@@ -73,7 +74,7 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
       if (!env.REQUIRE_PRIVILEGED_TOTP)
         return false;
       throw new Error("Privileged Account policy must be composed in-process");
-    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || options.localFixtures === true), { mode: env.PHONE_AUTH_MODE, supports: phone => /^\+225(?:01|05|07)\d{8}$/.test(phone) && smsRouter.supports(phone), delivery }, createTermsPolicy(env));
+    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || options.localFixtures === true), { mode: env.PHONE_AUTH_MODE, supports: phone => /^\+225(?:01|05|07)\d{8}$/.test(phone) && smsRouter.supports(phone), delivery }, createTermsPolicy(env), async (email, hash) => env.ALLOW_PUBLIC_ACCOUNT_REGISTRATION === true || (!!hash && await options.invitedEmail?.(email, hash) === true));
     const auth = {
       handler: createAccountAuthHandler(accounts, env, keys),
       async purgeExpiredCredentials() {
