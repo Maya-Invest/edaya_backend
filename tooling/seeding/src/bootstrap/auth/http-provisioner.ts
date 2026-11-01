@@ -63,6 +63,14 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
       otp = (await peek.json() as { otp: string }).otp
     }
     response = await client.request('/auth/edaya/otp/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, code: otp }) })
+    if (response.ok) {
+      const offer = await response.clone().json() as { state?: string, proof?: string, eligible?: boolean }
+      if (offer.state === 'registration_required') {
+        if (!offer.eligible || !offer.proof)
+          throw new Error('Local fixture registration is disabled')
+        response = await client.request('/auth/edaya/registration/complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, proof: offer.proof, termsAcceptance }) })
+      }
+    }
   }
   if (!response.ok)
     throw new Error(`Seed authentication failed (${response.status})`)

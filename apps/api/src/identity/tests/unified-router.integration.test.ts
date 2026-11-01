@@ -1,19 +1,20 @@
-import { composeIdentity } from "../composition";
+import type { AppBindings } from "@/http/bindings";
 import { afterAll, expect, test } from "bun:test";
 import { Hono } from "hono";
 import createApp from "@/http/create-app";
-import type { AppBindings } from "@/http/bindings";
 import { parseRuntimeEnv } from "@/runtime/shared/env";
-import { createIdentityRuntime } from "../runtime";
-import { parseEnv } from "../env";
+import { composeIdentity } from "../composition";
 import { createAccountDirectory } from "../directory";
-import { ensureIdentitySigningKeys, signIdentityAccessToken } from "../jwt-keys";
-import { verifyIdentityToken } from "../server";
+import { parseEnv } from "../env";
 import { runIndependentJobs } from "../jobs";
+import { ensureIdentitySigningKeys, signIdentityAccessToken } from "../jwt-keys";
+import { createIdentityRuntime } from "../runtime";
+import { verifyIdentityToken } from "../server";
+import { verifyFixture } from "./register-fixture";
 
 const origin = "https://api.edayaplus.test";
 const web = "https://app.edayaplus.test";
-const env = parseRuntimeEnv({ API_ORIGIN: origin, RUNTIME: "local", NODE_ENV: "test", LOG_LEVEL: "silent", DATABASE_URL: "pglite:memory", AUTH_DATABASE_URL: "pglite:memory", TRUSTED_ORIGINS: web });
+const env = parseRuntimeEnv({ ALLOW_PUBLIC_ACCOUNT_REGISTRATION: true, API_ORIGIN: origin, RUNTIME: "local", NODE_ENV: "test", LOG_LEVEL: "silent", DATABASE_URL: "pglite:memory", AUTH_DATABASE_URL: "pglite:memory", TRUSTED_ORIGINS: web });
 const captured = new Map<string, string>();
 const identity = await createIdentityRuntime(parseEnv({ ...env, RUNTIME: "test", BETTER_AUTH_URL: origin, FIRST_PARTY_API_ORIGINS: origin, BETTER_AUTH_SECRET: "disposable-secret-at-least-32-characters" }, "test"), { delivery: { async send(message) {
   captured.set(message.destination, message.code);
@@ -36,7 +37,11 @@ test("unified router issues host cookies and native credentials without school c
     const email = `${crypto.randomUUID()}@example.test`;
     const start = await send("/auth/edaya/otp/start", { kind: "email", value: email });
     const { challenge } = await start.json() as { challenge: string };
-    const verified = await send("/auth/edaya/otp/verify", { challenge, code: captured.get(email) }, native ? { "x-edaya-client": "native" } : {});
+    const offerResponse = await send("/auth/edaya/otp/verify", { challenge, code: captured.get(email) }, native ? { "x-edaya-client": "native" } : {});
+    expect(offerResponse.headers.get("set-cookie")).toBeNull();
+    const offer = await offerResponse.json() as { proof: string; state: string };
+    expect(offer.state).toBe("registration_required");
+    const verified = await send("/auth/edaya/registration/complete", { challenge, proof: offer.proof }, native ? { "x-edaya-client": "native" } : {});
     expect(verified.status).toBe(200);
     expect(verified.headers.get("set-cookie")).toContain("__Host-edaya_session=");
     expect(verified.headers.get("set-cookie")).toContain("HttpOnly; SameSite=Lax");
@@ -103,7 +108,7 @@ test("privileged MFA policy uses school repositories directly and remains lazy",
     const accountRuntime = await combined.resolve();
     const start = await accountRuntime.accounts.begin({ kind: "email", value: "privileged@example.test", ip: "test" });
     expect(policies).toBe(0);
-    const verified = await accountRuntime.accounts.verify(start.challenge, code);
+    const verified = await verifyFixture(accountRuntime.accounts, start.challenge, code);
     expect(verified.state).toBe("enrollment_required");
     expect(policies).toBe(1);
   }

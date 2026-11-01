@@ -4,7 +4,7 @@ import type { IdentitySigningKeys } from "./jwt-keys";
 import { AuthError } from "@edaya/account";
 import { hashInvitationToken } from "@edaya/service";
 import { z } from "zod";
-import { RegistrationInput, AuthUnlink, AuthEnrollmentInput as enrollmentSchema, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
+import { AuthUnlink, AuthEnrollmentInput as enrollmentSchema, RegistrationInput, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
 import { resolveAllowlistedApiOrigin } from "./env";
 import { signIdentityAccessToken } from "./jwt-keys";
 import { phoneSmsPrefixes } from "./phone-config";

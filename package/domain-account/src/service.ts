@@ -295,8 +295,9 @@ export class AccountService {
       const registration = challenge?.registration
       if (!challenge || challenge.kind !== 'email' || challenge.purpose !== 'login' || challenge.superseded
         || !registration || registration.consumed || registration.expiresAt <= this.now()
-        || registration.evidence.provider !== this.provider.generation || registration.digest !== await this.crypto.digest(input.proof))
+        || registration.evidence.provider !== this.provider.generation || registration.digest !== await this.crypto.digest(input.proof)) {
         throw new AuthError('registration_expired', 401)
+      }
 
       const terms = await this.acceptedTerms(input.termsAcceptance)
       const account = await this.repository.find('email', challenge.value)

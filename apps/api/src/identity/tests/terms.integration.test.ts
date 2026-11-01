@@ -10,6 +10,7 @@ import { createAccountAuthHandler, isAccountAuthRoute } from "../account-auth";
 import { parseEnv } from "../env";
 import { ensureIdentitySigningKeys } from "../jwt-keys";
 import { createTermsPolicy } from "../terms-policy";
+import { verifyFixture } from "./register-fixture";
 
 const database = new PGlite();
 const db = drizzle(database);
@@ -25,7 +26,7 @@ const provider = { generation: "test-terms", sendOtp: async () => {
 const phone = { mode: "whatsapp_first" as const, supports: () => true, delivery: { send: async () => {
   sends++;
 } } };
-const service = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy);
+const service = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy, async () => true);
 const consent = (locale: "fr" | "en" = "en"): TermsAcceptanceInput => ({ version, locale, accepted: true });
 const start = (value: string, termsAcceptance = consent()) => service.begin({ kind: "email", value, ip: value, termsAcceptance });
 const receipts = async (accountId: string) => (await db.execute(sql`SELECT * FROM identity.terms_acceptance WHERE account_id=${accountId} ORDER BY version`)).rows;
@@ -42,7 +43,7 @@ test("missing and outdated acceptance fail before delivery, even for repeat sign
   await expect(start("stale@example.com", { ...consent(), version: "old" })).rejects.toMatchObject({ code: "terms_version_changed" });
   expect(sends).toBe(before);
   const challenge = await start("repeat@example.com");
-  const result = await service.verify(challenge.challenge, "123456");
+  const result = await verifyFixture(service, challenge.challenge, "123456", consent());
   expect(result.state).toBe("complete");
   await expect(service.begin({ kind: "email", value: "repeat@example.com", ip: "repeat" })).rejects.toMatchObject({ code: "terms_acceptance_required" });
 });
@@ -59,33 +60,37 @@ test("failed verification writes no receipt; completed login stores server-owned
   const challenge = await start("receipt@example.com");
   await expect(service.verify(challenge.challenge, "654321")).rejects.toMatchObject({ code: "invalid_code" });
   expect(await repository.find("email", "receipt@example.com")).toBeNull();
-  const result = await service.verify(challenge.challenge, "123456");
+  const result = await verifyFixture(service, challenge.challenge, "123456", consent());
   if (result.state !== "complete")
     throw new Error("Expected login");
   const first = await receipts(result.account.id);
   expect(first).toEqual([{ account_id: result.account.id, version, locale: "en", document_hash: `${version}-en-hash`, accepted_at: now }]);
   now += 61000;
   const second = await start("receipt@example.com", consent("fr"));
-  await service.verify(second.challenge, "123456");
+  await verifyFixture(service, second.challenge, "123456", consent());
   expect(await receipts(result.account.id)).toEqual(first);
 });
 
-test("new versions preserve history and existing sessions; email resend pins the original version", async () => {
+test("new versions preserve history and existing sessions; registration after resend requires the current version", async () => {
   version = "email-v1";
   const first = await start("history@example.com");
-  const signedIn = await service.verify(first.challenge, "123456");
+  const signedIn = await verifyFixture(service, first.challenge, "123456", consent());
   if (signedIn.state !== "complete")
     throw new Error("Expected login");
   const pending = await start("pinned@example.com");
   version = "email-v2";
   const replacement = await service.resend({ challenge: pending.challenge, action: "resend", ip: "resend", requestId: crypto.randomUUID() });
-  const completed = await service.verify(replacement.challenge, "123456");
+  const offer = await service.verify(replacement.challenge, "123456");
+  if (offer.state !== "registration_required")
+    throw new Error("Expected explicit registration");
+  await expect(service.completeRegistration({ ...offer, termsAcceptance: { ...consent(), version: "email-v1" } })).rejects.toMatchObject({ code: "terms_version_changed" });
+  const completed = await service.completeRegistration({ ...offer, termsAcceptance: consent() });
   if (completed.state !== "complete")
     throw new Error("Expected login");
-  expect((await receipts(completed.account.id))[0]?.version).toBe("email-v1");
+  expect((await receipts(completed.account.id))[0]?.version).toBe("email-v2");
   expect((await service.getSession(signedIn.credential)).account.id).toBe(signedIn.account.id);
   const next = await start("history@example.com");
-  await service.verify(next.challenge, "123456");
+  await verifyFixture(service, next.challenge, "123456", consent());
   expect((await receipts(signedIn.account.id)).map(row => row.version)).toEqual(["email-v1", "email-v2"]);
 });
 
@@ -101,7 +106,7 @@ test("phone resend and SMS fallback retain acceptance and reject conflicting ret
   const resent = await service.resend({ challenge: initial.challenge, action: "resend", ip: "phone", requestId: crypto.randomUUID() });
   now += 121000;
   const fallback = await service.resend({ challenge: resent.challenge, action: "sms", ip: "phone", requestId: crypto.randomUUID() });
-  const completed = await service.verify(fallback.challenge, "123456");
+  const completed = await verifyFixture(service, fallback.challenge, "123456", consent());
   if (completed.state !== "complete")
     throw new Error("Expected login");
   expect((await receipts(completed.account.id))[0]?.version).toBe("phone-v1");
@@ -109,9 +114,9 @@ test("phone resend and SMS fallback retain acceptance and reject conflicting ret
 
 test("enrollment, second factor and recovery preserve the pinned document", async () => {
   version = "mfa-v1";
-  const mfa = new AccountService(repository, provider, security, { requiresTotp: async () => true }, () => now, true, phone, policy);
+  const mfa = new AccountService(repository, provider, security, { requiresTotp: async () => true }, () => now, true, phone, policy, async () => true);
   const initial = await mfa.begin({ kind: "email", value: "mfa@example.com", ip: "mfa", termsAcceptance: consent() });
-  const pending = await mfa.verify(initial.challenge, "123456");
+  const pending = await verifyFixture(mfa, initial.challenge, "123456", consent());
   if (pending.state !== "enrollment_required")
     throw new Error("Expected enrollment");
   const account = (await repository.find("email", "mfa@example.com"))!;
@@ -124,14 +129,14 @@ test("enrollment, second factor and recovery preserve the pinned document", asyn
   expect((await receipts(account.id))[0]?.version).toBe("mfa-v1");
   now += 61000;
   const next = await mfa.begin({ kind: "email", value: "mfa@example.com", ip: "mfa", termsAcceptance: consent() });
-  const factor = await mfa.verify(next.challenge, "123456");
+  const factor = await verifyFixture(mfa, next.challenge, "123456", consent());
   if (factor.state !== "totp_required")
     throw new Error("Expected second factor");
   await mfa.verifySecondFactor(factor.challenge, totpCode(setup.secret, Math.floor(now / 30000)));
   expect((await receipts(account.id)).map(row => row.version)).toEqual(["mfa-v1", "mfa-v2"]);
   version = "mfa-v3";
   const third = await mfa.begin({ kind: "email", value: "mfa@example.com", ip: "mfa", termsAcceptance: consent() });
-  const recoverable = await mfa.verify(third.challenge, "123456");
+  const recoverable = await verifyFixture(mfa, third.challenge, "123456", consent());
   if (recoverable.state !== "totp_required")
     throw new Error("Expected second factor");
   const recovered = await mfa.recover(recoverable.challenge, enrolled.recoveryCodes[0]!);
@@ -144,16 +149,16 @@ test("enrollment, second factor and recovery preserve the pinned document", asyn
 test("acceptance and session writes roll back together on infrastructure failure", async () => {
   const failing = new AccountService({ ...repository, saveSession: async () => {
     throw new Error("database unavailable");
-  } }, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy);
+  } }, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy, async () => true);
   const initial = await failing.begin({ kind: "email", value: "atomic@example.com", ip: "atomic", termsAcceptance: consent() });
-  await expect(failing.verify(initial.challenge, "123456")).rejects.toThrow("database unavailable");
+  await expect(verifyFixture(failing, initial.challenge, "123456", consent())).rejects.toThrow("database unavailable");
   expect(await repository.find("email", "atomic@example.com")).toBeNull();
-  expect((await repository.challenge(initial.challenge))?.consumed).toBe(false);
+  expect((await repository.challenge(initial.challenge))?.registration?.consumed).toBe(false);
 });
 
 test("concurrent consent inserts preserve the original acceptance timestamp", async () => {
   const initial = await start("concurrent@example.com");
-  const result = await service.verify(initial.challenge, "123456");
+  const result = await verifyFixture(service, initial.challenge, "123456", consent());
   if (result.state !== "complete")
     throw new Error("Expected login");
   const before = await receipts(result.account.id);
@@ -162,9 +167,9 @@ test("concurrent consent inserts preserve the original acceptance timestamp", as
 });
 
 test("authenticated linking and enrollment do not request or invent acceptance", async () => {
-  const off = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true);
+  const off = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, undefined, undefined, async () => true);
   const initial = await off.begin({ kind: "email", value: "existing@example.com", ip: "existing" });
-  const result = await off.verify(initial.challenge, "123456");
+  const result = await verifyFixture(off, initial.challenge, "123456", consent());
   if (result.state !== "complete")
     throw new Error("Expected login");
   const alias = await service.begin({ kind: "email", value: "alias-terms@example.com", ip: "alias", credential: result.credential });
