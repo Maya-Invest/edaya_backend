@@ -7,11 +7,14 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
+import type { DocumentsSeedPort } from '../domains/documents/port'
+import type { FamilyFeedbackSeedPort } from '../domains/family-feedback/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
 import type { ReportCardsSeedPort } from '../domains/report-cards/port'
 import type { SchedulingSeedPort } from '../domains/scheduling/port'
+import type { SchoolBrandingSeedPort } from '../domains/school-branding/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
@@ -33,12 +36,16 @@ import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/adapters/i
 import { createInProcessCommunicationsSeedPort } from '../domains/communications/adapters/in-process'
 import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapters/in-process'
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapters/in-process'
+import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
+import { createInProcessFamilyFeedbackSeedPort } from '../domains/family-feedback/adapters/in-process'
+import { seedDevFamilyFeedback } from '../domains/family-feedback/workflow'
 import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
 import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
 import { createInProcessReportCardsSeedPort } from '../domains/report-cards/adapters/in-process'
 import { createInProcessSchedulingSeedPort } from '../domains/scheduling/adapters/in-process'
+import { createInProcessSchoolBrandingSeedPort } from '../domains/school-branding/adapters/in-process'
 import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/adapters/in-process'
 import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/adapters/in-process'
 import { createInProcessStudentSupportSeedPort } from '../domains/student-support/adapters/in-process'
@@ -84,6 +91,10 @@ export interface RunDevSeedsOptions {
   reportCardsPort?: ReportCardsSeedPort
   /** Explicit finance adapter; defaults to the in-process application adapter. */
   financePort?: FinanceSeedPort
+  /** Explicit official-documents adapter; defaults to the in-process application adapter. */
+  documentsPort?: DocumentsSeedPort
+  /** Explicit family-feedback campaign adapter; defaults to the in-process application adapter. */
+  familyFeedbackPort?: FamilyFeedbackSeedPort
   /** Explicit extracurricular-activities adapter; defaults to the in-process application adapter. */
   activitiesPort?: ActivitiesSeedPort
   /** Explicit calendar/incident adapter; defaults to the in-process application adapter. */
@@ -97,6 +108,7 @@ export interface RunDevSeedsOptions {
   /** Explicit attachments adapter; defaults to the in-process application adapter. */
   attachmentsPort?: AttachmentsSeedPort
   profilePicturesPort?: ProfilePicturesSeedPort
+  schoolBrandingPort?: SchoolBrandingSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
   /** Skip profile photo uploads (local file storage unavailable or explicit opt-out). */
@@ -132,7 +144,7 @@ export function parseDevSeedScope(argv: string[]): DevSeedScope {
     return arg
   }
 
-  throw new Error(`Unknown seed scope: ${arg}. Usage: bun repo seed.ts [school|auth|auth:link|access|profile-pictures|all]`)
+  throw new Error(`Unknown seed scope: ${arg}. Usage: bun repo ops seed --scope <school|auth|auth:link|access|profile-pictures|all>`)
 }
 
 export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSeedsResults> {
@@ -165,6 +177,10 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessReportCardsSeedPort(requireApplication('reportCardsPort'))
   const financePort = options.financePort
     ?? createInProcessFinanceSeedPort(requireApplication('financePort'))
+  const documentsPort = options.documentsPort
+    ?? createInProcessDocumentsSeedPort(requireApplication('documentsPort'))
+  const familyFeedbackPort = options.familyFeedbackPort
+    ?? createInProcessFamilyFeedbackSeedPort(requireApplication('familyFeedbackPort'))
   const activitiesPort = options.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireApplication('activitiesPort'))
   const schoolLifePort = options.schoolLifePort
@@ -182,6 +198,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       application: requireApplication('profilePicturesPort'),
       apiBaseUrl: options.apiBaseUrl ?? 'http://localhost:9999',
     })
+  const schoolBrandingPort = options.schoolBrandingPort
+    ?? createInProcessSchoolBrandingSeedPort(requireApplication('schoolBrandingPort'))
   const results: RunDevSeedsResults = {
     school: null,
     authProvision: null,
@@ -213,6 +231,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       assessmentsPort,
       reportCardsPort,
       financePort,
+      documentsPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -220,6 +239,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       communicationsPort,
       attachmentsPort,
       profilePicturesPort,
+      schoolBrandingPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
       skipAttachments: options.skipAttachments,
@@ -241,6 +261,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         progress: options.progress,
       },
     )
+    await seedDevFamilyFeedback(familyFeedbackPort, resolveDevSeedContext().dataset)
     return results
   }
 
@@ -257,6 +278,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       assessmentsPort,
       reportCardsPort,
       financePort,
+      documentsPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -264,6 +286,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       communicationsPort,
       attachmentsPort,
       profilePicturesPort,
+      schoolBrandingPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
       skipAttachments: options.skipAttachments,
@@ -300,6 +323,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         progress: options.progress,
       },
     )
+    await seedDevFamilyFeedback(familyFeedbackPort, resolveDevSeedContext().dataset)
   }
 
   if (scope === 'profile-pictures') {

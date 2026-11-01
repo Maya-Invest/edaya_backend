@@ -1,8 +1,9 @@
-import type { School, SchoolType } from '@edaya/core'
+import type { EdayaSparkS2sKeyMode } from '@edaya/authorization'
+import type { School } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import { randomUUID } from 'node:crypto'
-import { createSchoolBootstrapActor } from '@edaya/authorization'
+import { createSchoolBootstrapActor, provisionEdayaSparkReadS2sClient } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 
 export interface RegisterSchoolOwnerSession {
@@ -15,9 +16,10 @@ export interface RegisterSchoolOwnerSession {
 }
 
 export interface RegisterSchoolWithOwnerInput {
+  shortName?: string
   name: string
   timeZone: string
-  type?: SchoolType
+  financeCurrency?: string
   country?: string
   city?: string
   requestId: string
@@ -26,6 +28,7 @@ export interface RegisterSchoolWithOwnerInput {
   ownerFirstName?: string
   ownerLastName?: string
   ownerEmail?: string
+  edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
 }
 
 export interface RegisterSchoolWithOwnerResult {
@@ -96,9 +99,10 @@ export async function registerSchoolWithOwner(
     const school = await service.setupWorkflow.registerSchool({
       id: schoolId,
       name: input.name,
+      shortName: input.shortName,
       timeZone: input.timeZone,
+      financeCurrency: input.financeCurrency,
       ownerSubjectId: subjectId,
-      ...(input.type ? { type: input.type } : {}),
       ...(input.country ? { country: input.country } : {}),
       ...(input.city ? { city: input.city } : {}),
     })
@@ -121,6 +125,12 @@ export async function registerSchoolWithOwner(
         'Failed to assign the caller as school owner',
       )
     }
+
+    await provisionEdayaSparkReadS2sClient(application.repositories.s2sClients, {
+      schoolId,
+      createdBySubjectId: subjectId,
+      keyMode: input.edayaSparkS2sKeyMode ?? 'deterministic',
+    })
 
     return { school: persistedSchool ?? school }
   }, { lockKeys: [`school-owner:${subjectId}`] })

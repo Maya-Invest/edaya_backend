@@ -1,15 +1,27 @@
-import type { AtomicExecutionPort, GrantScope, StaffMember } from '@edaya/core'
+import type { AtomicExecutionPort, StaffMember, UserScopeSelection } from '@edaya/core'
 import type { StaffActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { randomUUID } from 'node:crypto'
-import { BusinessRuleViolationError, Permission, ServiceApiKey, StaffMember as StaffMemberEntity, StaffPermissionAssignment } from '@edaya/core'
+import { BusinessRuleViolationError, corePermissionDefinition, Permission, permissionScopeSelectionsSchema, scopesForPermission, ServiceApiKey, StaffMember as StaffMemberEntity, StaffPermissionAssignment } from '@edaya/core'
 import { AccessPolicies } from '../access/access-policies'
 import { encodeApiKey, generateApiKey } from './api-key-crypto'
 
 export interface ServiceAccountPermissionAssignmentInput {
   permission: Permission
-  scopes: GrantScope[]
+  scopes: UserScopeSelection[]
   academicYearId: string
+}
+
+export function materializeServiceAccountGrant(input: ServiceAccountPermissionAssignmentInput) {
+  const definition = corePermissionDefinition(input.permission)
+  const policy = definition.scopePolicy
+  const selections = permissionScopeSelectionsSchema.parse(input.scopes)
+  if (!definition.serviceAccountAssignable || (policy.mode === 'none' && selections.length))
+    throw new BusinessRuleViolationError('SERVICE_ACCOUNT_PERMISSION_INVALID', 'Permission or scope selections are not available to service accounts')
+  const scopes = scopesForPermission(input.permission, selections)
+  if (!scopes.length || (policy.mode === 'resources' && selections.some(scope => !policy.allowedKinds.includes(scope.kind === 'all' ? scope.grain : scope.kind))))
+    throw new BusinessRuleViolationError('SERVICE_ACCOUNT_SCOPE_REQUIRED', 'Select compatible resources for this permission')
+  return { ...input, scopes }
 }
 
 export interface CreateServiceAccountInput {
@@ -36,7 +48,7 @@ async function performCreateServiceAccount(
   actor: StaffActorMetadata,
   input: CreateServiceAccountInput,
 ): Promise<CreateServiceAccountResult> {
-  await new AccessPolicies(actor, repositories).serviceAccounts.assertCreate(input)
+  await new AccessPolicies(actor, repositories).serviceAccounts.assertCreate({ ...input, permissionAssignments: input.permissionAssignments?.map(materializeServiceAccountGrant) })
 
   const schoolId = actor.schoolId
   const elevated = input.elevated ?? false
@@ -127,7 +139,7 @@ async function saveServiceAccountPermissionAssignments(
       schoolId,
       academicYearId: assignment.academicYearId,
       permission: assignment.permission,
-      scopes: assignment.scopes,
+      scopes: materializeServiceAccountGrant(assignment).scopes,
       status: 'active',
     }))
   }
@@ -171,7 +183,7 @@ async function performUpdateServiceAccount(
   staffMemberId: string,
   input: UpdateServiceAccountInput,
 ): Promise<StaffMember> {
-  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertUpdate(staffMemberId, input.permissionAssignments)
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertUpdate(staffMemberId, input.permissionAssignments?.map(materializeServiceAccountGrant))
 
   if (
     input.displayName === undefined

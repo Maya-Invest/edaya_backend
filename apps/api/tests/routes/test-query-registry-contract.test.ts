@@ -74,7 +74,7 @@ describe("core route registry contracts", () => {
 
   it("omits unavailable generic writes while retaining named commands", () => {
     const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
-    for (const name of ["students", "enrollments", "payments", "student-fees", "assessment-results", "results", "account-invitations"]) {
+    for (const name of ["attachments", "students", "enrollments", "payments", "student-charges", "catalog-services", "student-year-accounts", "student-service-enrollments", "assessment-results", "results", "account-invitations", "document-issuances", "staff-permission-profile-bindings"]) {
       for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
         expect(paths.has(`/core/entities/${name}/${action}`)).toBe(false);
       }
@@ -84,6 +84,25 @@ describe("core route registry contracts", () => {
     expect(paths.has("/core/commands/cancel-student-fee")).toBe(true);
     expect(paths.has("/core/entities/class-subjects/save")).toBe(false);
     expect(paths.has("/core/entities/class-subjects/delete")).toBe(true);
+    expect(paths.has("/core/entities/staff-permission-profiles/save")).toBe(false);
+    expect(paths.has("/core/entities/staff-permission-profiles/delete")).toBe(true);
+    expect(paths.has("/core/commands/configure-permission-profile")).toBe(true);
+  });
+
+  it("does not expose family feedback through generic entity routes", () => {
+    const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
+    for (const name of [
+      "family-feedback-campaigns",
+      "family-feedback-slots",
+      "family-feedback-responses",
+      "family-feedback-snapshots",
+      "family-feedback-comment-read-audit",
+    ]) {
+      expect(paths.has(`/core/entities/${name}/list`)).toBe(false);
+      expect(paths.has(`/core/entities/${name}/one`)).toBe(false);
+    }
+    expect(CORE_ENTITY_KEYS.some(key => key.toLowerCase().includes("familyfeedback"))).toBe(false);
+    expect(coreEntities.some(entity => entity.serviceName.toLowerCase().includes("familyfeedback"))).toBe(false);
   });
 
   it("does not register duplicate public route names", () => {
@@ -126,10 +145,12 @@ describe("core route registry contracts", () => {
     expect(commandOnlyEntities.map(entity => entity.serviceName)).toEqual(expect.arrayContaining([
       "students",
       "enrollments",
-      "studentFees",
+      "studentCharges",
+      "attachments",
       "payments",
       "assessmentResults",
       "results",
+      "documentIssuances",
     ]));
   });
 
@@ -139,6 +160,8 @@ describe("core route registry contracts", () => {
       "schoolId",
       "academicYearId",
       "status",
+      "sourceProfileBindingId",
+      "sourceManualAssignmentId",
     ]));
 
     expect(fieldsFor("resources")).toContain("kind");

@@ -3,6 +3,7 @@
 import type { Context } from "hono";
 import type { ActorMetadata } from "@edaya/authorization";
 import type { SchoolService } from "@edaya/service";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { AppBindings } from "@/http/bindings";
 import { buildWorkerApiRuntime } from "@/runtime/worker/build-runtime";
 
@@ -13,6 +14,13 @@ export function scheduleBackgroundTask(
   actor: ActorMetadata,
   task: BackgroundTask,
 ): void {
+  scheduleBackgroundApplicationTask(c, application => task(application.forActor(actor)));
+}
+
+export function scheduleBackgroundApplicationTask(
+  c: Context<AppBindings>,
+  task: (application: ApiSchoolApplication) => Promise<unknown>,
+): void {
   const logFailure = (error: unknown) => {
     c.var.logger.error({ err: error }, "background task failed");
   };
@@ -22,7 +30,7 @@ export function scheduleBackgroundTask(
       const runtime = await buildWorkerApiRuntime(c.env);
       try {
         const schoolApp = await runtime.getSchoolApplication();
-        await task(schoolApp.forActor(actor));
+        await task(schoolApp);
       }
       finally {
         await runtime.close();
@@ -30,7 +38,7 @@ export function scheduleBackgroundTask(
       return;
     }
 
-    await task(c.get("schoolApp").forActor(actor));
+    await task(c.get("schoolApp"));
   };
 
   if (c.env.RUNTIME === "worker") {

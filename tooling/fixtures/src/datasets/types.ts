@@ -1,6 +1,6 @@
-import type { AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, FeeInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentFeeInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
+import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, AutoBillingConfiguration, CalendarEventKind, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 
-export type FixtureDatasetPurpose = 'minimal' | 'integration' | 'demo' | 'demo-ci' | 'bulk'
+export type FixtureDatasetPurpose = 'demo-ci'
 
 export interface FixtureAttendanceSession {
   session: {
@@ -55,25 +55,26 @@ export interface FixtureCalendarEvent {
   scope: 'school' | readonly string[]
 }
 
-export interface FixtureReportCardSection {
+export interface FixtureReportModule {
   id: string
   name: string
-  role: ReportCardDefinitionSectionRole
   order: number
-  weight: number
-  coefficient?: number
+  weightingMode: 'subject_coefficients' | 'explicit'
+  explicitWeight?: number
   subjectIds: readonly string[]
 }
 
 export interface FixtureReportCardGradeScale {
   scale: GradeScaleInput
-  narrativePassingScore: number
 }
 
-export interface FixtureReportCardDefinition {
-  definition: ReportCardDefinitionInput
-  sections: readonly FixtureReportCardSection[]
-  narrativeStatus: 'published' | 'draft'
+export interface FixtureReportConfiguration {
+  schoolId: string
+  gradeLevelId: string
+  academicYearId: string
+  gradeScaleId: string
+  passThreshold?: number
+  modules: readonly FixtureReportModule[]
 }
 
 export interface FixtureReportCardSubjectMark {
@@ -88,7 +89,6 @@ export interface FixtureReportCardResult {
   studentId: string
   classGroupId: string
   periodId: string
-  reportCardDefinitionId: string
   gradeScaleId: string
   narrativeStatus: 'published' | 'generated'
   overallAverage: number
@@ -105,6 +105,76 @@ export interface FixtureAnnouncementMaterializePlan {
   announcementId: string
 }
 
+export interface FixtureCatalogInstallment {
+  label: string
+  percentage: number
+  dueDate?: string
+}
+
+export interface FixtureCatalogBillingTerms {
+  kind: 'one_time'
+  installments: readonly FixtureCatalogInstallment[]
+  singleDueDate?: string
+}
+
+/** Seed-oriented catalog offering. Charges are materialized from enrollments, not stored here. */
+export interface FixtureCatalogService {
+  id: string
+  academicYearId: string
+  name: string
+  description?: string
+  category?: CatalogServiceCategory
+  autoBilling?: AutoBillingConfiguration
+  defaultPrice: number
+  currency: string
+  billingTerms: FixtureCatalogBillingTerms
+  status?: CatalogServiceStatus
+}
+
+export interface FixtureStudentServiceEnrollment {
+  id: string
+  studentId: string
+  catalogServiceId: string
+  priceOverride?: number
+  dueDate?: string
+  waive?: {
+    reason: string
+    waiverAmount?: number
+  }
+  cancelCharge?: {
+    reason: string
+  }
+}
+
+export type FixtureAllocationPlan
+  = { mode: 'account_only' }
+    | { mode: 'fifo' }
+    | { mode: 'targeted', targets: readonly { chargeId: string, amount: number }[] }
+
+/** Seed-oriented receipt. Not a raw Payment entity (no studentFeeId / accountId required). */
+export interface FixturePayment {
+  id: string
+  studentId?: string
+  academicYearId?: string
+  accountId?: string
+  amount: number
+  paymentDate: string
+  method: PaymentMethod
+  reference?: string
+  notes?: string
+  allocation?: FixtureAllocationPlan
+  reverseCausedAllocations?: boolean | { chargeIds: readonly string[] }
+  reversePayment?: boolean
+  refund?: {
+    id: string
+    amount: number
+    paymentDate: string
+    method: PaymentMethod
+    reference?: string
+    notes?: string
+  }
+}
+
 export interface FixtureDatasetExtensions {
   assessmentResultScores?: Record<string, Partial<Record<string, number>>>
   attendanceSessions?: {
@@ -118,13 +188,39 @@ export interface FixtureDatasetExtensions {
   schedulingSessionProgressAnchors?: readonly FixtureSchedulingSessionProgressAnchor[]
   calendarEvents?: readonly FixtureCalendarEvent[]
   reportCardGradeScaleFixtures?: readonly FixtureReportCardGradeScale[]
-  reportCardDefinitionFixtures?: readonly FixtureReportCardDefinition[]
+  reportConfigurationFixtures?: readonly FixtureReportConfiguration[]
   reportCardResults?: readonly FixtureReportCardResult[]
   announcementMaterializePlans?: readonly FixtureAnnouncementMaterializePlan[]
   classSubjectStaffAssignments?: readonly StaffAssignmentInput[]
   classResourceAssignments?: readonly ResourceAssignmentInput[]
   /** When true, schedules may still be created but lesson sessions are not materialized (timetable generation QA). */
   skipLessonSessionSeeding?: boolean
+  documentIssuances?: readonly FixtureDocumentIssuance[]
+  /** When set, only these academic periods are published after create. Default: all periods. */
+  publishAcademicPeriodIds?: readonly string[]
+  /** Monday of the week used to materialize recurring lesson sessions. */
+  schedulingReferenceWeekStart?: string
+  /** Narrative "today" for dashboard windows and finance upcoming dues. */
+  seedReferenceDate?: string
+}
+
+export interface FixtureDocumentIssuance {
+  id: string
+  requestId: string
+  templateKey: string
+  sourceId: string
+  studentId?: string
+  classGroupId?: string
+  academicYearId: string
+  locale?: 'fr' | 'en'
+  status: 'ready' | 'failed'
+  failureCode?: string
+  staffFields?: {
+    recipient?: string
+    date?: string
+    location?: string
+    reason?: string
+  }
 }
 
 export interface FixtureDatasetEntities {
@@ -141,6 +237,8 @@ export interface FixtureDatasetEntities {
   students?: readonly StudentInput[]
   enrollments?: readonly StudentClassEnrollmentInput[]
   guardianLinks?: readonly GuardianStudentLinkInput[]
+  subjectCategories?: readonly SubjectCategoryInput[]
+  academicDisciplines?: readonly AcademicDisciplineInput[]
   subjects?: readonly SubjectInput[]
   subjectMatters?: readonly SubjectMatterInput[]
   classSubjects?: readonly ClassSubjectInput[]
@@ -153,9 +251,9 @@ export interface FixtureDatasetEntities {
   activities?: readonly ActivityInput[]
   activityEnrollments?: readonly ActivityEnrollmentInput[]
   classActivityEnrollments?: readonly ClassActivityEnrollmentInput[]
-  fees?: readonly FeeInput[]
-  studentFees?: readonly StudentFeeInput[]
-  payments?: readonly PaymentInput[]
+  catalogServices?: readonly FixtureCatalogService[]
+  studentServiceEnrollments?: readonly FixtureStudentServiceEnrollment[]
+  payments?: readonly FixturePayment[]
   announcements?: readonly AnnouncementInput[]
   announcementTargets?: readonly AnnouncementTargetInput[]
   messageDeliveries?: readonly MessageDeliveryInput[]

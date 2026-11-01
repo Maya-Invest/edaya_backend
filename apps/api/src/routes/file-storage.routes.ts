@@ -1,4 +1,4 @@
-import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError } from "@edaya/core";
+import { AttachmentOwnerKind, AttachmentStatus } from "@edaya/core";
 import type { AppRouteHandler } from "@/http/types";
 import { Buffer } from "node:buffer";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
@@ -6,14 +6,11 @@ import type { Environment } from "@/runtime/shared/env/schema";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import { isInteractiveActor, requireActorSchoolId } from "@edaya/authorization";
-import { assertUploadPolicyAllowed, buildStorageKey, validateAttachmentSave } from "@edaya/service";
+import { createAttachmentUpload, grantAttachmentDownload, loadAttachmentAsset, receiveAttachmentUpload, resolveAttachmentReadPolicy } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
-import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import { readLocalDevStoredObject } from "@/runtime/shared/adapters/local-dev-file-storage";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -24,7 +21,7 @@ const uploadIntentRequestSchema = z.object({
   mimeType: z.string().min(1),
   sizeBytes: z.number().int().positive(),
   attachmentId: z.string().min(1).optional(),
-}).openapi("CreateFileUploadIntentRequest");
+}).strict().openapi("CreateFileUploadIntentRequest");
 
 const uploadIntentResponseSchema = z.object({
   attachmentId: z.string(),
@@ -158,47 +155,9 @@ export const createFileUploadIntentHandler: AppRouteHandler<typeof createFileUpl
   }
 
   try {
-    const schoolId = requireActorSchoolId(actor);
     const body = validatedJson(c) as z.infer<typeof uploadIntentRequestSchema>;
-    await c.var.schoolApp.forActor(actor).baseService.access.attachments.assertConfigure();
-    assertUploadPolicyAllowed({
-      ownerKind: body.ownerKind,
-      mimeType: body.mimeType,
-      sizeBytes: body.sizeBytes,
-    });
-
-    const attachmentId = body.attachmentId ?? `att-${randomUUID()}`;
-    const storageKey = buildStorageKey({
-      schoolId,
-      purpose: "uploads",
-      ownerKind: body.ownerKind,
-      ownerId: body.ownerId,
-      attachmentId,
-      fileName: body.fileName,
-    });
-
-    await validateAttachmentSave(
-      new Attachment({
-        id: attachmentId,
-        schoolId,
-        ownerKind: body.ownerKind,
-        ownerId: body.ownerId,
-        fileName: body.fileName,
-        storageKey,
-        status: AttachmentStatus.PendingUpload,
-        mimeType: body.mimeType,
-        sizeBytes: body.sizeBytes,
-        uploadedById: isInteractiveActor(actor) ? actor.actorId : undefined,
-      }),
-      undefined,
-      c.var.schoolApp.repositories,
-    );
-
-    const presigned = await c.var.schoolApp.fileStorage.createPresignedUpload({
-      key: storageKey,
-      contentType: body.mimeType,
-      sizeBytes: body.sizeBytes,
-    });
+    const presigned = await createAttachmentUpload(c.var.schoolApp.forActor(actor).baseService, body);
+    const { attachmentId, storageKey } = presigned;
 
     return c.json({
       attachmentId,
@@ -223,30 +182,14 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
 
-    const attachment = await c.var.schoolApp.repositories.attachments.findById(attachmentId);
-    if (!attachment || attachment.schoolId !== requireActorSchoolId(actor)) {
+    const base = c.var.schoolApp.forActor(actor).baseService;
+    const access = await resolveAttachmentReadPolicy(base, attachmentId);
+    const presigned = await grantAttachmentDownload(base, attachmentId, { access });
+    if (!presigned) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
-
-    await c.var.schoolApp.forActor(actor).baseService.access.attachments.assertRead(attachment.id);
-
-    if (!attachment.storageKey) {
-      if (attachment.fileUrl) {
-        return c.json({
-          downloadUrl: attachment.fileUrl,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-        }, HttpStatusCodes.OK);
-      }
-      throw new BusinessRuleViolationError(
-        "ATTACHMENT_STORAGE_KEY_MISSING",
-        "Attachment has no storage key",
-      );
-    }
-
-    const presigned = await c.var.schoolApp.fileStorage.createPresignedDownload(
-      attachment.storageKey,
-      { fileName: attachment.fileName },
-    );
+    c.header("Cache-Control", "private, no-store");
+    c.header("Vary", "Authorization");
 
     return c.json({
       downloadUrl: presigned.downloadUrl,
@@ -258,19 +201,14 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
   }
 };
 
-function contentDispositionForAttachment(
-  mimeType: string | null | undefined,
-  fileName: string,
-): { fileName: string; disposition: "inline" | "attachment" } {
-  const inline = (mimeType ?? "").toLowerCase().startsWith("image/");
-  return {
-    fileName,
-    disposition: inline ? "inline" : "attachment",
-  };
-}
-
 function isLocalMemoryFileStorageEnabled(env: Environment): boolean {
   return env.RUNTIME === "local" || env.RUNTIME === "in-memory";
+}
+
+/** HTTP headers are Latin-1; keep an ASCII filename= fallback and RFC 5987 filename*. */
+export function contentDisposition(fileName: string, inline: boolean): string {
+  const ascii = fileName.replace(/[^\u0020-\u007E]/g, "-").replaceAll("\"", "");
+  return `${inline ? "inline" : "attachment"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
 export const putMemoryFileHandler: AppRouteHandler<typeof putMemoryFileRoute> = async (c) => {
@@ -281,14 +219,14 @@ export const putMemoryFileHandler: AppRouteHandler<typeof putMemoryFileRoute> = 
   try {
     const { storageKey } = validatedParam(c) as { storageKey: string };
     const key = decodeURIComponent(storageKey);
-    const body = new Uint8Array(await c.req.arrayBuffer());
-    const contentType = c.req.header("content-type") ?? "application/octet-stream";
-
-    await c.var.schoolApp.fileStorage.putObject({
-      key,
-      body,
-      contentType,
+    const received = await receiveAttachmentUpload(c.var.schoolApp, {
+      storageKey: key,
+      contentType: c.req.header("content-type") ?? "application/octet-stream",
+      body: c.req.raw.body,
     });
+    if (!received) {
+      return c.json({ message: "Upload not found" }, HttpStatusCodes.NOT_FOUND);
+    }
 
     return c.body(null, HttpStatusCodes.NO_CONTENT);
   }
@@ -302,19 +240,34 @@ export const getMemoryFileHandler: AppRouteHandler<typeof getMemoryFileRoute> = 
     return c.json({ message: "Not Found" }, HttpStatusCodes.NOT_FOUND);
   }
 
+  if (!c.var.actor) {
+    return unauthorizedResponse(c);
+  }
+
   try {
+    const base = c.var.schoolApp.forActor(c.var.actor).baseService;
     const { storageKey } = validatedParam(c) as { storageKey: string };
     const key = decodeURIComponent(storageKey);
-    const stored = await readLocalDevStoredObject(c.var.schoolApp.fileStorage, key);
-    if (!stored) {
-      return c.json({ message: "Object not found" }, HttpStatusCodes.NOT_FOUND);
+    const attachment = await base.repositories.attachments.forSchool!(base.actor.schoolId).findOne({ storageKey: key });
+    if (!attachment || attachment.status !== AttachmentStatus.Ready) {
+      return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
+    const access = await resolveAttachmentReadPolicy(base, attachment.id);
+    const stored = await loadAttachmentAsset(base, {
+      attachmentId: attachment.id,
+      ownerKind: attachment.ownerKind,
+      ownerId: attachment.ownerId,
+      maxBytes: attachment.sizeBytes!,
+      allowedMimeTypes: [attachment.mimeType!],
+      access,
+    });
 
-    const fileName = c.req.query("fileName") ?? "file";
-    const inline = stored.contentType.toLowerCase().startsWith("image/");
+    const inline = (stored.contentType ?? "application/octet-stream").toLowerCase().startsWith("image/");
     return c.body(Buffer.from(stored.body), HttpStatusCodes.OK, {
-      "Content-Type": stored.contentType,
-      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${fileName.replace(/"/g, "")}"`,
+      "Cache-Control": "private, no-store",
+      "Vary": "Authorization",
+      "Content-Type": stored.contentType ?? "application/octet-stream",
+      "Content-Disposition": contentDisposition(attachment.fileName, inline),
     });
   }
   catch (error) {
@@ -328,34 +281,14 @@ export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> 
   }
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
-    const attachment = await c.var.schoolApp.repositories.attachments.findById(attachmentId);
-    if (!attachment || attachment.status !== AttachmentStatus.Ready) {
+    const base = c.var.schoolApp.forActor(c.var.actor).baseService;
+    const access = await resolveAttachmentReadPolicy(base, attachmentId);
+    const presigned = await grantAttachmentDownload(base, attachmentId, { inlineImages: true, access });
+    if (!presigned) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
-
-    const actor = c.var.actor;
-    if (!actor) {
-      return unauthorizedResponse(c);
-    }
-
-    if (attachment.schoolId !== requireActorSchoolId(actor)) {
-      return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
-    }
-    await c.var.schoolApp.forActor(actor).baseService.access.attachments.assertRead(attachment.id);
     c.header("Cache-Control", "private, no-store");
     c.header("Vary", "Authorization");
-
-    if (!attachment.storageKey) {
-      if (attachment.fileUrl) {
-        return c.redirect(attachment.fileUrl, HttpStatusCodes.MOVED_TEMPORARILY);
-      }
-      return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
-    }
-
-    const presigned = await c.var.schoolApp.fileStorage.createPresignedDownload(
-      attachment.storageKey,
-      contentDispositionForAttachment(attachment.mimeType, attachment.fileName),
-    );
 
     return c.redirect(presigned.downloadUrl, HttpStatusCodes.MOVED_TEMPORARILY);
   }

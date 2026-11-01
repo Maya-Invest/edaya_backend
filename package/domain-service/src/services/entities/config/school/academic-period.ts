@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
+import { assertPeriodSelectionIdentity, periodSelections, reconcilePeriodSelections } from '../../../../capabilities/subject-enrollment/calendar'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
@@ -12,6 +13,8 @@ export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = ({ repo
     repository: repositories.academicPeriods,
     tenant: directSchoolTenant(),
     resource: 'academicPeriods',
+    writeLockGroup: 'academic-state',
+    hooks: { postSave: (period, previous, repositories) => reconcilePeriodSelections(repositories, period, previous) },
 
     atomicExecution,
   }),
@@ -26,6 +29,7 @@ export async function validateAcademicPeriodSave(
   _existing: AcademicPeriod | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  await assertPeriodSelectionIdentity(repositories, period, _existing)
   const academicYear = await repositories.academicYears.findById(period.academicYearId)
   if (!academicYear || academicYear.schoolId !== period.schoolId) {
     denyResourceAccess()
@@ -39,11 +43,12 @@ export async function validateAcademicPeriodDelete(
   period: AcademicPeriod,
   repositories: SchoolRepositories,
 ): Promise<void> {
-  const [assessments, reportCards] = await Promise.all([
+  const [assessments, reportCards, selections] = await Promise.all([
     repositories.assessments.list({ periodId: period.id }),
     repositories.results.list({ periodId: period.id }),
+    periodSelections(repositories, period),
   ])
-  if (assessments.length > 0 || reportCards.length > 0) {
+  if (assessments.length > 0 || reportCards.length > 0 || selections.length > 0) {
     throw new BusinessRuleViolationError('ACADEMIC_PERIOD_HAS_DEPENDENCIES', `Cannot delete academic period ${period.id}: dependent records still exist`)
   }
 }

@@ -1,8 +1,8 @@
 import type { Context } from "hono";
-import * as HttpStatusCodes from "stoker/http-status-codes";
-
 import type { AppBindings } from "@/http/bindings";
+
 import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
+import * as HttpStatusCodes from "stoker/http-status-codes";
 
 type ResponseDetails = Record<string, unknown>;
 
@@ -35,6 +35,7 @@ export function conflictResponse(c: Context<AppBindings>, error: BusinessRuleVio
   return c.json({
     message: error.message,
     code: error.code,
+    ...(error.details ? { details: error.details } : {}),
   }, HttpStatusCodes.CONFLICT);
 }
 

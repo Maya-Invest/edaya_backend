@@ -1,6 +1,6 @@
+import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, CatalogInstallmentTemplate, CatalogServiceInput, ChargeInstallment, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, DocumentIssuanceInput, GradeLevelInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, PlacementStatusInput, ReportCardResultInput, ReportModuleInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffManualPermissionAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StaffPermissionProfileBindingInput, StaffPermissionProfileInput, StaffPermissionScopeDefaultsInput, StudentAcademicYearProfileInput, StudentChargeInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, StudentPhotoSubmissionInput, StudentServiceEnrollmentInput, StudentSubjectEnrollmentInput, StudentYearAccountInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAcademicYearProfileInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from "@edaya/core";
+import { academicDisciplineSchema, academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeScaleSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, placementStatusSchema, reportCardResultSchema, reportCardSnapshotSchema, reportModuleSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentAcademicYearProfileSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentSubjectEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, teacherAcademicYearProfileSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
-import { academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, feeInstallmentTemplateSchema as coreFeeInstallmentTemplateSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, studentFeeInstallmentSchema as coreStudentFeeInstallmentSchema, disciplinaryActionSchema, feeSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolSchema, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentFeeSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, subjectMatterSchema, subjectSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
-import type { AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, FeeInput, FeeInstallmentTemplate, GradeLevelInput, GradeLevelSubjectInput, GradeLevelSubjectMatterInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionInput, ReportCardResultInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentFeeInput, StudentFeeInstallment, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from "@edaya/core";
 import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
 
 // ==========================================================
@@ -24,13 +24,17 @@ export const accountInvitationResponseSchema = responseSchema<AccountInvitationI
 );
 export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentInput>("StaffAssignment", unwrapShape(staffAssignmentSchema));
 export const staffPermissionAssignmentResponseSchema = responseSchema<StaffPermissionAssignmentInput>("StaffPermissionAssignment", unwrapShape(staffPermissionAssignmentSchema));
+export const staffPermissionProfileResponseSchema = responseSchema<StaffPermissionProfileInput>("StaffPermissionProfile", unwrapShape(staffPermissionProfileSchema));
+export const staffPermissionProfileBindingResponseSchema = responseSchema<StaffPermissionProfileBindingInput>("StaffPermissionProfileBinding", unwrapShape(staffPermissionProfileBindingSchema));
 export const attachmentResponseSchema = responseSchema<AttachmentInput>("Attachment", unwrapShape(attachmentSchema));
 export const resourceResponseSchema = responseSchema<ResourceInput>("Resource", unwrapShape(resourceSchema));
 export const resourceAssignmentResponseSchema = responseSchema<ResourceAssignmentInput>("ResourceAssignment", unwrapShape(resourceAssignmentSchema));
-export const feeInstallmentTemplateSchema = valueSchema<FeeInstallmentTemplate>(unwrapShape(coreFeeInstallmentTemplateSchema));
-export const feeResponseSchema = responseSchema<FeeInput>("Fee", unwrapShape(feeSchema));
-export const studentFeeInstallmentSchema = valueSchema<StudentFeeInstallment>(unwrapShape(coreStudentFeeInstallmentSchema));
-export const studentFeeResponseSchema = responseSchema<StudentFeeInput>("StudentFee", unwrapShape(studentFeeSchema));
+export const catalogInstallmentTemplateSchema = valueSchema<CatalogInstallmentTemplate>(unwrapShape(coreCatalogInstallmentTemplateSchema));
+export const catalogServiceResponseSchema = responseSchema<CatalogServiceInput>("CatalogService", unwrapShape(catalogServiceSchema));
+export const chargeInstallmentSchema = valueSchema<ChargeInstallment>(unwrapShape(coreChargeInstallmentSchema));
+export const studentServiceEnrollmentResponseSchema = responseSchema<StudentServiceEnrollmentInput>("StudentServiceEnrollment", unwrapShape(studentServiceEnrollmentSchema));
+export const studentChargeResponseSchema = responseSchema<StudentChargeInput>("StudentCharge", unwrapShape(studentChargeSchema));
+export const studentYearAccountResponseSchema = responseSchema<StudentYearAccountInput>("StudentYearAccount", unwrapShape(studentYearAccountSchema));
 export const paymentResponseSchema = responseSchema<PaymentInput>("Payment", unwrapShape(paymentSchema));
 export const scheduleResponseSchema = responseSchema<ScheduleInput>("Schedule", unwrapShape(scheduleSchema));
 export const lessonSessionResponseSchema = responseSchema<LessonSessionInput>("LessonSession", unwrapShape(lessonSessionSchema));
@@ -42,25 +46,13 @@ export const announcementResponseSchema = responseSchema<AnnouncementInput>("Ann
 export const announcementTargetResponseSchema = responseSchema<AnnouncementTargetInput>("AnnouncementTarget", unwrapShape(announcementTargetSchema));
 export const messageDeliveryResponseSchema = responseSchema<MessageDeliveryInput>("MessageDelivery", unwrapShape(messageDeliverySchema));
 
-/** OpenAPI/GraphQL-safe: catalog keys contain dots (e.g. announcement.published). */
-const schoolNotificationTemplateDocumentApiSchema = z.record(z.string(), z.unknown()).openapi(
-  "SchoolNotificationTemplateDocument",
-  { type: "object", additionalProperties: true },
-);
-
 export const schoolNotificationTemplatesResponseSchema = responseSchema<SchoolNotificationTemplatesInput>(
   "SchoolNotificationTemplates",
-  {
-    schoolId: field.id(),
-    templates: schoolNotificationTemplateDocumentApiSchema,
-    createdAt: field.date(),
-    updatedAt: field.date(),
-  },
+  unwrapShape(schoolNotificationTemplatesSchema),
 );
 export const subjectResponseSchema = responseSchema<SubjectInput>("Subject", unwrapShape(subjectSchema));
+export const subjectCategoryResponseSchema = responseSchema<SubjectCategoryInput>("SubjectCategory", unwrapShape(subjectCategorySchema));
 export const subjectMatterResponseSchema = responseSchema<SubjectMatterInput>("SubjectMatter", unwrapShape(subjectMatterSchema));
-export const gradeLevelSubjectResponseSchema = responseSchema<GradeLevelSubjectInput>("GradeLevelSubject", unwrapShape(gradeLevelSubjectSchema));
-export const gradeLevelSubjectMatterResponseSchema = responseSchema<GradeLevelSubjectMatterInput>("GradeLevelSubjectMatter", unwrapShape(gradeLevelSubjectMatterSchema));
 export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGroup", unwrapShape(classGroupSchema));
 export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
 export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
@@ -72,12 +64,17 @@ export const assessmentResponseSchema = responseSchema<AssessmentInput>("Assessm
 export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>("AssessmentResult", unwrapShape(assessmentResultSchema));
 export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema));
 export const gradeScaleResponseSchema = responseSchema<GradeScaleInput>("GradeScale", unwrapShape(gradeScaleSchema));
-export const definitionResponseSchema = responseSchema<ReportCardDefinitionInput>("ReportCardDefinition", unwrapShape(reportCardDefinitionSchema));
-export const sectionResponseSchema = responseSchema<ReportCardDefinitionSectionInput>("ReportCardDefinitionSection", unwrapShape(reportCardDefinitionSectionSchema));
+export const reportModuleResponseSchema = responseSchema<ReportModuleInput>("ReportModule", unwrapShape(reportModuleSchema));
 export const reportCardResultSectionSchema = lazySchema(() => coreReportCardResultSectionSchema)
   .openapi("ReportCardResultSection", { type: "object" });
+export const reportCardSnapshotResponseSchema = z.object({
+  ...objectFromSchema(reportCardSnapshotSchema).shape,
+  sectionResults: z.array(reportCardResultSectionSchema),
+}).openapi("ReportCardSnapshot");
 export const resultResponseSchema = responseSchema<ReportCardResultInput>("ReportCardResult", {
   ...unwrapShape(reportCardResultSchema),
+  revisedDraft: reportCardSnapshotResponseSchema.optional(),
+  publicationHistory: z.array(reportCardSnapshotResponseSchema).optional(),
   sectionResults: z.array(reportCardResultSectionSchema),
   attendanceSummary: valueSchema<AttendanceSummary>({
     ...unwrapShape(coreAttendanceSummarySchema),
@@ -89,15 +86,16 @@ export const studentResponseSchema = responseSchema<StudentInput>("Student", unw
 export const enrollmentResponseSchema = responseSchema<StudentClassEnrollmentInput>("StudentClassEnrollment", unwrapShape(studentClassEnrollmentSchema));
 export const guardianResponseSchema = responseSchema<GuardianInput>("Guardian", {
   ...unwrapShape(guardianSchema),
-  contactMethods: z.array(objectFromSchema(guardianContactMethodSchema)),
 });
 export const guardianLinkResponseSchema = responseSchema<GuardianStudentLinkInput>("GuardianStudentLink", unwrapShape(guardianStudentLinkSchema));
 export const studentNoteResponseSchema = responseSchema<StudentNoteInput>("StudentNote", unwrapShape(studentNoteSchema));
+export const studentPhotoSubmissionResponseSchema = responseSchema<StudentPhotoSubmissionInput>("StudentPhotoSubmission", unwrapShape(studentPhotoSubmissionSchema));
 export const studentHealthProfileResponseSchema = responseSchema<StudentHealthProfileInput>("StudentHealthProfile", unwrapShape(studentHealthProfileSchema));
 export const studentDisciplinaryActionResponseSchema = responseSchema<StudentDisciplinaryActionInput>("StudentDisciplinaryAction", unwrapShape(studentDisciplinaryActionSchema));
 export const disciplinaryActionResponseSchema = responseSchema<DisciplinaryActionInput>("DisciplinaryAction", unwrapShape(disciplinaryActionSchema));
 export const studentIncidentInvolvementResponseSchema = responseSchema<StudentIncidentInvolvementInput>("StudentIncidentInvolvement", unwrapShape(studentIncidentInvolvementSchema));
 export const incidentResponseSchema = responseSchema<IncidentInput>("Incident", unwrapShape(incidentSchema));
+export const documentIssuanceResponseSchema = responseSchema<DocumentIssuanceInput>("DocumentIssuance", unwrapShape(documentIssuanceSchema));
 
 // ==========================================================
 // 2. All 42 Query Filter (QueryOptions) OpenAPI Schemas
@@ -202,6 +200,24 @@ export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({
   academicYearId: field.string(),
   permission: field.string(),
   status: field.string(),
+  sourceProfileId: field.string(),
+  sourceProfileBindingId: field.string(),
+  sourceManualAssignmentId: field.string(),
+});
+
+export const staffPermissionProfileQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  name: field.string(),
+  sourceKey: field.string(),
+});
+
+export const staffPermissionProfileBindingQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  staffId: field.id(),
+  profileId: field.id(),
+  academicYearId: field.id(),
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({
@@ -227,24 +243,45 @@ export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
   classGroupId: field.id(),
 });
 
-export const feeQuerySchema = createQueryOptionsSchema({
+export const catalogServiceQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
+  academicYearId: field.id(),
   name: field.string(),
+  status: field.string(),
 });
 
-export const studentFeeQuerySchema = createQueryOptionsSchema({
+export const studentServiceEnrollmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   studentId: field.id(),
-  feeId: field.id(),
+  catalogServiceId: field.id(),
+  academicYearId: field.id(),
   status: field.string(),
+});
+
+export const studentChargeQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  studentId: field.id(),
+  enrollmentId: field.id(),
+  academicYearId: field.id(),
+  status: field.string(),
+});
+
+export const studentYearAccountQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  studentId: field.id(),
+  academicYearId: field.id(),
+  currency: field.string(),
 });
 
 export const paymentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
-  studentFeeId: field.id(),
+  accountId: field.id(),
+  academicYearId: field.id(),
   method: field.string(),
   status: field.string(),
+  kind: field.string(),
+  reference: field.string(),
 });
 
 export const scheduleQuerySchema = createQueryOptionsSchema({
@@ -261,7 +298,7 @@ export const lessonSessionQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   classGroupId: field.id(),
   scheduleId: field.id(),
-  timetableGenerated: field.string(),
+  timetableGenerated: z.boolean(),
   classSubjectId: field.id(),
   status: field.string(),
   displayLabel: field.string(),
@@ -322,17 +359,31 @@ export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   recipientKind: field.string(),
   recipientId: field.id(),
   status: field.string(),
-});
+  title: field.string(),
+  body: field.string(),
+  eventKey: field.string(),
+  sentAt: field.optionalDate(),
+  createdAt: field.optionalDate(),
+}, undefined, ["title", "body"]);
 
 export const schoolNotificationTemplatesQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
 });
 
 export const subjectQuerySchema = createQueryOptionsSchema({
+  gradeLevelId: field.id(),
+  academicYearId: field.id(),
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
   code: field.string(),
+  categoryId: field.id(),
+});
+
+export const subjectCategoryQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  name: field.string(),
 });
 
 export const subjectMatterQuerySchema = createQueryOptionsSchema({
@@ -354,22 +405,7 @@ export const classSubjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   classGroupId: field.id(),
   subjectId: field.id(),
-  gradeLevelSubjectId: field.id(),
   periodsPerWeek: field.number(),
-});
-
-export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  gradeLevelId: field.id(),
-  academicYearId: field.id(),
-  subjectId: field.id(),
-  periodsPerWeek: field.number(),
-});
-
-export const gradeLevelSubjectMatterQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  gradeLevelSubjectId: field.id(),
-  subjectMatterId: field.id(),
 });
 
 export const classSubjectMatterQuerySchema = createQueryOptionsSchema({
@@ -429,23 +465,14 @@ export const gradeScaleQuerySchema = createQueryOptionsSchema({
   isDefault: field.boolean(),
 });
 
-export const definitionQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  schoolId: field.id(),
-  academicYearId: field.id(),
-  name: field.string(),
-});
-
-export const sectionQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  reportCardDefinitionId: field.id(),
-  name: field.string(),
-});
+export const reportModuleQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), gradeLevelId: field.id(), academicYearId: field.id(), name: field.string(), order: field.number() });
 
 export const resultQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   studentId: field.id(),
-  reportCardDefinitionId: field.id(),
+  gradeLevelId: field.id(),
+  academicYearId: field.id(),
+  reportConfigurationRevision: field.number(),
   classGroupId: field.id(),
   periodId: field.id(),
   status: field.string(),
@@ -483,6 +510,15 @@ export const guardianLinkQuerySchema = createQueryOptionsSchema({
   guardianId: field.id(),
   studentId: field.id(),
   relationship: field.string(),
+});
+
+export const studentPhotoSubmissionQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  studentId: field.id(),
+  status: field.string(),
+  submitterGuardianId: field.id(),
+  attachmentId: field.id(),
 });
 
 export const studentNoteQuerySchema = createQueryOptionsSchema({
@@ -523,3 +559,43 @@ export const incidentQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   title: field.string(),
 });
+
+export const documentIssuanceQuerySchema = createQueryOptionsSchema({
+  id: field.id(),
+  schoolId: field.id(),
+  templateKey: field.string(),
+  sourceId: field.id(),
+  studentId: field.id(),
+  classGroupId: field.id(),
+  academicYearId: field.id(),
+  status: field.string(),
+  requestId: field.string(),
+});
+
+export const staffPermissionScopeDefaultsResponseSchema = responseSchema<StaffPermissionScopeDefaultsInput>("StaffPermissionScopeDefaults", unwrapShape(staffPermissionScopeDefaultsSchema));
+export const staffPermissionScopeDefaultsQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id() });
+
+export const staffManualPermissionAssignmentResponseSchema = responseSchema<StaffManualPermissionAssignmentInput>("StaffManualPermissionAssignment", unwrapShape(staffManualPermissionAssignmentSchema));
+export const staffManualPermissionAssignmentQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id(), permission: field.string(), status: field.string() });
+
+export const academicDisciplineResponseSchema = responseSchema<AcademicDisciplineInput>("AcademicDiscipline", unwrapShape(academicDisciplineSchema));
+export const academicDisciplineQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), code: field.id(), isActive: field.boolean() });
+
+export const placementStatusResponseSchema = responseSchema<PlacementStatusInput>("PlacementStatus", unwrapShape(placementStatusSchema));
+export const placementStatusQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), code: field.id(), isActive: field.boolean() });
+
+export const studentAcademicYearProfileResponseSchema = responseSchema<StudentAcademicYearProfileInput>("StudentAcademicYearProfile", unwrapShape(studentAcademicYearProfileSchema));
+export const studentAcademicYearProfileQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), academicYearId: field.id(), studentId: field.id() });
+
+export const teacherAcademicYearProfileResponseSchema = responseSchema<TeacherAcademicYearProfileInput>("TeacherAcademicYearProfile", unwrapShape(teacherAcademicYearProfileSchema));
+export const teacherAcademicYearProfileQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), academicYearId: field.id(), teacherId: field.id() });
+
+export const subjectEnrollmentResponseSchema = responseSchema<StudentSubjectEnrollmentInput>("StudentSubjectEnrollment", {
+  ...unwrapShape(studentSubjectEnrollmentSchema),
+  enrolledAt: z.string().datetime(),
+  endedAt: z.string().datetime().optional(),
+  deletedAt: z.string().datetime().optional(),
+  createdAt: z.string().datetime(),
+  periods: z.array(z.object({ periodId: field.id(), activatedAt: z.string().datetime(), startsAt: z.string().datetime(), endsAt: z.string().datetime() })),
+});
+export const subjectEnrollmentQuerySchema = createQueryOptionsSchema({ id: field.id(), studentClassEnrollmentId: field.id(), classSubjectId: field.id(), enrolledAt: field.date(), endedAt: field.date(), deletedAt: field.date() });

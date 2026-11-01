@@ -19,14 +19,15 @@ export const X_EDAYA_BASE_PATH = "x-edaya-base-path";
 export const X_EDAYA_RESPONSE_IS_ARRAY = "x-edaya-response-is-array";
 
 export type ClientRouteNamespace
-  = | "authorization"
+  = | "auth"
+    | "authorization"
     | "onboarding"
     | "files"
+    | "imports"
     | "serviceAccounts"
     | "platformUsers"
     | "s2sClients"
-    | "public"
-    | "webhooks";
+    | "public";
 
 export type EntityRouteAction
   = | "list"

@@ -8,6 +8,10 @@ export enum AttachmentStatus {
   Failed = 'failed',
 }
 
+/** Generic attachment access never implies access to a feature-owned purpose. */
+export const GENERAL_ATTACHMENT_PURPOSE = 'general'
+export const attachmentPurposeSchema = z.string().regex(/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/).max(100)
+
 export enum AttachmentOwnerKind {
   StudentHealthProfile = 'student_health_profile',
   Incident = 'incident',
@@ -20,6 +24,9 @@ export enum AttachmentOwnerKind {
   StudentClassEnrollment = 'student_enrollment',
   StudentDisciplinaryAction = 'applied_disciplinary_action',
   Staff = 'staff',
+  Teacher = 'teacher',
+  School = 'school',
+  DocumentIssuance = 'document_issuance',
   Other = 'other',
 }
 
@@ -28,6 +35,7 @@ export const attachmentBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   ownerKind: z.nativeEnum(AttachmentOwnerKind),
   ownerId: z.string().trim().min(1, 'ownerId must not be blank'),
+  purpose: attachmentPurposeSchema.default(GENERAL_ATTACHMENT_PURPOSE),
   fileName: z.string().trim().min(1, 'fileName must not be blank'),
   storageKey: z.string().trim().min(1, 'storageKey must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   fileUrl: z.string().trim().min(1, 'fileUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -71,6 +79,7 @@ export class Attachment {
   get schoolId() { return this.data.schoolId }
   get ownerKind() { return this.data.ownerKind }
   get ownerId() { return this.data.ownerId }
+  get purpose() { return this.data.purpose }
   get fileName() { return this.data.fileName }
   get storageKey() { return this.data.storageKey }
   get fileUrl() { return this.data.fileUrl }

@@ -1,15 +1,21 @@
-import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole } from '@edaya/core'
+import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole, Teacher, TeacherInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, Attachment, AttachmentStatus, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
+import { academicStateLock } from '../../capabilities/academics/marks-state'
+import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
+import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
+import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
+import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/profile-photo-uploads'
+import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
 
 import { requireSchool } from '../require-school'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
-import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
+import { syncSubjectsToClassGroup } from './subject-sync'
 
 export interface CreateAcademicYearInput {
   id: string
@@ -46,8 +52,20 @@ export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupIn
   classGroupId: string
 }
 
-export type RegisterStaffMemberInput = StaffMemberInput & {
+export type RegisterStaffMemberInput = Omit<StaffMemberInput, 'id'> & {
+  id?: string
   sendAccountInvitation?: boolean
+}
+
+export type RegisterTeacherInput = Omit<TeacherInput, 'id'> & {
+  id?: string
+}
+
+export interface UpdateTeacherSelfProfileInput {
+  firstName: string
+  lastName: string
+  email?: string | null
+  phone?: string | null
 }
 
 export interface UpdateStaffMemberStatusInput {
@@ -56,6 +74,7 @@ export interface UpdateStaffMemberStatusInput {
 }
 
 export interface UpdateStaffMemberProfileInput {
+  phone?: string | null
   staffId: string
   firstName?: string
   lastName?: string
@@ -81,6 +100,13 @@ export type ConfigureResourceInput = ResourceInput & { schoolId?: string }
 export type ConfigureActivityInput = ActivityInput & { schoolId?: string }
 export type EnrollStudentInActivityInput = ActivityEnrollmentInput
 
+function patchOptionalText(existing: string | undefined, incoming: string | null | undefined): string | undefined {
+  if (incoming === undefined)
+    return existing
+  const value = incoming?.trim()
+  return value || undefined
+}
+
 export interface RemoveAttachmentInput {
   attachmentId?: string
   id?: string
@@ -101,6 +127,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       const school = new SchoolEntity(schoolInput)
       await this.baseService.entities.schools.save(school)
       await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
+      await ensureSchoolPermissionProfiles(this.baseService.repositories, school.id)
       return school
     })
   }
@@ -114,12 +141,13 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         id: existing.id,
         name: changes.name ?? existing.name,
         timeZone: changes.timeZone ?? existing.timeZone,
+        financeCurrency: changes.financeCurrency ?? existing.financeCurrency,
         ownerSubjectId,
         consortiumId: existing.consortiumId,
         pendingOwnerStaffId: changes.pendingOwnerStaffId === undefined
           ? existing.pendingOwnerStaffId
           : changes.pendingOwnerStaffId,
-        type: changes.type === undefined ? existing.type : changes.type,
+        shortName: changes.shortName ?? existing.shortName,
         country: changes.country === undefined ? existing.country : changes.country,
         city: changes.city === undefined ? existing.city : changes.city,
         enforceScheduleConflicts: changes.enforceScheduleConflicts ?? existing.enforceScheduleConflicts,
@@ -132,6 +160,19 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         timetableGenerationMode: changes.timetableGenerationMode ?? existing.timetableGenerationMode,
         timetableMinPeriodSpan: changes.timetableMinPeriodSpan ?? existing.timetableMinPeriodSpan,
         timetableMaxPeriodSpan: changes.timetableMaxPeriodSpan ?? existing.timetableMaxPeriodSpan,
+        postalAddress: patchOptionalText(existing.postalAddress, changes.postalAddress),
+        phone: patchOptionalText(existing.phone, changes.phone),
+        email: patchOptionalText(existing.email, changes.email),
+        schoolCode: patchOptionalText(existing.schoolCode, changes.schoolCode),
+        issuingName: patchOptionalText(existing.issuingName, changes.issuingName),
+        logoAttachmentId: existing.logoAttachmentId,
+        crestAttachmentId: existing.crestAttachmentId,
+        stampAttachmentId: existing.stampAttachmentId,
+        signatureAttachmentId: existing.signatureAttachmentId,
+        issuanceAssetVersion: existing.issuanceAssetVersion,
+        publicBrandingPurposes: changes.publicBrandingPurposes === undefined
+          ? existing.publicBrandingPurposes
+          : changes.publicBrandingPurposes,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.schools.save(school)
@@ -275,7 +316,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
       await this.baseService.atomicExecution.execute(async () => {
-        await syncGradeLevelSubjectsToClassGroup(this.baseService, classGroup)
+        await syncSubjectsToClassGroup(this.baseService, classGroup)
       })
       return classGroup
     })
@@ -293,9 +334,15 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const { sendAccountInvitation, ...entityInput } = staffMemberInput
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.staffMembers.findById(candidate),
+        entityInput.id,
+        'STAFF_MEMBER_ID_ALREADY_EXISTS',
+        'Staff member',
+      )
       const staffMember = await this.saveConstructed(
         this.baseService.entities.staffMembers,
-        new StaffMemberEntity(entityInput),
+        new StaffMemberEntity({ ...entityInput, id }),
       )
 
       await scheduleAccountInvitationIfEligible(
@@ -311,6 +358,39 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
+  async registerTeacher(teacherInput: RegisterTeacherInput): Promise<Teacher> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.teachers.findById(candidate),
+        teacherInput.id,
+        'TEACHER_ID_ALREADY_EXISTS',
+        'Teacher',
+      )
+      return this.saveConstructed(
+        this.baseService.entities.teachers,
+        new TeacherEntity({ ...teacherInput, id }),
+      )
+    })
+  }
+
+  async updateTeacherSelfProfile(input: UpdateTeacherSelfProfileInput): Promise<Teacher> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const actor = this.baseService.actor
+      if (actor.kind !== 'teacher')
+        denyResourceAccess()
+      const existing = await this.requireEntity(this.baseService.entities.teachers, actor.teacherId)
+      const email = input.email === undefined ? existing.email : input.email?.trim() || undefined
+      const phone = input.phone === undefined ? existing.phone : input.phone?.trim() || undefined
+      return this.saveConstructed(this.baseService.entities.teachers, new TeacherEntity({
+        ...existing.data,
+        firstName: input.firstName.trim(),
+        lastName: input.lastName.trim(),
+        email,
+        phone,
+      }))
+    })
+  }
+
   async updateStaffMemberStatus({ staffId, isActive }: UpdateStaffMemberStatusInput): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
@@ -321,6 +401,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         lastName: existing.lastName,
         code: existing.code,
         email: existing.email,
+        phone: existing.phone,
         photoUrl: existing.photoUrl,
         notificationEmail: existing.notificationEmail,
         notificationPhone: existing.notificationPhone,
@@ -342,6 +423,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async updateStaffMemberProfile({ staffId, ...changes }: UpdateStaffMemberProfileInput): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
+      await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Staff, staffId, changes.photoUrl)
       const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -349,6 +431,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         lastName: changes.lastName ?? existing.lastName,
         code: changes.code === undefined ? existing.code : (changes.code ?? undefined),
         email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
+        phone: changes.phone === undefined ? existing.phone : (changes.phone ?? undefined),
         photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
         notificationEmail: existing.notificationEmail,
         notificationPhone: existing.notificationPhone,
@@ -370,8 +453,10 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async configureGradeLevel(input: GradeLevelInput): Promise<GradeLevel> {
     return this.baseService.atomicExecution.execute(async () => {
       this.checkActorSchool(input.schoolId)
-      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity(input))
-    })
+      const scope = await this.baseService.access.entity('gradeLevels').readScope()
+      const existing = await this.repositories.gradeLevels.forAccess(scope).findById(input.id)
+      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity({ ...input, gradingPolicies: existing?.gradingPolicies ?? [] }))
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   async configurePeriodDefinition(input: PeriodDefinitionInput & { schoolId?: string }): Promise<PeriodDefinition> {
@@ -453,46 +538,12 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    return this.baseService.atomicExecution.execute(async () => {
-      await this.baseService.access.attachments.assertConfigure()
-      const attachment = new Attachment({
-        ...input,
-        status: input.storageKey ? AttachmentStatus.Ready : input.status,
-      })
-      if (attachment.storageKey) {
-        const stored = await this.baseService.fileStorage.headObject(attachment.storageKey)
-        if (!stored) {
-          throw new BusinessRuleViolationError(
-            'ATTACHMENT_OBJECT_NOT_FOUND',
-            'Uploaded object was not found in storage',
-          )
-        }
-        if (attachment.sizeBytes !== undefined && stored.sizeBytes !== attachment.sizeBytes) {
-          throw new BusinessRuleViolationError(
-            'ATTACHMENT_SIZE_MISMATCH',
-            'Uploaded object size does not match declared sizeBytes',
-          )
-        }
-        if (attachment.mimeType && stored.contentType && stored.contentType !== attachment.mimeType) {
-          throw new BusinessRuleViolationError(
-            'ATTACHMENT_MIME_TYPE_MISMATCH',
-            'Uploaded object content type does not match declared mimeType',
-          )
-        }
-      }
-      return this.saveConstructed(this.baseService.entities.attachments, attachment)
-    })
+    assertGenericAttachmentIsNotPortrait(input.purpose)
+    return completeAttachmentUpload(this.baseService, input)
   }
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
-      await this.baseService.access.attachments.assertConfigure()
-      if (existing.storageKey) {
-        await this.baseService.fileStorage.deleteObject(existing.storageKey)
-      }
-      await this.baseService.entities.attachments.delete(existing.id)
-    })
+    return removeAttachment(this.baseService, attachmentId ?? id ?? '')
   }
 
   private async saveStaffAssignment(input: AssignStaffInput): Promise<StaffAssignment> {

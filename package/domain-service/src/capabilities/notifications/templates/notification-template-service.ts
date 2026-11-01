@@ -1,9 +1,16 @@
+import type { SchoolNotificationTemplateCatalog } from '@edaya/core'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
-import type { NotificationChannelTemplate, SchoolNotificationTemplateDocument } from './document-schema'
+import type { EventNotificationTemplateEntry, InvitationNotificationTemplateEntry } from './document-schema'
 import type { NotificationChannel, NotificationTemplateKey } from './keys'
-import { BusinessRuleViolationError } from '@edaya/core'
+import {
+  ACCOUNT_INVITATION_TEMPLATE_KEY,
+  BusinessRuleViolationError,
+  isEventNotificationTemplateKey,
+  readEventNotificationTemplate,
+
+} from '@edaya/core'
 import { buildDefaultNotificationTemplateDocument } from './defaults/manifest'
-import { mergeSchoolNotificationTemplateDocument } from './merge-school-notification-templates'
+import { mergeNotificationTemplateCatalogs } from './merge-school-notification-templates'
 import { renderTemplateString } from './render'
 
 export interface RenderNotificationTemplateInput {
@@ -14,34 +21,56 @@ export interface RenderNotificationTemplateInput {
 }
 
 export class NotificationTemplateService {
-  private cachedDefaultDocument?: SchoolNotificationTemplateDocument
+  private cachedDefaultDocument?: SchoolNotificationTemplateCatalog
 
   constructor(
     private readonly repositories: Partial<Pick<SchoolRepositories, 'schoolNotificationTemplates'>>,
   ) {}
 
-  async render(input: RenderNotificationTemplateInput): Promise<{ subject?: string, body: string }> {
-    const templates = await this.resolveTemplateDocument(input.schoolId)
-    const entry = templates[input.templateKey]
-    const slice: NotificationChannelTemplate | undefined = input.channel === 'email'
-      ? entry.email
-      : ('in_app' in entry ? entry.in_app : undefined)
-    if (!slice) {
+  async render(input: RenderNotificationTemplateInput): Promise<{ subject?: string, title?: string, body: string }> {
+    const catalog = await this.resolveTemplateDocument(input.schoolId)
+    if (input.templateKey === ACCOUNT_INVITATION_TEMPLATE_KEY) {
+      const entry = catalog.accountInvitation
+      if (input.channel === 'email') {
+        return {
+          subject: renderTemplateString(entry.rich_message.subject, input.variables),
+          body: renderTemplateString(entry.rich_message.body, input.variables),
+        }
+      }
+      if (input.channel === 'sms') {
+        return { body: renderTemplateString(entry.simple_message.body, input.variables) }
+      }
       throw new BusinessRuleViolationError(
         'NOTIFICATION_TEMPLATE_CHANNEL_NOT_FOUND',
         `No ${input.channel} template for ${input.templateKey}`,
       )
     }
 
-    return {
-      subject: slice.subject
-        ? renderTemplateString(slice.subject, input.variables)
-        : undefined,
-      body: renderTemplateString(slice.body, input.variables),
+    if (!isEventNotificationTemplateKey(input.templateKey)) {
+      throw new BusinessRuleViolationError(
+        'NOTIFICATION_TEMPLATE_CHANNEL_NOT_FOUND',
+        `No ${input.channel} template for ${input.templateKey}`,
+      )
     }
+
+    const entry = readEventNotificationTemplate(catalog, input.templateKey)
+    if (input.channel === 'email') {
+      return {
+        subject: renderTemplateString(entry.rich_message.subject, input.variables),
+        body: renderTemplateString(entry.rich_message.body, input.variables),
+      }
+    }
+    if (input.channel === 'in_app') {
+      return {
+        title: renderTemplateString(entry.base_message.title, input.variables),
+        subject: renderTemplateString(entry.base_message.title, input.variables),
+        body: renderTemplateString(entry.base_message.body, input.variables),
+      }
+    }
+    return { body: renderTemplateString(entry.simple_message.body, input.variables) }
   }
 
-  private async resolveTemplateDocument(schoolId: string): Promise<SchoolNotificationTemplateDocument> {
+  async resolveTemplateDocument(schoolId: string): Promise<SchoolNotificationTemplateCatalog> {
     const defaults = await this.getDefaultDocument()
     const repository = this.repositories.schoolNotificationTemplates
     const row = repository
@@ -51,13 +80,15 @@ export class NotificationTemplateService {
       return defaults
     }
 
-    return mergeSchoolNotificationTemplateDocument(defaults, row.templates)
+    return mergeNotificationTemplateCatalogs(defaults, row.catalog)
   }
 
-  private async getDefaultDocument(): Promise<SchoolNotificationTemplateDocument> {
+  private async getDefaultDocument(): Promise<SchoolNotificationTemplateCatalog> {
     if (!this.cachedDefaultDocument) {
       this.cachedDefaultDocument = await buildDefaultNotificationTemplateDocument()
     }
     return this.cachedDefaultDocument
   }
 }
+
+export type { EventNotificationTemplateEntry, InvitationNotificationTemplateEntry }

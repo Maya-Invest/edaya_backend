@@ -1,4 +1,4 @@
-import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
+import type { AccountInvitationRepository, Guardian, StaffMember, Student, Teacher } from '@edaya/core'
 import type { LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor'
 import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -6,10 +6,10 @@ import { randomUUID } from 'node:crypto'
 import { denyResourceAccess } from '@edaya/authorization'
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity } from '@edaya/core'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
+import { invitationLifecycleLockKey } from '../../capabilities/invitations/invitation-lifecycle'
 import { buildInvitationUrl, generateInvitationToken, hashInvitationToken } from '../../capabilities/invitations/invitation-token'
-import { normalizeInvitationEmail, resolveInvitationContact, resolveInviteeDisplayName, resolveStudentInvitationEmail } from '../../capabilities/invitations/resolve-invitation-contact'
-import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../capabilities/notifications/templates/keys'
-import { renderInvitationEmailContent } from '../../capabilities/notifications/templates/render-enqueue-content'
+import { normalizeInvitationEmail, normalizeInvitationPhone, resolveInvitationContact, resolveInviteeDisplayName, resolveStudentInvitationContact } from '../../capabilities/invitations/resolve-invitation-contact'
+import { renderInvitationContent } from '../../capabilities/notifications/templates/render-enqueue-content'
 import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
 
@@ -45,6 +45,12 @@ export interface AcceptAccountInvitationInput {
   contactValue?: string
 }
 
+export interface AcceptAccountInvitationByIdInput {
+  invitationId: string
+  subjectId: string
+  contactValue?: string
+}
+
 export type AcceptAccountInvitationResult = LinkSubjectToActorResult
 
 export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
@@ -59,93 +65,89 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       await this.baseService.access.staffPermissions.assertAssign()
       return this.createAndDeliverInvitation(input)
-    })
+    }, { lockKeys: [this.invitationLockKey(input.kind, input.targetId)] })
   }
 
   async resendAccountInvitation(input: ResendAccountInvitationInput): Promise<SendAccountInvitationResult> {
+    const existing = await this.requireInvitationInSchool(input.invitationId)
     return this.baseService.atomicExecution.execute(async () => {
       await this.baseService.access.staffPermissions.assertAssign()
-      const existing = await this.requireInvitationInSchool(input.invitationId)
-      if (existing.status === AccountInvitationStatus.Accepted) {
+      const current = await this.requireInvitationInSchool(input.invitationId)
+      if (current.status === AccountInvitationStatus.Accepted) {
         throw new BusinessRuleViolationError(
           'INVITATION_ALREADY_ACCEPTED',
           'This invitation has already been accepted',
         )
       }
-      await this.revokeInvitationDelivery(existing)
-      if (existing.status !== AccountInvitationStatus.Revoked) {
-        await this.saveInvitation(existing.copyWith({
+      await this.revokeInvitationDelivery(current)
+      if (current.status !== AccountInvitationStatus.Revoked) {
+        await this.transitionInvitation(current, current.copyWith({
           status: AccountInvitationStatus.Revoked,
         }))
       }
       return this.createAndDeliverInvitation({
-        kind: existing.kind,
-        targetId: existing.targetId,
-        contactChannel: existing.contactChannel,
-        contactValue: existing.contactValue,
+        kind: current.kind,
+        targetId: current.targetId,
+        contactChannel: current.contactChannel,
+        contactValue: current.contactValue,
         inviteBaseUrl: input.inviteBaseUrl,
       })
-    })
+    }, { lockKeys: [this.invitationLockKey(existing.kind, existing.targetId)] })
   }
 
   async revokeAccountInvitation(input: RevokeAccountInvitationInput): Promise<AccountInvitation> {
+    const existing = await this.requireInvitationInSchool(input.invitationId)
     return this.baseService.atomicExecution.execute(async () => {
       await this.baseService.access.staffPermissions.assertAssign()
-      const existing = await this.requireInvitationInSchool(input.invitationId)
-      if (existing.status === AccountInvitationStatus.Accepted) {
+      const current = await this.requireInvitationInSchool(input.invitationId)
+      if (current.status === AccountInvitationStatus.Accepted) {
         throw new BusinessRuleViolationError(
           'INVITATION_ALREADY_ACCEPTED',
           'Accepted invitations cannot be revoked',
         )
       }
-      await this.revokeInvitationDelivery(existing)
-      const revoked = existing.copyWith({ status: AccountInvitationStatus.Revoked })
-      await this.saveInvitation(revoked)
+      if (current.status === AccountInvitationStatus.Revoked) {
+        return current
+      }
+      await this.revokeInvitationDelivery(current)
+      const revoked = current.copyWith({ status: AccountInvitationStatus.Revoked })
+      await this.transitionInvitation(current, revoked)
       return revoked
-    })
+    }, { lockKeys: [this.invitationLockKey(existing.kind, existing.targetId)] })
   }
 
   async acceptAccountInvitation(input: AcceptAccountInvitationInput): Promise<AcceptAccountInvitationResult> {
+    const preview = await this.repositories.accountInvitations.findByTokenHash(hashInvitationToken(input.token))
+    if (!preview) {
+      throw new BusinessRuleViolationError('INVITATION_NOT_FOUND', 'Invitation not found or invalid')
+    }
     return this.baseService.atomicExecution.execute(async () => {
       await this.baseService.access.invitations.assertAccept()
       const invitation = await this.requireValidInvitationToken(input.token)
-      this.assertContactMatches(invitation, input.contactValue)
+      return this.completeAccept(invitation, input.subjectId, input.contactValue)
+    }, { lockKeys: [invitationLifecycleLockKey(preview.schoolId, preview.kind, preview.targetId)] })
+  }
 
-      if (invitation.status === AccountInvitationStatus.Accepted) {
-        if (invitation.acceptedSubjectId === input.subjectId) {
-          return this.loadLinkedEntity(invitation)
-        }
-        throw new BusinessRuleViolationError(
-          'INVITATION_ALREADY_ACCEPTED',
-          'This invitation was already used by another account',
-        )
-      }
-
-      await this.assertPendingOwnerAssignable(invitation, input.subjectId)
-
-      const result = await linkSubjectToActor(
-        this.baseService,
-        this.repositories,
-        invitation.schoolId,
-        this.buildLinkInput(invitation, input.subjectId),
-      )
-
-      await this.assignPendingOwnerIfNeeded(invitation, input.subjectId)
-
-      await this.baseService.invitationDelivery.revoke(invitation.id)
-
-      await this.saveInvitation(invitation.copyWith({
-        status: AccountInvitationStatus.Accepted,
-        acceptedAt: new Date(),
-        acceptedSubjectId: input.subjectId,
-      }))
-
-      return result
-    })
+  async acceptAccountInvitationById(
+    input: AcceptAccountInvitationByIdInput,
+  ): Promise<AcceptAccountInvitationResult> {
+    const preview = await this.repositories.accountInvitations.findById(input.invitationId)
+    if (!preview) {
+      throw new BusinessRuleViolationError('INVITATION_NOT_FOUND', 'Invitation not found or invalid')
+    }
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.baseService.access.invitations.assertAccept()
+      const invitation = await this.requireValidInvitationId(input.invitationId)
+      return this.completeAccept(invitation, input.subjectId, input.contactValue)
+    }, { lockKeys: [invitationLifecycleLockKey(preview.schoolId, preview.kind, preview.targetId)] })
   }
 
   async getInvitationPreviewByToken(token: string): Promise<AccountInvitation> {
     return this.requireValidInvitationToken(token)
+  }
+
+  private invitationLockKey(kind: AccountInvitationKind, targetId: string): string {
+    return invitationLifecycleLockKey(this.baseService.actor.schoolId, kind, targetId)
   }
 
   private async saveInvitation(invitation: AccountInvitation): Promise<void> {
@@ -154,10 +156,32 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     await this.repositories.accountInvitations.forAccess(scope).save(invitation)
   }
 
+  private async transitionInvitation(
+    current: AccountInvitation,
+    next: AccountInvitation,
+  ): Promise<void> {
+    const existing = await this.repositories.accountInvitations.forSchool!(this.baseService.actor.schoolId).findById(current.id)
+    const scope = await this.baseService.access.invitations.assertSave(next, existing ?? current)
+    const store = this.repositories.accountInvitations.forAccess(scope) as AccountInvitationRepository
+    const updated = await store.compareAndSetStatus(current.id, current.status, next)
+    if (!updated) {
+      throw new BusinessRuleViolationError(
+        'INVITATION_STALE_TRANSITION',
+        'Invitation was changed by another request',
+      )
+    }
+  }
+
   private async createAndDeliverInvitation(
     input: SendAccountInvitationInput,
   ): Promise<SendAccountInvitationResult> {
     const channel = input.contactChannel ?? AccountInvitationContactChannel.Email
+    if (channel === AccountInvitationContactChannel.Phone) {
+      throw new BusinessRuleViolationError(
+        'INVITATION_PHONE_UNSUPPORTED',
+        'Phone invitations are not available until phone authentication ships',
+      )
+    }
     const { displayName, contactValue } = await this.resolveTargetContact(input, channel)
 
     const pending = await this.repositories.accountInvitations.findPendingByTarget(
@@ -167,7 +191,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     )
     if (pending) {
       await this.revokeInvitationDelivery(pending)
-      await this.saveInvitation(pending.copyWith({
+      await this.transitionInvitation(pending, pending.copyWith({
         status: AccountInvitationStatus.Revoked,
       }))
     }
@@ -194,11 +218,10 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
     const schoolName = await resolveSchoolName(this.repositories, invitation.schoolId)
     const inviteUrl = buildInvitationUrl(input.inviteBaseUrl, token)
-    const { emailSubject, emailBody } = await renderInvitationEmailContent(
+    const { emailSubject, emailBody } = await renderInvitationContent(
       this.baseService.templateService,
       {
         schoolId: invitation.schoolId,
-        templateKey: ACCOUNT_INVITATION_TEMPLATE_KEY,
         variables: {
           schoolName,
           inviteeName: displayName,
@@ -231,38 +254,97 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   ): Promise<{ displayName: string, contactValue: string }> {
     if (input.kind === AccountInvitationKind.Staff) {
       const staff = await this.requireUnlinkedStaff(input.targetId)
-      const contactValue = resolveInvitationContact(channel, input.contactValue, staff)
-      return this.requireContact(contactValue, displayNameFor(staff))
+      return this.requireEmailOrRejectPhone(
+        resolveInvitationContact(channel, input.contactValue, staff),
+        resolveInvitationContact(AccountInvitationContactChannel.Phone, input.contactValue, staff),
+        displayNameFor(staff),
+      )
     }
 
     if (input.kind === AccountInvitationKind.Guardian) {
       const guardian = await this.requireUnlinkedGuardian(input.targetId)
-      const contactValue = resolveInvitationContact(channel, input.contactValue, undefined, guardian)
-      return this.requireContact(contactValue, displayNameFor(guardian))
+      return this.requireEmailOrRejectPhone(
+        resolveInvitationContact(channel, input.contactValue, undefined, guardian),
+        resolveInvitationContact(AccountInvitationContactChannel.Phone, input.contactValue, undefined, guardian),
+        displayNameFor(guardian),
+      )
     }
 
     if (input.kind === AccountInvitationKind.Teacher) {
       const teacher = await this.requireUnlinkedTeacher(input.targetId)
-      const contactValue = resolveInvitationContact(channel, input.contactValue, undefined, undefined, teacher)
-      return this.requireContact(contactValue, displayNameFor(teacher))
+      return this.requireEmailOrRejectPhone(
+        resolveInvitationContact(channel, input.contactValue, undefined, undefined, teacher),
+        resolveInvitationContact(AccountInvitationContactChannel.Phone, input.contactValue, undefined, undefined, teacher),
+        displayNameFor(teacher),
+      )
     }
 
     const student = await this.requireUnlinkedStudent(input.targetId)
-    const contactValue = resolveStudentInvitationEmail(input.contactValue)
-    return this.requireContact(contactValue, displayNameFor(student))
+    return this.requireEmailOrRejectPhone(
+      resolveStudentInvitationContact(channel, input.contactValue),
+      resolveStudentInvitationContact(AccountInvitationContactChannel.Phone, input.contactValue),
+      displayNameFor(student),
+    )
   }
 
-  private requireContact(
-    contactValue: string | undefined,
+  private requireEmailOrRejectPhone(
+    email: string | undefined,
+    phone: string | undefined,
     displayName: string,
   ): { displayName: string, contactValue: string } {
-    if (!contactValue) {
+    if (email) {
+      return { displayName, contactValue: email }
+    }
+    if (phone) {
       throw new BusinessRuleViolationError(
-        'INVITATION_CONTACT_REQUIRED',
-        'A deliverable contact is required to send an invitation',
+        'INVITATION_PHONE_UNSUPPORTED',
+        'Phone invitations are not available until phone authentication ships',
       )
     }
-    return { displayName, contactValue }
+    throw new BusinessRuleViolationError(
+      'INVITATION_CONTACT_REQUIRED',
+      'A deliverable contact is required to send an invitation',
+    )
+  }
+
+  private async completeAccept(
+    invitation: AccountInvitation,
+    subjectId: string,
+    contactValue: string | undefined,
+  ): Promise<AcceptAccountInvitationResult> {
+    this.assertContactMatches(invitation, contactValue)
+
+    if (invitation.status === AccountInvitationStatus.Accepted) {
+      if (invitation.acceptedSubjectId === subjectId) {
+        return this.loadLinkedEntity(invitation)
+      }
+      throw new BusinessRuleViolationError(
+        'INVITATION_ALREADY_ACCEPTED',
+        'This invitation was already used by another account',
+      )
+    }
+
+    await this.assertPendingOwnerAssignable(invitation, subjectId)
+    await this.assertInvitationTargetLinkable(invitation, subjectId)
+
+    const result = await linkSubjectToActor(
+      this.baseService,
+      this.repositories,
+      invitation.schoolId,
+      this.buildLinkInput(invitation, subjectId),
+    )
+
+    await this.assignPendingOwnerIfNeeded(invitation, subjectId)
+
+    await this.baseService.invitationDelivery.revoke(invitation.id, invitation.schoolId)
+
+    await this.transitionInvitation(invitation, invitation.copyWith({
+      status: AccountInvitationStatus.Accepted,
+      acceptedAt: new Date(),
+      acceptedSubjectId: subjectId,
+    }))
+
+    return result
   }
 
   private async requireValidInvitationToken(token: string): Promise<AccountInvitation> {
@@ -270,6 +352,18 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     if (!invitation) {
       throw new BusinessRuleViolationError('INVITATION_NOT_FOUND', 'Invitation not found or invalid')
     }
+    return this.requireUsableInvitation(invitation)
+  }
+
+  private async requireValidInvitationId(invitationId: string): Promise<AccountInvitation> {
+    const invitation = await this.repositories.accountInvitations.findById(invitationId)
+    if (!invitation) {
+      throw new BusinessRuleViolationError('INVITATION_NOT_FOUND', 'Invitation not found or invalid')
+    }
+    return this.requireUsableInvitation(invitation)
+  }
+
+  private async requireUsableInvitation(invitation: AccountInvitation): Promise<AccountInvitation> {
     await this.baseService.access.invitations.assertUse(invitation.id)
     if (invitation.status === AccountInvitationStatus.Revoked) {
       throw new BusinessRuleViolationError('INVITATION_REVOKED', 'This invitation has been revoked')
@@ -340,7 +434,33 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async revokeInvitationDelivery(invitation: AccountInvitation): Promise<void> {
-    await this.baseService.invitationDelivery.revoke(invitation.id)
+    await this.baseService.invitationDelivery.revoke(invitation.id, invitation.schoolId)
+  }
+
+  private async assertInvitationTargetLinkable(
+    invitation: AccountInvitation,
+    subjectId: string,
+  ): Promise<void> {
+    let existingSubjectId: string | undefined
+    if (invitation.kind === AccountInvitationKind.Staff) {
+      existingSubjectId = (await this.repositories.staffMembers.findById(invitation.targetId))?.subjectId
+    }
+    else if (invitation.kind === AccountInvitationKind.Guardian) {
+      existingSubjectId = (await this.repositories.guardians.findById(invitation.targetId))?.subjectId
+    }
+    else if (invitation.kind === AccountInvitationKind.Teacher) {
+      existingSubjectId = (await this.repositories.teachers.findById(invitation.targetId))?.subjectId
+    }
+    else {
+      existingSubjectId = (await this.repositories.students.findById(invitation.targetId))?.subjectId
+    }
+
+    if (existingSubjectId && existingSubjectId !== subjectId) {
+      throw new BusinessRuleViolationError(
+        'ACTOR_SUBJECT_ALREADY_LINKED',
+        'The invitation target is already linked to a different account',
+      )
+    }
   }
 
   private async assertPendingOwnerAssignable(
@@ -471,9 +591,4 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
 function displayNameFor(entity: StaffMember | Guardian | Student | Teacher): string {
   return resolveInviteeDisplayName(entity)
-}
-
-function normalizeInvitationPhone(value: string | undefined): string | undefined {
-  const normalized = value?.trim()
-  return normalized?.startsWith('+') ? normalized : undefined
 }

@@ -1,4 +1,4 @@
-import { AttachmentOwnerKind, AttachmentStatus } from '@edaya/core'
+import { AttachmentOwnerKind, AttachmentStatus, GENERAL_ATTACHMENT_PURPOSE } from '@edaya/core'
 
 const PUBLIC_INLINE_OWNER_KINDS = new Set<AttachmentOwnerKind>([
   AttachmentOwnerKind.Staff,
@@ -8,6 +8,7 @@ const PUBLIC_INLINE_OWNER_KINDS = new Set<AttachmentOwnerKind>([
 
 export interface AttachmentInlineAccessInput {
   ownerKind: AttachmentOwnerKind
+  purpose?: string
   mimeType?: string | null
   status: AttachmentStatus
 }
@@ -15,7 +16,7 @@ export interface AttachmentInlineAccessInput {
 export function allowsPublicInlineAttachmentContent(
   attachment: AttachmentInlineAccessInput,
 ): boolean {
-  if (attachment.status !== AttachmentStatus.Ready) {
+  if (attachment.status !== AttachmentStatus.Ready || (attachment.purpose ?? GENERAL_ATTACHMENT_PURPOSE) !== GENERAL_ATTACHMENT_PURPOSE) {
     return false
   }
 

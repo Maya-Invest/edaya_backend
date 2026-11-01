@@ -86,6 +86,8 @@ export function resolveSeedPhaseLabels(
       return ['Profile photos']
     case 'service-account':
       return ['Service account']
+    case 's2s-clients':
+      return ['Edaya Spark S2S']
     case 'validate':
       return ['Validation']
     case 'doctor':

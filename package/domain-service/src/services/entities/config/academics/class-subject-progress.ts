@@ -13,6 +13,7 @@ export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgres
     repository: repositories.classSubjectProgress,
     tenant: classSubjectProgressTenant(),
     resource: 'classSubjectProgress',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateClassSubjectProgressSave,

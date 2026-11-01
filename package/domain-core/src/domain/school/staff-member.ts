@@ -59,6 +59,7 @@ export const staffMemberBaseSchema = z.object({
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notificationPhone: z.string().trim().min(1, 'notificationPhone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -98,6 +99,7 @@ export class StaffMember {
   get code() { return this.data.code }
   get photoUrl() { return this.data.photoUrl }
   get email() { return this.data.email }
+  get phone() { return this.data.phone }
   get notificationEmail() { return this.data.notificationEmail }
   get notificationPhone() { return this.data.notificationPhone }
   get subjectId() { return this.data.subjectId }

@@ -1,0 +1,28 @@
+@page { size: A4 portrait; margin: 14mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #1c2430; font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.4; }
+.watermarked { position: relative; }
+.watermark { position: fixed; inset: 30% 0 auto; text-align: center; font-size: 48pt; color: rgba(180, 40, 40, 0.18); transform: rotate(-24deg); pointer-events: none; letter-spacing: 0.2em; }
+.letter-header { display: flex; gap: 16px; align-items: center; border-bottom: 3px solid var(--brand, #1f4b7a); padding-bottom: 12px; margin-bottom: 16px; }
+.logo, .photo { max-height: 72px; object-fit: contain; }
+.photo { width: 72px; height: 90px; object-fit: cover; border: 1px solid #c5cdd8; }
+.school { margin: 0; font-weight: 700; font-size: 14pt; color: var(--brand, #1f4b7a); }
+h1 { font-size: 16pt; margin: 0 0 12px; }
+.number { font-weight: 600; }
+.fields { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; }
+.fields dt { font-weight: 600; }
+.fields dd { margin: 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th, td { border: 1px solid #c5cdd8; padding: 6px 8px; text-align: left; font-size: 10pt; }
+th { background: #eef3f8; }
+.notes { margin-top: 12px; font-style: italic; }
+footer { margin-top: 28px; display: flex; gap: 24px; align-items: flex-end; }
+.stamp, .sign { max-height: 72px; }
+.generated { margin-left: auto; font-size: 8pt; color: #667084; }
+.id-card .card { width: 85mm; height: 54mm; border: 1px dashed #667084; padding: 8mm; position: relative; }
+.id-card .photo { width: 24mm; height: 30mm; float: right; }
+
+.teacher-pair { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; break-inside: avoid; page-break-inside: avoid; margin: 2px 0; }
+.teacher-pair span { overflow-wrap: anywhere; }
+.teacher-signature { display: block; max-width: 76px; max-height: 28px; width: auto; height: auto; object-fit: contain; }
+ .incident-author { margin-top: 24px; break-inside: avoid; }

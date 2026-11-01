@@ -1,10 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import type { SignatureSlot } from "../types";
 
-export interface OverlaySignaturesOptions {
-  readonly fetchImpl?: typeof fetch;
-}
-
 function resolvePageIndex(page: SignatureSlot["position"]["page"], pageCount: number): number {
   if (page === "first") {
     return 0;
@@ -33,27 +29,14 @@ function isJpeg(bytes: Uint8Array): boolean {
     && bytes[2] === 0xFF;
 }
 
-async function fetchImageBytes(
-  imageUrl: string,
-  fetchImpl: typeof fetch,
-): Promise<Uint8Array> {
-  const response = await fetchImpl(imageUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch signature image: ${response.status}`);
-  }
-  return new Uint8Array(await response.arrayBuffer());
-}
-
 export async function overlaySignatures(
   pdfBytes: Uint8Array,
   signatures: readonly SignatureSlot[],
-  options: OverlaySignaturesOptions = {},
 ): Promise<Uint8Array> {
   if (signatures.length === 0) {
     return pdfBytes;
   }
 
-  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const pages = pdfDoc.getPages();
   if (pages.length === 0) {
@@ -61,7 +44,7 @@ export async function overlaySignatures(
   }
 
   for (const signature of signatures) {
-    const imageBytes = await fetchImageBytes(signature.imageUrl, fetchImpl);
+    const imageBytes = signature.imageBytes;
     const pageIndex = resolvePageIndex(signature.position.page, pages.length);
     const page = pages[pageIndex]!;
     const image = isPng(imageBytes)

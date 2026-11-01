@@ -44,7 +44,7 @@ function resolveStagingDatabaseUrl(): string {
   return databaseUrl.trim()
 }
 
-export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
+export async function runSeedCleanup(options: CleanupOptions): Promise<boolean> {
   loadSeedEnvFiles()
   const repoRoot = resolveRepoRoot(import.meta.url)
 
@@ -54,18 +54,18 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
 
     if (await probeLocalApiReachable(apiUrl)) {
       throw new Error(
-        `Local API is running at ${apiUrl}. Stop \`bun repo dev\` before wiping .data — `
+        `Local API is running at ${apiUrl}. Stop \`bun repo dev\` before wiping .data/school — `
         + 'deleting databases while the API is up corrupts PGlite.',
       )
     }
 
     const confirmed = await confirm(
-      'Delete local school PGlite under .data/?',
+      'Delete local school PGlite under .data/school/?',
       options.yes,
     )
     if (!confirmed) {
       console.log('Cleanup cancelled.')
-      return
+      return false
     }
 
     const result = await wipeLocalData({ repoRoot })
@@ -77,8 +77,8 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
     }
 
     console.log(`Local school cleanup complete. ${IDENTITY_AUTH_WIPE_HINT}`)
-    console.log('Restart `bun repo dev`, then run `bun repo seed`.')
-    return
+    console.log('Restart `bun repo dev`, then run `bun repo ops seed`.')
+    return true
   }
 
   const confirmed = await confirm(
@@ -87,12 +87,13 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
   )
   if (!confirmed) {
     console.log('Cleanup cancelled.')
-    return
+    return false
   }
 
   const databaseUrl = resolveStagingDatabaseUrl()
   const result = await wipeStagingSchoolDatabase(databaseUrl)
   console.log(`Staging school database wiped (${result.tableCount} public tables truncated).`)
   console.log(IDENTITY_AUTH_WIPE_HINT)
-  console.log('Staging school cleanup complete. Run `bun repo db migrate staging` if needed, then `bun repo seed --staging`.')
+  console.log('Staging school cleanup complete. Run `bun repo ops db migrate school staging` if needed, then `bun repo ops seed staging`.')
+  return true
 }

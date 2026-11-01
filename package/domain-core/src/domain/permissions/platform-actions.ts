@@ -2,12 +2,9 @@ import { Permission } from './permission'
 
 export const ALL_PLATFORM_PERMISSIONS = [
   Permission.PLATFORM_USER_READ,
-  Permission.PLATFORM_USER_CREATE,
-  Permission.PLATFORM_USER_DEACTIVATE,
+  Permission.PLATFORM_USER_MANAGE,
   Permission.S2S_CLIENT_READ,
-  Permission.S2S_CLIENT_CREATE,
-  Permission.S2S_CLIENT_REVOKE,
-  Permission.S2S_CLIENT_ROTATE_KEY,
+  Permission.S2S_CLIENT_MANAGE,
 ] as const
 
 export type PlatformAction = typeof ALL_PLATFORM_PERMISSIONS[number]

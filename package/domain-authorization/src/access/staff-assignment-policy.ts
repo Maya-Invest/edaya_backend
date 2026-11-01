@@ -1,5 +1,4 @@
 import type { AuthorityScope, StaffAssignment } from '@edaya/core'
-import type { ScopeType } from '../permissions/scope-type'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { Permission } from '../permissions/permission'
@@ -17,28 +16,15 @@ export interface StaffAssignmentResolvedTarget {
   readonly schoolId: string
   readonly classGroupId: string
   readonly classSubjectId?: string
+  readonly gradeLevelId?: string
+  readonly subjectId?: string
   readonly activityId?: string
   readonly lessonSessionId?: string
   readonly activitySessionId?: string
   readonly assessmentId?: string
 }
 
-const TARGET_ALLOWED_SCOPES: Record<StaffAssignmentTargetKind, readonly (ScopeType | undefined)[]> = {
-  class_group: ['class_group', 'class_subject'],
-  class_subject: ['class_group', 'class_subject'],
-  lesson_session: ['class_group', 'class_subject'],
-  activity_session: ['activity'],
-  assessment: ['class_group', 'class_subject'],
-}
-
-export const ASSESSMENT_STAFF_ASSIGNMENT_PERMISSIONS: readonly Permission[] = [
-  Permission.EXAM_CONFIG_CREATE,
-  Permission.GRADE_INPUT,
-  Permission.GRADE_UPDATE,
-  Permission.ATTENDANCE_RECORD,
-]
-
-const ASSESSMENT_STAFF_ASSIGNMENT_PERMISSION_SET = new Set(ASSESSMENT_STAFF_ASSIGNMENT_PERMISSIONS)
+export const ASSESSMENT_STAFF_ASSIGNMENT_PERMISSIONS: readonly Permission[] = Object.values(Permission).filter(permission => permissionDefinitions[permission].assignmentTargets.includes('assessment'))
 
 async function resolvePlacement(
   assignment: StaffAssignment,
@@ -70,6 +56,8 @@ async function resolvePlacement(
       schoolId: classGroup.schoolId,
       classGroupId: classSubject.classGroupId,
       classSubjectId: assignment.classSubjectId,
+      gradeLevelId: classGroup.gradeLevelId,
+      subjectId: classSubject.subjectId,
     }
   }
 
@@ -123,40 +111,18 @@ async function resolvePlacement(
   throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_TARGET_REQUIRED', 'StaffAssignment must target exactly one placement entity')
 }
 
-export function assertPermissionAllowedOnStaffAssignmentTarget(
-  permission: Permission,
-  targetKind: StaffAssignmentTargetKind,
-): void {
-  if (targetKind === 'assessment' && !ASSESSMENT_STAFF_ASSIGNMENT_PERMISSION_SET.has(permission)) {
-    throw new BusinessRuleViolationError(
-      'STAFF_ASSIGNMENT_PERMISSION_NOT_ALLOWED',
-      `Permission "${permission}" is not allowed on assessment StaffAssignment targets`,
-    )
-  }
-
-  const catalogScope = permissionDefinitions[permission].scope
-  if (!catalogScope) {
-    throw new BusinessRuleViolationError(
-      'STAFF_ASSIGNMENT_TENANT_PERMISSION',
-      `Tenant-wide permission "${permission}" cannot be granted through StaffAssignment`,
-    )
-  }
-
-  if (!TARGET_ALLOWED_SCOPES[targetKind].includes(catalogScope)) {
-    throw new BusinessRuleViolationError(
-      'STAFF_ASSIGNMENT_SCOPE_MISMATCH',
-      `Permission "${permission}" scope "${catalogScope}" is not valid for StaffAssignment target "${targetKind}"`,
-    )
-  }
+export function assertPermissionAllowedOnStaffAssignmentTarget(permission: Permission, targetKind: StaffAssignmentTargetKind): void {
+  if (!permissionDefinitions[permission].assignmentTargets.includes(targetKind))
+    throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_SCOPE_MISMATCH', `Permission "${permission}" cannot be granted at "${targetKind}"`)
 }
 
 export function scopesForStaffAssignmentPermission(permission: Permission, target: StaffAssignmentResolvedTarget): AuthorityScope[] {
   assertPermissionAllowedOnStaffAssignmentTarget(permission, target.kind)
-  const { classGroupId, classSubjectId, lessonSessionId, activitySessionId, assessmentId, activityId } = target
+  const { classGroupId, classSubjectId, lessonSessionId, activitySessionId, assessmentId, activityId, gradeLevelId, subjectId } = target
   if (target.kind === 'class_group')
-    return [{ kind: permissionDefinitions[permission].scope === 'class_subject' ? 'class_subject' : 'class_group', classGroupId }]
-  if (target.kind === 'class_subject' && classSubjectId)
-    return [{ kind: 'class_subject', classGroupId, classSubjectId }]
+    return [{ kind: 'class_group', classGroupId }]
+  if (target.kind === 'class_subject' && gradeLevelId && subjectId)
+    return [{ kind: 'subject', gradeLevelId, subjectId, classGroupId }]
   if (target.kind === 'lesson_session' && lessonSessionId && classSubjectId)
     return [{ kind: 'lesson_session', lessonSessionId, classGroupId, classSubjectId }]
   if (target.kind === 'activity_session' && activitySessionId && activityId)

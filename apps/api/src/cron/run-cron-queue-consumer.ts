@@ -1,48 +1,36 @@
 import type { MessageBatch } from "@cloudflare/workers-types";
-import { runCronJobForSchool } from "@edaya/service";
 import type { LoggerPort } from "@edaya/core";
-import type { CronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
-import { parseCronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
 import type { ApiRuntime } from "@/runtime/types";
+import { executeCronOccurrence } from "@edaya/service";
+import { parseCronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
 
 export async function runCronQueueBatch(
   runtime: ApiRuntime,
-  batch: MessageBatch<CronJobDispatchQueueBody>,
+  batch: Pick<MessageBatch<unknown>, "messages">,
   logger: LoggerPort,
 ): Promise<void> {
   const application = await runtime.getSchoolApplication();
-
   for (const message of batch.messages) {
-    const payload = parseCronJobDispatchQueueBody(message.body);
-
+    let payload;
     try {
-      const result = await runCronJobForSchool(application, {
-        jobKey: payload.jobKey,
-        schoolId: payload.schoolId,
-        asOf: payload.asOf,
-        requestId: payload.requestId,
-      });
-
-      logger.info({
-        event: "cron.execute",
-        jobKey: payload.jobKey,
-        schoolId: payload.schoolId,
-        requestId: payload.requestId,
-        asOf: payload.asOf.toISOString(),
-        processed: result.result.processed,
-        skipped: result.result.skipped,
-      }, "cron job executed");
-      message.ack();
+      payload = parseCronJobDispatchQueueBody(message.body);
     }
-    catch (error) {
-      logger.error({
-        event: "cron.execute",
-        err: error,
-        jobKey: payload.jobKey,
-        schoolId: payload.schoolId,
-        requestId: payload.requestId,
-      }, "cron job execution failed");
-      message.retry();
+    catch {
+      logger.warn({ event: "cron.execute", code: "CRON_QUEUE_PAYLOAD_INVALID" }, "invalid cron message discarded");
+      message.ack();
+      continue;
+    }
+    try {
+      const disposition = await executeCronOccurrence(application, payload.jobId);
+      if (disposition === "ack")
+        message.ack();
+      else
+        message.retry({ delaySeconds: 60 });
+      logger.info({ event: "cron.execute", jobId: payload.jobId, disposition }, "cron delivery processed");
+    }
+    catch {
+      logger.error({ event: "cron.execute", jobId: payload.jobId, code: "CRON_PERSISTENCE_FAILED" }, "cron delivery failed");
+      message.retry({ delaySeconds: 60 });
     }
   }
 }

@@ -15,7 +15,7 @@ export async function installSchemaBeforeTypedGrants(db: PGlite): Promise<void> 
 
 export async function seedAuthorizationPlacement(db: PGlite): Promise<void> {
   await db.exec(`
-    INSERT INTO schools (id, name, time_zone, created_at) VALUES ('school-a', 'A', 'UTC', now()), ('school-b', 'B', 'UTC', now());
+    INSERT INTO schools (id, name, short_name, time_zone, finance_currency, created_at) VALUES ('school-a', 'A', 'A', 'UTC', 'USD', now()), ('school-b', 'B', 'B', 'UTC', 'USD', now());
     INSERT INTO academic_years (id, school_id, name, start_date, end_date, status, created_at) VALUES
       ('year-a', 'school-a', 'A', '2026-01-01', '2026-12-31', 'published', now()),
       ('year-old', 'school-a', 'Old', '2025-01-01', '2025-12-31', 'archived', now()),
@@ -29,7 +29,13 @@ export async function seedAuthorizationPlacement(db: PGlite): Promise<void> {
       ('class-other', 'school-a', 'level-a', 'Other', 'year-a', now()),
       ('class-old', 'school-a', 'level-a', 'Old', 'year-old', now()),
       ('class-b', 'school-b', 'level-b', 'B', 'year-b', now());
-    INSERT INTO subjects (id, school_id, name, created_at) VALUES ('math', 'school-a', 'Math', now()), ('french', 'school-a', 'French', now()), ('foreign-math', 'school-b', 'Math', now());
+    INSERT INTO subject_categories (id, school_id, name, created_at) VALUES
+      ('category-a', 'school-a', 'General', now()),
+      ('category-b', 'school-b', 'General', now());
+    INSERT INTO subjects (id, school_id, grade_level_id, academic_year_id, name, category_id, created_at) VALUES
+      ('math', 'school-a', 'level-a', 'year-a', 'Math', 'category-a', now()),
+      ('french', 'school-a', 'level-a', 'year-a', 'French', 'category-a', now()),
+      ('foreign-math', 'school-b', 'level-b', 'year-b', 'Math', 'category-b', now());
     INSERT INTO class_subjects (id, class_group_id, subject_id, created_at, completed_percentage) VALUES
       ('math-a', 'class-a', 'math', now(), 0), ('french-a', 'class-a', 'french', now(), 0),
       ('math-other', 'class-other', 'math', now(), 0), ('math-b', 'class-b', 'foreign-math', now(), 0);
@@ -58,9 +64,12 @@ export async function seedAuthorizationRelationships(db: PGlite): Promise<void> 
         ('student-a', 'school-a', 'A', 'Student', 'active', now()), ('student-other', 'school-a', 'Other', 'Student', 'active', now()),
         ('student-b', 'school-b', 'B', 'Student', 'active', now());
       INSERT INTO student_class_enrollments (id, student_id, class_group_id, academic_year_id, enrollment_index, status, enrolled_at, created_at) VALUES
-        ('enrollment-a', 'student-a', 'class-a', 'year-a', 1, 'active', now(), now()),
-        ('enrollment-other', 'student-other', 'class-other', 'year-a', 1, 'active', now(), now()),
-        ('enrollment-b', 'student-b', 'class-b', 'year-b', 1, 'active', now(), now());
+        ('enrollment-a', 'student-a', 'class-a', 'year-a', 1, 'active', '2026-01-01', now()),
+        ('enrollment-other', 'student-other', 'class-other', 'year-a', 1, 'active', '2026-01-01', now()),
+        ('enrollment-b', 'student-b', 'class-b', 'year-b', 1, 'active', '2026-01-01', now());
+      INSERT INTO student_subject_enrollments (id, student_class_enrollment_id, class_subject_id, enrolled_at, ended_at, source, created_at)
+        SELECT 'participation:' || e.id || ':' || cs.id, e.id, cs.id, e.enrolled_at, y.end_date + interval '1 day', 'automatic', now()
+        FROM student_class_enrollments e JOIN class_subjects cs ON cs.class_group_id = e.class_group_id JOIN academic_years y ON y.id = e.academic_year_id;
       INSERT INTO assessments (id, class_group_id, class_subject_id, period_id, title, kind, max_score, coefficient, due_at, created_at) VALUES
         ('assessment-math', 'class-a', 'math-a', 'period-a', 'Math', 'homework', 20, 1, '2026-05-01', now()),
         ('assessment-french', 'class-a', 'french-a', 'period-a', 'French', 'homework', 20, 1, '2026-05-01', now()),
@@ -72,7 +81,7 @@ export async function seedAuthorizationRelationships(db: PGlite): Promise<void> 
       INSERT INTO teachers (id, school_id, first_name, last_name, subject_id, is_active, created_at) VALUES ('teacher-a', 'school-a', 'A', 'Teacher', 'person-a', true, now());
       INSERT INTO teacher_assignments (id, teacher_id, academic_year_id, kind, class_subject_id, status, created_at) VALUES
         ('teaching', 'teacher-a', 'year-a', 'subject', 'math-a', 'active', now());
-      INSERT INTO guardians (id, school_id, first_name, last_name, subject_id, has_access, contact_methods, created_at) VALUES ('guardian-a', 'school-a', 'A', 'Guardian', 'person-a', true, '[]', now());
+      INSERT INTO guardians (id, school_id, first_name, last_name, subject_id, has_access, created_at) VALUES ('guardian-a', 'school-a', 'A', 'Guardian', 'person-a', true, now());
       INSERT INTO guardian_student_links (id, school_id, guardian_id, student_id, relationship, is_primary, created_at) VALUES
         ('guardian-link', 'school-a', 'guardian-a', 'student-a', 'parent', true, now());
     `)

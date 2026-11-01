@@ -1,4 +1,5 @@
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { boolean, doublePrecision, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const academicYears = pgTable('academic_years', {
@@ -44,6 +45,8 @@ export const periodDefinitions = pgTable('period_definitions', {
 // 5. Grade Level Table
 
 export const gradeLevels = pgTable('grade_levels', {
+  reportSettings: jsonb('report_settings').notNull().default([]),
+  gradingPolicies: jsonb('grading_policies').notNull().default([]),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
@@ -55,13 +58,30 @@ export const gradeLevels = pgTable('grade_levels', {
 
 // 6. Staff Member Table
 
+export const subjectCategories = pgTable('subject_categories', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('subject_categories', table))
+
 export const subjects = pgTable('subjects', {
+  disciplineId: text('discipline_id'),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
   code: text('code'),
-  defaultCoefficient: integer('default_coefficient'),
-  category: text('category').notNull().default('Scientifique'),
+  gradeLevelId: text('grade_level_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  shortName: text('short_name'),
+  reportModuleId: text('report_module_id'),
+  reportOrder: integer('report_order').notNull().default(0),
+  coefficient: doublePrecision('coefficient'),
+  periodsPerWeek: integer('periods_per_week'),
+  minPeriodSpan: integer('min_period_span'),
+  maxPeriodSpan: integer('max_period_span'),
+  isOptional: boolean('is_optional').notNull().default(false),
+  categoryId: text('category_id').notNull(),
   color: text('color').notNull().default('mint'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('subjects', table))
@@ -92,41 +112,21 @@ export const classGroups = pgTable('class_groups', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('class_groups', table))
 
-export const gradeLevelSubjects = pgTable('grade_level_subjects', {
-  id: text('id').primaryKey(),
-  gradeLevelId: text('grade_level_id').notNull(),
-  academicYearId: text('academic_year_id').notNull(),
-  subjectId: text('subject_id').notNull(),
-  coefficient: integer('coefficient'),
-  periodsPerWeek: integer('periods_per_week'),
-  minPeriodSpan: integer('min_period_span'),
-  maxPeriodSpan: integer('max_period_span'),
-  isOptional: boolean('is_optional').notNull().default(false),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('grade_level_subjects', table))
-
-export const gradeLevelSubjectMatters = pgTable('grade_level_subject_matters', {
-  id: text('id').primaryKey(),
-  gradeLevelSubjectId: text('grade_level_subject_id').notNull(),
-  subjectMatterId: text('subject_matter_id').notNull(),
-  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('grade_level_subject_matters', table))
-
 // 24. Class Subject Table
 
 export const classSubjects = pgTable('class_subjects', {
   id: text('id').primaryKey(),
   classGroupId: text('class_group_id').notNull(),
   subjectId: text('subject_id').notNull(),
-  gradeLevelSubjectId: text('grade_level_subject_id'),
-  coefficient: integer('coefficient'),
+  coefficient: doublePrecision('coefficient'),
   periodsPerWeek: integer('periods_per_week'),
   minPeriodSpan: integer('min_period_span'),
   maxPeriodSpan: integer('max_period_span'),
+  participationRevision: integer('participation_revision').notNull().default(0),
   isOffered: boolean('is_offered').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),
-}, table => definePerformanceIndexes('class_subjects', table))
+}, table => [...definePerformanceIndexes('class_subjects', table), uniqueIndex('class_subjects_class_subject_uidx').on(table.classGroupId, table.subjectId)])
 
 // 28. Activity Table (school program / club)
 
@@ -192,3 +192,18 @@ export const classActivityEnrollments = pgTable('class_activity_enrollments', {
 }, table => definePerformanceIndexes('class_activity_enrollments', table))
 
 // 30. Class Subject Matter Table
+
+export const studentSubjectEnrollments = pgTable('student_subject_enrollments', {
+  id: text('id').primaryKey(),
+  studentClassEnrollmentId: text('student_class_enrollment_id').notNull(),
+  classSubjectId: text('class_subject_id').notNull(),
+  enrolledAt: timestamp('enrolled_at', { mode: 'date' }).notNull(),
+  endedAt: timestamp('ended_at', { mode: 'date' }),
+  source: text('source').notNull(),
+  scope: text('scope').notNull().default('annual'),
+  periods: jsonb('periods').notNull().default([]),
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  deletedBy: text('deleted_by'),
+  revision: integer('revision').notNull().default(0),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => [...definePerformanceIndexes('student_subject_enrollments', table), uniqueIndex('student_subject_enrollments_current_idx').on(table.studentClassEnrollmentId, table.classSubjectId).where(sql`${table.deletedAt} IS NULL`)])

@@ -1,5 +1,7 @@
 # RC implementation evidence — 9–10 September 2026
 
+> Historical; partner OAuth later cancelled (2026-09-15). First-party identity JWTs remain.
+
 Working-tree evidence on top of backend baseline `98b7a136`; these changes are not committed or deployed. All integration runs use synthetic fixtures and disposable local databases. The launch audit records historical baseline failures separately.
 
 ## Latest completed slice — school-scoped repository reads and writes (10 September)

@@ -1,79 +1,43 @@
-# Cross-repo workflow
+# Repository integration
 
-Edaya spans multiple repositories:
+See [independent CI and releases](ci-setup.md) for destination-branch acquisition, compatibility gates, artifact handoff and rollout requirements.
 
-| Repo | Role |
-|------|------|
-| **edaya_backend** (this repo) | API, cron, domain packages, adaptors, `@maya-invest/edaya-api-client`, client codegen tooling |
-| **edaya_web** | SvelteKit webapp + webadmin, browser OpenAPI types |
-| **edaya_mobile** | Flutter app (consumes OpenAPI client bindings extension) |
-| **edaya_identity** | Better Auth Worker, identity database, JWT issuer/JWKS, directory API, `@maya-invest/edaya-identity-client` |
+The backend preserves tracked OpenAPI drift checks and mandatory API regression tests without checking out consumers. Clients must upgrade to the current backend contract; historical wire compatibility is informational, not a release requirement.
 
-Backend local development links the identity client with
-`"@maya-invest/edaya-identity-client": "file:../edaya_identity/package/identity-client"`.
-CI must check out the sibling identity repository before `bun install`, or replace the file link with the published package.
+## Coordinated timetable publication removal
 
-## Backend OpenAPI pipeline
+The timetable change is an intentional breaking release. Deploy the school database migration `0039_timetable_generation_final.sql`, backend and regenerated first-party clients together. Do not run old backend instances against the migrated boolean column. Stop academic writes while replacing the old instances, apply the migration, and start the matching backend and clients before reopening writes.
 
-When API routes or registry metadata change in **this repo**:
+Both legacy timetable states become `timetableGenerated: true`; absent states become false. IDs, teacher snapshots and previously issued documents remain unchanged. The migration deletes `TIMETABLE_PUBLISH` grants and profile entries without adding replacement authority. Generation still requires scoped `TIMETABLE_CREATE`. Publication and republication routes are removed, so old clients must upgrade.
 
-```sh
-bun repo openapi export          # tooling/repo/fixtures/openapi.json
-bun repo openapi generate        # package/api-client/src/
-bun run verify
-```
+Generation now runs replacement, protection checks, conflict validation and persistence under the school academic transaction lock. Only pending generated lessons without exceptions, notes, attendance (including saved drafts), curriculum progress, validation/correction history, assessments or explicit session references are replaceable. Active preserved lessons count toward workload and occupancy; cancelled lessons block their class interval without consuming workload. Class and teacher PDFs use the current noncancelled generated lessons in the selected academic year; printing neither protects lessons nor mutates earlier document snapshots.
 
-| Step | Script | Output |
-|------|--------|--------|
-| Export spec | `bun repo openapi export` | `tooling/repo/fixtures/openapi.json` |
-| Generate client | `bun repo openapi generate` | `package/api-client/src/` |
-| Drift check | `bun repo check openapi` | Compares temp output to tracked files (non-mutating) |
+The historical OpenAPI compatibility baseline intentionally remains unchanged. Qualification records the removed endpoints, permission and changed field type in `.ci-evidence/contract-changes.json` as client upgrade information. These historical differences do not block release; current-contract, authentication, authorization and persistence regressions still do. Regenerate and qualify both frontend and mobile clients from the same committed backend candidate before rollout.
 
-### Published client (`@maya-invest/edaya-api-client`)
+## Durable school intake
 
-The generated client lives in `package/api-client/`. On merge to `staging` / `main`, CI regenerates and publishes to **GitHub Packages** (`npm.pkg.github.com`) with dist-tags `staging` / `production`. See [ci-setup.md](./ci-setup.md#api-client-github-packages-maya-investedaya-api-client).
+Apply additive school migration `0047_durable_school_imports.sql` after the academic-discipline/placement-profile model. Upgrade web and mobile clients from the same backend candidate. The staff import UI uses the new typed `imports` namespace; former browser execution loops are removed. The mode is session-wide `S | M | O`, defaults to `M`, and optional `on_existing` rows override it. File metadata has no conflict option. See [durable school imports](../architecture/school-imports.md) for transaction, recovery, correction and format contracts. Rollout requires preview-only validation of prepared files before a separately approved live import.
 
-Consumers can install:
+## Automatic fee billing
 
-```sh
-bun add @maya-invest/edaya-api-client@staging
-bun add @maya-invest/edaya-api-client@production
-```
+Apply school migration `0049_auto_billing.sql` with the matching backend and regenerated first-party clients. It replaces the fee enrollment mode with `autoBilling`; every existing fee starts Off and the migration creates neither charges nor background work. Enabling All students or Matching students explicitly schedules missing assignments for active class placements in that fee's academic year. Existing charge snapshots and cancellations are preserved.
 
-**Local development in this monorepo** — workspace resolution via root override:
+The transactional command outbox drives resumable automatic-billing runs. Request completion nudges the dispatcher, and the existing cron heartbeat recovers pending work. Fee details expose pending/running/completed/failed status and a retry command for unfinished work. Configuration and retry require catalog management plus assignment authority covering all students, classes, or grade levels in the fee's year; academic enrolment/profile writers need no added finance permission.
 
-```json
-"overrides": {
-  "@maya-invest/edaya-api-client": "workspace:*",
-  "@maya-invest/edaya-identity-client": "file:../edaya_identity/package/identity-client"
-}
-```
+## Flat guardian contacts
 
-**Sibling repos** — point `package.json` at the backend client folder:
+Migration `0051_flat_guardian_contacts.sql` is a fresh-database breaking cutover and refuses populated guardian tables. Coordinate the backend with regenerated web and mobile clients. `updateGuardianProfile` replaces the contact-collection command and atomically saves supplied existing-child notification preferences. Guardian contacts are scalar import fields; the separate contact import is retired. Back up before resetting local school and identity databases; this cutover does not authorize resetting remote environments.
 
-```json
-"@maya-invest/edaya-api-client": "file:../edaya_backend/package/api-client"
-```
+## Year-level dashboard
 
-Bindings are extracted from each operation's `x-edaya-*` metadata in the exported OpenAPI document. Entity metadata comes from the API registry and `apps/api/src/lib/school-api/openapi/client-extensions.ts`.
+`getSchoolOverview` requires a school and academic year; its academic period is optional. A year-only response returns `academicPeriodId: null`, null period-dependent grading/report-card metrics, and no period-dependent action items. Other authorized summaries retain their existing year/date scopes. Supplied periods still require authorization and membership in the selected year. Regenerate first-party clients for the nullable response fields; no database migration or reset is needed.
 
-Every entity declares `publicOperations` with explicit `create`, `update`, `delete`, `batchCreate`, `batchUpdate`, and `batchDelete` flags. REST and GraphQL omit forbidden mutations. Generic save is an upsert and therefore requires both create and update permission; batch save requires both batch flags. The legacy `allowDirectSave` metadata is derived for compatibility and does not control exposure.
+## Flat report modules
 
-Regenerate both TypeScript and Dart clients when these policies change. TypeScript removes unavailable methods from the generated public type; both runtimes reject forbidden writes before sending a request. Use the named command for command-owned records. Client flags describe API availability, not the caller's authorization: backend tenant, permission and business-rule checks still apply to every exposed operation.
+Migration `0052_flat_report_modules.sql` is a clean-school-database cutover. It refuses populated report definitions, sections or results; it does not convert historical reports. Back up any local school data before resetting or reseeding it. The account/identity database is outside this cutover. Hosted resets and deployments require a separate rollout authorization.
 
-## Pair PR with edaya_web
+Deploy the matching backend, web and mobile contracts together, generated from one immutable backend candidate. Report templates and their commands/resources are retired. Modules, membership and report settings are scoped to grade level/year; subjects retain categories and coefficients. The new configuration query supports report administrators independently of chapter access. No mobile module administration is added.
 
-After merging API changes here:
+Run migration guard tests, both weighting modes, permission isolation, explicit generation/review/publication, annual source-version validation, report PDF rendering and mobile comment draft tests before reopening academic writes. Published results keep captured module/subject labels and weights. Draft regeneration uses the current configuration revision. Old offline template-section comments are not restored into the new report contract.
 
-1. Merge or sync the updated `@maya-invest/edaya-api-client` (file link or published package).
-2. In **edaya_web**: `bun install` (if using file link) and `bun run verify`.
-
-Full consumer-side details: [edaya_web/docs/reference/cross-repo-workflow.md](../../edaya_web/docs/reference/cross-repo-workflow.md).
-
-## CI independence
-
-Each repo runs `bun run verify` against its own code. **edaya_web** CI checks out **edaya_backend** for the API-client file link. **edaya_backend** CI checks out **edaya_identity** as a sibling for the identity-client file link, then exports and checks generated artifacts from the in-repo school API.
-
-## Hand-written client runtime
-
-Generated files are regen-only. The handwritten runtime (`Transport`, `EntityResource`, `createSchoolClient`, …) lives in `tooling/client-codegen/templates/runtime/` and is copied into `package/api-client/src/runtime/` on generate.
+Deleting a module leaves its feedback on earlier publications. Regeneration carries forward comments for retained subjects by stable subject identity, including when they become ungrouped; it does not transfer a removed module's comment to another result group. Removed subject comments still require explicit reconciliation.

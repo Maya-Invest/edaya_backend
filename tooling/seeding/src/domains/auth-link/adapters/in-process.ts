@@ -1,13 +1,14 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AuthLinkSeedPort } from '../port'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { School } from '@edaya/core'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
-import { SeedPortError, withSeedPortError } from '../../../support/seed-port-error'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { initializeFixtureSchoolOwner } from '@edaya/service'
+import { withSeedPortError } from '../../../support/seed-port-error'
 
 export function createInProcessAuthLinkSeedPort(application: SeedApplication): AuthLinkSeedPort {
+  const context = resolveDevSeedContext()
   const actor = createSystemActorMetadata({
-    schoolId: SEED_SCHOOL_ID,
+    schoolId: context.schoolId,
     requestId: 'dev-staff-auth-seed',
     systemId: 'fixture-seed',
     reason: 'Install the selected local development dataset',
@@ -16,27 +17,14 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
 
   return {
     findSchoolById: id => withSeedPortError('findSchoolById', async () => {
-      const school = await application.repositories.schools.findById(id)
+      const school = await service.baseService.entities.schools.findById(id)
       return school ? { id: school.id, ownerSubjectId: school.ownerSubjectId } : undefined
     }),
     setSchoolOwnerSubjectId: (schoolId, subjectId) => withSeedPortError('setSchoolOwnerSubjectId', async () => {
-      const school = await application.repositories.schools.findById(schoolId)
-      if (!school) {
-        throw new SeedPortError('setSchoolOwnerSubjectId', { detail: `School not found: ${schoolId}` })
-      }
-      await application.repositories.schools.save(new School({
-        id: school.id,
-        name: school.name,
-        timeZone: school.timeZone,
-        ownerSubjectId: subjectId,
-        type: school.type,
-        country: school.country,
-        city: school.city,
-        createdAt: school.createdAt,
-      }))
+      await initializeFixtureSchoolOwner(service.baseService, { schoolId, staffId: context.ownerStaffId, subjectId })
     }),
     findStaffById: id => withSeedPortError('findStaffById', async () => {
-      const staff = await application.repositories.staffMembers.findById(id)
+      const staff = await service.baseService.entities.staffMembers.findById(id)
       return staff ? { id: staff.id, subjectId: staff.subjectId } : undefined
     }),
     registerStaffMember: input => withSeedPortError('registerStaffMember', async () => {
@@ -46,15 +34,18 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
       await service.accessControlWorkflow.relinkActorSubject({ staffMemberId: staffId, subjectId })
     }),
     findGuardianById: id => withSeedPortError('findGuardianById', async () => {
-      const guardian = await application.repositories.guardians.findById(id)
+      const guardian = await service.baseService.entities.guardians.findById(id)
       return guardian ? { id: guardian.id, subjectId: guardian.subjectId } : undefined
     }),
     findTeacherById: id => withSeedPortError('findTeacherById', async () => {
-      const teacher = await application.repositories.teachers.findById(id)
+      const teacher = await service.baseService.entities.teachers.findById(id)
       return teacher ? { id: teacher.id, subjectId: teacher.subjectId } : undefined
     }),
     replaceGuardianSubjectId: (guardianId, subjectId) => withSeedPortError('replaceGuardianSubjectId', async () => {
       await service.accessControlWorkflow.relinkActorSubject({ guardianId, subjectId })
+    }),
+    replaceTeacherSubjectId: (teacherId, subjectId) => withSeedPortError('replaceTeacherSubjectId', async () => {
+      await service.accessControlWorkflow.relinkActorSubject({ teacherId, subjectId })
     }),
     linkActorSubject: input => withSeedPortError('linkActorSubject', async () => {
       await service.accessControlWorkflow.linkActorSubject(input)

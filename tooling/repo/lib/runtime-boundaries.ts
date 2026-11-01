@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { parseJsonc, readConfig, validateSecrets } from '../../../apps/api/configuration/index.ts'
+import { findWorkerParityViolations } from './worker-parity'
 
 export interface RuntimeBoundaryViolation {
   label: string
@@ -14,73 +16,37 @@ function readRepoFile(repoRoot: string, relativePath: string): string | null {
   return readFileSync(filePath, 'utf8')
 }
 
-function findWranglerEnvRouteMismatches(wrangler: string): RuntimeBoundaryViolation[] {
+function findWranglerEnvRouteMismatches(wrangler: string, repoRoot: string): RuntimeBoundaryViolation[] {
   const violations: RuntimeBoundaryViolation[] = []
-
-  for (const envName of ['staging', 'prod'] as const) {
-    const envBlock = wrangler.match(new RegExp(`"${envName}"\\s*:\\s*\\{([\\s\\S]*?)\\n\\s*\\}(?=,|\\s*\\})`))?.[1]
-    if (!envBlock) {
-      continue
-    }
-
-    const apiOrigin = envBlock.match(/"API_ORIGIN"\s*:\s*"([^"]+)"/)?.[1]
-    const routePattern = envBlock.match(/"pattern"\s*:\s*"([^"]+)"/)?.[1]
-    if (!apiOrigin || !routePattern) {
-      continue
-    }
-
-    let apiHost: string
-    try {
-      apiHost = new URL(apiOrigin).hostname
-    }
-    catch {
-      violations.push({
-        label: `wrangler ${envName} route`,
-        message: `env.${envName} API_ORIGIN is not a valid URL: ${apiOrigin}`,
-      })
-      continue
-    }
-
-    if (apiHost !== routePattern) {
-      violations.push({
-        label: `wrangler ${envName} route`,
-        message: `env.${envName} routes[0].pattern (${routePattern}) must match API_ORIGIN host (${apiHost})`,
-      })
+  try {
+    const config = parseJsonc(wrangler) as { env?: Record<string, { routes?: { pattern: string }[] }> }
+    for (const target of ['staging', 'production']) {
+      const settings = readConfig(target, resolve(repoRoot, 'apps/api'))
+      const route = config.env?.[target === 'production' ? 'prod' : target]?.routes?.[0]?.pattern
+      if (route && new URL(settings.API_ORIGIN!).hostname !== route) {
+        violations.push({ label: `wrangler ${target} route`, message: `config.${target}.jsonc API_ORIGIN must match the Wrangler route` })
+      }
     }
   }
-
+  catch {
+    violations.push({ label: 'API configuration', message: 'Expected valid local, staging, production and Wrangler configuration files' })
+  }
   return violations
 }
 
 export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundaryViolation[] {
   const violations: RuntimeBoundaryViolation[] = []
 
-  const envExample = readRepoFile(repoRoot, 'apps/api/.env.example')
-  if (!envExample) {
-    violations.push({
-      label: 'missing apps/api/.env.example',
-      message: 'apps/api/.env.example is required for local runtime documentation',
-    })
+  try {
+    const local = readConfig('local', resolve(repoRoot, 'apps/api'))
+    if (local.RUNTIME !== 'local' || !local.DATABASE_URL?.startsWith('pglite:')) {
+      violations.push({ label: 'local configuration', message: 'config.local.jsonc must use RUNTIME=local and persisted PGlite' })
+    }
+    const secrets = JSON.parse(readRepoFile(repoRoot, 'apps/api/secrets.json.example') ?? '{}')
+    validateSecrets(secrets, 'secrets.json.example')
   }
-  else {
-    if (!/\bRUNTIME=local\b/.test(envExample)) {
-      violations.push({
-        label: 'local env example',
-        message: 'apps/api/.env.example must set RUNTIME=local',
-      })
-    }
-    if (/DATABASE_URL=postgres:\/\//.test(envExample)) {
-      violations.push({
-        label: 'local env example',
-        message: 'apps/api/.env.example must not default DATABASE_URL to postgres://',
-      })
-    }
-    if (!/DATABASE_URL=pglite:\.data\/school/.test(envExample)) {
-      violations.push({
-        label: 'local env example',
-        message: 'apps/api/.env.example must default DATABASE_URL to pglite:.data/school',
-      })
-    }
+  catch {
+    violations.push({ label: 'local configuration', message: 'Invalid config.local.jsonc or secrets.json.example' })
   }
 
   const localLoader = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/env/local-loader.ts')
@@ -170,7 +136,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (existsSync(resolve(repoRoot, relativePath))) {
       violations.push({
         label: 'school identity extract',
-        message: `${relativePath} must live in edaya_identity, not the school API`,
+        message: `${relativePath} must live in apps/api/src/identity, not school runtime adapters`,
       })
     }
   }
@@ -200,7 +166,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (/0 2 \* \* \*/.test(wrangler) || /0 6 \* \* \*/.test(wrangler)) {
       violations.push({
         label: 'wrangler cron',
-        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (*/5 * * * *), not per-job triggers',
+        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (* * * * *), not per-job triggers',
       })
     }
 
@@ -214,10 +180,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     else {
       for (const [, block] of cronBlocks) {
         const expressions = [...block.matchAll(/"([^"]+)"/g)].map(match => match[1])
-        if (expressions.length !== 1 || expressions[0] !== '*/5 * * * *') {
+        if (expressions.length !== 1 || expressions[0] !== '* * * * *') {
           violations.push({
             label: 'wrangler cron',
-            message: `each wrangler triggers.crons must contain only "*/5 * * * *" (found: ${expressions.join(', ') || 'none'})`,
+            message: `each wrangler triggers.crons must contain only "* * * * *" (found: ${expressions.join(', ') || 'none'})`,
           })
           break
         }
@@ -246,14 +212,23 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
       })
     }
 
-    if (/\bBETTER_AUTH_|\bHYPERDRIVE_AUTH\b|\bAUTH_KV\b|\bALLOW_LEGACY_COOKIE_BUSINESS_AUTH\b|\bCOOKIE_DOMAIN\b/.test(wrangler)) {
+    if (/\bALLOW_LEGACY_COOKIE_BUSINESS_AUTH\b|\bCOOKIE_DOMAIN\b/.test(wrangler)) {
       violations.push({
         label: 'wrangler identity extract',
-        message: 'apps/api/wrangler.jsonc must not bind Better Auth, AUTH Hyperdrive, AUTH_KV, COOKIE_DOMAIN, or ALLOW_LEGACY_COOKIE_BUSINESS_AUTH',
+        message: 'apps/api/wrangler.jsonc must not configure COOKIE_DOMAIN or ALLOW_LEGACY_COOKIE_BUSINESS_AUTH',
       })
     }
 
-    violations.push(...findWranglerEnvRouteMismatches(wrangler))
+    if (/"vars"\s*:/.test(wrangler) || !/"keep_vars"\s*:\s*true/.test(wrangler)) {
+      violations.push({ label: 'Worker variables', message: 'Wrangler must omit vars and enable keep_vars' })
+    }
+    violations.push(...findWranglerEnvRouteMismatches(wrangler, repoRoot))
+    try {
+      violations.push(...findWorkerParityViolations(parseJsonc(wrangler) as Record<string, unknown>))
+    }
+    catch {
+      violations.push({ label: 'Worker environment parity', message: 'Invalid Wrangler JSONC' })
+    }
   }
 
   return violations

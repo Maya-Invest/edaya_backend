@@ -1,4 +1,4 @@
-import type { AccessTarget, AuthorityScope, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, Permission, StaffAssignment } from '@edaya/core'
+import type { AccessTarget, AuthorityScope, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, DocumentTeacher, Filter, Permission, StaffAssignment } from '@edaya/core'
 import type { InteractiveActorMetadata, SchoolScopedActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { StudentClassEnrollmentStatus, StudentStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
@@ -144,7 +144,7 @@ export class AccessFacts {
     return target
   }
 
-  async teaching(teacherId = this.actor.kind === 'teacher' ? this.actor.teacherId : undefined): Promise<{ year: string | undefined, subjects: Array<{ classGroupId: string, classSubjectId: string }>, homerooms: string[] }> {
+  async teaching(teacherId = this.actor.kind === 'teacher' ? this.actor.teacherId : undefined): Promise<{ year: string | undefined, subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }>, homerooms: string[] }> {
     if (!teacherId)
       return { year: undefined, subjects: [], homerooms: [] }
     const year = await this.academicYear()
@@ -155,7 +155,7 @@ export class AccessFacts {
       academicYearId: year,
       status: TeacherAssignmentStatus.Active,
     })).filter(assignment => effectiveAt(assignment, this.now))
-    const subjects: Array<{ classGroupId: string, classSubjectId: string }> = []
+    const subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }> = []
     const homerooms: string[] = []
     for (const assignment of assignments) {
       if (assignment.kind === TeacherAssignmentKind.Subject && assignment.classSubjectId) {
@@ -163,7 +163,7 @@ export class AccessFacts {
         const group = await this.one('classGroups', subject.classGroupId)
         if (group.academicYearId !== year)
           denied()
-        subjects.push({ classGroupId: group.id, classSubjectId: subject.id })
+        subjects.push({ classGroupId: group.id, classSubjectId: subject.id, gradeLevelId: group.gradeLevelId, subjectId: subject.subjectId })
       }
       if (assignment.kind === TeacherAssignmentKind.Homeroom && assignment.classGroupId) {
         const group = await this.one('classGroups', assignment.classGroupId)
@@ -200,21 +200,26 @@ export class AccessFacts {
     return { kind: 'audience', actorKind, actorId, classGroupIds }
   }
 
-  /** Display names come from live teacher placements, never staff responsibility labels. */
-  async assignedTeacherNames(input: { academicYearId: string, classGroupId: string, kind: TeacherAssignmentKind, classSubjectId?: string }): Promise<string | undefined> {
+  /** Preserve identities even when several teachers have the same display name. */
+  async assignedTeachers(input: { academicYearId: string, classGroupId: string, kind: TeacherAssignmentKind, classSubjectId?: string }): Promise<DocumentTeacher[]> {
     const filter = input.kind === TeacherAssignmentKind.Subject
       ? { classSubjectId: input.classSubjectId, kind: input.kind, academicYearId: input.academicYearId, status: TeacherAssignmentStatus.Active }
       : { classGroupId: input.classGroupId, kind: input.kind, academicYearId: input.academicYearId, status: TeacherAssignmentStatus.Active }
     const assignments = await this.list('teacherAssignments', filter)
-    const names = new Set<string>()
+    const teachers = new Map<string, DocumentTeacher>()
     for (const assignment of assignments) {
       if (!effectiveAt(assignment, this.now) || (assignment.classGroupId && assignment.classGroupId !== input.classGroupId))
         continue
       const teacher = await this.one('teachers', assignment.teacherId)
       if (teacher.isActive)
-        names.add(teacher.fullName)
+        teachers.set(teacher.id, { teacherId: teacher.id, name: teacher.fullName, ...(teacher.signatureAttachmentId ? { signatureAttachmentId: teacher.signatureAttachmentId } : {}) })
     }
-    return [...names].sort().join(', ') || undefined
+    return [...teachers.values()].sort((a, b) => a.name.localeCompare(b.name) || a.teacherId.localeCompare(b.teacherId))
+  }
+
+  /** Display names come from live teacher placements, never staff responsibility labels. */
+  async assignedTeacherNames(input: { academicYearId: string, classGroupId: string, kind: TeacherAssignmentKind, classSubjectId?: string }): Promise<string | undefined> {
+    return [...new Set((await this.assignedTeachers(input)).map(teacher => teacher.name))].sort().join(', ') || undefined
   }
 
   async studentClasses(studentIds: readonly string[]): Promise<string[]> {

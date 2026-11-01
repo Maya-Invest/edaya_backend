@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="{{locale}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{documentTitle}}</title>
+    <style>
+      :root { --brand: {{primaryColor}}; }
+      {{{styles}}}
+    </style>
+  </head>
+  <body class="id-card {{#if watermark}}watermarked{{/if}}">
+    {{#if watermark}}<div class="watermark">{{labels.preview}}</div>{{/if}}
+    <article class="card">
+      <div class="cut-marks"></div>
+      {{#if logoUrl}}<img class="logo" src="{{logoUrl}}" alt="" />{{/if}}
+      <p class="school">{{schoolName}}</p>
+      {{#if photoUrl}}<img class="photo" src="{{photoUrl}}" alt="" />{{/if}}
+      <h1>{{studentName}}</h1>
+      {{#if classLabel}}<p>{{labels.class}} {{classLabel}}</p>{{/if}}
+      {{#if matricule}}<p>{{labels.matricule}} {{matricule}}</p>{{/if}}
+      {{#if schoolYear}}<p>{{labels.schoolYear}} {{schoolYear}}</p>{{/if}}
+    </article>
+  </body>
+</html>

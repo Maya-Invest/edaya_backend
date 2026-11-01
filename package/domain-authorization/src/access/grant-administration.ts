@@ -15,6 +15,11 @@ export interface DelegatedGrant {
 /** Validate the complete placement against this tenant, including redundant parent IDs. */
 export async function validateGrantTargets(facts: AccessFacts, grant: DelegatedGrant): Promise<void> {
   validatePermissionScopes(grant.permission, grant.scopes)
+  await validateScopeSelectionTargets(facts, grant)
+}
+
+/** Validate saved selections without treating them as grants for a particular action. */
+export async function validateScopeSelectionTargets(facts: AccessFacts, grant: { scopes: readonly GrantScope[], academicYearId: string }): Promise<void> {
   await facts.one('academicYears', grant.academicYearId)
   for (const scope of grant.scopes) {
     switch (scope.kind) {
@@ -26,24 +31,24 @@ export async function validateGrantTargets(facts: AccessFacts, grant: DelegatedG
       case 'grade_level':
         await facts.one('gradeLevels', scope.gradeLevelId)
         break
-      case 'grade_level_subject': {
+      case 'subject': {
         await facts.one('gradeLevels', scope.gradeLevelId)
-        if (scope.gradeLevelSubjectId) {
-          const subject = await facts.one('gradeLevelSubjects', scope.gradeLevelSubjectId)
+        if (scope.subjectId) {
+          const subject = await facts.one('subjects', scope.subjectId)
           if (subject.gradeLevelId !== scope.gradeLevelId || subject.academicYearId !== grant.academicYearId)
             denied('Grant subject belongs to a different placement or academic year')
         }
+        if (scope.classGroupId) {
+          const group = await facts.one('classGroups', scope.classGroupId)
+          if (group.gradeLevelId !== scope.gradeLevelId || group.academicYearId !== grant.academicYearId)
+            denied('Grant class belongs to a different grade or academic year')
+        }
         break
       }
-      case 'class_group':
-      case 'class_subject': {
+      case 'class_group': {
         const group = await facts.one('classGroups', scope.classGroupId)
         if (group.academicYearId !== grant.academicYearId)
           denied('Grant placement belongs to a different academic year')
-        if (scope.kind === 'class_subject' && scope.classSubjectId
-          && (await facts.one('classSubjects', scope.classSubjectId)).classGroupId !== group.id) {
-          denied()
-        }
         break
       }
       case 'activity': {
@@ -55,6 +60,50 @@ export async function validateGrantTargets(facts: AccessFacts, grant: DelegatedG
       }
     }
   }
+}
+
+/** Dynamic parent containment; enumerated children never imply future parent authority. */
+async function contains(facts: AccessFacts, held: AuthorityScope, requested: AuthorityScope, year: string): Promise<boolean> {
+  if (authorityScopeContains(held, requested))
+    return true
+  if (requested.kind === 'all')
+    return false
+  if (held.kind === 'activity' && requested.kind === 'activity_session')
+    return (!held.activityId || held.activityId === requested.activityId) && (!held.classGroupId || held.classGroupId === requested.classGroupId)
+  if (held.kind !== 'grade_level' && held.kind !== 'subject' && !(held.kind === 'all' && ['grade_level', 'subject'].includes(held.grain)))
+    return false
+  let gradeLevelId: string | undefined
+  let subjectId: string | undefined
+  let classGroupId: string | undefined
+  if ('gradeLevelId' in requested) {
+    gradeLevelId = requested.gradeLevelId
+    if (requested.kind === 'subject') {
+      subjectId = requested.subjectId
+      classGroupId = requested.classGroupId
+    }
+  }
+  else if ('classGroupId' in requested && requested.classGroupId) {
+    classGroupId = requested.classGroupId
+    const group = await facts.one('classGroups', classGroupId)
+    if (group.academicYearId !== year)
+      return false
+    gradeLevelId = group.gradeLevelId
+    if ('classSubjectId' in requested && requested.classSubjectId) {
+      const offering = await facts.one('classSubjects', requested.classSubjectId)
+      if (offering.classGroupId !== classGroupId)
+        return false
+      subjectId = offering.subjectId
+    }
+  }
+  if (!gradeLevelId || (held.kind !== 'all' && held.gradeLevelId !== gradeLevelId))
+    return false
+  if (held.kind === 'grade_level' || (held.kind === 'all' && held.grain === 'grade_level'))
+    return true
+  // Subject authority may delegate a subject or an exact teaching occurrence, never a whole class/grade.
+  if (requested.kind !== 'subject' && !subjectId)
+    return false
+  return held.kind === 'all' || ((!held.subjectId || held.subjectId === subjectId)
+    && (!held.classGroupId || held.classGroupId === classGroupId))
 }
 
 /** An administrator can delegate only authority they hold for the same action and year. */
@@ -74,9 +123,9 @@ export async function assertGrantDelegation(facts: AccessFacts, grants: readonly
     const held = await facts.staffGrants(requested.permission, requested.academicYearId)
     const startsAt = requested.startsAt ?? facts.now
     for (const scope of requested.scopes) {
-      if (!held.some(grant => (!grant.startsAt || grant.startsAt <= startsAt)
-        && (!grant.endsAt || (requested.endsAt !== undefined && requested.endsAt <= grant.endsAt))
-        && grant.scopes.some(heldScope => authorityScopeContains(heldScope, scope)))) {
+      const candidates = held.filter(grant => (!grant.startsAt || grant.startsAt <= startsAt) && (!grant.endsAt || (requested.endsAt !== undefined && requested.endsAt <= grant.endsAt)))
+      const matches = await Promise.all(candidates.flatMap(grant => grant.scopes.map(heldScope => contains(facts, heldScope, scope, requested.academicYearId))))
+      if (!matches.some(Boolean)) {
         denied('Delegation exceeds the administrator’s action, scope, year, or validity period')
       }
     }
@@ -94,7 +143,10 @@ export async function assertAssignmentDelegation(facts: AccessFacts, assignment:
   for (const permission of assignment.permissions) {
     const held = await facts.staffGrants(permission, assignment.academicYearId)
     const requested: AuthorityScope[] = scopesForStaffAssignmentPermission(permission, target)
-    if (requested.some(scope => !held.some(grant => !grant.endsAt && grant.scopes.some(existing => authorityScopeContains(existing, scope)))))
-      denied('Assignment exceeds the administrator’s action, placement, year, or validity period')
+    for (const scope of requested) {
+      const matches = await Promise.all(held.filter(grant => !grant.endsAt).flatMap(grant => grant.scopes.map(existing => contains(facts, existing, scope, assignment.academicYearId))))
+      if (!matches.some(Boolean))
+        denied('Assignment exceeds the administrator’s action, placement, year, or validity period')
+    }
   }
 }

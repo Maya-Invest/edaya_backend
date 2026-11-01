@@ -13,7 +13,7 @@ describe('notification gateway adapters', () => {
       recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: 'g1' }],
     })).resolves.toBeUndefined()
 
-    await expect(noOpNotificationGateway.cancel('test:1')).resolves.toBeUndefined()
+    await expect(noOpNotificationGateway.cancel('test:1', 'school')).resolves.toBeUndefined()
   })
 
   test('RecordingNotificationGateway records enqueue and cancel', async () => {
@@ -29,7 +29,7 @@ describe('notification gateway adapters', () => {
     }
 
     await gateway.enqueue(input)
-    await gateway.cancel(input.idempotencyKey)
+    await gateway.cancel(input.idempotencyKey, input.schoolId)
 
     expect(gateway.enqueued).toEqual([input])
     expect(gateway.cancelled).toEqual([input.idempotencyKey])
@@ -67,7 +67,7 @@ describe('notification gateway adapters', () => {
     }
 
     await gateway.enqueue(input)
-    await gateway.cancel(input.idempotencyKey)
+    await gateway.cancel(input.idempotencyKey, input.schoolId)
     await gateway.enqueue({ ...input, title: 'Rescheduled' })
 
     expect(gateway.enqueued).toHaveLength(2)

@@ -1,7 +1,6 @@
 import type { SQL } from "drizzle-orm";
-import { sql } from "drizzle-orm";
-import { NOTIFY_RELIABILITY_MIGRATION_SQL, NOTIFY_SCHEMA_SQL } from "./schema";
 import type { NotifySql } from "./types";
+import { sql } from "drizzle-orm";
 
 function bindSql(query: string, params: unknown[] = []): SQL {
   if (params.length === 0) {
@@ -55,22 +54,4 @@ export function createNotifySqlFromDrizzle(db: unknown, getExecutor?: () => unkn
     },
     async close() {},
   };
-}
-
-function splitStatements(sqlText: string): string[] {
-  return sqlText
-    .split(";")
-    .map(statement => statement.trim())
-    .filter(Boolean)
-    .map(statement => `${statement};`);
-}
-
-export async function applyNotifySchema(sqlClient: NotifySql): Promise<void> {
-  for (const statement of splitStatements(`${NOTIFY_SCHEMA_SQL}\n${NOTIFY_RELIABILITY_MIGRATION_SQL}`)) {
-    await sqlClient.execute(statement);
-  }
-}
-
-export async function applyNotifySchemaOnDrizzle(db: unknown): Promise<void> {
-  await applyNotifySchema(createNotifySqlFromDrizzle(db));
 }

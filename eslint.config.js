@@ -1,3 +1,4 @@
+import { importOrder } from './tooling/repo/eslint-imports.js'
 import antfu from '@antfu/eslint-config'
 
 export default antfu({
@@ -7,6 +8,7 @@ export default antfu({
     '**/tooling/seeding/src/generated/**',
   ],
   rules: {
+    'perfectionist/sort-imports': importOrder,
     'no-new': 'off',
   },
 }, {

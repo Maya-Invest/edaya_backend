@@ -1,8 +1,8 @@
+import type { AppBindings } from "@/http/types";
+import { ActorAssuranceLevel } from "@edaya/authorization";
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/app-router";
-import { ActorAssuranceLevel } from "@edaya/authorization";
-import type { AppBindings } from "@/http/types";
 
 describe("generated core query endpoints", () => {
   const mockActor = {
@@ -44,6 +44,27 @@ describe("generated core query endpoints", () => {
     batchDelete: mock().mockResolvedValue(undefined),
     ...overrides,
   });
+
+  for (const query of [
+    { path: "get-activity-roster", method: "getActivityRoster", input: { activityId: "club-1" }, output: { students: [], eligibleStudentIds: [], classes: [] } },
+    { path: "get-assessment-editor-context", method: "getAssessmentEditorContext", input: { classGroupId: "class-1", periodId: "period-1" }, output: { assessmentsRaw: [], classSubjectsRaw: [], subjectsRaw: [], classSize: 0, markResults: [] } },
+  ]) {
+    it(`dispatches bounded ${query.path} context and rejects missing targets`, async () => {
+      const handler = mock().mockResolvedValue(query.output);
+      const app = setupTestApp({ baseService: {}, [query.method]: handler });
+      const request = (body: unknown) => app.request(`/core/queries/${query.path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const response = await request(query.input);
+      expect(response.status).toBe(200);
+      expect(await response.json() as unknown).toEqual(query.output);
+      expect(handler).toHaveBeenCalledWith(query.input);
+      expect((await request({})).status).toBe(422);
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+  }
 
   it("counts generated core entities", async () => {
     const mockCount = mock().mockResolvedValue(2);
@@ -169,6 +190,22 @@ describe("generated core query endpoints", () => {
     });
   });
 
+  it("accepts a year-only dashboard query but rejects an explicitly invalid period", async () => {
+    const getSchoolOverview = mock().mockResolvedValue({ academicPeriodId: null });
+    const app = setupTestApp({ baseService: {}, getSchoolOverview });
+    const request = (academicPeriodId?: string) => app.request("/core/queries/get-school-overview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schoolId: "school-1", academicYearId: "year-1", academicPeriodId }),
+    });
+    const response = await request();
+    expect(response.status).toBe(200);
+    expect(await response.json() as { academicPeriodId: null }).toEqual({ academicPeriodId: null });
+    expect(getSchoolOverview).toHaveBeenCalledWith({ schoolId: "school-1", academicYearId: "year-1", academicPeriodId: undefined, referenceDate: undefined });
+    expect((await request("")).status).toBe(422);
+    expect(getSchoolOverview).toHaveBeenCalledTimes(1);
+  });
+
   it("executes get-class-group-timetable query route", async () => {
     const mockGetClassGroupTimetable = mock().mockResolvedValue({
       classGroupId: "cg-1",
@@ -197,6 +234,39 @@ describe("generated core query endpoints", () => {
     expect(body.events).toEqual([]);
     expect(mockGetClassGroupTimetable).toHaveBeenCalledWith({
       classGroupId: "cg-1",
+      startDate: new Date("2026-05-01T00:00:00.000Z"),
+      endDate: new Date("2026-05-31T00:00:00.000Z"),
+    });
+  });
+
+  it("executes get-teacher-timetable query route", async () => {
+    const mockGetTeacherTimetable = mock().mockResolvedValue({
+      teacherId: "teacher-1",
+      startDate: "2026-05-01",
+      endDate: "2026-05-31",
+      events: [],
+    });
+    const app = setupTestApp({
+      baseService: {},
+      getTeacherTimetable: mockGetTeacherTimetable,
+    });
+
+    const res = await app.request("/core/queries/get-teacher-timetable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        teacherId: "teacher-1",
+        startDate: "2026-05-01",
+        endDate: "2026-05-31",
+      }),
+    });
+
+    const body = await res.json() as { teacherId: string; events: unknown[] };
+    expect(res.status).toBe(200);
+    expect(body.teacherId).toBe("teacher-1");
+    expect(body.events).toEqual([]);
+    expect(mockGetTeacherTimetable).toHaveBeenCalledWith({
+      teacherId: "teacher-1",
       startDate: new Date("2026-05-01T00:00:00.000Z"),
       endDate: new Date("2026-05-31T00:00:00.000Z"),
     });

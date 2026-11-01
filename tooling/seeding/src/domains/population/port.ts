@@ -8,6 +8,7 @@ export interface StudentSeedRecord {
 }
 
 export interface EnrollmentSeedRecord {
+  enrolledAt?: string
   id: string
   studentId: string
   classGroupId: string

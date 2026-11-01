@@ -1,5 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { SchoolRepositories } from '@edaya/service'
+import { PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
@@ -45,7 +46,7 @@ export function wrapSaveWithFailure<T extends { readonly id: string }>(
 }
 
 export function applyAllSaveFailureWraps(repos: any, getSaveFailure: () => any, clearSaveFailure: () => void) {
-  wrapSaveWithFailure('studentFeeRepository', repos.studentFees, getSaveFailure, clearSaveFailure)
+  wrapSaveWithFailure('studentFeeRepository', repos.studentCharges, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('lessonSessionRepository', repos.lessonSessions, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('classSubjectMatterRepository', repos.classSubjectMatters, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('reportCardResultRepository', repos.results, getSaveFailure, clearSaveFailure)
@@ -71,6 +72,7 @@ export function buildSchoolApplication(opts: {
 }) {
   return new SchoolApplication({
     atomicExecution: opts.atomicExecution,
+    commandJournal: new PostgresCommandJournal(),
     repositories: opts.repositories,
     notificationGateway: noOpNotificationGateway,
     fileStorage: noOpFileStorage,
@@ -118,14 +120,15 @@ export function buildTestRepositoriesMap(repos: any) {
     attendanceRepository: repos.attendance,
     assessmentResultRepository: repos.assessmentResults,
     gradeScaleRepository: repos.gradeScales,
-    reportCardDefinitionRepository: repos.definitions,
-    reportCardDefinitionSectionRepository: repos.sections,
+    reportModuleRepository: repos.reportModules,
     reportCardResultRepository: repos.results,
     announcementRepository: repos.announcements,
     announcementTargetRepository: repos.announcementTargets,
     messageDeliveryRepository: repos.messageDeliveries,
-    feeRepository: repos.fees,
-    studentFeeRepository: repos.studentFees,
+    catalogServiceRepository: repos.catalogServices,
+    studentChargeRepository: repos.studentCharges,
+    studentYearAccountRepository: repos.studentYearAccounts,
+    studentFeeRepository: repos.studentCharges,
     paymentRepository: repos.payments,
     scheduleRepository: repos.schedules,
     calendarEventRepository: repos.calendarEvents,

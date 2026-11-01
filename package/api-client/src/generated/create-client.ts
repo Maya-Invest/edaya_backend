@@ -34,10 +34,33 @@ type QueryClients<TSchemas extends Record<string, unknown>> = {
   ) => Promise<SchemaName<TSchemas, typeof clientBindings.queries[K]['responseSchemaName']>>
 }
 
+type AuthClients<TSchemas extends Record<string, unknown>> = {
+  terms: () => Promise<SchemaName<TSchemas, 'AuthTerms'>>
+  methods: () => Promise<SchemaName<TSchemas, 'AuthMethods'>>
+  startOtp: (payload: SchemaName<TSchemas, 'AuthStart'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
+  statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
+  resendOtp: (payload: SchemaName<TSchemas, 'AuthResend'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
+  verifyOtp: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
+  verifyTotp: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
+  enroll: (payload: SchemaName<TSchemas, 'AuthEnrollmentInput'>) => Promise<SchemaName<TSchemas, 'AuthEnrollment'>>
+  confirmEnrollment: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
+  recover: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthEnrollment'>>
+  linkIdentifier: (payload: SchemaName<TSchemas, 'AuthStart'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
+  unlinkIdentifier: (payload: SchemaName<TSchemas, 'AuthUnlink'>) => Promise<SchemaName<TSchemas, 'AuthSuccess'>>
+  security: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => Promise<SchemaName<TSchemas, 'AuthSecurity'>>
+  disableTotp: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => Promise<SchemaName<TSchemas, 'AuthSuccess'>>
+  getSession: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => Promise<SchemaName<TSchemas, 'AuthSnapshot'>>
+  accessToken: (payload: SchemaName<TSchemas, 'AuthResource'>) => Promise<SchemaName<TSchemas, 'AuthAccessToken'>>
+  signOut: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => Promise<SchemaName<TSchemas, 'AuthSuccess'>>
+  signOutAll: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => Promise<SchemaName<TSchemas, 'AuthSuccess'>>
+}
+
 type AuthorizationClients<TSchemas extends Record<string, unknown>> = {
   effectiveGrants: () => Promise<SchemaName<TSchemas, 'EffectiveGrantsResponse'>>
+  profiles: () => Promise<SchemaName<TSchemas, 'AuthorizationProfilesResponse'>>
   permissionCatalog: () => Promise<SchemaName<TSchemas, 'PermissionCatalogResponse'>>
   scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => Promise<SchemaName<TSchemas, 'ScopeRenderResponse'>>
+  scopeSelectionsRender: (payload: SchemaName<TSchemas, 'ScopeSelectionsRenderRequest'>) => Promise<SchemaName<TSchemas, 'ScopeSelectionsRenderResponse'>>
 }
 
 type FilesClients<TSchemas extends Record<string, unknown>> = {
@@ -46,9 +69,26 @@ type FilesClients<TSchemas extends Record<string, unknown>> = {
   getContent: (params: { attachmentId: string }) => Promise<unknown>
 }
 
+type ImportsClients<TSchemas extends Record<string, unknown>> = {
+  create: (payload: SchemaName<TSchemas, 'CreateSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  settings: (payload: SchemaName<TSchemas, 'UpdateSchoolImportSettingsRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  submit: (payload: SchemaName<TSchemas, 'SubmitSchoolImportFileRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportFile'>>
+  validate: (payload: SchemaName<TSchemas, 'ValidateSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  confirm: (payload: SchemaName<TSchemas, 'ConfirmSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  retry: (payload: SchemaName<TSchemas, 'RetrySchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  cancel: (payload: SchemaName<TSchemas, 'CancelSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  status: (payload: SchemaName<TSchemas, 'GetSchoolImportStatusRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportStatus'>>
+  detail: (payload: SchemaName<TSchemas, 'GetSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  history: (payload: SchemaName<TSchemas, 'SchoolImportHistoryRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportHistory'>>
+  report: (payload: SchemaName<TSchemas, 'SchoolImportReportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDownload'>>
+  template: (payload: SchemaName<TSchemas, 'SchoolImportTemplateRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDownload'>>
+}
+
 type OnboardingClients<TSchemas extends Record<string, unknown>> = {
   registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => Promise<SchemaName<TSchemas, 'School'>>
   listStructureTemplates: () => Promise<SchemaName<TSchemas, 'OnboardingListStructureTemplatesResponse'>>
+  listDatasets: () => Promise<SchemaName<TSchemas, 'OnboardingDatasetChoices'>>
+  getDataset: (params: { id: string, version: string }) => Promise<SchemaName<TSchemas, 'OnboardingDataset'>>
   accountStatus: () => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
   applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingApplyStructureTemplateResponse'>>
   completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
@@ -64,6 +104,8 @@ type PlatformUsersClients<TSchemas extends Record<string, unknown>> = {
 }
 
 type PublicClients<TSchemas extends Record<string, unknown>> = {
+  listMyInvitations: () => Promise<SchemaName<TSchemas, 'ListMyInvitationsResponse'>>
+  acceptMyInvitation: (params: { invitationId: string }) => Promise<SchemaName<TSchemas, 'AcceptInvitationResponse'>>
   previewInvitation: (params: { token: string }) => Promise<SchemaName<TSchemas, 'InvitationPreviewResponse'>>
   acceptInvitation: (params: { token: string }) => Promise<SchemaName<TSchemas, 'AcceptInvitationResponse'>>
 }
@@ -83,22 +125,19 @@ type ServiceAccountsClients<TSchemas extends Record<string, unknown>> = {
   rotateKey: (params: { id: string }) => Promise<SchemaName<TSchemas, 'RotateServiceAccountKeyResponse'>>
 }
 
-type WebhooksClients<TSchemas extends Record<string, unknown>> = {
-  notificationDelivery: () => Promise<SchemaName<TSchemas, 'NotificationDeliveryWebhookResponse'>>
-}
-
 export interface SchoolClient<TSchemas extends Record<string, unknown>> {
   entities: EntityClients<TSchemas>
   commands: CommandClients<TSchemas>
   queries: QueryClients<TSchemas>
+  auth: AuthClients<TSchemas>
   authorization: AuthorizationClients<TSchemas>
   files: FilesClients<TSchemas>
+  imports: ImportsClients<TSchemas>
   onboarding: OnboardingClients<TSchemas>
   platformUsers: PlatformUsersClients<TSchemas>
   public: PublicClients<TSchemas>
   s2sClients: S2sClientsClients<TSchemas>
   serviceAccounts: ServiceAccountsClients<TSchemas>
-  webhooks: WebhooksClients<TSchemas>
 }
 
 export function createSchoolClient<TSchemas extends Record<string, unknown>>(
@@ -139,19 +178,57 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     entities,
     commands,
     queries,
+    auth: {
+    terms: () => transport.request('GET', resolveClientRoutePath('/auth/edaya/terms', {}, 'root')),
+    methods: () => transport.request('GET', resolveClientRoutePath('/auth/edaya/methods', {}, 'root')),
+    startOtp: (payload: SchemaName<TSchemas, 'AuthStart'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/start', {}, 'root'), { body: payload }),
+    statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/status', {}, 'root'), { body: payload }),
+    resendOtp: (payload: SchemaName<TSchemas, 'AuthResend'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/resend', {}, 'root'), { body: payload }),
+    verifyOtp: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/verify', {}, 'root'), { body: payload }),
+    verifyTotp: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/verify', {}, 'root'), { body: payload }),
+    enroll: (payload: SchemaName<TSchemas, 'AuthEnrollmentInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/enroll', {}, 'root'), { body: payload }),
+    confirmEnrollment: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/confirm', {}, 'root'), { body: payload }),
+    recover: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/recovery', {}, 'root'), { body: payload }),
+    linkIdentifier: (payload: SchemaName<TSchemas, 'AuthStart'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/identifiers/start', {}, 'root'), { body: payload }),
+    unlinkIdentifier: (payload: SchemaName<TSchemas, 'AuthUnlink'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/identifiers/unlink', {}, 'root'), { body: payload }),
+    security: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/security', {}, 'root'), { body: payload }),
+    disableTotp: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/disable', {}, 'root'), { body: payload }),
+    getSession: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/session', {}, 'root'), { body: payload }),
+    accessToken: (payload: SchemaName<TSchemas, 'AuthResource'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/access-token', {}, 'root'), { body: payload }),
+    signOut: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/sign-out', {}, 'root'), { body: payload }),
+    signOutAll: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/sign-out-all', {}, 'root'), { body: payload }),
+  } as AuthClients<TSchemas>,
     authorization: {
     effectiveGrants: () => transport.request('GET', resolveClientRoutePath('authorization/effective-grants')),
+    profiles: () => transport.request('GET', resolveClientRoutePath('authorization/profiles')),
     permissionCatalog: () => transport.request('GET', resolveClientRoutePath('authorization/permission-catalog')),
     scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => transport.request('POST', resolveClientRoutePath('authorization/scope/render'), { body: payload }),
+    scopeSelectionsRender: (payload: SchemaName<TSchemas, 'ScopeSelectionsRenderRequest'>) => transport.request('POST', resolveClientRoutePath('authorization/scope-selections/render'), { body: payload }),
   } as AuthorizationClients<TSchemas>,
     files: {
     createUploadIntent: (payload: SchemaName<TSchemas, 'CreateFileUploadIntentRequest'>) => transport.request('POST', resolveClientRoutePath('files/upload-intents'), { body: payload }),
     getDownloadUrl: (params: { attachmentId: string }) => transport.request('GET', resolveClientRoutePath('files/{attachmentId}/download-url', params)),
     getContent: (params: { attachmentId: string }) => transport.request('GET', resolveClientRoutePath('files/{attachmentId}/content', params)),
   } as FilesClients<TSchemas>,
+    imports: {
+    create: (payload: SchemaName<TSchemas, 'CreateSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/create'), { body: payload }),
+    settings: (payload: SchemaName<TSchemas, 'UpdateSchoolImportSettingsRequest'>) => transport.request('POST', resolveClientRoutePath('imports/settings'), { body: payload }),
+    submit: (payload: SchemaName<TSchemas, 'SubmitSchoolImportFileRequest'>) => transport.request('POST', resolveClientRoutePath('imports/submit'), { body: payload }),
+    validate: (payload: SchemaName<TSchemas, 'ValidateSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/validate'), { body: payload }),
+    confirm: (payload: SchemaName<TSchemas, 'ConfirmSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/confirm'), { body: payload }),
+    retry: (payload: SchemaName<TSchemas, 'RetrySchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/retry'), { body: payload }),
+    cancel: (payload: SchemaName<TSchemas, 'CancelSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/cancel'), { body: payload }),
+    status: (payload: SchemaName<TSchemas, 'GetSchoolImportStatusRequest'>) => transport.request('POST', resolveClientRoutePath('imports/status'), { body: payload }),
+    detail: (payload: SchemaName<TSchemas, 'GetSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/detail'), { body: payload }),
+    history: (payload: SchemaName<TSchemas, 'SchoolImportHistoryRequest'>) => transport.request('POST', resolveClientRoutePath('imports/history'), { body: payload }),
+    report: (payload: SchemaName<TSchemas, 'SchoolImportReportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/report'), { body: payload }),
+    template: (payload: SchemaName<TSchemas, 'SchoolImportTemplateRequest'>) => transport.request('POST', resolveClientRoutePath('imports/template'), { body: payload }),
+  } as ImportsClients<TSchemas>,
     onboarding: {
     registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/register-school'), { body: payload }),
     listStructureTemplates: () => transport.request('GET', resolveClientRoutePath('onboarding/structure-templates')),
+    listDatasets: () => transport.request('GET', resolveClientRoutePath('onboarding/datasets')),
+    getDataset: (params: { id: string, version: string }) => transport.request('GET', resolveClientRoutePath('onboarding/datasets/{id}/{version}', params)),
     accountStatus: () => transport.request('GET', resolveClientRoutePath('onboarding/account-status')),
     applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/apply-structure-template'), { body: payload }),
     completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/complete-wizard'), { body: payload }),
@@ -165,6 +242,8 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     deactivate: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('platform-users/{id}/deactivate', params)),
   } as PlatformUsersClients<TSchemas>,
     public: {
+    listMyInvitations: () => transport.request('GET', resolveClientRoutePath('public/me/invitations', {}, 'root')),
+    acceptMyInvitation: (params: { invitationId: string }) => transport.request('POST', resolveClientRoutePath('public/me/invitations/{invitationId}/accept', params, 'root')),
     previewInvitation: (params: { token: string }) => transport.request('GET', resolveClientRoutePath('public/invitations/{token}', params, 'root')),
     acceptInvitation: (params: { token: string }) => transport.request('POST', resolveClientRoutePath('public/invitations/{token}/accept', params, 'root')),
   } as PublicClients<TSchemas>,
@@ -181,8 +260,5 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     revoke: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('service-accounts/{id}/revoke', params)),
     rotateKey: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('service-accounts/{id}/rotate-key', params)),
   } as ServiceAccountsClients<TSchemas>,
-    webhooks: {
-    notificationDelivery: () => transport.request('POST', resolveClientRoutePath('webhooks/notification-delivery', {}, 'root')),
-  } as WebhooksClients<TSchemas>,
   }
 }

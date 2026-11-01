@@ -1,11 +1,11 @@
-import { ReportCardDefinitionSectionKind, ReportCardResultSection } from '@edaya/core'
+import { ReportCardResultSection, ReportCardResultSectionKind } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('ReportCardResultSection entity', () => {
   test('instantiates successfully as a group section', () => {
     const result = new ReportCardResultSection({
       sectionId: 'sec1',
-      sectionKind: ReportCardDefinitionSectionKind.Group,
+      sectionKind: ReportCardResultSectionKind.Module,
       name: 'Sciences',
       average: 14.5,
       weight: 1,
@@ -13,7 +13,7 @@ describe('ReportCardResultSection entity', () => {
     })
 
     expect(result.sectionId).toBe('sec1')
-    expect(result.sectionKind).toBe(ReportCardDefinitionSectionKind.Group)
+    expect(result.sectionKind).toBe(ReportCardResultSectionKind.Module)
     expect(result.name).toBe('Sciences')
     expect(result.average).toBe(14.5)
     expect(result.weight).toBe(1)
@@ -25,7 +25,7 @@ describe('ReportCardResultSection entity', () => {
   test('instantiates successfully as a subject section', () => {
     const result = new ReportCardResultSection({
       sectionId: 'sec2',
-      sectionKind: ReportCardDefinitionSectionKind.Subject,
+      sectionKind: ReportCardResultSectionKind.Subject,
       name: 'Physics',
       average: 12.333,
       weight: 2,
@@ -33,7 +33,7 @@ describe('ReportCardResultSection entity', () => {
     })
 
     expect(result.sectionId).toBe('sec2')
-    expect(result.sectionKind).toBe(ReportCardDefinitionSectionKind.Subject)
+    expect(result.sectionKind).toBe(ReportCardResultSectionKind.Subject)
     expect(result.name).toBe('Physics')
     expect(result.average).toBe(12.33) // Rounded
     expect(result.weight).toBe(2)
@@ -43,7 +43,7 @@ describe('ReportCardResultSection entity', () => {
   test('persists teacher comment on subject sections', () => {
     const result = new ReportCardResultSection({
       sectionId: 'sec3',
-      sectionKind: ReportCardDefinitionSectionKind.Subject,
+      sectionKind: ReportCardResultSectionKind.Subject,
       name: 'subj-math',
       average: 18.5,
       weight: 2,
@@ -58,7 +58,7 @@ describe('ReportCardResultSection entity', () => {
     expect(() => {
       new ReportCardResultSection({
         sectionId: 'sec1',
-        sectionKind: ReportCardDefinitionSectionKind.Group,
+        sectionKind: ReportCardResultSectionKind.Module,
         name: 'Sciences',
         average: 14.5,
         weight: 1,
@@ -71,7 +71,7 @@ describe('ReportCardResultSection entity', () => {
     expect(() => {
       new ReportCardResultSection({
         sectionId: 'sec2',
-        sectionKind: ReportCardDefinitionSectionKind.Subject,
+        sectionKind: ReportCardResultSectionKind.Subject,
         name: 'Physics',
         average: 12.33,
         weight: 2,
@@ -83,7 +83,7 @@ describe('ReportCardResultSection entity', () => {
     expect(() => {
       new ReportCardResultSection({
         sectionId: 'sec1',
-        sectionKind: ReportCardDefinitionSectionKind.Group,
+        sectionKind: ReportCardResultSectionKind.Module,
         name: 'Sciences',
         average: -1,
         weight: 1,
@@ -93,11 +93,20 @@ describe('ReportCardResultSection entity', () => {
     expect(() => {
       new ReportCardResultSection({
         sectionId: 'sec1',
-        sectionKind: ReportCardDefinitionSectionKind.Group,
+        sectionKind: ReportCardResultSectionKind.Module,
         name: 'Sciences',
         average: 10,
         weight: -1,
       })
     }).toThrow('weight must be a finite, non-negative number')
   })
+})
+
+test('raw persisted sections enforce flat module structure as well as constructed sections', async () => {
+  const { reportCardResultSectionSchema } = await import('../../../../src')
+  const subject = { sectionId: 'subject:math', sectionKind: 'subject', name: 'Math', classSubjectId: 'cs', weight: 1, subResults: [] }
+  const module = { sectionId: 'module:science', sectionKind: 'module', name: 'Science', weight: 1, subResults: [subject] }
+  expect(reportCardResultSectionSchema.safeParse(module).success).toBe(true)
+  expect(reportCardResultSectionSchema.safeParse({ ...module, subResults: [module] }).success).toBe(false)
+  expect(reportCardResultSectionSchema.safeParse({ ...subject, subResults: [subject] }).success).toBe(false)
 })

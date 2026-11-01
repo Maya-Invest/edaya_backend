@@ -1,6 +1,5 @@
 import type { SeedApplication } from '../../../support/types'
 import type { CurriculumSeedPort } from '../port'
-import { Subject, SubjectMatter } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -10,17 +9,17 @@ export function createInProcessCurriculumSeedPort(
   const service = createInProcessSeedService(application, 'dev-curriculum-seed')
 
   return {
+    saveSubjectCategory: record => withSeedPortError('curriculum.saveSubjectCategory', async () => {
+      await service.academicsWorkflow.configureSubjectCategory(record)
+    }),
+    saveAcademicDiscipline: record => withSeedPortError('curriculum.saveAcademicDiscipline', async () => {
+      await service.academicsWorkflow.configureAcademicDiscipline(record)
+    }),
     saveSubject: record => withSeedPortError('curriculum.saveSubject', async () => {
-      await service.baseService.entities.subjects.save(new Subject(record))
+      await service.academicsWorkflow.configureSubject(record)
     }),
     saveSubjectMatter: record => withSeedPortError('curriculum.saveSubjectMatter', async () => {
-      await service.baseService.entities.subjectMatters.save(new SubjectMatter(record))
-    }),
-    offerSubjectToGradeLevel: record => withSeedPortError('curriculum.offerSubjectToGradeLevel', async () => {
-      await service.academicsWorkflow.offerSubjectToGradeLevel(record)
-    }),
-    assignMatterToGradeLevelSubject: record => withSeedPortError('curriculum.assignMatterToGradeLevelSubject', async () => {
-      await service.academicsWorkflow.assignMatterToGradeLevelSubject(record)
+      await service.academicsWorkflow.configureSubjectMatter(record)
     }),
   }
 }

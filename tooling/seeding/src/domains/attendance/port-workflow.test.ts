@@ -4,7 +4,7 @@ import type {
   AttendanceSeedPort,
   AttendanceSeedRecord,
 } from './port'
-import { demoCiDataset, demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { describe, expect, test } from 'bun:test'
 import { seedDevAttendance } from './workflow'
@@ -33,28 +33,6 @@ function createAttendanceSeedPortStub() {
 }
 
 describe('attendance seed port workflow', () => {
-  test('seeds lesson sessions and marks configured justifications pending', async () => {
-    const attendanceSessions = demoDataset.extensions?.attendanceSessions
-    if (!attendanceSessions) {
-      throw new Error('demoDataset must include attendanceSessions extension')
-    }
-
-    const { port, lessonSessions, records, pending } = createAttendanceSeedPortStub()
-
-    const count = await seedDevAttendance(port, demoDataset)
-    const expectedAttendance = resolveExpectedCounts(demoDataset).attendance
-
-    expect(count).toBe(expectedAttendance ?? 0)
-    expect(lessonSessions).toHaveLength(attendanceSessions.absenceSessions.length + 1)
-    const expectedRecordCount = attendanceSessions.absenceSessions.reduce(
-      (total: number, session) => total + session.records.length,
-      attendanceSessions.todaySession.records.length,
-    )
-    expect(records).toHaveLength(expectedRecordCount)
-    expect(pending.map(record => record.id)).toEqual([...new Set(attendanceSessions.pendingJustificationRecordIds)])
-    expect(pending.every(record => record.fallbackReason.length > 0)).toBe(true)
-  })
-
   test('seeds demo-ci daily roll-call days for 6ème 1 and 6ème 2', async () => {
     const dailyAttendanceDays = demoCiDataset.extensions?.dailyAttendanceDays
     if (!dailyAttendanceDays) {

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
+import { assertStorageReadLimit } from "@edaya/core";
 
 export type LocalFileTokenOperation = "upload" | "download";
 
@@ -7,6 +8,7 @@ export interface LocalFileUploadTokenPayload {
   op: "upload";
   key: string;
   contentType: string;
+  sizeBytes: number;
   exp: number;
 }
 
@@ -61,6 +63,14 @@ export function verifyLocalFileToken(
   if (!payload?.op || !payload?.key || typeof payload.exp !== "number") {
     throw new Error("Invalid token payload");
   }
+  if (payload.op === "upload") {
+    try {
+      assertStorageReadLimit(payload.sizeBytes);
+    }
+    catch {
+      throw new Error("Invalid upload size");
+    }
+  }
   if (payload.exp * 1000 <= Date.now()) {
     throw new Error("Token expired");
   }
@@ -69,13 +79,15 @@ export function verifyLocalFileToken(
 }
 
 export function buildUploadTokenPayload(
-  input: { key: string; contentType: string; expiresInSeconds?: number },
+  input: { key: string; contentType: string; sizeBytes: number; expiresInSeconds?: number },
 ): LocalFileUploadTokenPayload {
   const expiresInSeconds = input.expiresInSeconds ?? 900;
+  assertStorageReadLimit(input.sizeBytes);
   return {
     op: "upload",
     key: input.key,
     contentType: input.contentType,
+    sizeBytes: input.sizeBytes,
     exp: Math.floor((Date.now() + expiresInSeconds * 1000) / 1000),
   };
 }

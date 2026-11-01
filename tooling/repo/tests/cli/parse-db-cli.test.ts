@@ -3,21 +3,21 @@ import { dbMigrateScriptName, parseDbCliArgs } from '../../cli/parse-db-cli'
 
 describe('parseDbCliArgs', () => {
   it('parses migrate commands', () => {
-    expect(parseDbCliArgs(['migrate', 'local'])).toEqual({
+    expect(parseDbCliArgs(['migrate', 'school', 'local'])).toEqual({
       kind: 'migrate',
       target: 'local',
       slice: 'school',
     })
-    expect(() => parseDbCliArgs(['migrate', 'staging', '--auth'])).toThrow()
+    expect(() => parseDbCliArgs(['migrate', 'school', 'staging', '--auth'])).toThrow()
   })
 
   it('parses reset commands', () => {
-    expect(parseDbCliArgs(['reset', 'staging', '--yes'])).toEqual({
+    expect(parseDbCliArgs(['reset', 'school', 'staging', '--yes'])).toEqual({
       kind: 'reset',
       target: 'staging',
       yes: true,
     })
-    expect(parseDbCliArgs(['reset', 'production'])).toEqual({
+    expect(parseDbCliArgs(['reset', 'school', 'production'])).toEqual({
       kind: 'reset',
       target: 'production',
       yes: false,

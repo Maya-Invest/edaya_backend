@@ -1,5 +1,7 @@
 # Test Pyramid & Verify Pipeline — Sprint Plan
 
+> **Historical plan.** Current lane selection and commands are in [CI setup](../reference/ci-setup.md) and the [implemented cleanup](test-suite-cleanup-plan.md). Package-owned SQL/composition tests now use `*.integration.test.ts`; cross-package journeys remain in the integration workspace.
+
 > **Status:** T0–T1 complete (2026-07-07) · T2–T3 pending  
 > **Created:** 2026-07-07  
 > **Scope:** Separate unit tests from integration tests; consolidate repo hygiene checks under `bun repo verify`; centralize non-unit tests in `@edaya/integration-tests` with explicit slices  

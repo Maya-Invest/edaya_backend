@@ -1,7 +1,7 @@
 import { PlatformUser } from '@edaya/core'
 import { eq } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 export class PostgresPlatformUserStore extends PostgresStore<PlatformUser> {
   private readonly mapRow: (row: any) => PlatformUser
@@ -19,7 +19,7 @@ export class PostgresPlatformUserStore extends PostgresStore<PlatformUser> {
     })
 
     super(
-      db,
+      asStoreDatabase(db),
       schema.platformUsers,
       (entity: PlatformUser) => ({
         id: entity.id,

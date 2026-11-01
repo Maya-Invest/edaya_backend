@@ -40,6 +40,8 @@ describe('school command keys', () => {
       extra: [],
     })
     expect(keyDifference(Object.keys(createSchoolCommandHandlers({
+      conversations: {} as import('../../src/services/workflows/conversations').ConversationsWorkflow,
+      teacherCorrections: service.teacherCorrectionsWorkflow,
       setup: service.setupWorkflow,
       accessControl: service.accessControlWorkflow,
       accountInvitation: service.accountInvitationWorkflow,
@@ -52,6 +54,8 @@ describe('school command keys', () => {
       communications: service.communicationsWorkflow,
       behavior: service.behaviorWorkflow,
       finance: service.financeWorkflow,
+      documents: service.documentsWorkflow,
+      familyFeedback: service.familyFeedbackWorkflow,
     })), SCHOOL_COMMAND_KEYS)).toEqual({
       missing: [],
       extra: [],

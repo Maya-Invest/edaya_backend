@@ -1,0 +1,63 @@
+name: Quality
+on:
+  workflow_call:
+    inputs:
+      source_ref:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  quality-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CI: 'true'
+      CI_TARGET: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          source_sha: ${{ inputs.source_ref }}
+      - name: Restore quality caches
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: |
+            .cache/quality/
+            .cache/repo-tools/
+          key: ${{ runner.os }}-${{ runner.arch }}-quality-v1-${{ hashFiles('bun.lock', '**/tsconfig*.json', '**/eslint.config.*', 'turbo.json', 'tooling/repo/eslint-imports.js', 'tooling/repo/ci/typecheck.ts', '.github/actions/setup/action.yml', '!**/node_modules/**') }}-${{ inputs.source_ref }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-quality-v1-${{ hashFiles('bun.lock', '**/tsconfig*.json', '**/eslint.config.*', 'turbo.json', 'tooling/repo/eslint-imports.js', 'tooling/repo/ci/typecheck.ts', '.github/actions/setup/action.yml', '!**/node_modules/**') }}-
+      - name: Repository and workflow checks
+        run: bun run repo ci quality checks
+      - name: ESLint
+        run: bun run repo ci quality lint
+      - name: TypeScript
+        run: bun run repo ci quality types
+      - name: Finalize quality evidence
+        if: always()
+        run: bun run repo ci quality finalize
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: stage-quality-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .ci-evidence/stages/quality.json
+      - name: Upload quality phase timings
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: quality-details-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: |
+            .ci-evidence/quality/
+            .ci-evidence/quality-details/

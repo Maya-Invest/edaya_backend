@@ -1,5 +1,6 @@
 import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
-import { AttendanceMode, DayOfWeek, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AttendanceMode, DayOfWeek, defaultSubjectCategoryId, SubjectColor } from '@edaya/core'
+import { IVORY_COAST_ONBOARDING_DATASET } from '../../onboarding/ivory-coast/parse-ivory-coast-templates'
 import { classNameFromLabel } from '../../onboarding/registry'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
@@ -7,18 +8,24 @@ import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../..
 export const demoCiSchool = {
   id: DEMO_CI_SCHOOL_ID,
   name: 'École Edaya — Cocody',
+  financeCurrency: 'XOF',
   timeZone: 'Africa/Abidjan',
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',
   timetableMinDayGapSameSubject: 1,
+  issuingName: 'École Edaya — Cocody',
+  postalAddress: 'Boulevard Latrille, Cocody, Abidjan',
+  phone: '+225 27 22 44 00 00',
+  email: 'secretariat@edaya-ci.test',
+  schoolCode: 'EDAYA-CI',
 } satisfies SchoolInput
 
 export const demoCiAcademicYear = {
   id: DEMO_CI_ACADEMIC_YEAR_ID,
   schoolId: DEMO_CI_SCHOOL_ID,
-  name: '2025 — 2026',
-  startDate: '2025-09-15',
-  endDate: '2026-07-10',
+  name: '2026 — 2027',
+  startDate: '2026-09-14',
+  endDate: '2027-07-09',
 } satisfies AcademicYearInput
 
 export const demoCiAcademicPeriods = [
@@ -27,24 +34,24 @@ export const demoCiAcademicPeriods = [
     schoolId: DEMO_CI_SCHOOL_ID,
     academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
     name: 'Trimestre 1',
-    startDate: '2025-09-15',
-    endDate: '2025-12-19',
+    startDate: '2026-09-14',
+    endDate: '2026-12-18',
   },
   {
     id: 'ci-2025-t2',
     schoolId: DEMO_CI_SCHOOL_ID,
     academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
     name: 'Trimestre 2',
-    startDate: '2026-01-05',
-    endDate: '2026-03-27',
+    startDate: '2027-01-04',
+    endDate: '2027-03-26',
   },
   {
     id: 'ci-2025-t3',
     schoolId: DEMO_CI_SCHOOL_ID,
     academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
     name: 'Trimestre 3',
-    startDate: '2026-04-14',
-    endDate: '2026-07-10',
+    startDate: '2027-04-12',
+    endDate: '2027-07-09',
   },
 ] as const satisfies readonly AcademicPeriodInput[]
 
@@ -96,36 +103,29 @@ function demoCiClassName(gradeLevelId: string, index: number): string {
 export const demoCiClassGroups = [
   { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: demoCiClassName('ci-gl-6', 0), capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
   { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: demoCiClassName('ci-gl-6', 1), capacity: 35, attendanceMode: AttendanceMode.Daily },
-  { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: demoCiClassName('ci-gl-5', 0), capacity: 35, homeroomStaffId: 'ci-st3' },
-  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: demoCiClassName('ci-gl-4', 0), capacity: 35 },
-  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: demoCiClassName('ci-gl-3', 0), capacity: 35 },
+  { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: demoCiClassName('ci-gl-5', 0), capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: demoCiClassName('ci-gl-4', 0), capacity: 35, attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: demoCiClassName('ci-gl-3', 0), capacity: 35, attendanceMode: AttendanceMode.Daily },
 ] as const satisfies readonly ClassGroupInput[]
 
-/** Matières du collège ivoirien (cf. template ci-college). */
-export const demoCiSubjects = [
-  { id: 'ci-subj-fr', schoolId: DEMO_CI_SCHOOL_ID, name: 'Français', code: 'FR', defaultCoefficient: 3, category: SubjectCategory.Literary, color: SubjectColor.Warm },
-  { id: 'ci-subj-math', schoolId: DEMO_CI_SCHOOL_ID, name: 'Mathématiques', code: 'MATH', defaultCoefficient: 3, category: SubjectCategory.Scientific, color: SubjectColor.Mint },
-  { id: 'ci-subj-pc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Physique-Chimie', code: 'PC', defaultCoefficient: 2, category: SubjectCategory.Scientific, color: SubjectColor.Sky },
-  { id: 'ci-subj-svt', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sciences de la Vie et de la Terre', code: 'SVT', defaultCoefficient: 2, category: SubjectCategory.Scientific, color: SubjectColor.Mint },
-  { id: 'ci-subj-ang', schoolId: DEMO_CI_SCHOOL_ID, name: 'Anglais', code: 'ANG', defaultCoefficient: 2, category: SubjectCategory.Languages, color: SubjectColor.Sky },
-  { id: 'ci-subj-hg', schoolId: DEMO_CI_SCHOOL_ID, name: 'Histoire-Géographie', code: 'HG', defaultCoefficient: 2, category: SubjectCategory.Humanities, color: SubjectColor.Warm },
-  { id: 'ci-subj-edhc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation aux Droits de l\'Homme et à la Citoyenneté', code: 'EDHC', defaultCoefficient: 1, category: SubjectCategory.Humanities, color: SubjectColor.Warm },
-  { id: 'ci-subj-eps', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation Physique et Sportive', code: 'EPS', defaultCoefficient: 1, category: SubjectCategory.Sport, color: SubjectColor.Mint },
-] as const satisfies readonly SubjectInput[]
+function demoCiCategoryId(code: string): string {
+  const category = IVORY_COAST_ONBOARDING_DATASET.subjectCategories.find(row => row.code === code)
+  if (!category)
+    throw new Error(`Unknown demo category: ${code}`)
+  return defaultSubjectCategoryId(DEMO_CI_SCHOOL_ID, category.name)
+}
 
-export const demoCiSubjectMatters = buildCatalogSubjectMatters(
-  ciCollegeSubjectMatterCatalog,
-  {
-    'ci-subj-fr': 'ci-sm-fr-',
-    'ci-subj-math': 'ci-sm-math-',
-    'ci-subj-pc': 'ci-sm-pc-',
-    'ci-subj-svt': 'ci-sm-svt-',
-    'ci-subj-ang': 'ci-sm-ang-',
-    'ci-subj-hg': 'ci-sm-hg-',
-    'ci-subj-edhc': 'ci-sm-edhc-',
-    'ci-subj-eps': 'ci-sm-eps-',
-  },
-) satisfies readonly SubjectMatterInput[]
+/** Matières du collège ivoirien (cf. template ci-college). */
+const demoCiSubjectTemplates = [
+  { id: 'ci-subj-fr', schoolId: DEMO_CI_SCHOOL_ID, name: 'Français', code: 'FR', coefficient: 3, categoryId: demoCiCategoryId('LITERARY'), color: SubjectColor.Warm },
+  { id: 'ci-subj-math', schoolId: DEMO_CI_SCHOOL_ID, name: 'Mathématiques', code: 'MATH', coefficient: 3, categoryId: demoCiCategoryId('SCIENTIFIC'), color: SubjectColor.Mint },
+  { id: 'ci-subj-pc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Physique-Chimie', code: 'PC', coefficient: 2, categoryId: demoCiCategoryId('SCIENTIFIC'), color: SubjectColor.Sky },
+  { id: 'ci-subj-svt', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sciences de la Vie et de la Terre', code: 'SVT', coefficient: 2, categoryId: demoCiCategoryId('SCIENTIFIC'), color: SubjectColor.Mint },
+  { id: 'ci-subj-ang', schoolId: DEMO_CI_SCHOOL_ID, name: 'Anglais', code: 'ANG', coefficient: 2, categoryId: demoCiCategoryId('LANGUAGES'), color: SubjectColor.Sky },
+  { id: 'ci-subj-hg', schoolId: DEMO_CI_SCHOOL_ID, name: 'Histoire-Géographie', code: 'HG', coefficient: 2, categoryId: demoCiCategoryId('HUMANITIES'), color: SubjectColor.Warm },
+  { id: 'ci-subj-edhc', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation aux Droits de l\'Homme et à la Citoyenneté', code: 'EDHC', coefficient: 1, categoryId: demoCiCategoryId('HUMANITIES'), color: SubjectColor.Warm },
+  { id: 'ci-subj-eps', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation Physique et Sportive', code: 'EPS', coefficient: 1, categoryId: demoCiCategoryId('SPORT'), color: SubjectColor.Mint },
+] as const
 
 const demoCiClassSubjectDefinitions = [
   { id: 'ci-cs-6a-fr', classGroupId: 'ci-6a', subjectId: 'ci-subj-fr', coefficient: 3 },
@@ -163,12 +163,44 @@ const demoCiClassSubjectDefinitions = [
   { id: 'ci-cs-3a-eps', classGroupId: 'ci-3a', subjectId: 'ci-subj-eps', coefficient: 1 },
 ] as const
 
-export const demoCiClassSubjects = demoCiClassSubjectDefinitions.map(classSubject => ({
-  ...classSubject,
-  periodsPerWeek: classSubject.subjectId === 'ci-subj-math'
-    ? 4
-    : Math.max(2, classSubject.coefficient + 1),
-  ...(classSubject.subjectId === 'ci-subj-math'
-    ? { minPeriodSpan: 1, maxPeriodSpan: 2 }
-    : {}),
+/** Each grade owns independent subject and chapter IDs. Sixth-grade IDs stay readable in demo journeys. */
+export function demoCiSubjectId(templateId: string, gradeLevelId: string): string {
+  return gradeLevelId === 'ci-gl-6' ? templateId : `${templateId}-${gradeLevelId}`
+}
+
+export const demoCiSubjects = demoCiGradeLevels.flatMap((grade) => {
+  const groupIds = new Set(demoCiClassGroups.filter(group => group.gradeLevelId === grade.id).map(group => group.id as string))
+  return demoCiSubjectTemplates.filter(template => demoCiClassSubjectDefinitions.some(offering => groupIds.has(offering.classGroupId) && offering.subjectId === template.id)).map((template) => {
+    const offering = demoCiClassSubjectDefinitions.find(row => groupIds.has(row.classGroupId) && row.subjectId === template.id)!
+    return { ...template, id: demoCiSubjectId(template.id, grade.id), gradeLevelId: grade.id, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, coefficient: offering.coefficient, periodsPerWeek: template.code === 'MATH' ? 4 : Math.max(2, offering.coefficient + 1), ...(template.code === 'MATH' ? { minPeriodSpan: 1, maxPeriodSpan: 2 } : {}) }
+  })
+}) satisfies readonly SubjectInput[]
+
+const demoCiChapterTemplates = buildCatalogSubjectMatters(
+  ciCollegeSubjectMatterCatalog,
+  {
+    'ci-subj-fr': 'ci-sm-fr-',
+    'ci-subj-math': 'ci-sm-math-',
+    'ci-subj-pc': 'ci-sm-pc-',
+    'ci-subj-svt': 'ci-sm-svt-',
+    'ci-subj-ang': 'ci-sm-ang-',
+    'ci-subj-hg': 'ci-sm-hg-',
+    'ci-subj-edhc': 'ci-sm-edhc-',
+    'ci-subj-eps': 'ci-sm-eps-',
+  },
+) satisfies readonly SubjectMatterInput[]
+
+export const demoCiSubjectMatters = demoCiSubjects.flatMap((subject) => {
+  const template = demoCiSubjectTemplates.find(row => row.code === subject.code)!
+  return demoCiChapterTemplates.filter(chapter => chapter.subjectId === template.id).map(chapter => ({
+    ...chapter,
+    subjectId: subject.id,
+    id: subject.gradeLevelId === 'ci-gl-6' ? chapter.id : `${chapter.id}-${subject.gradeLevelId}`,
+  }))
+}) satisfies readonly SubjectMatterInput[]
+
+export const demoCiClassSubjects = demoCiClassGroups.flatMap(group => demoCiSubjects.filter(subject => subject.gradeLevelId === group.gradeLevelId).map((subject) => {
+  const template = demoCiSubjectTemplates.find(row => row.code === subject.code)!
+  const previous = demoCiClassSubjectDefinitions.find(row => row.classGroupId === group.id && row.subjectId === template.id)
+  return { id: previous?.id ?? `ci-cs-${group.id.slice(3)}-${template.id.replace('ci-subj-', '')}`, classGroupId: group.id, subjectId: subject.id, coefficient: subject.coefficient, periodsPerWeek: subject.periodsPerWeek, minPeriodSpan: subject.minPeriodSpan, maxPeriodSpan: subject.maxPeriodSpan }
 })) satisfies readonly ClassSubjectInput[]

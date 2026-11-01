@@ -18,7 +18,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Exercices 1 à 8 sur les fractions équivalentes.',
     attachments: [{ name: 'fractions_ws.pdf', size: '180 KB' }],
-    dueAt: '2025-11-10T12:00:00.000Z',
+    dueAt: '2026-11-09T12:00:00.000Z',
   },
   {
     id: 'ci-hw-t1-fr',
@@ -31,7 +31,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Lire la fable et répondre aux questions de compréhension.',
     attachments: [],
-    dueAt: '2025-12-08T12:00:00.000Z',
+    dueAt: '2026-12-07T12:00:00.000Z',
   },
   {
     id: 'ci-hw-t2-math',
@@ -44,7 +44,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Construire des triangles et mesurer les angles.',
     attachments: [{ name: 'constructions.pdf', size: '95 KB' }],
-    dueAt: '2026-02-24T12:00:00.000Z',
+    dueAt: '2027-02-23T12:00:00.000Z',
   },
   {
     id: 'ci-hw-t2-hg',
@@ -57,7 +57,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Localiser les grands royaumes sur la carte fournie.',
     attachments: [{ name: 'carte_afrique.pdf', size: '240 KB' }],
-    dueAt: '2026-03-18T12:00:00.000Z',
+    dueAt: '2027-03-17T12:00:00.000Z',
   },
   {
     id: 'ci-hw-6b-math',
@@ -70,7 +70,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Réviser les équations pour le contrôle à venir.',
     attachments: [],
-    dueAt: '2026-05-10T12:00:00.000Z',
+    dueAt: '2027-05-10T12:00:00.000Z',
   },
   {
     id: 'ci-hw-t3-math',
@@ -83,7 +83,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Exercices 1 à 12, page 84. Montrer tout le raisonnement.',
     attachments: [{ name: 'exercices_ch4.pdf', size: '320 KB' }],
-    dueAt: '2026-05-18T12:00:00.000Z',
+    dueAt: '2027-05-18T12:00:00.000Z',
   },
   {
     id: 'ci-hw-t3-fr',
@@ -96,7 +96,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Analyse de 300 mots sur la morale de la fable.',
     attachments: [{ name: 'fable_text.pdf', size: '120 KB' }],
-    dueAt: '2026-05-22T12:00:00.000Z',
+    dueAt: '2027-05-21T12:00:00.000Z',
   },
   {
     id: 'ci-hw-t3-svt',
@@ -109,7 +109,7 @@ export const demoCiHomeworkAssessments = [
     coefficient: 1,
     description: 'Lire le chapitre 6 et répondre aux questions.',
     attachments: [],
-    dueAt: '2026-05-25T12:00:00.000Z',
+    dueAt: '2027-05-25T12:00:00.000Z',
   },
 ] as const satisfies readonly AssessmentInput[]
 

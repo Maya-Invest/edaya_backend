@@ -8,22 +8,32 @@ export interface NotifyRecipientRow {
   subject_id: string;
   tenant: string;
   email: string | null;
+  phone: string | null;
   display_name: string | null;
   locale: string | null;
   allows_notifications: boolean;
   channel_email: boolean;
   channel_push: boolean;
+  channel_sms: boolean;
   recipient_kind: string | null;
   recipient_id: string | null;
 }
 
 export interface NotifyDeviceRow {
+  app_id: string;
+  installation_id: string;
+  profile_kind: string;
+  profile_id: string;
+  tenant: string;
   subject_id: string;
   provider: string;
   token: string;
 }
 
 export interface NotifyJobRow {
+  payload_version: number;
+  attempts: number;
+  delivery_id: string;
   idempotency_key: string;
   tenant: string;
   job_kind: string;
@@ -32,6 +42,7 @@ export interface NotifyJobRow {
   body: string;
   email_subject: string | null;
   email_body: string | null;
+  sms_body: string | null;
   metadata: string | null;
   status: string;
   provider_message_id: string | null;

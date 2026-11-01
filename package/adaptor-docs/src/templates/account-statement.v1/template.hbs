@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="{{locale}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{documentTitle}}</title>
+    <style>
+      :root { --brand: {{primaryColor}}; }
+      {{{styles}}}
+    </style>
+  </head>
+  <body class="{{#if watermark}}watermarked{{/if}}">
+    {{#if watermark}}<div class="watermark">{{labels.preview}}</div>{{/if}}
+    <header class="letter-header">
+      {{#if logoUrl}}<img class="logo" src="{{logoUrl}}" alt="" />{{/if}}
+      <div class="identity">
+        <p class="school">{{schoolName}}</p>
+        {{#if schoolCity}}<p>{{schoolCity}}</p>{{/if}}
+        {{#if schoolAddress}}<p>{{schoolAddress}}</p>{{/if}}
+        {{#if schoolPhone}}<p>{{schoolPhone}}</p>{{/if}}
+        {{#if schoolEmail}}<p>{{schoolEmail}}</p>{{/if}}
+      </div>
+      {{#if photoUrl}}<img class="photo" src="{{photoUrl}}" alt="" />{{/if}}
+    </header>
+    <h1>{{#if documentTitle}}{{documentTitle}}{{else}}{{labels.documentTitle}}{{/if}}</h1>
+    {{#if orderNumber}}<p class="number">{{labels.orderNumber}} {{orderNumber}}</p>{{/if}}
+    {{#if studentName}}<p><strong>{{labels.student}}</strong> {{studentName}}</p>{{/if}}
+    {{#if classLabel}}<p><strong>{{labels.class}}</strong> {{classLabel}}</p>{{/if}}
+    {{#if schoolYear}}<p><strong>{{labels.schoolYear}}</strong> {{schoolYear}}</p>{{/if}}
+    {{#if date}}<p><strong>{{labels.date}}</strong> {{date}}</p>{{/if}}
+    {{#if matricule}}<p><strong>{{labels.matricule}}</strong> {{matricule}}</p>{{/if}}
+    {{#if fields}}
+      <dl class="fields">
+        {{#each fields}}
+          <dt>{{label}}</dt>
+          <dd>{{value}}</dd>
+        {{/each}}
+      </dl>
+    {{/if}}
+    {{#if paragraphs}}
+      {{#each paragraphs}}
+        <p class="body">{{text}}</p>
+      {{/each}}
+    {{/if}}
+    {{#if notes}}<p class="notes">{{notes}}</p>{{/if}}
+    {{#if columns}}
+      <table>
+        <thead><tr>{{#each columns}}<th>{{this}}</th>{{/each}}</tr></thead>
+        <tbody>
+          {{#each rows}}
+            <tr>{{#each cells}}<td>{{this}}</td>{{/each}}</tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{/if}}
+    <footer>
+      {{#if stampUrl}}<img class="stamp" src="{{stampUrl}}" alt="" />{{/if}}
+      {{#if signatureUrl}}<img class="sign" src="{{signatureUrl}}" alt="" />{{/if}}
+      <p class="generated">{{labels.generatedBy}}</p>
+    </footer>
+  </body>
+</html>

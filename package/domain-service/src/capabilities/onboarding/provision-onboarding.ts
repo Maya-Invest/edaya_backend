@@ -1,25 +1,27 @@
-import type { ActorMetadata } from '@edaya/authorization'
+import type { ActorMetadata, EdayaSparkS2sKeyMode } from '@edaya/authorization'
+import type { CommandJson } from '@edaya/core'
 import type { ApplyStructureTemplateResult } from './apply-structure-template'
 import type { InviteStaffMembersResult } from './invite-staff-members'
 import type { OnboardingAccountStatus } from './onboarding-account-state'
 import type { OnboardingSchoolApplication } from './onboarding-application'
+import type { OnboardingDataset } from './onboarding-dataset'
 import type { RegisterSchoolOwnerSession } from './register-school-with-owner'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
-import { randomUUID } from 'node:crypto'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
-import { applyStructureTemplate } from './apply-structure-template'
+import { digestCommandRequest } from '../../services/commands/command-execution'
+import { applyStructureTemplate, resolveDatasetStructure } from './apply-structure-template'
 import { ensureAcademicStructureFromDraft } from './ensure-academic-structure-from-draft'
 import { inviteStaffMembers } from './invite-staff-members'
 import { completeOnboardingWizard } from './onboarding-account-state'
+import { onboardingDatasetSchema } from './onboarding-dataset'
 import { registerSchoolWithOwner } from './register-school-with-owner'
 import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { isStructureTemplateId } from './structure-naming'
 
 export interface ProvisionOnboardingSchoolInput {
   name: string
   timeZone: string
+  financeCurrency?: string
   city: string
   country: string
   academicYearLabel: string
@@ -35,7 +37,7 @@ export interface ProvisionOnboardingSchoolInput {
 
 export interface ProvisionOnboardingStructureInput {
   templates: string[]
-  templateSnapshots?: StructureTemplateDefinition[]
+  dataset: OnboardingDataset
   levels: Array<{
     gradeLevelId: string
     classCount: number
@@ -50,6 +52,8 @@ export interface ProvisionOnboardingInviteInput {
 }
 
 export interface ProvisionOnboardingInput {
+  schoolId: string
+  requestId: string
   school: ProvisionOnboardingSchoolInput
   structure: ProvisionOnboardingStructureInput
   invites?: ProvisionOnboardingInviteInput[]
@@ -63,6 +67,41 @@ export interface ProvisionOnboardingResult {
   staff: InviteStaffMembersResult
   status: OnboardingAccountStatus
   phases: Array<{ phase: string, ms: number }>
+  replayed?: boolean
+}
+
+interface StoredProvisionResult {
+  schoolId: string
+  yearId: string
+  periodId: string
+  gradeLevelCount: number
+  classGroupCount: number
+  subjectCount: number
+  classSubjectCount: number
+  gradeScaleCount: number
+  reportModuleCount: number
+  reportSubjectAssignmentCount: number
+  hasStructure: boolean
+  staffInviteCount: number
+  permissionAssignmentsEnsured: number
+  wizardCompleted: boolean
+  maxReachedStep: number
+  schoolStepSubmitted: boolean
+  structureStepSubmitted: boolean
+  phases: Array<{ phase: string, ms: number }>
+  [key: string]: CommandJson
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function requireUuid(value: string, code: string, message: string): string {
+  const trimmed = value.trim()
+  if (!isUuid(trimmed)) {
+    throw new BusinessRuleViolationError(code, message)
+  }
+  return trimmed
 }
 
 function toOwnerSession(session: RegisterSchoolOwnerSession) {
@@ -74,26 +113,6 @@ function toOwnerSession(session: RegisterSchoolOwnerSession) {
       ...(session.user.name ? { name: session.user.name } : {}),
     },
   }
-}
-
-function parseTemplates(templates: string[]): StructureTemplateId[] {
-  if (!templates.length) {
-    throw new BusinessRuleViolationError(
-      'STRUCTURE_TEMPLATE_REQUIRED',
-      'At least one school template must be selected',
-    )
-  }
-  const parsed: StructureTemplateId[] = []
-  for (const template of templates) {
-    if (!isStructureTemplateId(template)) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_TEMPLATE_INVALID',
-        `Invalid structure template id: ${template}`,
-      )
-    }
-    parsed.push(template)
-  }
-  return parsed
 }
 
 function parseInvites(invites: ProvisionOnboardingInviteInput[] | undefined): Array<{
@@ -115,6 +134,68 @@ function parseInvites(invites: ProvisionOnboardingInviteInput[] | undefined): Ar
       role: invite.role,
     }
   })
+}
+
+function clampStep(value: number): OnboardingAccountStatus['maxReachedStep'] {
+  if (value === 2 || value === 3 || value === 4) {
+    return value
+  }
+  return 1
+}
+
+function persistProvisionResult(result: ProvisionOnboardingResult): StoredProvisionResult {
+  return {
+    schoolId: result.schoolId,
+    yearId: result.yearId,
+    periodId: result.periodId,
+    gradeLevelCount: result.structure?.gradeLevelCount ?? 0,
+    classGroupCount: result.structure?.classGroupCount ?? 0,
+    subjectCount: result.structure?.subjectCount ?? 0,
+    classSubjectCount: result.structure?.classSubjectCount ?? 0,
+    gradeScaleCount: result.structure?.gradeScaleCount ?? 0,
+    reportModuleCount: result.structure?.reportModuleCount ?? 0,
+    reportSubjectAssignmentCount: result.structure?.reportSubjectAssignmentCount ?? 0,
+    hasStructure: result.structure != null,
+    staffInviteCount: result.staff.invitedCount,
+    permissionAssignmentsEnsured: result.staff.permissionAssignmentsEnsured,
+    wizardCompleted: result.status.wizardCompleted,
+    maxReachedStep: result.status.maxReachedStep,
+    schoolStepSubmitted: result.status.schoolStepSubmitted,
+    structureStepSubmitted: result.status.structureStepSubmitted,
+    phases: result.phases.map(phase => ({ phase: phase.phase, ms: phase.ms })),
+  }
+}
+
+function storedToResult(stored: StoredProvisionResult, replayed: boolean): ProvisionOnboardingResult {
+  return {
+    schoolId: stored.schoolId,
+    yearId: stored.yearId,
+    periodId: stored.periodId,
+    structure: stored.hasStructure
+      ? {
+          gradeLevelCount: stored.gradeLevelCount,
+          classGroupCount: stored.classGroupCount,
+          subjectCount: stored.subjectCount,
+          classSubjectCount: stored.classSubjectCount,
+          gradeScaleCount: stored.gradeScaleCount,
+          reportModuleCount: stored.reportModuleCount,
+          reportSubjectAssignmentCount: stored.reportSubjectAssignmentCount,
+          phases: [],
+        }
+      : null,
+    staff: {
+      invitedCount: stored.staffInviteCount,
+      permissionAssignmentsEnsured: stored.permissionAssignmentsEnsured,
+    },
+    status: {
+      wizardCompleted: stored.wizardCompleted === true,
+      maxReachedStep: clampStep(stored.maxReachedStep),
+      schoolStepSubmitted: stored.schoolStepSubmitted === true,
+      structureStepSubmitted: stored.structureStepSubmitted === true,
+    },
+    phases: stored.phases,
+    ...(replayed ? { replayed: true } : {}),
+  }
 }
 
 async function resolveOwnerActorAfterRegister(
@@ -143,24 +224,44 @@ async function resolveOwnerActorAfterRegister(
   })
 }
 
-export async function provisionOnboarding(
+async function assertProvisionCallerAvailable(
+  application: OnboardingSchoolApplication,
+  subjectId: string,
+  schoolId: string,
+): Promise<void> {
+  const [staff, guardian, student, teacher] = await Promise.all([
+    application.repositories.staffMembers.findOne({ subjectId }),
+    application.repositories.guardians.findOne({ subjectId }),
+    application.repositories.students.findOne({ subjectId }),
+    application.repositories.teachers.findOne({ subjectId }),
+  ])
+
+  if (staff && staff.schoolId === schoolId) {
+    return
+  }
+
+  if (staff || guardian || student || teacher) {
+    throw new BusinessRuleViolationError(
+      'SUBJECT_ALREADY_LINKED',
+      'This account is already linked to a school actor',
+    )
+  }
+}
+
+async function executeProvision(
   application: OnboardingSchoolApplication,
   session: RegisterSchoolOwnerSession,
   input: ProvisionOnboardingInput,
   options: {
-    requestId?: string
     existingActor?: ActorMetadata
     inviteBaseUrl?: string
-    allowPublicSchoolRegistration: boolean
+    edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
   },
+  schoolId: string,
+  requestId: string,
 ): Promise<ProvisionOnboardingResult> {
-  const requestId = options.requestId ?? randomUUID()
   const phases: Array<{ phase: string, ms: number }> = []
-
-  const track = async <T>(
-    phase: string,
-    run: () => Promise<T>,
-  ): Promise<T> => {
+  const track = async <T>(phase: string, run: () => Promise<T>): Promise<T> => {
     const phaseStarted = performance.now()
     try {
       return await run()
@@ -170,56 +271,31 @@ export async function provisionOnboarding(
     }
   }
 
-  const templates = parseTemplates(input.structure.templates)
+  const templates = input.structure.templates
   const invites = parseInvites(input.invites)
-
-  let schoolId: string
   let actor: ActorMetadata
 
-  if (options.existingActor?.kind === 'staff' && options.existingActor.schoolId) {
-    schoolId = options.existingActor.schoolId
+  if (options.existingActor?.kind === 'staff' && options.existingActor.schoolId === schoolId) {
     actor = options.existingActor
   }
   else {
-    if (!options.allowPublicSchoolRegistration) {
-      throw new BusinessRuleViolationError(
-        'PUBLIC_SCHOOL_REGISTRATION_DISABLED',
-        'Public school registration is disabled',
-      )
-    }
-    try {
-      const registered = await track('registerSchool', async () => {
-        return registerSchoolWithOwner(application, toOwnerSession(session), {
-          name: input.school.name,
-          timeZone: input.school.timeZone,
-          city: input.school.city,
-          country: input.school.country,
-          requestId,
-        })
+    await track('registerSchool', async () => {
+      return registerSchoolWithOwner(application, toOwnerSession(session), {
+        id: schoolId,
+        name: input.school.name,
+        timeZone: input.school.timeZone,
+        financeCurrency: input.school.financeCurrency,
+        city: input.school.city,
+        country: input.school.country,
+        requestId,
+        ...(options.edayaSparkS2sKeyMode
+          ? { edayaSparkS2sKeyMode: options.edayaSparkS2sKeyMode }
+          : {}),
       })
-      schoolId = registered.school.id
-      actor = await track('resolveOwnerActor', async () => {
-        return resolveOwnerActorAfterRegister(application, session, schoolId, requestId)
-      })
-    }
-    catch (error) {
-      if (
-        !(error instanceof BusinessRuleViolationError)
-        || error.code !== 'SUBJECT_ALREADY_LINKED'
-      ) {
-        throw error
-      }
-      const existingStaff = await application.repositories.staffMembers.findOne({
-        subjectId: session.user.id,
-      })
-      if (!existingStaff) {
-        throw error
-      }
-      schoolId = existingStaff.schoolId
-      actor = await track('resolveOwnerActor', async () => {
-        return resolveOwnerActorAfterRegister(application, session, schoolId, requestId)
-      })
-    }
+    })
+    actor = await track('resolveOwnerActor', async () => {
+      return resolveOwnerActorAfterRegister(application, session, schoolId, requestId)
+    })
   }
 
   const academic = await track('ensureAcademicStructure', async () => {
@@ -237,9 +313,8 @@ export async function provisionOnboarding(
   try {
     structure = await applyStructureTemplate(application, actor, {
       templates,
-      ...(input.structure.templateSnapshots
-        ? { templateSnapshots: input.structure.templateSnapshots }
-        : {}),
+      dataset: input.structure.dataset,
+      academicYearId: academic.yearId,
       levels: input.structure.levels,
     })
     for (const phase of structure.phases) {
@@ -280,4 +355,79 @@ export async function provisionOnboarding(
     status,
     phases,
   }
+}
+
+export async function provisionOnboarding(
+  application: OnboardingSchoolApplication,
+  session: RegisterSchoolOwnerSession,
+  input: ProvisionOnboardingInput,
+  options: {
+    requestId?: string
+    existingActor?: ActorMetadata
+    inviteBaseUrl?: string
+    allowPublicSchoolRegistration: boolean
+    edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
+  },
+): Promise<ProvisionOnboardingResult> {
+  if (!options.allowPublicSchoolRegistration && options.existingActor?.kind !== 'staff') {
+    throw new BusinessRuleViolationError(
+      'PUBLIC_SCHOOL_REGISTRATION_DISABLED',
+      'Public school registration is disabled',
+    )
+  }
+
+  input = { ...input, structure: { ...input.structure, dataset: onboardingDatasetSchema.parse(input.structure.dataset) } }
+  resolveDatasetStructure(input.structure)
+
+  const schoolId = requireUuid(input.schoolId, 'ONBOARDING_SCHOOL_ID_INVALID', 'A stable school identity is required')
+  const requestId = requireUuid(
+    input.requestId || options.requestId || '',
+    'ONBOARDING_REQUEST_ID_INVALID',
+    'A stable provision request identity is required',
+  )
+  const subjectId = session.user.id
+  const callerId = await digestCommandRequest(['identity', subjectId])
+  const scopedRequestId = await digestCommandRequest(requestId)
+
+  return application.commandExecution.execute({
+    scope: {
+      schoolId,
+      command: 'onboarding.provision',
+      callerId,
+      requestId: scopedRequestId,
+    },
+    input: {
+      schoolId,
+      requestId,
+      school: input.school,
+      structure: {
+        templates: input.structure.templates,
+        levels: input.structure.levels,
+        dataset: input.structure.dataset,
+      },
+      invites: parseInvites(input.invites),
+    },
+    resultMode: 'ordinary',
+    lockKeys: [`school-owner:${subjectId}`, `onboarding-provision:${schoolId}`],
+    authorize: async () => {
+      await assertProvisionCallerAvailable(application, subjectId, schoolId)
+    },
+    replay: async (stored: StoredProvisionResult) => {
+      const school = await application.repositories.schools.findById(stored.schoolId)
+      if (!school || school.ownerSubjectId !== subjectId) {
+        throw new BusinessRuleViolationError(
+          'COMMAND_REPLAY_CONFLICT',
+          'Provision receipt does not match this account',
+        )
+      }
+      return storedToResult(stored, true)
+    },
+    persistResult: persistProvisionResult,
+    audit: result => [{
+      event: 'onboarding.school_provisioned',
+      resourceType: 'school',
+      resourceId: result.schoolId,
+    }],
+    execute: async () => executeProvision(application, session, input, options, schoolId, requestId),
+  })
 }

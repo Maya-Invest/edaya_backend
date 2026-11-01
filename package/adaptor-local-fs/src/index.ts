@@ -5,7 +5,7 @@ export {
   resolveLocalFileStorageSecret,
 } from "./create-from-env";
 export { createLocalFileStorage } from "./local-file-storage";
-export { createLocalFileObjectStore } from "./object-store";
+export { createLocalFileObjectStore, resolveObjectPath } from "./object-store";
 export { createLocalFileStorageApp } from "./server-app";
 export {
   buildDownloadTokenPayload,

@@ -1,4 +1,4 @@
-import type { AcademicPeriodType, AttendanceMode, DayOfWeek, SchoolType, StaffProfileRole } from '@edaya/core'
+import type { AcademicPeriodType, AttendanceMode, DayOfWeek, StaffProfileRole } from '@edaya/core'
 
 export interface SchoolStructureSeedState {
   schoolIds: readonly string[]
@@ -9,10 +9,16 @@ export interface SchoolStructureSchoolRecord {
   id: string
   name: string
   timeZone: string
+  financeCurrency?: string
   ownerSubjectId?: string
-  type?: SchoolType
+  shortName?: string
   country?: string
   city?: string
+  issuingName?: string
+  postalAddress?: string
+  phone?: string
+  email?: string
+  schoolCode?: string
 }
 
 export interface GradeLevelSeedRecord {
@@ -80,6 +86,8 @@ export interface ClassGroupSeedRecord {
 export interface SchoolStructureSeedPort {
   inspectSeedState: (demoSchoolId: string) => Promise<SchoolStructureSeedState>
   registerSchool: (record: SchoolStructureSchoolRecord) => Promise<void>
+  /** Apply the fixture currency before later domains create financial records. */
+  configureFinanceCurrency: (schoolId: string, financeCurrency: string) => Promise<void>
   saveGradeLevel: (record: GradeLevelSeedRecord) => Promise<void>
   createAcademicYear: (record: AcademicYearSeedRecord) => Promise<void>
   publishAcademicYear: (academicYearId: string) => Promise<void>

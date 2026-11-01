@@ -19,7 +19,6 @@
     "tsc",
     "tsx",
     "tsconfig",
-    "tsup",
     "turbo",
     "antfu"
   ]

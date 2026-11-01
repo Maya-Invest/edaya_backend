@@ -2,7 +2,9 @@ import type { SchoolApplication } from '../../services/school-application'
 import type { CronJobKey } from './cron-job-catalog'
 import type { CronJobResult, SchoolCronJobContext } from './cron-job-context'
 import { createSystemActorMetadata } from '@edaya/authorization'
+import { preparePrivateFileCleanup } from '../files/private-file-cleanup'
 import { CRON_JOB_KEYS } from './cron-job-catalog'
+import { advanceFamilyFeedbackCampaigns } from './jobs/advance-family-feedback-campaigns'
 import { expireAccountInvitations } from './jobs/expire-account-invitations'
 import { processDueNotifications } from './jobs/process-due-notifications'
 import { reconcilePendingDeliveries } from './jobs/reconcile-pending-deliveries'
@@ -25,6 +27,8 @@ const CRON_JOB_HANDLERS = {
   processDueNotifications,
   reconcilePendingDeliveries,
   expireAccountInvitations,
+  preparePrivateFileCleanup,
+  advanceFamilyFeedbackCampaigns,
 } as const satisfies Record<CronJobKey, (context: SchoolCronJobContext) => Promise<CronJobResult>>
 
 export async function runCronJobForSchool(

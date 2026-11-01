@@ -41,6 +41,7 @@ async function seedPopulationFromDataset(
       id: enrollment.id,
       studentId: enrollment.studentId,
       classGroupId: enrollment.classGroupId,
+      enrolledAt: isoDateString(enrollment.enrolledAt ?? dataset.entities.academicYear?.startDate),
     })
   }
 
@@ -66,14 +67,6 @@ async function seedPopulationFromDataset(
       legalGuardian: link.legalGuardian ?? true,
     })
   }
-}
-
-/** Auth-linked students and guardians only — for fast integration test fixtures. */
-export async function seedIntegrationLightPopulation(
-  port: PopulationSeedPort,
-  dataset: FixtureDataset,
-): Promise<void> {
-  await seedPopulationFromDataset(port, dataset)
 }
 
 export async function seedDevPopulation(

@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 
 const CRON_SCHEDULE_SEEDS = [
+  { id: 'cron-schedule-private-file-cleanup', jobKey: 'preparePrivateFileCleanup', cronExpression: '*/15 * * * *' },
   {
     id: 'cron-schedule-expire-account-invitations',
     jobKey: 'expireAccountInvitations',
@@ -14,6 +15,11 @@ const CRON_SCHEDULE_SEEDS = [
   {
     id: 'cron-schedule-reconcile-pending-deliveries',
     jobKey: 'reconcilePendingDeliveries',
+    cronExpression: '*/5 * * * *',
+  },
+  {
+    id: 'cron-schedule-advance-family-feedback',
+    jobKey: 'advanceFamilyFeedbackCampaigns',
     cronExpression: '*/5 * * * *',
   },
 ] as const

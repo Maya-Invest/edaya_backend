@@ -1,0 +1,41 @@
+{
+// Worker application settings. Credentials belong in secrets files.
+// Apply explicitly: bun repo ops vars push staging
+  // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
+  // AUTH_PROVIDER_GENERATION. Boolean settings use string values "true" / "false".
+  // Phone auth stays disabled until all provider settings AND secrets are configured.
+  // SMS requires sms_routes plus AFRICAS_TALKING_USERNAME and API key.
+  // Optional sender ID must be registered; qualify default-sender delivery before enabling.
+  // "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
+  // "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID",
+  // WhatsApp requires sms_only prerequisites as fallback; then use whatsapp_first.
+  // "WHATSAPP_PHONE_NUMBER_ID": "1234567890",
+  // "WHATSAPP_BUSINESS_ACCOUNT_ID": "1234567890",
+  // "WHATSAPP_API_VERSION": "vXX.X", // replace with a supported pinned version
+  // "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"edaya_auth_fr\",\"language\":\"fr\"},\"en\":{\"name\":\"edaya_auth_en\",\"language\":\"en_US\"}}",
+  // Optional rendering: GOTENBERG_URL, DOCS_RENDER_ON_PUBLISH.
+  // See docs/reference/api-configuration.md and phone-verification.md.
+  "NODE_ENV": "production",
+  "LOG_LEVEL": "info",
+  "RUNTIME": "worker",
+  "PAUSE_API": "false",
+  "PAUSE_SCHEDULER": "false",
+  "PAUSE_JOBS": "false",
+  "PHONE_AUTH_MODE": "disabled",
+  "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
+  "AFRICAS_TALKING_USERNAME": "atoumbre",
+  "AFRICAS_TALKING_SANDBOX": "false",
+  "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
+  "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
+  "REQUIRE_EMAIL_VERIFICATION": "true",
+  "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
+  "EMAIL_TRANSPORT": "cloudflare",
+  "API_ORIGIN": "https://staging.api.edayaplus.com",
+  "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
+  "ACCOUNT_INVITATIONS_ENABLED": "true",
+  "PROFILE_PHOTO_MAX_BYTES": "1048576",
+  "PLATFORM_BOOTSTRAP_EMAILS": "",
+  "R2_BUCKET_NAME": "edaya-staging",
+  "ACCOUNT_SECURITY_KEY_VERSION": "v1",
+  "R2_ENDPOINT": "https://909d0c6bd332023be902a0e432d2bed7.r2.cloudflarestorage.com"
+}

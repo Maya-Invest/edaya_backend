@@ -6,16 +6,16 @@ import type {
   PublishAnnouncementSeedRecord,
 } from './port'
 import { AnnouncementStatus, AnnouncementTargetKind, MessageDeliveryStatus } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevCommunications } from './workflow'
 
 describe('communications seed port workflow', () => {
   test('seeds targets before publication and counts materialized plus explicit deliveries', async () => {
-    const announcements = demoDataset.entities.announcements ?? []
-    const targets = demoDataset.entities.announcementTargets ?? []
-    const explicitDeliveries = demoDataset.entities.messageDeliveries ?? []
-    const materializePlans = demoDataset.extensions?.announcementMaterializePlans ?? []
+    const announcements = demoCiDataset.entities.announcements ?? []
+    const targets = demoCiDataset.entities.announcementTargets ?? []
+    const explicitDeliveries = demoCiDataset.entities.messageDeliveries ?? []
+    const materializePlans = demoCiDataset.extensions?.announcementMaterializePlans ?? []
     const announcementRecords: AnnouncementSeedRecord[] = []
     const targetRecords: AnnouncementTargetSeedRecord[] = []
     const published: PublishAnnouncementSeedRecord[] = []
@@ -33,7 +33,7 @@ describe('communications seed port workflow', () => {
       recordDelivery: async record => void deliveries.push(record),
     }
 
-    const counts = await seedDevCommunications(port, demoDataset)
+    const counts = await seedDevCommunications(port, demoCiDataset)
 
     expect(counts).toEqual({
       announcements: announcements.length,
@@ -59,6 +59,6 @@ describe('communications seed port workflow', () => {
       materializeDeliveries: async () => 0,
       recordDelivery: async () => { throw new Error('Unlinked profile must not receive a delivery') },
     }
-    expect((await seedDevCommunications(port, demoDataset)).messageDeliveries).toBe(0)
+    expect((await seedDevCommunications(port, demoCiDataset)).messageDeliveries).toBe(0)
   })
 })

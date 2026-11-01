@@ -6,7 +6,7 @@ import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
-const GUARDIAN_EMAIL = 'c.laurent@mail.com'
+const GUARDIAN_EMAIL = 'm.kone@mail.ci'
 
 describeWithLightSchool('selected-profile action grants route', (getContext) => {
   it('returns only relationship action grants when X-Actor-Kind is guardian', async () => {

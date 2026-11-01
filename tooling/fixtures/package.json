@@ -56,46 +56,29 @@
       "types": "./src/shared/builders/people.ts",
       "import": "./src/shared/builders/people.ts"
     },
-    "./integration/narrative": {
-      "types": "./src/datasets/integration/narrative.ts",
-      "import": "./src/datasets/integration/narrative.ts"
-    },
-    "./datasets/bulk": {
-      "types": "./src/datasets/bulk/index.ts",
-      "import": "./src/datasets/bulk/index.ts"
-    },
-    "./datasets/demo": {
-      "types": "./src/datasets/demo/index.ts",
-      "import": "./src/datasets/demo/index.ts"
-    },
     "./datasets/demo-ci": {
       "types": "./src/datasets/demo-ci/index.ts",
       "import": "./src/datasets/demo-ci/index.ts"
     },
-    "./datasets/integration": {
-      "types": "./src/datasets/integration/index.ts",
-      "import": "./src/datasets/integration/index.ts"
+    "./shared/attachment-assets": {
+      "types": "./src/shared/attachment-assets.ts",
+      "import": "./src/shared/attachment-assets.ts"
     },
-    "./datasets/minimal": {
-      "types": "./src/datasets/minimal/index.ts",
-      "import": "./src/datasets/minimal/index.ts"
+    "./shared/issuance-assets": {
+      "types": "./src/shared/issuance-assets.ts",
+      "import": "./src/shared/issuance-assets.ts"
     }
   },
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "bun test tests",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix"
+    "test": "bun test tests --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts",
+    "lint": "bun x --bun eslint src tests",
+    "lint:fix": "bun x --bun eslint src tests --fix"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/service": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/bun": "^1.3.14",
-    "@types/node": "^25.9.2",
-    "typescript": "^6.0.2"
   }
 }

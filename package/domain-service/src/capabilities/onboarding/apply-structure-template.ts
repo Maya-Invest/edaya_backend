@@ -1,16 +1,18 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { AppliedStructureLevelSubjects } from './apply-report-cards-from-template'
+import type { AppliedDatasetLevel } from './apply-report-cards-from-dataset'
 import type { OnboardingSchoolApplication } from './onboarding-application'
+import type { OnboardingDataset, OnboardingDatasetGradeLevel } from './onboarding-dataset'
 import type { ClassNamingMode } from './structure-naming'
-import type { StructureTemplateCurriculumEntry, StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
 import { randomUUID } from 'node:crypto'
 import { requireActorSchoolId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, Subject, SubjectCategory, SubjectColor, SubjectMatter } from '@edaya/core'
+import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor, SubjectMatter } from '@edaya/core'
 
-import { applyReportCardsFromTemplate, collectLevelSubjects } from './apply-report-cards-from-template'
-import { ensureAcademicPeriodsFromTemplates } from './ensure-academic-periods-from-template'
+import { ensureDatasetSubjectCategories } from '../academics/dataset-subject-categories'
+import { applyReportCardsFromDataset } from './apply-report-cards-from-dataset'
+import { ensureAcademicPeriodsFromDataset, resolveDatasetCalendar } from './ensure-academic-periods-from-dataset'
 import { nextOnboardingClassGroupId } from './next-class-group-id'
-import { classDisplayName, parseGradeLevelTemplateId, resolveOnboardingStructureTemplates } from './structure-naming'
+import { onboardingDatasetSchema } from './onboarding-dataset'
+import { classNameFromLabel } from './structure-naming'
 import { structureGradeLevelSeedId } from './structure-seed-ids'
 
 export interface ApplyStructureLevelInput {
@@ -21,8 +23,9 @@ export interface ApplyStructureLevelInput {
 }
 
 export interface ApplyStructureTemplateInput {
-  templates: StructureTemplateId[]
-  templateSnapshots?: StructureTemplateDefinition[]
+  dataset: OnboardingDataset
+  academicYearId?: string
+  templates: string[]
   levels: ApplyStructureLevelInput[]
 }
 
@@ -32,8 +35,8 @@ export interface ApplyStructureTemplateResult {
   subjectCount: number
   classSubjectCount: number
   gradeScaleCount: number
-  reportCardDefinitionCount: number
-  reportCardSectionCount: number
+  reportModuleCount: number
+  reportSubjectAssignmentCount: number
   phases: Array<{ phase: string, ms: number }>
 }
 
@@ -41,149 +44,63 @@ export interface StructureBootstrapGraph {
   gradeLevels: GradeLevel[]
   subjects: Subject[]
   subjectMatters: SubjectMatter[]
-  gradeLevelSubjects: GradeLevelSubject[]
-  gradeLevelSubjectMatters: GradeLevelSubjectMatter[]
   classGroups: ClassGroup[]
   classSubjects: ClassSubject[]
   classSubjectMatters: ClassSubjectMatter[]
-  appliedLevels: AppliedStructureLevelSubjects[]
+  appliedLevels: AppliedDatasetLevel[]
   gradeLevelCount: number
   classGroupCount: number
   subjectCount: number
   classSubjectCount: number
 }
 
-type NormalizedStructureLevel = ApplyStructureLevelInput & {
-  template: StructureTemplateDefinition
-  levelCode: string
+export type NormalizedStructureLevel = ApplyStructureLevelInput & {
+  template: OnboardingDataset['templates'][number]
+  definition: OnboardingDatasetGradeLevel
 }
 
-const DOMAIN_TO_CATEGORY: Record<string, SubjectCategory> = {
-  'Sciences': SubjectCategory.Scientific,
-  'Langues': SubjectCategory.Languages,
-  'Univers Social': SubjectCategory.Humanities,
-  'Arts': SubjectCategory.Arts,
-  'Développement Physique': SubjectCategory.Sport,
-}
-
-const DOMAIN_TO_COLOR: Record<string, SubjectColor> = {
-  'Sciences': SubjectColor.Mint,
-  'Langues': SubjectColor.Sky,
-  'Univers Social': SubjectColor.Warm,
-  'Arts': SubjectColor.Warm,
-  'Développement Physique': SubjectColor.Mint,
-}
-
-function subjectCategory(domain: string): SubjectCategory {
-  return DOMAIN_TO_CATEGORY[domain] ?? SubjectCategory.Scientific
-}
-
-function subjectColor(domain: string): SubjectColor {
-  return DOMAIN_TO_COLOR[domain] ?? SubjectColor.Mint
-}
-
-function catalogSubjectKey(entry: StructureTemplateCurriculumEntry): string {
-  // Same subject code → one school catalog subject. Per-level programme lives on matters.
-  return entry.longName ?? entry.subjectCode
-}
-
-function catalogSubjectName(
-  subject: StructureTemplateDefinition['subjects'][number],
-  entry: StructureTemplateCurriculumEntry,
-): string {
-  return entry.longName ?? subject.shortName
-}
-
-export function curriculumEntriesForLevel(
-  template: StructureTemplateDefinition,
-  levelCode: string,
-): StructureTemplateCurriculumEntry[] {
-  const specific = template.curriculum.filter(entry => entry.levelCode === levelCode)
-  if (specific.length > 0) {
-    return specific
-  }
-  return template.subjects.map(subject => ({
-    levelCode,
-    subjectCode: subject.code,
-    coefficient: subject.defaultCoefficient,
-    matters: ['Programme de base'],
-  }))
-}
-
-function parseStructureInput(
-  input: ApplyStructureTemplateInput,
-  templates: StructureTemplateDefinition[],
-): NormalizedStructureLevel[] {
-  if (!input.templates.length) {
-    throw new BusinessRuleViolationError(
-      'STRUCTURE_TEMPLATE_REQUIRED',
-      'At least one school template must be selected',
-    )
-  }
-
-  const templateById = new Map(templates.map(template => [template.id, template]))
-  const allowedLevelIds = new Set(
-    templates.flatMap(template => template.gradeLevels.map(level => level.id)),
-  )
-
-  const normalized: NormalizedStructureLevel[] = []
-  for (const level of input.levels) {
-    const parsed = parseGradeLevelTemplateId(level.gradeLevelId)
-    if (!parsed || !allowedLevelIds.has(level.gradeLevelId)) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_LEVEL_NOT_ALLOWED',
-        `Grade level ${level.gradeLevelId} is not allowed for the selected templates`,
-      )
-    }
-    const template = templateById.get(parsed.templateId)
-    if (!template) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_LEVEL_NOT_ALLOWED',
-        `Template ${parsed.templateId} is not selected`,
-      )
-    }
-    if (!Number.isInteger(level.classCount) || level.classCount < 1) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_INVALID_CLASS_COUNT',
-        'Each level must have at least one class',
-      )
-    }
-    if (!Number.isInteger(level.capacity) || level.capacity < 1) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_INVALID_CAPACITY',
-        'Each class must have a positive capacity',
-      )
-    }
-    normalized.push({
-      ...level,
-      template,
-      levelCode: parsed.levelCode,
-    })
-  }
-
-  if (!normalized.length) {
-    throw new BusinessRuleViolationError(
-      'STRUCTURE_LEVEL_REQUIRED',
-      'At least one grade level must be configured',
-    )
-  }
-
-  return normalized
+/** Validate all selections before any school or curriculum writes. */
+export function resolveDatasetStructure(input: ApplyStructureTemplateInput): NormalizedStructureLevel[] {
+  const dataset = onboardingDatasetSchema.parse(input.dataset)
+  if (!input.templates.length || new Set(input.templates).size !== input.templates.length)
+    throw new BusinessRuleViolationError('STRUCTURE_TEMPLATE_REQUIRED', 'Select distinct dataset templates')
+  const templates = input.templates.map((id) => {
+    const template = dataset.templates.find(row => row.id === id)
+    if (!template)
+      throw new BusinessRuleViolationError('UNKNOWN_STRUCTURE_TEMPLATE', `Unknown dataset template: ${id}`)
+    return template
+  })
+  resolveDatasetCalendar(templates.map(template => dataset.calendarProfiles.find(row => row.code === template.calendarProfileCode)!))
+  if (!input.levels.length || new Set(input.levels.map(row => row.gradeLevelId)).size !== input.levels.length)
+    throw new BusinessRuleViolationError('STRUCTURE_LEVEL_REQUIRED', 'Select distinct grade levels')
+  return input.levels.map((selection) => {
+    const template = templates.find(row => row.gradeLevels.some(level => level.id === selection.gradeLevelId))
+    const definition = template?.gradeLevels.find(row => row.id === selection.gradeLevelId)
+    if (!template || !definition)
+      throw new BusinessRuleViolationError('STRUCTURE_LEVEL_NOT_ALLOWED', `Grade level ${selection.gradeLevelId} is not in the selected templates`)
+    if (!Number.isInteger(selection.classCount) || selection.classCount < 1)
+      throw new BusinessRuleViolationError('STRUCTURE_INVALID_CLASS_COUNT', 'Each level must have at least one class')
+    if (!Number.isInteger(selection.capacity) || selection.capacity < 1)
+      throw new BusinessRuleViolationError('STRUCTURE_INVALID_CAPACITY', 'Each class must have a positive capacity')
+    return { ...selection, template, definition }
+  })
 }
 
 async function allocateUniqueId(
   preferredId: string,
   schoolId: string,
   findById: (id: string) => Promise<{ id: string, schoolId?: string } | undefined>,
+  usedIds: Set<string>,
 ): Promise<string> {
-  const existing = await findById(preferredId)
-  if (!existing) {
-    return preferredId
+  for (const candidate of [preferredId, `${preferredId}--${schoolId.slice(0, 8)}`]) {
+    if (!usedIds.has(candidate) && !(await findById(candidate))) {
+      usedIds.add(candidate)
+      return candidate
+    }
   }
-  if (existing.schoolId === schoolId) {
-    return preferredId
-  }
-  return `${preferredId}--${schoolId.slice(0, 8)}`
+  const id = randomUUID()
+  usedIds.add(id)
+  return id
 }
 
 export async function buildStructureBootstrapGraph(
@@ -191,89 +108,56 @@ export async function buildStructureBootstrapGraph(
   schoolId: string,
   academicYearId: string,
   levels: NormalizedStructureLevel[],
+  disciplineIdsByCode: ReadonlyMap<string, string>,
+  categoryIdsByCode: ReadonlyMap<string, string>,
 ): Promise<StructureBootstrapGraph> {
   const gradeLevels: GradeLevel[] = []
   const subjects: Subject[] = []
   const subjectMatters: SubjectMatter[] = []
-  const gradeLevelSubjects: GradeLevelSubject[] = []
-  const gradeLevelSubjectMatters: GradeLevelSubjectMatter[] = []
   const classGroups: ClassGroup[] = []
   const classSubjects: ClassSubject[] = []
   const classSubjectMatters: ClassSubjectMatter[] = []
-  const appliedLevels: AppliedStructureLevelSubjects[] = []
+  const appliedLevels: AppliedDatasetLevel[] = []
 
-  const subjectIds = new Map<string, string>()
-  const matterIdsByKey = new Map<string, string>()
+  const usedGradeLevelIds = new Set<string>()
   const usedClassGroupIds = new Set<string>()
   const classSiblingCountByGradeSeed = new Map<string, number>()
 
-  function ensureSubject(
-    template: StructureTemplateDefinition,
-    entry: StructureTemplateCurriculumEntry,
-  ): string {
-    const catalogKey = catalogSubjectKey(entry)
-    const existing = subjectIds.get(catalogKey)
-    if (existing) {
-      return existing
-    }
-    const subject = template.subjects.find(item => item.code === entry.subjectCode)
-    if (!subject) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_SUBJECT_UNKNOWN',
-        `Unknown subject code ${entry.subjectCode}`,
-      )
-    }
-    const subjectId = randomUUID()
-    subjectIds.set(catalogKey, subjectId)
-    subjects.push(new Subject({
-      id: subjectId,
+  function ensureSubject(entry: OnboardingDatasetGradeLevel['subjects'][number], gradeLevelId: string): Subject {
+    const disciplineId = disciplineIdsByCode.get(entry.disciplineCode)
+    const categoryId = categoryIdsByCode.get(entry.categoryCode)
+    if (!disciplineId || !categoryId)
+      throw new BusinessRuleViolationError('STRUCTURE_CATALOG_UNRESOLVED', `Unresolved catalog for subject ${entry.code}`)
+    const subject = new Subject({
+      id: randomUUID(),
       schoolId,
-      name: catalogSubjectName(subject, entry),
-      shortName: subject.shortName,
-      code: subject.code,
-      defaultCoefficient: entry.coefficient ?? subject.defaultCoefficient,
-      category: subjectCategory(subject.domain),
-      color: subjectColor(subject.domain),
-    }))
-    return subjectId
-  }
-
-  function ensureMatter(
-    subjectId: string,
-    matterName: string,
-    sequenceOrder: number,
-  ): string {
-    const key = `${subjectId}::${matterName}`
-    const existing = matterIdsByKey.get(key)
-    if (existing) {
-      return existing
-    }
-    const matterId = randomUUID()
-    matterIdsByKey.set(key, matterId)
-    subjectMatters.push(new SubjectMatter({
-      id: matterId,
-      subjectId,
-      name: matterName,
-      description: matterName,
-      sequenceOrder,
-      estimatedHours: 2,
-    }))
-    return matterId
+      academicYearId,
+      gradeLevelId,
+      name: entry.name,
+      shortName: entry.shortName,
+      code: entry.code,
+      disciplineId,
+      categoryId,
+      coefficient: entry.coefficient,
+      isOptional: entry.isOptional,
+      color: entry.categoryCode === 'LANGUAGES' ? SubjectColor.Sky : ['HUMANITIES', 'ARTS'].includes(entry.categoryCode) ? SubjectColor.Warm : SubjectColor.Mint,
+      reportOrder: entry.reportOrder,
+    })
+    subjects.push(subject)
+    return subject
   }
 
   let classSubjectCount = 0
 
   for (const level of levels) {
-    const gradeLevelDef = level.template.gradeLevels.find(entry => entry.code === level.levelCode)
-    if (!gradeLevelDef) {
-      continue
-    }
+    const gradeLevelDef = level.definition
 
     const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId)
     const gradeLevelId = await allocateUniqueId(
       preferredGradeLevelId,
       schoolId,
       id => application.repositories.gradeLevels.findById(id),
+      usedGradeLevelIds,
     )
 
     const classNamingMode = level.classNamingMode ?? 'numerical'
@@ -286,51 +170,22 @@ export async function buildStructureBootstrapGraph(
       cycle: level.template.cycle,
     }))
 
-    const entries = curriculumEntriesForLevel(level.template, level.levelCode)
-    const levelGlSubjects: Array<{
-      gradeLevelSubject: GradeLevelSubject
-      matterIds: string[]
-    }> = []
-
-    for (const entry of entries) {
-      const subjectId = ensureSubject(level.template, entry)
-      const gradeLevelSubjectId = randomUUID()
-      const gradeLevelSubject = new GradeLevelSubject({
-        id: gradeLevelSubjectId,
-        gradeLevelId,
-        academicYearId,
-        subjectId,
-        coefficient: entry.coefficient,
-        isOptional: entry.isOptional ?? false,
+    const entries = gradeLevelDef.subjects
+    const levelSubjects = entries.map((entry) => {
+      const subject = ensureSubject(entry, gradeLevelId)
+      const matterIds = [...entry.chapters].sort((a, b) => a.order - b.order).map((chapter) => {
+        const id = randomUUID()
+        subjectMatters.push(new SubjectMatter({ id, subjectId: subject.id, name: chapter.title, description: chapter.title, sequenceOrder: chapter.order, estimatedHours: 2 }))
+        return id
       })
-      gradeLevelSubjects.push(gradeLevelSubject)
-
-      const matterIds: string[] = []
-      for (const [matterIndex, matterName] of entry.matters.entries()) {
-        const matterId = ensureMatter(subjectId, matterName, matterIndex + 1)
-        matterIds.push(matterId)
-        gradeLevelSubjectMatters.push(new GradeLevelSubjectMatter({
-          id: randomUUID(),
-          gradeLevelSubjectId,
-          subjectMatterId: matterId,
-        }))
-      }
-      levelGlSubjects.push({ gradeLevelSubject, matterIds })
       classSubjectCount += level.classCount
-    }
+      return { subject, matterIds, definition: entry }
+    })
 
     appliedLevels.push({
-      template: level.template,
-      levelCode: level.levelCode,
+      definition: gradeLevelDef,
       gradeLevelId,
-      gradeLevelName: gradeLevelDef.name,
-      gradeLevelShortLabel: gradeLevelDef.shortLabel,
-      subjects: collectLevelSubjects(
-        level.template,
-        level.levelCode,
-        entries,
-        entry => subjectIds.get(catalogSubjectKey(entry)),
-      ),
+      subjects: levelSubjects.map(({ subject, definition }) => ({ subjectId: subject.id, definition })),
     })
 
     for (let index = 0; index < level.classCount; index += 1) {
@@ -343,6 +198,7 @@ export async function buildStructureBootstrapGraph(
         preferredClassGroupId,
         schoolId,
         id => application.repositories.classGroups.findById(id),
+        usedClassGroupIds,
       )
       usedClassGroupIds.add(classGroupId)
 
@@ -351,28 +207,22 @@ export async function buildStructureBootstrapGraph(
         schoolId,
         academicYearId,
         gradeLevelId,
-        name: classDisplayName(
-          level.template,
-          level.levelCode,
-          index,
-          classNamingMode,
-        ),
+        name: classNameFromLabel(gradeLevelDef.shortLabel, index, classNamingMode),
         capacity: level.capacity,
       }))
 
-      for (const { gradeLevelSubject, matterIds } of levelGlSubjects) {
+      for (const { subject, matterIds } of levelSubjects) {
         const classSubjectId = randomUUID()
         classSubjects.push(new ClassSubject({
           id: classSubjectId,
           classGroupId,
-          subjectId: gradeLevelSubject.subjectId,
-          gradeLevelSubjectId: gradeLevelSubject.id,
-          coefficient: gradeLevelSubject.coefficient,
-          periodsPerWeek: gradeLevelSubject.periodsPerWeek,
-          minPeriodSpan: gradeLevelSubject.minPeriodSpan,
-          maxPeriodSpan: gradeLevelSubject.maxPeriodSpan,
+          subjectId: subject.id,
+          coefficient: subject.coefficient,
+          periodsPerWeek: subject.periodsPerWeek,
+          minPeriodSpan: subject.minPeriodSpan,
+          maxPeriodSpan: subject.maxPeriodSpan,
           completedPercentage: 0,
-          isOffered: !gradeLevelSubject.isOptional,
+          isOffered: !subject.isOptional,
         }))
 
         for (const matterId of matterIds) {
@@ -392,8 +242,6 @@ export async function buildStructureBootstrapGraph(
     gradeLevels,
     subjects,
     subjectMatters,
-    gradeLevelSubjects,
-    gradeLevelSubjectMatters,
     classGroups,
     classSubjects,
     classSubjectMatters,
@@ -405,16 +253,6 @@ export async function buildStructureBootstrapGraph(
   }
 }
 
-export async function persistStructureBootstrapGraph(
-  application: OnboardingSchoolApplication,
-  actor: ActorMetadata,
-  graph: StructureBootstrapGraph,
-): Promise<void> {
-  await application.forActor(actor).baseService.access.curriculum.assertConfigure()
-  await persistCurriculumEntities(application, graph)
-  await persistClassMirrorEntities(application, graph)
-}
-
 async function persistCurriculumEntities(
   application: OnboardingSchoolApplication,
   graph: StructureBootstrapGraph,
@@ -423,8 +261,6 @@ async function persistCurriculumEntities(
   await repos.gradeLevels.batchSave(graph.gradeLevels)
   await repos.subjects.batchSave(graph.subjects)
   await repos.subjectMatters.batchSave(graph.subjectMatters)
-  await repos.gradeLevelSubjects.batchSave(graph.gradeLevelSubjects)
-  await repos.gradeLevelSubjectMatters.batchSave(graph.gradeLevelSubjectMatters)
 }
 
 async function persistClassMirrorEntities(
@@ -442,8 +278,8 @@ export async function applyStructureTemplate(
   actor: ActorMetadata,
   input: ApplyStructureTemplateInput,
 ): Promise<ApplyStructureTemplateResult> {
-  const templates = resolveOnboardingStructureTemplates(input.templates, input.templateSnapshots ?? [])
-  const levels = parseStructureInput(input, templates)
+  const dataset = onboardingDatasetSchema.parse(input.dataset)
+  const levels = resolveDatasetStructure({ ...input, dataset })
   const schoolId = requireActorSchoolId(actor)
   const service = application.forActor(actor)
   const phases: Array<{ phase: string, ms: number }> = []
@@ -467,7 +303,9 @@ export async function applyStructureTemplate(
   }
 
   const academicYears = await application.repositories.academicYears.list({ schoolId })
-  const academicYear = academicYears.find(year => year.status === 'published') ?? academicYears[0]
+  const academicYear = input.academicYearId
+    ? academicYears.find(year => year.id === input.academicYearId)
+    : academicYears.find(year => year.status === 'published') ?? academicYears[0]
   if (!academicYear) {
     throw new BusinessRuleViolationError(
       'NO_ACADEMIC_YEAR',
@@ -480,24 +318,39 @@ export async function applyStructureTemplate(
   let classSubjectCount = 0
   let subjectCount = 0
   let gradeScaleCount = 0
-  let reportCardDefinitionCount = 0
-  let reportCardSectionCount = 0
+  let reportModuleCount = 0
+  let reportSubjectAssignmentCount = 0
 
   await service.baseService.atomicExecution.execute(async () => {
     const uniqueTemplates = [...new Map(levels.map(level => [level.template.id, level.template])).values()]
-    await ensureAcademicPeriodsFromTemplates(application, actor, {
+    await ensureAcademicPeriodsFromDataset(application, actor, {
       schoolId,
       academicYearId: academicYear.id,
       academicYearStart: academicYear.startDate,
       academicYearEnd: academicYear.endDate,
-      templates: uniqueTemplates,
+      profiles: uniqueTemplates.map(template => dataset.calendarProfiles.find(profile => profile.code === template.calendarProfileCode)!),
     })
 
+    await service.baseService.access.curriculum.assertConfigure()
+    const categoryIdsByCode = await ensureDatasetSubjectCategories(application.repositories, schoolId, dataset.subjectCategories)
+    const disciplineIdsByCode = new Map<string, string>()
+    const existingDisciplines = await service.baseService.entities.academicDisciplines.list({ schoolId })
+    for (const spec of dataset.disciplines) {
+      const code = spec.code.toUpperCase()
+      const matches = existingDisciplines.filter(row => row.code.toUpperCase() === code)
+      const existing = matches[0]
+      if (matches.length > 1 || (existing && (!existing.isActive || existing.name !== spec.name)))
+        throw new BusinessRuleViolationError('STRUCTURE_DISCIPLINE_CONFLICT', `Dataset discipline ${spec.code} conflicts with the school catalog`)
+      const discipline = existing ?? await service.academicsWorkflow.configureAcademicDiscipline({ id: randomUUID(), code, name: spec.name, isActive: true })
+      disciplineIdsByCode.set(spec.code, discipline.id)
+    }
     const graph = await buildStructureBootstrapGraph(
       application,
       schoolId,
       academicYear.id,
       levels,
+      disciplineIdsByCode,
+      categoryIdsByCode,
     )
 
     await application.forActor(actor).baseService.access.curriculum.assertConfigure()
@@ -516,15 +369,16 @@ export async function applyStructureTemplate(
     classSubjectCount = graph.classSubjectCount
 
     const reportCardCounts = await track('structure.reportCards', async () => {
-      return applyReportCardsFromTemplate(application, actor, {
+      return applyReportCardsFromDataset(application, actor, {
         schoolId,
         academicYearId: academicYear.id,
         levels: graph.appliedLevels,
+        dataset,
       })
     })
     gradeScaleCount = reportCardCounts.gradeScaleCount
-    reportCardDefinitionCount = reportCardCounts.reportCardDefinitionCount
-    reportCardSectionCount = reportCardCounts.reportCardSectionCount
+    reportModuleCount = reportCardCounts.reportModuleCount
+    reportSubjectAssignmentCount = reportCardCounts.reportSubjectAssignmentCount
   })
 
   return {
@@ -533,8 +387,8 @@ export async function applyStructureTemplate(
     subjectCount,
     classSubjectCount,
     gradeScaleCount,
-    reportCardDefinitionCount,
-    reportCardSectionCount,
+    reportModuleCount,
+    reportSubjectAssignmentCount,
     phases,
   }
 }

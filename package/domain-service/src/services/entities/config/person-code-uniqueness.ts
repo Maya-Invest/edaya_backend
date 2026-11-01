@@ -10,14 +10,16 @@ export async function assertUniquePersonCode(input: {
   entityId: string
   errorCode: string
   entityLabel: string
-  listBySchool: () => Promise<readonly { id: string, code?: string }[]>
+  findCandidates: (code: string) => Promise<readonly { id: string, code?: string }[]>
 }): Promise<void> {
   if (!input.code) {
     return
   }
 
   const normalized = normalizePersonCode(input.code)
-  const existing = await input.listBySchool()
+  // Candidate narrowing must not replace the established trim/lowercase rule
+  // with import matching's stronger Unicode compatibility normalization.
+  const existing = await input.findCandidates(input.code)
   const conflict = existing.find((entry) => {
     if (entry.id === input.entityId || !entry.code) {
       return false

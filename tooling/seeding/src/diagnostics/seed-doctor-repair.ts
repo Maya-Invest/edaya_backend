@@ -79,7 +79,7 @@ export async function runHttpSeedDoctorWithRepair(
 
   for (const scope of repairs) {
     // eslint-disable-next-line no-console
-    console.log(`Seed doctor repair: running \`bun repo seed --scope ${scope}\`...`)
+    console.log(`Seed doctor repair: running \`bun repo ops seed --scope ${scope}\`...`)
     await runRepairScope(scope, options)
   }
 

@@ -1,31 +1,48 @@
 import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
 import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
+import type { MarksQueueInput } from './queries/marks-review'
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
-import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
+import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetTeacherTimetableInput, TeacherTimetable } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
 import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
-import { FeeStatus, ReportCardResultStatus } from '@edaya/core'
+import { ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
+import { SchoolImportService } from '../capabilities/imports/import-service'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
-
-import { buildAppShellCounts } from './queries/app-shell-counts'
+import { getActivityRoster } from './queries/activity-roster'
+import { getAssessmentEditorContext } from './queries/assessment-editor-context'
+import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
-import { buildClassGroupTimetable } from './queries/timetable'
+import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
+
+import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
 import { AccountInvitationServiceWorkflow } from './workflows/account-invitation'
 import { AssessmentsServiceWorkflow } from './workflows/assessments'
 import { BehaviorServiceWorkflow } from './workflows/behavior'
 import { CommunicationsServiceWorkflow } from './workflows/communications'
+import { ConversationsWorkflow } from './workflows/conversations'
+import { DocumentsServiceWorkflow } from './workflows/documents'
+import { FamilyFeedbackServiceWorkflow } from './workflows/family-feedback'
 import { FinanceServiceWorkflow } from './workflows/finance'
 import { NotificationTemplatesServiceWorkflow } from './workflows/notification-templates'
+import { ReportConfigurationWorkflow } from './workflows/report-configuration'
 import { SchedulingServiceWorkflow } from './workflows/scheduling'
 import { SetupServiceWorkflow } from './workflows/setup'
 import { StudentServiceWorkflow } from './workflows/student'
+import { TeacherCorrectionsWorkflow } from './workflows/teacher-corrections'
 import { resolveTimetableSpace, TimetableGenerationServiceWorkflow } from './workflows/timetable-generation'
 
 export class SchoolService {
+  private readonly importArgs: Pick<ServiceArgs, 'importPersistence' | 'importFormat' | 'durableWork'>
+  get imports(): SchoolImportService {
+    if (!this.importArgs.importPersistence || !this.importArgs.importFormat)
+      throw new Error('Import adapters are not configured')
+    return new SchoolImportService(this, this.importArgs.importPersistence, this.importArgs.importFormat, this.importArgs.durableWork)
+  }
+
   readonly baseService: BaseSchoolService
   readonly academicsWorkflow: AcademicsServiceWorkflow
   readonly financeWorkflow: FinanceServiceWorkflow
@@ -39,9 +56,14 @@ export class SchoolService {
   readonly accessControlWorkflow: AccessControlServiceWorkflow
   readonly accountInvitationWorkflow: AccountInvitationServiceWorkflow
   readonly notificationTemplatesWorkflow: NotificationTemplatesServiceWorkflow
+  readonly documentsWorkflow: DocumentsServiceWorkflow
+  readonly familyFeedbackWorkflow: FamilyFeedbackServiceWorkflow
+  readonly teacherCorrectionsWorkflow: TeacherCorrectionsWorkflow
+  readonly conversationsWorkflow: ConversationsWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
+    this.importArgs = args
     this.baseService = new BaseSchoolService(args)
     this.academicsWorkflow = new AcademicsServiceWorkflow(this.baseService)
     this.financeWorkflow = new FinanceServiceWorkflow(this.baseService)
@@ -55,7 +77,13 @@ export class SchoolService {
     this.accessControlWorkflow = new AccessControlServiceWorkflow(this.baseService)
     this.accountInvitationWorkflow = new AccountInvitationServiceWorkflow(this.baseService)
     this.notificationTemplatesWorkflow = new NotificationTemplatesServiceWorkflow(this.baseService)
+    this.documentsWorkflow = new DocumentsServiceWorkflow(this.baseService)
+    this.familyFeedbackWorkflow = new FamilyFeedbackServiceWorkflow(this.baseService)
+    this.teacherCorrectionsWorkflow = new TeacherCorrectionsWorkflow(this.baseService)
+    this.conversationsWorkflow = new ConversationsWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
+      conversations: this.conversationsWorkflow,
+      teacherCorrections: this.teacherCorrectionsWorkflow,
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
       accountInvitation: this.accountInvitationWorkflow,
@@ -68,13 +96,154 @@ export class SchoolService {
       communications: this.communicationsWorkflow,
       behavior: this.behaviorWorkflow,
       finance: this.financeWorkflow,
+      documents: this.documentsWorkflow,
+      familyFeedback: this.familyFeedbackWorkflow,
     })
   }
 
+  getReportConfiguration(input: Parameters<ReportConfigurationWorkflow['read']>[0]) { return new ReportConfigurationWorkflow(this.baseService).read(input) }
+
+  getStudentSubjectEnrollments(input: Parameters<typeof getStudentSubjectEnrollments>[1]) { return getStudentSubjectEnrollments(this.baseService, input) }
+  getClassSubjectRoster(input: Parameters<typeof getClassSubjectRoster>[1]) { return getClassSubjectRoster(this.baseService, input) }
+  getStudentTimetable(input: Parameters<typeof getStudentTimetable>[1]) { return getStudentTimetable(this.baseService, input) }
+
+  listConversationRecipients(input: Parameters<ConversationsWorkflow['recipients']>[0]) { return this.conversationsWorkflow.recipients(input) }
+  listConversations(input: Parameters<ConversationsWorkflow['list']>[0]) { return this.conversationsWorkflow.list(input) }
+  getConversation(input: Parameters<ConversationsWorkflow['detail']>[0]) { return this.conversationsWorkflow.detail(input) }
+
+  async getTeacherAttendanceCall(input: Parameters<TeacherCorrectionsWorkflow['getAttendanceCall']>[0]) { return this.teacherCorrectionsWorkflow.getAttendanceCall(input) }
+  async getTeacherWorkflowState(input: Parameters<TeacherCorrectionsWorkflow['getWorkflowState']>[0]) { return this.teacherCorrectionsWorkflow.getWorkflowState(input) }
+  async listTeacherCorrections(input: Parameters<TeacherCorrectionsWorkflow['list']>[0]) { return this.teacherCorrectionsWorkflow.list(input) }
+  async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
+
+  async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
+
+  async getAssessmentEditorContext(input: { classGroupId: string, periodId: string }) { return getAssessmentEditorContext(this.baseService, input) }
+
+  async getAssessmentMarksReview(input: { assessmentId: string }) { return getAssessmentMarksReview(this.baseService, input) }
+  async listAssessmentMarksReviews(input: MarksQueueInput) { return listAssessmentMarksReviews(this.baseService, input) }
+
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    const scope = await this.baseService.access.finance.overdueFeesScope()
-    return this.baseService.repositories.studentFees.forAccess(scope).count({ status: FeeStatus.Overdue })
+    return this.financeWorkflow.countOverdueCharges()
+  }
+
+  getStudentFinanceSummary(input: { studentId: string, academicYearId: string }) {
+    return this.financeWorkflow.getStudentFinanceSummary(input)
+  }
+
+  getAccountStatement(input: { accountId: string }) {
+    return this.financeWorkflow.getAccountStatement(input)
+  }
+
+  getSchoolFinanceAging(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.getSchoolFinanceAging(input)
+  }
+
+  getFinanceOverview(input: Parameters<FinanceServiceWorkflow['getFinanceOverview']>[0]) { return this.financeWorkflow.getFinanceOverview(input) }
+
+  getFeeFinanceOverview(input: Parameters<FinanceServiceWorkflow['getFeeFinanceOverview']>[0]) { return this.financeWorkflow.getFeeFinanceOverview(input) }
+
+  getFinanceBillingPage(input: Parameters<FinanceServiceWorkflow['getFinanceBillingPage']>[0]) { return this.financeWorkflow.getFinanceBillingPage(input) }
+
+  getFinancePaymentsPage(input: Parameters<FinanceServiceWorkflow['getFinancePaymentsPage']>[0]) { return this.financeWorkflow.getFinancePaymentsPage(input) }
+
+  getFinanceBillingDetail(input: Parameters<FinanceServiceWorkflow['getFinanceBillingDetail']>[0]) { return this.financeWorkflow.getFinanceBillingDetail(input) }
+
+  getFinanceReconciliation(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.getFinanceReconciliation(input)
+  }
+
+  previewAccountAllocation(input: { accountId: string, allocation: import('./workflows/finance').AllocationPlan }) {
+    return this.financeWorkflow.previewAccountAllocation(input)
+  }
+
+  getRelatedFamilyFinanceOverview(input: { academicYearId: string }) {
+    return this.financeWorkflow.getRelatedFamilyFinanceOverview(input)
+  }
+
+  getStudentAccountStatement(input: { studentId: string, academicYearId: string, currency?: string }) {
+    return this.financeWorkflow.getStudentAccountStatement(input)
+  }
+
+  listOpenDueCharges(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.listOpenDueCharges(input)
+  }
+
+  getPaymentSettlementHistory(input: { accountId: string }) {
+    return this.financeWorkflow.getPaymentSettlementHistory(input)
+  }
+
+  listDocumentTemplates() {
+    return this.documentsWorkflow.listDocumentTemplates()
+  }
+
+  listDocumentIssuances(input: Parameters<DocumentsServiceWorkflow['listDocumentIssuances']>[0]) {
+    return this.documentsWorkflow.listDocumentIssuances(input)
+  }
+
+  getDocumentIssuance(input: { id: string }) {
+    return this.documentsWorkflow.getDocumentIssuance(input)
+  }
+
+  grantDocumentDownload(input: { id: string }) {
+    return this.documentsWorkflow.grantDocumentDownload(input)
+  }
+
+  grantDocumentBundleDownload(input: Parameters<DocumentsServiceWorkflow['grantDocumentBundleDownload']>[0]) {
+    return this.documentsWorkflow.grantDocumentBundleDownload(input)
+  }
+
+  listFamilyFeedbackCampaigns() {
+    return this.familyFeedbackWorkflow.listFamilyFeedbackCampaigns()
+  }
+
+  getFamilyFeedbackCampaign(input: { id: string }) {
+    return this.familyFeedbackWorkflow.getFamilyFeedbackCampaign(input)
+  }
+
+  previewFamilyFeedbackAudience(input: Parameters<FamilyFeedbackServiceWorkflow['previewFamilyFeedbackAudience']>[0]) {
+    return this.familyFeedbackWorkflow.previewFamilyFeedbackAudience(input)
+  }
+
+  getFamilyFeedbackInstrument(input: Parameters<FamilyFeedbackServiceWorkflow['getFamilyFeedbackInstrument']>[0]) {
+    return this.familyFeedbackWorkflow.getFamilyFeedbackInstrument(input)
+  }
+
+  listGuardianFamilyFeedbackCampaigns() {
+    return this.familyFeedbackWorkflow.listGuardianFamilyFeedbackCampaigns()
+  }
+
+  getGuardianFamilyFeedbackQuestionnaire(input: Parameters<FamilyFeedbackServiceWorkflow['getGuardianFamilyFeedbackQuestionnaire']>[0]) {
+    return this.familyFeedbackWorkflow.getGuardianFamilyFeedbackQuestionnaire(input)
+  }
+
+  listFamilyFeedbackComments(input: { id: string }) {
+    return this.familyFeedbackWorkflow.listFamilyFeedbackComments(input)
+  }
+
+  getFamilyFeedbackAggregateReview(input: { id: string }) {
+    return this.familyFeedbackWorkflow.getFamilyFeedbackAggregateReview(input)
+  }
+
+  listTeacherFamilyFeedbackResults() {
+    return this.familyFeedbackWorkflow.listTeacherFamilyFeedbackResults()
+  }
+
+  getTeacherFamilyFeedbackResult(input: { id: string }) {
+    return this.familyFeedbackWorkflow.getTeacherFamilyFeedbackResult(input)
+  }
+
+  reconcileStudentYearAccount(input: { accountId: string }) {
+    return this.financeWorkflow.reconcileStudentYearAccount(input)
+  }
+
+  reconcileSchoolFinance(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.reconcileSchoolFinance(input)
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {
@@ -86,18 +255,33 @@ export class SchoolService {
   async getSchoolOverview(input: GetSchoolOverviewInput): Promise<SchoolOverview> {
     this.checkActorSchool(input.schoolId)
     await this.baseService.access.overview.assertContext(input)
-    return buildSchoolOverview(await this.baseService.access.overview.repositories(), input)
+    let pendingStudentPhotoCount = 0
+    try {
+      pendingStudentPhotoCount = await this.baseService.entities.studentPhotoSubmissions.count({
+        status: StudentPhotoSubmissionStatus.Pending,
+      })
+    }
+    catch (error) {
+      if (!(error instanceof AuthorizationError))
+        throw error
+    }
+    return buildSchoolOverview(this.baseService.repositories.dashboardProjections, await this.baseService.access.overview.scopes(), input, { pendingStudentPhotoCount })
   }
 
   async getAppShellCounts(input: GetAppShellCountsInput): Promise<AppShellCounts> {
     this.checkActorSchool(input.schoolId)
     await this.baseService.access.overview.assertContext(input)
-    return buildAppShellCounts(await this.baseService.access.overview.repositories(), input)
+    return this.baseService.repositories.dashboardProjections.appShell(input, await this.baseService.access.overview.scopes())
   }
 
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {
     const repositories = await this.baseService.access.timetable.eventRepositories(input.classGroupId)
     return buildClassGroupTimetable(repositories, input)
+  }
+
+  async getTeacherTimetable(input: GetTeacherTimetableInput): Promise<TeacherTimetable> {
+    const repositories = await this.baseService.access.timetable.teacherEventRepositories(input.teacherId)
+    return buildTeacherTimetable(repositories, input)
   }
 
   async resolveTimetableSpace(input: ResolveTimetableSpaceInput): Promise<ResolvedTimetableCell[]> {

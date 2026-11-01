@@ -11,11 +11,12 @@
   },
   "scripts": {
     "precompile": "bun scripts/precompile-templates.ts",
-    "check": "bun run precompile && tsc --noEmit",
+    "check": "bun scripts/precompile-templates.ts --check && bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "lint": "eslint src tests scripts",
-    "lint:fix": "eslint src tests scripts --fix",
-    "test": "bun run precompile && bun test tests"
+    "lint": "bun x --bun eslint src tests scripts",
+    "lint:fix": "bun x --bun eslint src tests scripts --fix",
+    "test": "bun run precompile && bun test tests --path-ignore-patterns '**/*.integration.test.ts' --preload ../../tooling/test-support/unit-preload.ts",
+    "test:integration": "bun test .integration.test.ts --timeout 120000"
   },
   "dependencies": {
     "@edaya/core": "workspace:*",

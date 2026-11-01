@@ -1,9 +1,8 @@
 import type { PermissionDefinition } from './permission-definition'
-import { Permission, permissionScope } from '@edaya/core'
+import { corePermissionDefinition, Permission } from '@edaya/core'
 
 function buildDefinition(permission: Permission): PermissionDefinition {
-  const scope = permissionScope(permission)
-  return scope ? { permission, scope } : { permission }
+  return { permission, ...corePermissionDefinition(permission) }
 }
 
 export function buildPermissionDefinitions(): Record<Permission, PermissionDefinition> {

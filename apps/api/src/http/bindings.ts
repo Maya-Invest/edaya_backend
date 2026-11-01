@@ -4,7 +4,7 @@ import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
 import type { ActorMetadata } from "@edaya/authorization";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "../identity/server/index";
 
 export interface AppBindings {
   Bindings: Environment;

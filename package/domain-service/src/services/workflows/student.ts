@@ -1,14 +1,34 @@
-import type { ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput } from '@edaya/core'
+import type { Attachment, AttachmentInput, ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, ManageStudentSubjectEnrollmentsInput, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput, StudentPhotoSubmission } from '@edaya/core'
+import type {
+  CreateProfilePhotoUploadInput,
+} from '../../capabilities/files/profile-photo-uploads'
+import type {
+  PublishStudentPhotoInput,
+  ReviewStudentPhotoInput,
+  SubmitStudentPhotoInput,
+  WithdrawStudentPhotoSubmissionInput,
+} from '../../capabilities/files/student-photos'
 import type { BaseSchoolService } from '../base-school-service'
 import type { StudentWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { AccountInvitationKind, BusinessRuleViolationError, EnrollmentEndReason, Guardian, GuardianStudentLink, ProgressionDecision, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity, StudentStatus } from '@edaya/core'
+import { AccountInvitationKind, AttachmentOwnerKind, BusinessRuleViolationError, EnrollmentEndReason, Guardian, GuardianStudentLink, ProgressionDecision, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity, StudentStatus } from '@edaya/core'
+import {
+  completeProfilePhotoUpload,
+  createProfilePhotoUpload,
+  publishStudentPhoto,
+  reviewStudentPhoto,
+  submitStudentPhoto,
+  withdrawStudentPhotoSubmission,
+} from '../../capabilities/files'
+import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
 import { resolveStudentInvitationEmail, scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
-
+import { carrySubjectChoices, subjectTransferImpact } from '../../capabilities/subject-enrollment/transfer'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import { manageSubjectEnrollments } from './subject-enrollment'
 
 export interface EnrollStudentInput {
+  enrolledAt?: Date
   id: string
   studentId: string
   classGroupId: string
@@ -42,6 +62,7 @@ export interface PromoteStudentInput {
 }
 
 export interface TransferStudentInput {
+  acknowledgedDroppedSubjectIds?: string[]
   enrollmentId: string
   nextEnrollmentId: string
   nextClassGroupId: string
@@ -55,11 +76,13 @@ export interface GraduateStudentInput {
   notes?: string
 }
 
-export type RegisterStudentInput = StudentInput & {
+export type RegisterStudentInput = Omit<StudentInput, 'id'> & {
+  id?: string
   sendAccountInvitation?: boolean
   inviteEmail?: string
 }
-export type RegisterGuardianInput = GuardianInput & {
+export type RegisterGuardianInput = Omit<GuardianInput, 'id'> & {
+  id?: string
   sendAccountInvitation?: boolean
 }
 
@@ -76,7 +99,7 @@ export interface RecordProgressionDecisionInput {
   notes?: string
 }
 
-export interface UpdateStudentProfileInput extends Partial<StudentInput> {
+export interface UpdateStudentProfileInput extends Partial<Omit<StudentInput, 'photoUrl' | 'photoAttachmentId'>> {
   studentId: string
 }
 
@@ -98,7 +121,8 @@ export interface UpdateStudentNoteInput extends Partial<StudentNoteInput> {
   noteId: string
 }
 
-export interface UpdateGuardianContactMethodsInput extends Partial<GuardianInput> {
+export interface UpdateGuardianProfileInput extends Partial<Omit<GuardianInput, 'id' | 'schoolId' | 'subjectId' | 'createdAt'>> {
+  studentNotificationPreferences?: Array<{ studentId: string, receivesAcademicReports?: boolean, receivesAttendanceAlerts?: boolean }>
   guardianId: string
 }
 
@@ -107,7 +131,18 @@ export interface UpdateGuardianStudentLinkInput extends Partial<ConstructorParam
   studentId: string
 }
 
+export type {
+  CreateProfilePhotoUploadInput,
+} from '../../capabilities/files/profile-photo-uploads'
+export type {
+  PublishStudentPhotoInput,
+  ReviewStudentPhotoInput,
+  SubmitStudentPhotoInput,
+  WithdrawStudentPhotoSubmissionInput,
+} from '../../capabilities/files/student-photos'
+
 export class StudentServiceWorkflow extends BaseServiceWorkflow {
+  manageStudentSubjectEnrollments(input: ManageStudentSubjectEnrollmentsInput) { return manageSubjectEnrollments(this.baseService, input) }
   private readonly repositories: StudentWorkflowRepositories
 
   constructor(base: BaseSchoolService) {
@@ -128,7 +163,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         )
       }
 
-      const student = new Student(entityInput)
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.students.findById(candidate),
+        entityInput.id,
+        'STUDENT_ID_ALREADY_EXISTS',
+        'Student',
+      )
+      const student = new Student({ ...entityInput, id })
       await this.baseService.entities.students.save(student)
       await scheduleAccountInvitationIfEligible(
         this.baseService,
@@ -147,7 +188,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
     return this.baseService.atomicExecution.execute(async () => {
       const { sendAccountInvitation, ...entityInput } = input
-      const guardian = new Guardian(entityInput)
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.guardians.findById(candidate),
+        entityInput.id,
+        'GUARDIAN_ID_ALREADY_EXISTS',
+        'Guardian',
+      )
+      const guardian = new Guardian({ ...entityInput, id })
       await this.baseService.entities.guardians.save(guardian)
       await scheduleAccountInvitationIfEligible(
         this.baseService,
@@ -167,6 +214,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     classGroupId,
     createdAt,
+    enrolledAt,
   }: EnrollStudentInput): Promise<StudentClassEnrollment> {
     return this.baseService.atomicExecution.execute(async () => {
       const [student, classGroup] = await Promise.all([
@@ -202,11 +250,12 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroupId,
         academicYearId: classGroup.academicYearId,
         enrollmentIndex: nextEnrollmentIndex,
+        enrolledAt,
         createdAt,
       })
       await this.baseService.entities.enrollments.save(enrollment)
       return enrollment
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async linkGuardianToStudent({
@@ -226,16 +275,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
   }: LinkGuardianToStudentInput): Promise<GuardianStudentLinkType> {
     return this.baseService.atomicExecution.execute(async () => {
-      const [guardian, student] = await Promise.all([
-        this.requireGuardian(guardianId),
-        this.requireStudent(studentId),
-      ])
+      const { guardian, student } = await this.baseService.access.guardians.assertLinkStudent({ guardianId, studentId })
       if (guardian.schoolId !== student.schoolId) {
         denyResourceAccess()
       }
       this.checkActorSchool(guardian.schoolId)
-
-      await this.baseService.access.guardians.assertLinkStudent({ guardianId: guardian.id, studentId: student.id })
 
       const existing = await this.repositories.guardianLinks.findOne({ guardianId, studentId })
       const link = new GuardianStudentLink({
@@ -300,7 +344,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.entities.enrollments.save(completed)
       await this.baseService.entities.enrollments.save(successor)
       return successor
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async transferStudent({
@@ -308,11 +352,16 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     nextEnrollmentId,
     nextClassGroupId,
     effectiveAt,
+    acknowledgedDroppedSubjectIds = [],
   }: TransferStudentInput): Promise<StudentClassEnrollment> {
     return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
       const nextClassGroup = await this.requireTransitionTarget(enrollment, nextClassGroupId)
+      const impact = await subjectTransferImpact(this.baseService.repositories, enrollment, nextClassGroupId, effectiveAt)
+      const unsupported = impact.filter(choice => !choice.destinationClassSubjectId)
+      if (unsupported.some(choice => !acknowledgedDroppedSubjectIds.includes(choice.subjectId)))
+        throw new BusinessRuleViolationError('TRANSFER_OPTIONAL_CHOICES_ACKNOWLEDGMENT_REQUIRED', 'Confirm the optional subjects unavailable in the destination class', { unsupportedChoices: unsupported.map(choice => ({ subjectId: choice.subjectId, subjectName: choice.subjectName, enrollmentId: choice.enrollment.id })) })
       const transferred = enrollment.close({
         endedAt: effectiveAt,
         endReason: EnrollmentEndReason.Transferred,
@@ -326,8 +375,9 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       })
       await this.baseService.entities.enrollments.save(transferred)
       await this.baseService.entities.enrollments.save(successor)
+      await carrySubjectChoices(this.baseService.repositories, impact, successor, this.baseService.actor)
       return successor
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async graduateStudent({
@@ -351,6 +401,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         notes,
       })
       const graduatedStudent = new Student({
+        ...student.data,
         id: student.id,
         schoolId: student.schoolId,
         firstName: student.firstName,
@@ -369,7 +420,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.entities.enrollments.save(graduatedEnrollment)
       await this.baseService.entities.students.save(graduatedStudent)
       return graduatedEnrollment
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async closeEnrollment({ enrollmentId, endReason, endedAt }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
@@ -382,7 +433,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       })
       await this.baseService.entities.enrollments.save(closed)
       return closed
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async recordProgressionDecision({
@@ -407,7 +458,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   async updateStudentProfile({ studentId, ...changes }: UpdateStudentProfileInput): Promise<Student> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.students, studentId)
-      const student = existing.copyWith(changes)
+      const { photoUrl: _photoUrl, photoAttachmentId: _photoAttachmentId, ...profile } = changes as Partial<StudentInput>
+      const student = existing.copyWith(profile)
       await this.baseService.entities.students.save(student)
       return student
     })
@@ -466,20 +518,30 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
+  async updateGuardianProfile({ guardianId, studentNotificationPreferences, ...changes }: UpdateGuardianProfileInput): Promise<Guardian> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
+      await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Guardian, guardianId, changes.photoUrl)
       const guardian = new Guardian({
         ...existing.data,
-        phone: undefined,
-        email: undefined,
-        firstName: changes.firstName ?? existing.firstName,
-        lastName: changes.lastName ?? existing.lastName,
-        photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
-        contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
-        hasAccess: changes.hasAccess ?? existing.hasAccess,
+        ...Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined)),
+        code: Object.hasOwn(changes, 'code') ? changes.code : existing.code,
+        occupation: Object.hasOwn(changes, 'occupation') ? changes.occupation : existing.occupation,
+        sourceFullName: Object.hasOwn(changes, 'sourceFullName') ? changes.sourceFullName : existing.sourceFullName,
+        photoUrl: Object.hasOwn(changes, 'photoUrl') ? changes.photoUrl : existing.photoUrl,
+        id: existing.id,
+        schoolId: existing.schoolId,
+        subjectId: existing.subjectId,
+        createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardians.save(guardian)
+      const seen = new Set<string>()
+      for (const preference of studentNotificationPreferences ?? []) {
+        if (seen.has(preference.studentId))
+          throw new BusinessRuleViolationError('DUPLICATE_GUARDIAN_STUDENT_PREFERENCE', 'Each student must appear once')
+        seen.add(preference.studentId)
+        await this.updateGuardianStudentLink({ guardianId, studentId: preference.studentId, receivesAcademicReports: preference.receivesAcademicReports, receivesAttendanceAlerts: preference.receivesAttendanceAlerts })
+      }
 
       return guardian
     })
@@ -502,11 +564,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         isBillingContact: changes.isBillingContact ?? existing.isBillingContact,
         legalGuardian: changes.legalGuardian ?? existing.legalGuardian,
         canPickup: changes.canPickup ?? existing.canPickup,
-        emergencyContactPriority: changes.emergencyContactPriority ?? existing.emergencyContactPriority,
+        emergencyContactPriority: Object.hasOwn(changes, 'emergencyContactPriority') ? changes.emergencyContactPriority : existing.emergencyContactPriority,
         receivesAcademicReports: changes.receivesAcademicReports ?? existing.receivesAcademicReports,
         receivesAttendanceAlerts: changes.receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
-        contactRestrictions: changes.contactRestrictions ?? existing.contactRestrictions,
-        notes: changes.notes ?? existing.notes,
+        contactRestrictions: Object.hasOwn(changes, 'contactRestrictions') ? changes.contactRestrictions : existing.contactRestrictions,
+        notes: Object.hasOwn(changes, 'notes') ? changes.notes : existing.notes,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardianLinks.save(link)
@@ -559,6 +621,30 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     return nextClassGroup
   }
 
+  async createProfilePhotoUpload(input: CreateProfilePhotoUploadInput) {
+    return createProfilePhotoUpload(this.baseService, input)
+  }
+
+  async completeProfilePhotoUpload(input: AttachmentInput): Promise<Attachment> {
+    return completeProfilePhotoUpload(this.baseService, input)
+  }
+
+  async submitStudentPhoto(input: SubmitStudentPhotoInput): Promise<StudentPhotoSubmission> {
+    return submitStudentPhoto(this.baseService, input)
+  }
+
+  async withdrawStudentPhotoSubmission(input: WithdrawStudentPhotoSubmissionInput): Promise<StudentPhotoSubmission> {
+    return withdrawStudentPhotoSubmission(this.baseService, input)
+  }
+
+  async reviewStudentPhoto(input: ReviewStudentPhotoInput): Promise<StudentPhotoSubmission> {
+    return reviewStudentPhoto(this.baseService, input)
+  }
+
+  async publishStudentPhoto(input: PublishStudentPhotoInput): Promise<Student> {
+    return publishStudentPhoto(this.baseService, input)
+  }
+
   private async createSuccessorEnrollment({
     id,
     previousEnrollment,
@@ -601,14 +687,6 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (activeEnrollments.length >= classGroup.capacity) {
       throw new BusinessRuleViolationError('CLASS_GROUP_CAPACITY_EXCEEDED', `Class group ${classGroup.id} has reached capacity`)
     }
-  }
-
-  private async requireGuardian(guardianId: string): Promise<Guardian> {
-    const guardian = await this.repositories.guardians.findById(guardianId)
-    if (!guardian || guardian.schoolId !== this.baseService.actor.schoolId) {
-      denyResourceAccess()
-    }
-    return guardian
   }
 
   private async requireEntity<T>(

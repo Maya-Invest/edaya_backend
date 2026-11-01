@@ -1,8 +1,10 @@
-import type { AppBindings, AppRouteHandler } from "@/http/types";
 import type { CoreEntityKey } from "@edaya/service";
-import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { Context } from "hono";
+import type { AppBindings, AppRouteHandler } from "@/http/types";
+import type { CoreEntityConfig } from "@/lib/school-api/registry";
+import { dispatchAutoBilling } from "@edaya/service";
 import * as HttpStatusCodes from "stoker/http-status-codes";
+import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import {
   EntityOperationError,
   executeEntityBatchDelete,
@@ -14,7 +16,7 @@ import {
   executeEntityOne,
   executeEntitySave,
 } from "@/lib/school-api/entities/operations";
-import type { CoreEntityConfig } from "@/lib/school-api/registry";
+import { scheduleBackgroundApplicationTask } from "@/lib/school-api/schedule-background-task";
 import { validatedJson, validatedParam } from "./shared";
 
 function mapEntityOperationError(c: Context<AppBindings>, err: unknown) {
@@ -106,6 +108,8 @@ export function entitySaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceN
     const { actor, schoolApp } = resolveServices(c, entityConfig.serviceName);
     try {
       const entity = await executeEntitySave(actor, schoolApp!, entityConfig, validatedJson(c));
+      if (["catalogServices", "enrollments", "studentAcademicYearProfiles", "classGroups"].includes(entityConfig.serviceName))
+        scheduleBackgroundApplicationTask(c, application => dispatchAutoBilling(application));
       return c.json(entity, HttpStatusCodes.OK);
     }
     catch (err) {
@@ -123,6 +127,8 @@ export function entityDeleteHandler(serviceName: CoreEntityKey): AppRouteHandler
     try {
       const { id } = validatedJson(c) as { id: string };
       const result = await executeEntityDelete(actor, schoolApp!, serviceName, id);
+      if (["enrollments", "studentAcademicYearProfiles"].includes(serviceName))
+        scheduleBackgroundApplicationTask(c, application => dispatchAutoBilling(application));
       return c.json(result, HttpStatusCodes.OK);
     }
     catch (err) {
@@ -136,6 +142,8 @@ export function entityBatchSaveHandler(entityConfig: Pick<CoreEntityConfig, "ser
     const { actor, schoolApp } = resolveServices(c, entityConfig.serviceName);
     try {
       const result = await executeEntityBatchSave(actor, schoolApp!, entityConfig, validatedJson(c));
+      if (["catalogServices", "enrollments", "studentAcademicYearProfiles", "classGroups"].includes(entityConfig.serviceName))
+        scheduleBackgroundApplicationTask(c, application => dispatchAutoBilling(application));
       return c.json(result, HttpStatusCodes.OK);
     }
     catch (err) {
@@ -153,6 +161,8 @@ export function entityBatchDeleteHandler(serviceName: CoreEntityKey): AppRouteHa
     try {
       const { ids } = validatedJson(c) as { ids: string[] };
       const result = await executeEntityBatchDelete(actor, schoolApp!, serviceName, ids);
+      if (["enrollments", "studentAcademicYearProfiles"].includes(serviceName))
+        scheduleBackgroundApplicationTask(c, application => dispatchAutoBilling(application));
       return c.json(result, HttpStatusCodes.OK);
     }
     catch (err) {

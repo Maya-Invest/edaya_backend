@@ -2,16 +2,17 @@ import type { SchoolNotificationTemplates } from '@edaya/core'
 import type { NotificationTemplateKey } from '../../capabilities/notifications/templates/keys'
 import type { SchoolNotificationTemplateDocumentPatch } from '../../capabilities/notifications/templates/merge-school-notification-templates'
 import type { BaseSchoolService } from '../base-school-service'
-import { BusinessRuleViolationError, SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '@edaya/core'
+import { BusinessRuleViolationError, NOTIFICATION_TEMPLATE_FIELDS, SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '@edaya/core'
 
 import { buildDefaultNotificationTemplateDocument } from '../../capabilities/notifications/templates/defaults/manifest'
-import { mergeSchoolNotificationTemplateDocument } from '../../capabilities/notifications/templates/merge-school-notification-templates'
+import { mergeSchoolNotificationTemplateDocument, replaceNotificationTemplateKey } from '../../capabilities/notifications/templates/merge-school-notification-templates'
 
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface UpdateSchoolNotificationTemplatesInput {
   schoolId: string
-  templates: SchoolNotificationTemplateDocumentPatch
+  invitationSmsEnabled?: boolean
+  templates?: SchoolNotificationTemplateDocumentPatch
   expectedUpdatedAt?: Date
 }
 
@@ -43,8 +44,11 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
         )
       }
 
-      const templates = mergeSchoolNotificationTemplateDocument(existing.templates, input.templates)
-      return this.saveTemplateDocument(existing, templates)
+      const catalog = mergeSchoolNotificationTemplateDocument(existing.catalog, {
+        ...input.templates,
+        invitationSmsEnabled: input.invitationSmsEnabled,
+      })
+      return this.saveTemplateDocument(existing, catalog)
     })
   }
 
@@ -58,13 +62,15 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
       const existing = await this.requireTemplateDocument(input.schoolId)
       const defaults = await buildDefaultNotificationTemplateDocument()
 
-      const templates = input.templateKey
-        ? mergeSchoolNotificationTemplateDocument(existing.templates, {
-            [input.templateKey]: defaults[input.templateKey],
-          })
+      const catalog = input.templateKey
+        ? replaceNotificationTemplateKey(
+            existing.catalog,
+            input.templateKey,
+            defaults[NOTIFICATION_TEMPLATE_FIELDS[input.templateKey]],
+          )
         : defaults
 
-      return this.saveTemplateDocument(existing, templates)
+      return this.saveTemplateDocument(existing, catalog)
     })
   }
 
@@ -81,12 +87,12 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
 
   private async saveTemplateDocument(
     existing: SchoolNotificationTemplates,
-    templates: SchoolNotificationTemplates['templates'],
+    catalog: SchoolNotificationTemplates['catalog'],
   ): Promise<SchoolNotificationTemplates> {
     const now = new Date()
     const updated = new SchoolNotificationTemplatesEntity({
+      ...catalog,
       schoolId: existing.schoolId,
-      templates,
       createdAt: existing.createdAt,
       updatedAt: now,
     })

@@ -39,6 +39,19 @@ export interface ClassGroupTimetable {
   events: TimetableEvent[]
 }
 
+export interface GetTeacherTimetableInput {
+  teacherId: string
+  startDate: Date
+  endDate: Date
+}
+
+export interface TeacherTimetable {
+  teacherId: string
+  startDate: string
+  endDate: string
+  events: TimetableEvent[]
+}
+
 export async function buildClassGroupTimetable(
   repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
   input: GetClassGroupTimetableInput,
@@ -75,6 +88,68 @@ export async function buildClassGroupTimetable(
 
   return {
     classGroupId: input.classGroupId,
+    startDate: toDateKey(rangeStart),
+    endDate: toDateKey(normalizeDate(input.endDate)),
+    events,
+  }
+}
+
+export async function buildTeacherTimetable(
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
+  input: GetTeacherTimetableInput,
+): Promise<TeacherTimetable> {
+  const rangeStart = normalizeDate(input.startDate)
+  const rangeEnd = endOfUtcDay(normalizeDate(input.endDate))
+  const now = new Date()
+
+  const [lessonSessions, assignments] = await Promise.all([
+    repositories.lessonSessions.list({
+      startsAt: { $gte: rangeStart, $lte: rangeEnd },
+      $orderBy: [{ field: 'startsAt', direction: 'asc' }],
+    }),
+    repositories.teacherAssignments.list({ teacherId: input.teacherId }),
+  ])
+
+  const teacherLessons = lessonSessions.filter(session => session.timetableTeacherIds.includes(input.teacherId))
+  const activeSubjectClassIds = new Set(
+    assignments
+      .filter(assignment =>
+        assignment.status === TeacherAssignmentStatus.Active
+        && assignment.kind === TeacherAssignmentKind.Subject
+        && effectiveAt(assignment, now)
+        && assignment.classSubjectId,
+      )
+      .map(assignment => assignment.classSubjectId!),
+  )
+
+  const assessments = activeSubjectClassIds.size > 0
+    ? await repositories.assessments.list({ classSubjectId: { $in: [...activeSubjectClassIds] } })
+    : []
+
+  const lessonSessionById = new Map(lessonSessions.map(session => [session.id, session]))
+  const events: TimetableEvent[] = [
+    ...teacherLessons.map(lessonEventFromSession),
+    ...assessments
+      .filter(assessment => isInClassTimetableAssessment(assessment) && assessment.classSubjectId && activeSubjectClassIds.has(assessment.classSubjectId))
+      .flatMap(assessment => timetableEventsFromAssessment(assessment, lessonSessionById, rangeStart, rangeEnd)),
+  ]
+
+  events.sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
+
+  const eventsByClass = new Map<string, TimetableEvent[]>()
+  for (const event of events) {
+    const group = eventsByClass.get(event.classGroupId) ?? []
+    group.push(event)
+    eventsByClass.set(event.classGroupId, group)
+  }
+  await Promise.all(
+    [...eventsByClass.entries()].map(([classGroupId, classEvents]) =>
+      enrichTimetableEventPresentation(repositories, classGroupId, classEvents),
+    ),
+  )
+
+  return {
+    teacherId: input.teacherId,
     startDate: toDateKey(rangeStart),
     endDate: toDateKey(normalizeDate(input.endDate)),
     events,

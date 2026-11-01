@@ -1,20 +1,20 @@
-import indexRouter from "@/app-router";
+import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
+import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
+import type { GrantScope } from "@edaya/core";
+import type { AuthProvisioner } from "@edaya/seeding";
+import type { IdentityClient } from "../../src/identity/server/index";
+import type { TestIdentityKeys } from "../../src/identity/server/testing";
+import type { EmbeddedLocalFilesServer } from "./embedded-local-files";
 import type { AppBindings } from "@/http/bindings";
-import { createDependenciesInjection } from "@/http/dependencies";
-import { createSessionActorDependency } from "@/http/dependencies/session-actor";
 import type { DependencyModule } from "@/http/dependency-injection";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
-import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
-import { resetApiRuntimesForTests } from "@/runtime/local/registry";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
+import process from "node:process";
 import { ActorAssuranceLevel, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
-import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
-import { Permission, permissionScope, StaffPermissionAssignment } from "@edaya/core";
-import type { GrantScope } from "@edaya/core";
+import { corePermissionDefinition, Permission, permissionScope, StaffPermissionAssignment } from "@edaya/core";
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
+import { DEMO_CI_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
 
   createInProcessAuthLinkSeedPort,
@@ -22,33 +22,40 @@ import {
   runDevAuthLinkWithPort,
   runIntegrationLightSchoolSeed,
 } from "@edaya/seeding";
-import type { AuthProvisioner } from "@edaya/seeding";
+import { onTestFinished, setDefaultTimeout } from "bun:test";
+import { sql } from "drizzle-orm";
+import { Hono } from "hono";
+import indexRouter from "@/app-router";
+import { createDependenciesInjection } from "@/http/dependencies";
+import { createSessionActorDependency } from "@/http/dependencies/session-actor";
+import { pinoLogger } from "@/http/middleware/logger";
+import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
+import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
+import { resetApiRuntimesForTests } from "@/runtime/local/registry";
+import { createApiRuntime } from "@/runtime/shared/create-api-runtime";
+import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
+import { buildSchoolApplication } from "@/runtime/shared/school-application";
+import { createPostgresSchoolDatabase } from "@/runtime/shared/school-database";
+import { parseEnv as parseIdentityEnv } from "../../src/identity/env";
+import { dispatchAuthentication } from "../../src/identity/http";
+import { attachIdentityRuntime } from "../../src/identity/runtime";
+import {
+
+  verifyIdentityToken,
+} from "../../src/identity/server/index";
 import {
   createTestIdentityKeys,
   signTestIdentityToken,
-} from "@maya-invest/edaya-identity-client/testing";
-import type { TestIdentityKeys } from "@maya-invest/edaya-identity-client/testing";
-import {
-  createDirectoryClient,
-  IDENTITY_DIRECTORY_BY_CONTACT_PATH,
-  IDENTITY_DIRECTORY_BY_ID_PREFIX,
-
-  verifyIdentityToken,
-} from "@maya-invest/edaya-identity-client";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
-import { Hono } from "hono";
-import { onTestFinished, setDefaultTimeout } from "bun:test";
-import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
+} from "../../src/identity/server/testing";
+import { createTestingIdentity } from "../../src/identity/testing/composition";
 import {
   createLocalProfileTestEnv,
 
   startEmbeddedLocalFilesServer,
   syncProcessEnvLocalFilesUrl,
 } from "./embedded-local-files";
-import type { EmbeddedLocalFilesServer } from "./embedded-local-files";
+import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 
-// eslint-disable-next-line node/no-process-env -- route tests pin the demo fixture dataset
-process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";
 setDefaultTimeout(120_000);
 const identityAccounts = new Map<string, { subjectId: string; name?: string }>();
 const activeTestRuntimes = new Set<ApiRuntime>();
@@ -63,7 +70,7 @@ export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency };
 export const apiPgliteEnv = pgliteEnv;
 export const createApiPgliteTestEnv = createPgliteTestEnv;
-export const TEST_ACADEMIC_YEAR_ID = DEMO_CENTRAL_ACADEMIC_YEAR_ID;
+export const TEST_ACADEMIC_YEAR_ID = DEMO_CI_ACADEMIC_YEAR_ID;
 
 export interface AuthenticatedRouteContext {
   app: Hono<AppBindings>;
@@ -77,49 +84,13 @@ export interface CoreRouteTestAppOptions {
   sessionActor?: ReturnType<typeof createSessionActorDependency>;
   autoCleanup?: boolean;
   withEmbeddedLocalFiles?: boolean;
-  /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs edaya_identity running). */
+  /** `live` composes real Account and provider fixtures in this API runtime. */
   identity?: "test" | "live";
   env?: Record<string, unknown>;
 }
 
 function subjectForEmail(email: string): string {
   return identityAccounts.get(email)?.subjectId ?? `identity:${email.toLowerCase()}`;
-}
-
-function findIdentityAccountByEmail(email: string) {
-  const needle = email.toLowerCase();
-  for (const [storedEmail, account] of identityAccounts) {
-    if (storedEmail.toLowerCase() === needle) {
-      return { email: storedEmail, ...account };
-    }
-  }
-  return undefined;
-}
-
-function testDirectoryFetch(input: RequestInfo | URL): Promise<Response> {
-  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
-  if (url.pathname === IDENTITY_DIRECTORY_BY_CONTACT_PATH) {
-    const channel = url.searchParams.get("channel");
-    const value = url.searchParams.get("value") ?? "";
-    if (channel === "phone") {
-      return Promise.resolve(Response.json({ exists: false }));
-    }
-    const account = findIdentityAccountByEmail(value);
-    if (!account) {
-      return Promise.resolve(Response.json({ exists: false }));
-    }
-    return Promise.resolve(Response.json({ exists: true, id: account.subjectId }));
-  }
-  if (url.pathname.startsWith(IDENTITY_DIRECTORY_BY_ID_PREFIX)) {
-    const subjectId = decodeURIComponent(url.pathname.slice(IDENTITY_DIRECTORY_BY_ID_PREFIX.length));
-    for (const [email, account] of identityAccounts) {
-      if (account.subjectId === subjectId) {
-        return Promise.resolve(Response.json({ email }));
-      }
-    }
-    return Promise.resolve(new Response(null, { status: 404 }));
-  }
-  return Promise.resolve(new Response(null, { status: 404 }));
 }
 
 export const testIdentityProvisioner: AuthProvisioner = {
@@ -134,15 +105,23 @@ export const testIdentityProvisioner: AuthProvisioner = {
 };
 
 const testIdentityClient: IdentityClient = {
-  directory: createDirectoryClient({
-    baseUrl: pgliteEnv.IDENTITY_DIRECTORY_URL,
-    secret: pgliteEnv.IDENTITY_DIRECTORY_SECRET,
-    fetch: testDirectoryFetch as unknown as typeof fetch,
-  }),
+  directory: {
+    async lookupByContact(channel, value) {
+      const account = channel === "email" ? identityAccounts.get(value.trim().toLowerCase()) : undefined;
+      return account ? { exists: true, id: account.subjectId } : { exists: false };
+    },
+    async resolveBySubjectId(id) {
+      for (const [email, account] of identityAccounts) {
+        if (account.subjectId === id)
+          return { email, identifiers: [{ kind: "email", value: email }] };
+      }
+      return undefined;
+    },
+  },
   async verifyAccessToken(token) {
     const keys = await loadTestIdentityKeys();
     return verifyIdentityToken(token, {
-      issuer: pgliteEnv.IDENTITY_ISSUER,
+      issuer: pgliteEnv.API_ORIGIN,
       audience: pgliteEnv.API_ORIGIN,
       jwks: keys.jwks,
     });
@@ -209,12 +188,29 @@ export async function createCoreRouteTestApp(
   let embeddedLocalFiles: EmbeddedLocalFilesServer | undefined;
   let restoreLocalFilesUrl: (() => void) | undefined;
   const identity = options.identity ?? "test";
-  const identityEnv = identity === "live"
-    ? {
-        // eslint-disable-next-line node/no-process-env -- live identity uses the host directory secret
-        IDENTITY_DIRECTORY_SECRET: process.env.IDENTITY_DIRECTORY_SECRET ?? "local-directory-secret",
+  const identityEnv = {};
+  let nativeDatabase: { url: string; drop: () => Promise<void> } | undefined;
+  // The test runner creates this loopback cluster; never read a project DATABASE_URL.
+  // eslint-disable-next-line node/no-process-env -- Read only disposable native test runner configuration.
+  const nativeUrl = process.env.EDAYA_NATIVE_SEED === "1" ? process.env.EDAYA_NATIVE_TEST_URL : undefined;
+  if (nativeUrl) {
+    if (new URL(nativeUrl).hostname !== "127.0.0.1")
+      throw new Error("Native fixtures require the disposable loopback runner");
+    const admin = await createPostgresSchoolDatabase(nativeUrl);
+    const db = admin.db as { execute: (query: ReturnType<typeof sql>) => Promise<unknown> };
+    const name = `fixture_${crypto.randomUUID().replaceAll("-", "")}`;
+    await db.execute(sql`CREATE DATABASE ${sql.identifier(name)}`);
+    const url = new URL(nativeUrl);
+    url.pathname = `/${name}`;
+    nativeDatabase = { url: url.toString(), drop: async () => {
+      try {
+        await db.execute(sql`DROP DATABASE ${sql.identifier(name)} WITH (FORCE)`);
       }
-    : {};
+      finally {
+        await admin.dispose();
+      }
+    } };
+  }
   const env = options.withEmbeddedLocalFiles
     ? (() => {
         embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.LOCAL_FILES_SECRET!);
@@ -228,14 +224,64 @@ export async function createCoreRouteTestApp(
       })()
     : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv, ...options.env });
 
+  if (nativeDatabase) {
+    env.DATABASE_URL = nativeDatabase.url;
+  }
   if (embeddedLocalFiles && options.autoCleanup !== false) {
     onTestFinished(() => embeddedLocalFiles?.stop());
   }
 
+  const authEnv = parseIdentityEnv({ ...env, RUNTIME: "test", BETTER_AUTH_URL: env.API_ORIGIN, FIRST_PARTY_API_ORIGINS: env.API_ORIGIN, BETTER_AUTH_SECRET: "disposable-seed-fixture-secret-32-characters", AUTH_DATABASE_URL: "pglite:memory" }, "test");
+  const accountFixture = identity === "live" ? await createTestingIdentity(authEnv) : undefined;
+  if (accountFixture)
+    attachIdentityRuntime(env, accountFixture.runtime);
   const identityClientExtras = identity === "live" ? {} : { identityClient: testIdentityClient };
-  const runtime = env.RUNTIME === "local"
-    ? await buildLocalApiRuntime(env, identityClientExtras)
-    : await buildInMemoryApiRuntime(env, identityClientExtras);
+  const nativeHandle = nativeDatabase ? await createPostgresSchoolDatabase(nativeDatabase.url) : undefined;
+  if (nativeHandle)
+    await runStartupMigrations(nativeHandle.db, nativeDatabase!.url);
+  const runtime = nativeHandle
+    ? await createApiRuntime({
+        env,
+        ...identityClientExtras,
+        resolveSchoolHandle: async () => nativeHandle,
+        initSchoolApplication: (db, extras) => buildSchoolApplication(db as PostgresTransactionalDb, {
+          databaseUrl: nativeDatabase!.url,
+          env,
+          identityDirectory: extras.identityClient.directory,
+          notifyRuntime: extras.notifyRuntime,
+          runMigrations: false,
+        }),
+      })
+    : env.RUNTIME === "local"
+      ? await buildLocalApiRuntime(env, identityClientExtras)
+      : await buildInMemoryApiRuntime(env, identityClientExtras);
+  if (nativeDatabase) {
+    const close = runtime.close.bind(runtime);
+    let closed = false;
+    const { drop } = nativeDatabase;
+    runtime.close = async () => {
+      if (closed)
+        return;
+      closed = true;
+      try {
+        await close();
+      }
+      finally {
+        await drop();
+      }
+    };
+  }
+  if (accountFixture) {
+    const close = runtime.close.bind(runtime);
+    runtime.close = async () => {
+      try {
+        await close();
+      }
+      finally {
+        await accountFixture.close();
+      }
+    };
+  }
   if (options.autoCleanup !== false) {
     registerTestRuntimeCleanup(runtime);
   }
@@ -243,8 +289,13 @@ export async function createCoreRouteTestApp(
   const app = new Hono<AppBindings>();
   app.use(async (c, next) => {
     c.env = env;
+    c.set("apiRuntime", runtime);
+    if (accountFixture && c.req.path.startsWith("/auth/edaya/testing/"))
+      return accountFixture.app.fetch(c.req.raw, authEnv);
     await next();
   });
+  app.use(pinoLogger());
+  app.use(dispatchAuthentication);
   app.use(createCoreRouteTestDependencies(
     runtime,
     options.sessionActor ?? createSessionActorDependency(),
@@ -254,11 +305,19 @@ export async function createCoreRouteTestApp(
   return { app, runtime, application, env, ...(embeddedLocalFiles ? { localFiles: embeddedLocalFiles } : {}) };
 }
 
-export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, _runtime: ApiRuntime) {
+export async function seedDevSchoolAndAuthLinks(
+  application: ApiSchoolApplication,
+  _runtime: ApiRuntime,
+  options: { includeAccessSeed?: boolean } = {},
+) {
   await runIntegrationLightSchoolSeed(application);
   await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), testIdentityProvisioner, {
     linkGuardians: false,
   });
+  // Owner-only tests and cases that install explicit grants do not need every
+  // demo staff preset. Keep those cases focused on their own authority fixture.
+  if (options.includeAccessSeed === false)
+    return;
   const context = resolveDevSeedContext();
   await runDevAccessSeed(application, {
     auth: testIdentityProvisioner,
@@ -291,7 +350,7 @@ export async function provisionServiceAccountForTests(
     requestId: "service-account-test",
     authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Verified,
-    academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
+    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
   });
   return createServiceAccount(application.repositories, actor, input, application.atomicExecution);
 }
@@ -323,7 +382,7 @@ export async function signInWithBearerThroughApp(
     sub: subjectForEmail(input.email),
     email: input.email,
     email_verified: true,
-    iss: pgliteEnv.IDENTITY_ISSUER,
+    iss: pgliteEnv.API_ORIGIN,
     aud: pgliteEnv.API_ORIGIN,
   });
 }
@@ -349,20 +408,23 @@ export function buildSchoolWidePermissionAssignments(
   permissions: readonly Permission[],
   academicYearId = TEST_ACADEMIC_YEAR_ID,
 ): ServiceAccountPermissionAssignmentInput[] {
-  return permissions.map(permission => ({ permission, scopes: [{ kind: "school" }], academicYearId }));
+  return permissions.map((permission) => {
+    const policy = corePermissionDefinition(permission).scopePolicy;
+    return { permission, scopes: policy.mode === "resources" ? [{ kind: "all" as const, grain: policy.allowedKinds[0]! }] : [], academicYearId };
+  });
 }
 
 export async function grantServiceAccountCreate(
   application: ApiSchoolApplication,
   staffId: string,
-  permissions: readonly Permission[] = [Permission.SERVICE_ACCOUNT_CREATE],
+  permissions: readonly Permission[] = [Permission.SERVICE_ACCOUNT_MANAGE],
   scopes: GrantScope[] = [{ kind: "school" }],
 ) {
   await grantStaffPermissionAssignments(application, staffId, permissions, scopes);
 }
 
 export async function grantAccessControlAssign(application: ApiSchoolApplication, staffId: string) {
-  await grantStaffPermissionAssignments(application, staffId, [Permission.ACCESS_CONTROL_ASSIGN]);
+  await grantStaffPermissionAssignments(application, staffId, [Permission.ACCESS_CONTROL_MANAGE]);
 }
 
 async function grantStaffPermissionAssignments(

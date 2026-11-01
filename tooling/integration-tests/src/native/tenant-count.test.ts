@@ -1,5 +1,5 @@
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
-import { PostgresSchoolRepositories, PostgresStore } from '@edaya/adaptor-postgres'
+import { asStoreDatabase, PostgresSchoolRepositories, PostgresStore } from '@edaya/adaptor-postgres'
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { pgTable, text } from 'drizzle-orm/pg-core'
@@ -12,7 +12,7 @@ if (!url || new URL(url).hostname !== '127.0.0.1')
 const table = pgTable('rc_tenant_rows', { id: text('id').primaryKey(), schoolId: text('school_id').notNull() })
 const handle = await createPostgresSchoolDatabase(url)
 const db = handle.db as NodePgDatabase
-const repository = new PostgresStore(handle.db, table, (row: { id: string, schoolId: string }) => row, row => row)
+const repository = new PostgresStore(asStoreDatabase(handle.db), table, (row: { id: string, schoolId: string }) => row, row => row)
 const service = repository.forSchool('school-a')
 
 beforeAll(async () => {
@@ -64,7 +64,7 @@ describe('native scoped write boundary', () => {
   test('concurrent inserts from independent connections cannot take over the same ID', async () => {
     const second = await createPostgresSchoolDatabase(url!)
     try {
-      const secondRepository = new PostgresStore(second.db, table, (row: { id: string, schoolId: string }) => row, row => row)
+      const secondRepository = new PostgresStore(asStoreDatabase(second.db), table, (row: { id: string, schoolId: string }) => row, row => row)
       const outcomes = await Promise.allSettled([
         repository.forSchool('school-a').save({ id: 'concurrent-id', schoolId: 'school-a' }),
         secondRepository.forSchool('school-b').save({ id: 'concurrent-id', schoolId: 'school-b' }),

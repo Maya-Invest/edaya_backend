@@ -1,8 +1,9 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { AtomicExecutionPort, FileStoragePort } from '@edaya/core'
+import type { AtomicExecutionPort, DurableWorkPort, FileStoragePort } from '@edaya/core'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import type { ServiceArgs } from './service-args'
 import { AuthorizationError, AuthorizationErrorCode, isSchoolScopedActor } from '@edaya/authorization'
+import { CommandExecution } from './commands/command-execution'
 import { SchoolService } from './school-service'
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>
@@ -12,6 +13,12 @@ export class SchoolApplication {
 
   constructor(args: SchoolApplicationArgs) {
     this.args = args
+  }
+
+  get importPersistence(): import('@edaya/core').ImportPersistencePort {
+    if (!this.args.importPersistence)
+      throw new Error('Import persistence is not configured')
+    return this.args.importPersistence
   }
 
   get repositories(): SchoolRepositories {
@@ -26,6 +33,18 @@ export class SchoolApplication {
 
   get fileStorage(): FileStoragePort {
     return this.args.fileStorage
+  }
+
+  get commandExecution(): CommandExecution {
+    if (!this.args.commandJournal)
+      throw new Error('Reliable commands require a transactional command journal')
+    return new CommandExecution(this.atomicExecution, this.args.commandJournal)
+  }
+
+  get durableWork(): DurableWorkPort {
+    if (!this.args.durableWork)
+      throw new Error('Durable dispatch requires a persistent work store')
+    return this.args.durableWork
   }
 
   forActor(actor: ActorMetadata): SchoolService {

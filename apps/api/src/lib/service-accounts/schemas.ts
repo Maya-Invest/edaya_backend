@@ -1,9 +1,9 @@
-import { grantScopesSchema, Permission } from "@edaya/core";
+import { Permission, permissionScopeSelectionsSchema } from "@edaya/core";
 import { z } from "zod";
 
 export const serviceAccountPermissionAssignmentRequestSchema = z.object({
   permission: z.nativeEnum(Permission),
-  scopes: grantScopesSchema,
+  scopes: permissionScopeSelectionsSchema,
   academicYearId: z.string().trim().min(1),
 }).openapi("ServiceAccountPermissionAssignmentRequest");
 

@@ -4,7 +4,9 @@ import { describe, expect, test } from 'bun:test'
 describe('ReportCardResult entity', () => {
   const baseArgs = {
     id: 'rc1',
-    reportCardDefinitionId: 'def1',
+    gradeLevelId: 'grade1',
+    academicYearId: 'ay1',
+    reportConfigurationRevision: 0,
     studentId: 'stu1',
     classGroupId: 'cg1',
     periodId: 'per1',
@@ -42,7 +44,9 @@ describe('ReportCardResult entity', () => {
 describe('getLatestReportCard', () => {
   const baseArgs = {
     id: 'rc1',
-    reportCardDefinitionId: 'def1',
+    gradeLevelId: 'grade1',
+    academicYearId: 'ay1',
+    reportConfigurationRevision: 0,
     studentId: 'stu1',
     classGroupId: 'cg1',
     periodId: 'per1',

@@ -1,6 +1,6 @@
 import type { CloudflareEmailBinding } from "./email/cloudflare";
 
-export type NotifyEmailTransportKind = "log" | "cloudflare" | "smtp" | "novu";
+export type NotifyEmailTransportKind = "log" | "cloudflare" | "smtp";
 
 export interface NotifyTransportEnv {
   EMAIL_TRANSPORT?: NotifyEmailTransportKind | string;
@@ -19,4 +19,8 @@ export function parseNotifyFromAddress(value: string): { email: string; name?: s
   const name = match[1]?.trim();
   const email = match[2]?.trim() ?? value.trim();
   return name ? { email, name } : { email };
+}
+
+export function resolveEmailFrom(env: NotifyTransportEnv): { email: string; name?: string } {
+  return parseNotifyFromAddress(env.EMAIL_FROM?.trim() || DEFAULT_EMAIL_FROM);
 }

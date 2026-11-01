@@ -1,5 +1,6 @@
 export type { BrowserRunBinding } from "./adapters/browser-run-pdf-renderer";
 export { createBrowserRunPdfRenderer } from "./adapters/browser-run-pdf-renderer";
+export { createChromePdfRenderer, detectChromeExecutable } from "./adapters/chrome-pdf-renderer";
 export { createGotenbergPdfRenderer } from "./adapters/gotenberg-pdf-renderer";
 export { createStubPdfRenderer } from "./adapters/stub-pdf-renderer";
 export { createPdfRenderer } from "./adapters/create-pdf-renderer";

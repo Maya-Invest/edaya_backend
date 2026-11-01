@@ -1,0 +1,27 @@
+import { z } from "@hono/zod-openapi";
+
+export const AuthTermsAcceptance = z.object({ version: z.string().min(1).max(128), locale: z.enum(["fr", "en"]), accepted: z.literal(true) }).strict().openapi("AuthTermsAcceptance");
+export const AuthTermsSection = z.object({ heading: z.string(), paragraphs: z.array(z.string()) }).openapi("AuthTermsSection");
+export const AuthTermsDocument = z.object({ version: z.string(), locale: z.enum(["fr", "en"]), documentHash: z.string(), title: z.string(), status: z.enum(["draft", "published"]), sections: z.array(AuthTermsSection) }).openapi("AuthTermsDocument");
+export const AuthTerms = z.object({ enforced: z.boolean(), document: z.object(AuthTermsDocument.shape).nullable() }).openapi("AuthTerms");
+export const AuthStart = z.object({ termsAcceptance: AuthTermsAcceptance.optional(), kind: z.enum(["email", "phone"]), value: z.string().max(254), channel: z.enum(["email", "telegram", "whatsapp"]).optional(), locale: z.enum(["fr", "en"]).optional(), requestId: z.string().uuid().optional(), recoveryEligible: z.boolean().optional() }).strict().openapi("AuthStart");
+export const AuthChallengeInput = z.object({ challenge: z.string().min(1).max(128) }).strict().openapi("AuthChallengeInput");
+export const AuthResend = AuthChallengeInput.extend({ action: z.enum(["resend", "sms"]), requestId: z.string().uuid() }).strict().openapi("AuthResend");
+export const AuthProof = z.object({ challenge: z.string().min(1).max(128), code: z.string().max(128) }).strict().openapi("AuthProof");
+export const AuthEnrollmentInput = z.object({ challenge: z.string().max(128).optional() }).strict().openapi("AuthEnrollmentInput");
+export const AuthResource = z.object({ resource: z.string().url() }).strict().openapi("AuthResource");
+export const AuthEmptyInput = z.object({}).strict().openapi("AuthEmptyInput");
+export const AuthUnlink = z.object({ identifierId: z.string() }).strict().openapi("AuthUnlink");
+export const AccountIdentifier = z.object({ id: z.string(), kind: z.enum(["email", "phone"]), value: z.string(), verifiedAt: z.number(), recoveryEligible: z.boolean() }).openapi("AccountIdentifier");
+export const Account = z.object({ id: z.string(), status: z.enum(["active", "disabled"]), name: z.string(), securityVersion: z.number(), identifiers: z.array(AccountIdentifier), createdAt: z.number() }).openapi("AuthAccount");
+export const AccountUser = z.object({ id: z.string(), accountId: z.string(), email: z.string().nullable(), phone: z.string().nullable(), name: z.string(), emailVerified: z.boolean(), phoneVerified: z.boolean(), createdAt: z.string().datetime() }).openapi("AuthUser");
+export const AuthSession = z.object({ id: z.string(), userId: z.string(), accountId: z.string(), createdAt: z.string().datetime(), expiresAt: z.string().datetime(), secondFactorAt: z.string().datetime().nullable() }).openapi("AuthSession");
+export const AuthSnapshot = z.object({ account: Account, user: AccountUser, session: AuthSession }).openapi("AuthSnapshot");
+export const PrimaryStatus = z.object({ state: z.literal("primary_required"), challenge: z.string(), lifecycle: z.enum(["pending", "expired", "superseded", "completed", "exhausted"]), channel: z.enum(["email", "whatsapp", "sms"]), delivery: z.enum(["pending", "accepted", "uncertain", "failed", "sent", "delivered", "read"]), expiresAt: z.number(), nextResendAt: z.number(), serverNow: z.number(), actions: z.object({ resend: z.boolean(), sms: z.boolean() }), resendAfter: z.number().optional() }).openapi("AuthPrimaryStatus");
+export const Enrollment = z.object({ state: z.literal("enrollment_required"), challenge: z.string(), secret: z.string().optional(), uri: z.string().optional() }).openapi("AuthEnrollment");
+export const AuthOutcome = z.union([PrimaryStatus, AuthSnapshot.extend({ state: z.literal("complete"), token: z.string().optional(), recoveryCodes: z.array(z.string()).optional() }), z.object({ state: z.literal("linked"), account: Account }), z.object({ state: z.literal("totp_required"), challenge: z.string() }), Enrollment]).openapi("AuthOutcome");
+export const AuthMethods = z.object({ methods: z.array(z.object({ key: z.string(), kind: z.enum(["email", "phone"]), available: z.boolean().optional(), channels: z.array(z.string()).optional(), countries: z.array(z.string()).optional(), prefixes: z.array(z.string()).optional() })) }).openapi("AuthMethods");
+export const AuthSecurity = z.object({ totpEnabled: z.boolean(), totpRequired: z.boolean() }).openapi("AuthSecurity");
+export const AuthSuccess = z.object({ success: z.literal(true) }).openapi("AuthSuccess");
+export const AuthAccessToken = z.object({ accessToken: z.string(), tokenType: z.literal("Bearer"), expiresAt: z.string().datetime() }).openapi("AuthAccessToken");
+export const AuthFailure = z.object({ code: z.string(), message: z.string().optional(), nextResendAt: z.number().optional(), serverNow: z.number().optional() }).openapi("AuthFailure");

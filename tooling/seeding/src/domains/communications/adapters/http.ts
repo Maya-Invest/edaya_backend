@@ -49,7 +49,10 @@ export function createHttpCommunicationsSeedPort(
         recipientId: record.recipientId,
       })
       if (existing && typeof existing === 'object' && 'id' in existing && typeof existing.id === 'string') {
-        for (const event of seedDeliveryEvents(record))
+        const existingSentAt = 'sentAt' in existing && (typeof existing.sentAt === 'string' || existing.sentAt instanceof Date)
+          ? existing.sentAt
+          : undefined
+        for (const event of seedDeliveryEvents(record, existingSentAt))
           await postCoreCommand(requestOptions, 'applyDeliveryEvent', { ...event, deliveryId: existing.id })
         return
       }

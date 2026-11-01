@@ -1,29 +1,30 @@
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
+import type { AppRouteHandler } from "@/http/types";
+import { randomUUID } from "node:crypto";
+import { ActorAssuranceLevel, resolveEdayaSparkS2sKeyMode } from "@edaya/authorization";
+import { BusinessRuleViolationError } from "@edaya/core";
+import { listOnboardingDatasets, listStructureTemplatesForCountry, resolveOnboardingDataset, resolveOnboardingDatasetInput } from "@edaya/fixtures/onboarding";
+import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, onboardingDatasetSchema, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
+import { createRoute, z } from "@hono/zod-openapi";
+import * as HttpStatusCodes from "stoker/http-status-codes";
+import { jsonContent } from "stoker/openapi/helpers";
+import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import { conflictResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
-import type { AppRouteHandler } from "@/http/types";
-import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
-import type { StructureTemplateDefinition } from "@edaya/service";
-import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
-import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolResponseSchema } from "@/lib/school-api/schemas/entities";
-import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
-import { createRoute, z } from "@hono/zod-openapi";
-import { randomUUID } from "node:crypto";
-import * as HttpStatusCodes from "stoker/http-status-codes";
-import { jsonContent } from "stoker/openapi/helpers";
-import { createMessageObjectSchema } from "stoker/openapi/schemas";
+import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 
 const commandMessageSchema = createMessageObjectSchema();
 
 const onboardingRegisterSchoolRequestSchema = z.object({
   name: z.string().trim().min(1),
+  shortName: z.string().trim().min(1).optional(),
   timeZone: z.string().trim().min(1),
-  type: z.nativeEnum(SchoolType).nullable().optional(),
+  financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
   country: z.string().trim().min(1).nullable().optional(),
   city: z.string().trim().min(1).nullable().optional(),
   id: z.string().trim().min(1).optional(),
@@ -41,13 +42,6 @@ const structureTemplateReportCardDomainCategorySchema = z.object({
   weight: z.number().optional(),
 });
 
-const structureTemplateReportCardSectionSchema = z.object({
-  role: z.enum(["subjects", "summary", "comments"]),
-  label: z.string().trim().min(1),
-  order: z.number().int(),
-  subjectCodes: z.array(z.string().trim().min(1)).optional(),
-});
-
 const structureTemplateReportCardStructureSchema = z.object({
   gradingScale: z.number(),
   passingGrade: z.number(),
@@ -57,7 +51,7 @@ const structureTemplateReportCardStructureSchema = z.object({
     weight: z.number(),
   })).min(1),
   domainCategories: z.array(structureTemplateReportCardDomainCategorySchema).optional(),
-  sections: z.array(structureTemplateReportCardSectionSchema).optional(),
+  modules: z.array(z.object({ name: z.string().trim().min(1), order: z.number().int().positive(), subjectCodes: z.array(z.string().min(1)), weightingMode: z.enum(["subject_coefficients", "explicit"]), explicitWeight: z.number().finite().positive().optional() })).optional(),
   includeSummary: z.boolean().optional(),
   includeComments: z.boolean().optional(),
 });
@@ -79,11 +73,13 @@ const structureTemplateDefinitionSchema = z.object({
     examName: z.string().trim().min(1).optional(),
     reportCardStructure: structureTemplateReportCardStructureSchema.optional(),
   }).passthrough()).min(1),
+  subjectCategories: z.array(z.object({ code: z.string().trim().min(1), name: z.string().trim().min(1) })).optional(),
   subjects: z.array(z.object({
     code: z.string().trim().min(1),
     shortName: z.string().trim().min(1),
     domain: z.string().trim().min(1),
     defaultCoefficient: z.number(),
+    categoryCode: z.string().trim().min(1).optional(),
   }).passthrough()).min(1),
   curriculum: z.array(z.object({
     levelCode: z.string().trim().min(1),
@@ -103,7 +99,21 @@ const onboardingListStructureTemplatesResponseSchema = z.object({
   templates: z.array(structureTemplateDefinitionSchema),
 }).openapi("OnboardingListStructureTemplatesResponse");
 
-const structureTemplateSnapshotSchema = structureTemplateDefinitionSchema;
+const datasetSelectionFields = {
+  dataset: z.object({ id: z.string().trim().min(1), version: z.string().regex(/^\d+\.\d+\.\d+$/) }).optional(),
+  datasetSnapshot: onboardingDatasetSchema.openapi("OnboardingDataset").optional(),
+};
+// Reject obsolete snapshots before object parsing strips unknown wizard fields.
+function rejectLegacySnapshots<T extends z.ZodTypeAny>(schema: T) {
+  return z.preprocess((value, context) => {
+    if (value && typeof value === "object" && "templateSnapshots" in value) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["templateSnapshots"], message: "Legacy template snapshots are unsupported; supply a canonical datasetSnapshot" });
+      return z.NEVER;
+    }
+    return value;
+  }, schema);
+}
+const exclusiveDatasetSelection = (value: { dataset?: unknown; datasetSnapshot?: unknown }) => !(value.dataset && value.datasetSnapshot);
 
 const classNamingModeSchema = z.enum(["alphabetical", "numerical"]).default("numerical");
 
@@ -114,11 +124,12 @@ const onboardingStructureLevelSchema = z.object({
   classNamingMode: classNamingModeSchema.optional(),
 });
 
-const onboardingApplyStructureTemplateRequestSchema = z.object({
-  templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
-  templateSnapshots: z.array(structureTemplateSnapshotSchema).optional(),
+const onboardingApplyStructureTemplateRequestSchema = rejectLegacySnapshots(z.object({
+  ...datasetSelectionFields,
+  templates: z.array(z.string().trim().min(1)).min(1),
+  academicYearId: z.string().trim().min(1).optional(),
   levels: z.array(onboardingStructureLevelSchema).min(1),
-}).openapi("OnboardingApplyStructureTemplateRequest");
+}).refine(exclusiveDatasetSelection, "Supply a dataset reference or snapshot, not both")).openapi("OnboardingApplyStructureTemplateRequest");
 
 const onboardingApplyStructureTemplateResponseSchema = z.object({
   gradeLevelCount: z.number().int(),
@@ -126,8 +137,8 @@ const onboardingApplyStructureTemplateResponseSchema = z.object({
   subjectCount: z.number().int(),
   classSubjectCount: z.number().int(),
   gradeScaleCount: z.number().int(),
-  reportCardDefinitionCount: z.number().int(),
-  reportCardSectionCount: z.number().int(),
+  reportModuleCount: z.number().int(),
+  reportSubjectAssignmentCount: z.number().int(),
 }).openapi("OnboardingApplyStructureTemplateResponse");
 
 const onboardingStaffInviteRequestSchema = z.object({
@@ -154,9 +165,12 @@ const onboardingCompleteWizardRequestSchema = z.object({
 }).openapi("OnboardingCompleteWizardRequest");
 
 const onboardingProvisionRequestSchema = z.object({
+  schoolId: z.string().uuid(),
+  requestId: z.string().uuid(),
   school: z.object({
     name: z.string().trim().min(1),
     timeZone: z.string().trim().min(1),
+    financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
     city: z.string().trim().min(1),
     country: z.string().trim().min(1),
     academicYearLabel: z.string().trim().min(1),
@@ -169,10 +183,11 @@ const onboardingProvisionRequestSchema = z.object({
       end: z.string().trim().min(1),
     })).min(1),
   }),
-  structure: z.object({
-    templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
+  structure: rejectLegacySnapshots(z.object({
+    ...datasetSelectionFields,
+    templates: z.array(z.string().trim().min(1)).min(1),
     levels: z.array(onboardingStructureLevelSchema).min(1),
-  }),
+  }).refine(exclusiveDatasetSelection, "Supply a dataset reference or snapshot, not both")),
   invites: z.array(z.object({
     email: z.string().trim().email(),
     role: z.string().trim().min(1).refine(isOnboardingStaffInviteRoleKey, "Invalid staff invite role"),
@@ -190,6 +205,7 @@ const onboardingProvisionResponseSchema = z.object({
     phase: z.string(),
     ms: z.number(),
   })),
+  replayed: z.boolean().optional(),
 }).openapi("OnboardingProvisionResponse");
 
 export const onboardingRegisterSchoolRoute = createRoute({
@@ -231,11 +247,17 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   }
 
   const body = c.req.valid("json");
-  if (c.get("actor")) {
+  const actor = c.get("actor");
+  // A platform operator has no school yet. Local seed signs in the demo owner, who is also PLATFORM_BOOTSTRAP_EMAILS, before register-school.
+  if (actor && actor.kind !== "platform") {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
       "This account is already linked to a school actor",
     ));
+  }
+
+  if (c.env.REQUIRE_PRIVILEGED_TOTP === true && session.session.assuranceLevel !== ActorAssuranceLevel.Strong) {
+    return c.json({ message: "Authenticator enrollment required before creating a school" }, 403);
   }
 
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
@@ -243,8 +265,9 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   try {
     const result = await registerSchoolWithOwner(c.get("schoolApp"), toOwnerSession(session), {
       name: body.name,
+      shortName: body.shortName,
       timeZone: body.timeZone,
-      ...(body.type ? { type: body.type } : {}),
+      financeCurrency: body.financeCurrency,
       ...(body.country ? { country: body.country } : {}),
       ...(body.city ? { city: body.city } : {}),
       ...(body.id ? { id: body.id } : {}),
@@ -253,6 +276,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
       requestId,
+      edayaSparkS2sKeyMode: resolveEdayaSparkS2sKeyMode(c.env.NODE_ENV),
     });
 
     return c.json(
@@ -290,7 +314,7 @@ export const onboardingListStructureTemplatesHandler: AppRouteHandler<typeof onb
   const result = listStructureTemplatesForCountry(query.country);
   return c.json({
     countryCode: result.countryCode,
-    templates: [...result.templates],
+    templates: result.templates.map(({ subjectCategories: _categories, ...template }) => ({ ...template, subjects: template.subjects.map(({ categoryCode: _code, ...subject }) => subject) })),
   }, HttpStatusCodes.OK);
 };
 
@@ -326,10 +350,8 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
   try {
     const result = await applyStructureTemplate(c.get("schoolApp"), actor, {
       templates: body.templates,
-      templateSnapshots: resolveStructureTemplates(
-        body.templates,
-        (body.templateSnapshots as StructureTemplateDefinition[] | undefined) ?? [],
-      ),
+      dataset: resolveOnboardingDatasetInput(body),
+      academicYearId: body.academicYearId,
       levels: body.levels,
     });
     await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
@@ -486,7 +508,6 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
   }
 
   const body = c.req.valid("json");
-  const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
   const allowPublicSchoolRegistration = shouldAllowPublicSchoolRegistration(c.env);
 
   try {
@@ -494,21 +515,38 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
       c.get("schoolApp"),
       session,
       {
+        schoolId: body.schoolId,
+        requestId: body.requestId,
         school: body.school,
         structure: {
           ...body.structure,
-          templateSnapshots: resolveStructureTemplates(body.structure.templates),
+          dataset: resolveOnboardingDatasetInput(body.structure),
         },
         ...(body.invites ? { invites: body.invites } : {}),
       },
       {
-        requestId,
+        requestId: body.requestId,
         existingActor: c.get("actor") ?? undefined,
         inviteBaseUrl: resolveInviteBaseUrl(c.env),
         allowPublicSchoolRegistration,
+        edayaSparkS2sKeyMode: resolveEdayaSparkS2sKeyMode(c.env.NODE_ENV),
       },
     );
-    return c.json(result, HttpStatusCodes.OK);
+    const { structure, ...rest } = result;
+    return c.json({
+      ...rest,
+      structure: structure
+        ? {
+            gradeLevelCount: structure.gradeLevelCount,
+            classGroupCount: structure.classGroupCount,
+            subjectCount: structure.subjectCount,
+            classSubjectCount: structure.classSubjectCount,
+            gradeScaleCount: structure.gradeScaleCount,
+            reportModuleCount: structure.reportModuleCount,
+            reportSubjectAssignmentCount: structure.reportSubjectAssignmentCount,
+          }
+        : null,
+    }, HttpStatusCodes.OK);
   }
   catch (err) {
     if (
@@ -534,3 +572,33 @@ function toOwnerSession(session: AuthenticatedSession) {
     },
   };
 }
+
+const onboardingDatasetChoicesSchema = z.object({
+  datasets: z.array(z.object({ id: z.string(), version: z.string(), countryCode: z.string(), label: z.string(), isDefault: z.boolean() })),
+}).openapi("OnboardingDatasetChoices");
+export const onboardingListDatasetsRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("onboarding", "datasets"),
+  tags: ["Core Onboarding"],
+  summary: "List published onboarding datasets",
+  ...clientRouteOperation({ namespace: "onboarding", clientKey: "listDatasets", path: "onboarding/datasets", responseSchemaName: "OnboardingDatasetChoices" }),
+  request: { query: z.object({ country: z.string().optional() }) },
+  responses: { [HttpStatusCodes.OK]: jsonContent(onboardingDatasetChoicesSchema, "Published datasets"), ...coreRouteErrorResponses },
+});
+export const onboardingListDatasetsHandler: AppRouteHandler<typeof onboardingListDatasetsRoute> = async c => c.json({ datasets: listOnboardingDatasets(c.req.valid("query").country) }, HttpStatusCodes.OK);
+export const onboardingGetDatasetRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("onboarding", "datasets", "{id}", "{version}"),
+  tags: ["Core Onboarding"],
+  summary: "Read an exact onboarding dataset version",
+  ...clientRouteOperation({ namespace: "onboarding", clientKey: "getDataset", path: "onboarding/datasets/{id}/{version}", pathParams: ["id", "version"], responseSchemaName: "OnboardingDataset" }),
+  request: { params: z.object({ id: z.string().min(1), version: z.string().min(1) }) },
+  responses: { [HttpStatusCodes.OK]: jsonContent(onboardingDatasetSchema.openapi("OnboardingDataset"), "Canonical dataset"), ...coreRouteErrorResponses },
+});
+export const onboardingGetDatasetHandler: AppRouteHandler<typeof onboardingGetDatasetRoute> = async (c) => {
+  try {
+    const { id, version } = c.req.valid("param");
+    return c.json(resolveOnboardingDataset(id, version), HttpStatusCodes.OK);
+  }
+  catch (error) { return routeErrorResponse(c, error); }
+};

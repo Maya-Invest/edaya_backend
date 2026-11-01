@@ -1,11 +1,11 @@
-import { createHash, randomUUID } from "node:crypto";
 import type { PdfRenderer } from "../ports/pdf-renderer";
+import type { DocumentRenderingFailureCode, RenderDocumentRequest, RenderDocumentResult } from "../types";
+import { createHash, randomUUID } from "node:crypto";
+import { getTemplateDefinition } from "../templates/registry";
 import {
   DOCUMENT_RENDERING_FAILURES,
 
 } from "../types";
-import type { DocumentRenderingFailureCode, RenderDocumentRequest, RenderDocumentResult } from "../types";
-import { getTemplateDefinition } from "../templates/registry";
 import { overlaySignatures } from "./overlay-signatures";
 
 function sha256Hex(bytes: Uint8Array): string {
@@ -18,7 +18,6 @@ function createRenderId(): string {
 
 export interface RenderDocumentDependencies {
   readonly pdfRenderer: PdfRenderer;
-  readonly fetchImpl?: typeof fetch;
 }
 
 export async function renderDocument(
@@ -40,14 +39,12 @@ export async function renderDocument(
     const html = template.compileHtml(request.locale, request.payload);
     bytes = await dependencies.pdfRenderer.render({
       html,
-      paper: request.options?.paper ?? "A4",
-      orientation: request.options?.orientation ?? "portrait",
+      paper: request.templateKey === "annual-report-card.v1" ? "A4" : request.options?.paper ?? "A4",
+      orientation: request.templateKey === "annual-report-card.v1" ? "landscape" : request.options?.orientation ?? "portrait",
     });
     const signatures = request.options?.signatures ?? [];
     if (signatures.length > 0) {
-      bytes = await overlaySignatures(bytes, signatures, {
-        ...(dependencies.fetchImpl === undefined ? {} : { fetchImpl: dependencies.fetchImpl }),
-      });
+      bytes = await overlaySignatures(bytes, signatures);
     }
   }
   catch (error) {

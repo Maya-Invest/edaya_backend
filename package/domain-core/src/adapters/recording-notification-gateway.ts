@@ -3,47 +3,41 @@ import type {
   NotificationDeliveryStatusQuery,
   NotificationEnqueueInput,
   NotificationGatewayPort,
+  RegisterPushDeviceInput,
+  UnregisterPushDeviceInput,
 } from '../ports/gateways/notification-gateway'
 
 export class RecordingNotificationGateway implements NotificationGatewayPort {
   readonly enqueued: NotificationEnqueueInput[] = []
   readonly cancelled: string[] = []
-  readonly registeredPushDevices: Array<{ subjectId: string, schoolId: string, token: string, provider: 'fcm' | 'apns' }> = []
-  readonly unregisteredPushDevices: Array<{ subjectId: string, provider: 'fcm' | 'apns' }> = []
+  readonly registeredPushDevices: RegisterPushDeviceInput[] = []
+  readonly unregisteredPushDevices: UnregisterPushDeviceInput[] = []
   readonly statusLookups: NotificationDeliveryStatusQuery[][] = []
   private readonly enqueuedKeys = new Set<string>()
   private readonly statusLookupResults = new Map<string, NotificationDeliveryStatusLookup>()
 
-  setStatusLookup(deliveryId: string, lookup: NotificationDeliveryStatusLookup): void {
-    this.statusLookupResults.set(deliveryId, lookup)
+  setStatusLookup(schoolId: string, deliveryId: string, lookup: NotificationDeliveryStatusLookup): void {
+    this.statusLookupResults.set(JSON.stringify([schoolId, deliveryId]), lookup)
   }
 
   async enqueue(input: NotificationEnqueueInput): Promise<void> {
-    if (this.enqueuedKeys.has(input.idempotencyKey)) {
+    if (this.enqueuedKeys.has(JSON.stringify([input.schoolId, input.idempotencyKey]))) {
       return
     }
-    this.enqueuedKeys.add(input.idempotencyKey)
+    this.enqueuedKeys.add(JSON.stringify([input.schoolId, input.idempotencyKey]))
     this.enqueued.push(input)
   }
 
-  async cancel(idempotencyKey: string): Promise<void> {
+  async cancel(idempotencyKey: string, schoolId: string): Promise<void> {
     this.cancelled.push(idempotencyKey)
-    this.enqueuedKeys.delete(idempotencyKey)
+    this.enqueuedKeys.delete(JSON.stringify([schoolId, idempotencyKey]))
   }
 
-  async registerPushDevice(input: {
-    subjectId: string
-    schoolId: string
-    token: string
-    provider: 'fcm' | 'apns'
-  }): Promise<void> {
+  async registerPushDevice(input: RegisterPushDeviceInput): Promise<void> {
     this.registeredPushDevices.push(input)
   }
 
-  async unregisterPushDevice(input: {
-    subjectId: string
-    provider: 'fcm' | 'apns'
-  }): Promise<void> {
+  async unregisterPushDevice(input: UnregisterPushDeviceInput): Promise<void> {
     this.unregisteredPushDevices.push(input)
   }
 
@@ -53,7 +47,7 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
     this.statusLookups.push([...deliveries])
     const results = new Map<string, NotificationDeliveryStatusLookup>()
     for (const delivery of deliveries) {
-      const lookup = this.statusLookupResults.get(delivery.deliveryId)
+      const lookup = this.statusLookupResults.get(JSON.stringify([delivery.schoolId, delivery.deliveryId]))
       if (lookup) {
         results.set(delivery.deliveryId, lookup)
       }

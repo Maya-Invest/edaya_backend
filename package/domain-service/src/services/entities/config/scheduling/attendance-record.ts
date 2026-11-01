@@ -1,8 +1,10 @@
 import type { AttendanceAnchor, AttendanceRecord } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
-
 import { AttendanceJustificationStatus, AttendanceStatus, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
+import { assessmentRoster } from '../../../../capabilities/academics/marks-state'
+
+import { loadParticipation, subjectRoster } from '../../../../capabilities/subject-enrollment/participation'
 import { config } from '../../entity-config'
 import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
@@ -13,6 +15,7 @@ export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ 
     repository: repositories.attendance,
     tenant: attendanceRecordTenant(),
     resource: 'attendance',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateAttendanceSave,
@@ -27,7 +30,23 @@ function attendanceRecordTenant(): EntityTenantResolver<AttendanceRecord> {
 async function validateAttendanceSave(
   entity: AttendanceRecord,
   existing: AttendanceRecord | undefined,
+  repositories: SchoolRepositories,
 ): Promise<void> {
+  if (!existing || entity.studentId !== existing.studentId || entity.lessonSessionId !== existing.lessonSessionId || entity.assessmentId !== existing.assessmentId) {
+    let roster: string[] | undefined
+    if (entity.lessonSessionId) {
+      const lesson = await repositories.lessonSessions.findById(entity.lessonSessionId)
+      if (lesson?.classSubjectId)
+        roster = subjectRoster(await loadParticipation(repositories, [lesson.classGroupId]), lesson.classSubjectId, lesson.startsAt)
+    }
+    if (entity.assessmentId) {
+      const assessment = await repositories.assessments.findById(entity.assessmentId)
+      if (assessment)
+        roster = await assessmentRoster(assessment, repositories)
+    }
+    if (roster && !roster.includes(entity.studentId))
+      throw new BusinessRuleViolationError('SUBJECT_PARTICIPATION_REQUIRED', 'Student does not participate in this subject at the occurrence date')
+  }
   if (!existing)
     return
 
@@ -65,7 +84,7 @@ function attendanceJustificationChanged(entity: AttendanceRecord, existing: Atte
 }
 
 export async function findAttendanceRecordByAnchor(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'attendance'>,
   studentId: string,
   anchor: AttendanceAnchor,
 ): Promise<AttendanceRecord | undefined> {

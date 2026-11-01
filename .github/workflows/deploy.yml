@@ -1,0 +1,71 @@
+name: deploy
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Source revision (empty uses selected workflow revision)
+        type: string
+        default: ''
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+concurrency:
+  group: deploy-${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  source:
+    uses: ./.github/workflows/_prepare.yml
+    with:
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      source_ref: ${{ inputs.source_ref || github.sha }}
+      release_mode: true
+  quality:
+    needs: source
+    uses: ./.github/workflows/_quality_check.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+  unit:
+    needs: source
+    uses: ./.github/workflows/_unit_test.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+  build:
+    needs: source
+    uses: ./.github/workflows/_build.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+  integration:
+    needs: [source, quality, unit]
+    uses: ./.github/workflows/_integration_test.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      baseline_sha: ${{ github.event.pull_request.base.sha || '' }}
+  qualification:
+    if: always()
+    needs: [source, quality, unit, build, integration]
+    uses: ./.github/workflows/_finalize.yml
+    with:
+      source_sha: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      job_results: ${{ toJSON(needs) }}
+  migration:
+    needs: [source, qualification]
+    uses: ./.github/workflows/_migration.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    secrets: inherit
+  deployment:
+    needs: [source, migration]
+    uses: ./.github/workflows/_deployment.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    secrets: inherit

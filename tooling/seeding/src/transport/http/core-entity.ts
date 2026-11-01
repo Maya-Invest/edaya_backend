@@ -1,4 +1,4 @@
-import type { SeedCommandKey, SeedEntityKey } from './catalog'
+import type { SeedCommandKey, SeedEntityKey, SeedQueryKey } from './catalog'
 import type { HttpSeedClient } from './client'
 import { ApiError } from '@maya-invest/edaya-api-client'
 import { createSeedSchoolClient } from './school-client'
@@ -7,6 +7,7 @@ export interface CoreHttpRequestOptions {
   client: HttpSeedClient
   serviceAccountApiKey?: string
   requestId?: string
+  actor?: { schoolId: string, actorId: string, academicYearId: string }
 }
 
 function serializeValue(value: unknown): unknown {
@@ -45,6 +46,7 @@ function schoolClient(options: CoreHttpRequestOptions) {
   return createSeedSchoolClient(options.client, {
     serviceAccountApiKey: options.serviceAccountApiKey,
     requestId: options.requestId,
+    actor: options.actor,
   })
 }
 
@@ -76,6 +78,23 @@ export async function postCoreCommand(
   }
   catch (error) {
     throw formatCoreError(`Core command failed for ${methodName}`, error)
+  }
+}
+
+export async function postCoreQuery(
+  options: CoreHttpRequestOptions,
+  methodName: SeedQueryKey,
+  payload: unknown,
+): Promise<unknown> {
+  const serializedPayload = payload && typeof payload === 'object'
+    ? serializePlainObject(payload as Record<string, unknown>)
+    : payload
+
+  try {
+    return await schoolClient(options).queries[methodName](serializedPayload)
+  }
+  catch (error) {
+    throw formatCoreError(`Core query failed for ${methodName}`, error)
   }
 }
 
@@ -153,4 +172,17 @@ export async function postEntitySave(
   catch (error) {
     throw formatCoreError(`Entity save failed for ${serviceName}`, error)
   }
+}
+
+/** Uses the same managed entity invariants and atomic authorization as single saves. */
+export async function postEntityBatchSave(options: CoreHttpRequestOptions, serviceName: SeedEntityKey, entities: unknown[]): Promise<void> {
+  if (!entities.length)
+    return
+  try {
+    const resource = schoolClient(options).entities[serviceName]
+    if (!('batchSave' in resource) || typeof resource.batchSave !== 'function')
+      throw new Error(`Entity ${serviceName} does not support batch save`)
+    for (let offset = 0; offset < entities.length; offset += 500) await resource.batchSave({ entities: entities.slice(offset, offset + 500).map(entityPayload) as never[] })
+  }
+  catch (error) { throw formatCoreError(`Entity batch save failed for ${serviceName}`, error) }
 }

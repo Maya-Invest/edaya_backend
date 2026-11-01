@@ -1,6 +1,7 @@
 import type { AuthorityScope } from '../../domain/permissions/authority-scope'
 import type { AttachmentOwnerKind } from '../../domain/school/attachment'
 import type { CoreEntityKey } from '../../registry/core-entity-map'
+import { GENERAL_ATTACHMENT_PURPOSE } from '../../domain/school/attachment'
 
 /** A policy-produced constraint. Clients cannot supply repository access scopes. */
 export type AccessTarget = AuthorityScope
@@ -14,7 +15,12 @@ export interface ResourceAccessClause {
   /** Read-only calendar context includes school and grade events affecting a visible class. */
   readonly calendarAncestors?: boolean
   readonly publishedOnly?: boolean
+  readonly submittedMarksOnly?: boolean
   readonly attachmentOwners?: readonly AttachmentOwnerKind[]
+  /** Exact purposes selected by the named policy. Generic scopes default to general only. */
+  readonly attachmentPurposes?: readonly string[]
+  /** Exact attachment identities selected by a named policy. */
+  readonly attachmentIds?: readonly string[]
   readonly noteVisibility?: 'staff' | 'guardian'
   readonly authorStaffId?: string
   readonly attendanceMode?: 'session' | 'daily'
@@ -34,5 +40,7 @@ export function resourceAccessScope(
 ): ResourceAccessScope {
   if (!schoolId.trim())
     throw new Error('An access scope requires a trusted school')
-  return Object.freeze({ schoolId, resource, clauses: Object.freeze(clauses.map(clause => Object.freeze(clause))) })
+  return Object.freeze({ schoolId, resource, clauses: Object.freeze(clauses.map(clause => Object.freeze(resource === 'attachments'
+    ? { ...clause, attachmentPurposes: Object.freeze([...(clause.attachmentPurposes ?? [GENERAL_ATTACHMENT_PURPOSE])]) }
+    : clause))) })
 }

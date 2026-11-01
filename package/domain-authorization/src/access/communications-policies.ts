@@ -5,12 +5,12 @@ import { AccessFacts, denied } from './facts'
 
 export const DELIVERY_WRITER_SYSTEM_IDS = ['notify-adapter', 'notification-delivery-webhook', 'reconcilePendingDeliveries', 'fixture-seed'] as const
 
-/** Personal communications bind QUERY_COMMUNICATIONS_READ to the selected profile. */
+/** Personal communications bind PERSONAL_COMMUNICATIONS_READ to the selected profile. */
 export class CommunicationsAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
 
   assertCreate() {
-    return this.access.assertSchool(Permission.COMMUNICATION_CREATE)
+    return this.access.assertSchool(Permission.COMMUNICATION_DRAFT_MANAGE)
   }
 
   async assertSend(announcement: CoreEntityMap['announcements']) {
@@ -18,7 +18,6 @@ export class CommunicationsAccessPolicy {
     await facts.validateActor()
     if (announcement.schoolId !== this.access.actor.schoolId)
       return denied()
-    const authority = await this.access.scope(Permission.COMMUNICATION_SEND, 'announcements', 'write')
     const targets = await this.access.repositories.announcementTargets.list({ announcementId: announcement.id })
     if (!targets.length)
       throw new BusinessRuleViolationError('PUBLISH_WITHOUT_TARGETS', 'An announcement must have an audience before sending')
@@ -31,8 +30,11 @@ export class CommunicationsAccessPolicy {
       if (target.targetKind === AnnouncementTargetKind.ClassGroup) {
         await this.access.assertResources(Permission.COMMUNICATION_SEND, 'classGroups', [target.targetId!])
       }
-      else if (!authority.clauses.some(clause => clause.target.kind === 'school')) {
-        return denied('Only school-wide send authority can address a broadcast or direct recipient')
+      else if (target.targetKind === AnnouncementTargetKind.GradeLevel) {
+        await this.access.assertResources(Permission.COMMUNICATION_SEND, 'gradeLevels', [target.targetId!])
+      }
+      else {
+        await this.access.assertSchool(Permission.COMMUNICATION_SEND_BROADCAST)
       }
     }
     return resourceAccessScope(announcement.schoolId, 'announcements', [{ target: { kind: 'records', ids: [announcement.id] } }])
@@ -56,7 +58,7 @@ export class CommunicationsAccessPolicy {
 
   async deliveryEventContext(deliveryId: string) {
     await this.access.assertIntegrationCaller(DELIVERY_WRITER_SYSTEM_IDS)
-    const scope = await this.access.scope(Permission.COMMUNICATION_UPDATE, 'messageDeliveries', 'write')
+    const scope = await this.access.scope(Permission.COMMUNICATION_DRAFT_MANAGE, 'messageDeliveries', 'write', 'update')
     const delivery = await this.access.repositories.messageDeliveries.findById(deliveryId)
     if (delivery)
       await this.access.repositories.messageDeliveries.forAccess(scope).assertAccess(delivery)
@@ -111,7 +113,7 @@ export class CommunicationsAccessPolicy {
     if (actor.kind === 'system' || actor.kind === 's2s' || (actor.kind === 'staff' && actor.accountKind !== 'human'))
       return denied('Personal communications require an interactive human profile')
     await new AccessFacts(actor, this.access.repositories).validateActor()
-    await this.access.scope(Permission.QUERY_COMMUNICATIONS_READ, 'messageDeliveries')
+    await this.access.scope(Permission.PERSONAL_COMMUNICATIONS_READ, 'messageDeliveries')
     return actor
   }
 
@@ -119,14 +121,14 @@ export class CommunicationsAccessPolicy {
     const actor = await this.assertOwnAccount()
     if (delivery.recipientKind !== actor.kind || delivery.recipientId !== actor.actorId || delivery.subjectId !== actor.subjectId)
       return denied('A delivery belongs to its selected recipient profile')
-    const scope = await this.access.scope(Permission.QUERY_COMMUNICATIONS_READ, 'messageDeliveries')
+    const scope = await this.access.scope(Permission.PERSONAL_COMMUNICATIONS_READ, 'messageDeliveries')
     await this.access.repositories.messageDeliveries.forAccess(scope).assertAccess(delivery)
     return scope
   }
 
-  async assertContactUpdate<K extends 'staffMembers' | 'guardians'>(resource: K, before: CoreEntityMap[K], after: CoreEntityMap[K]) {
+  async assertContactUpdate<K extends 'staffMembers'>(resource: K, before: CoreEntityMap[K], after: CoreEntityMap[K]) {
     const actor = await this.assertOwnAccount()
-    if ((resource === 'staffMembers' ? actor.kind !== 'staff' : actor.kind !== 'guardian')
+    if (actor.kind !== 'staff'
       || before.id !== actor.actorId || after.id !== before.id || before.subjectId !== actor.subjectId || after.subjectId !== before.subjectId) {
       return denied('Notification contacts belong to the selected profile')
     }
@@ -136,7 +138,7 @@ export class CommunicationsAccessPolicy {
     }
     if (JSON.stringify(unchanged(before)) !== JSON.stringify(unchanged(after)))
       return denied('Personal contact updates may change only notification channels')
-    const scope = await this.access.scope(Permission.QUERY_COMMUNICATIONS_READ, resource)
+    const scope = await this.access.scope(Permission.PERSONAL_COMMUNICATIONS_READ, resource)
     const repository = this.access.repositories[resource].forAccess(scope) as unknown as BaseRepositoryInterface<CoreEntityMap[K]>
     await repository.assertAccess(before)
     await repository.assertAccess(after)

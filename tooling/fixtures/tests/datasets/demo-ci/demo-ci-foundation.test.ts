@@ -14,20 +14,27 @@ import {
 import { classNameFromLabel } from '../../../src/onboarding/registry'
 
 describe('demo-ci dataset (Côte d\'Ivoire)', () => {
+  it('provides published reports for both guardian profiles and an eligible grading roster', () => {
+    const reports = demoCiDataset.extensions.reportCardResults
+    expect(reports.filter(result => result.narrativeStatus === 'published').map(result => result.studentId)).toEqual(['ci-s1', 'ci-s4'])
+    expect(reports.some(result => result.classGroupId === 'ci-6a' && result.narrativeStatus === 'generated')).toBe(true)
+  })
   it('assembles a French Ivorian collège school shell', () => {
     expect(demoCiDataset.purpose).toBe('demo-ci')
     expect(demoCiDataset.entities.school?.country).toBe('Côte d\'Ivoire')
     expect(demoCiDataset.entities.school?.city).toBe('Abidjan')
     expect(demoCiDataset.entities.school?.timeZone).toBe('Africa/Abidjan')
+    expect(demoCiDataset.entities.school?.issuingName).toBe('École Edaya — Cocody')
+    expect(demoCiDataset.entities.school?.schoolCode).toBe('EDAYA-CI')
     expect(demoCiGradeLevels).toHaveLength(4)
     expect(demoCiClassGroups).toHaveLength(5)
     expect(demoCiStaffMembers).toHaveLength(5)
     expect(demoCiDataset.entities.teachers).toHaveLength(5)
-    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(34)
-    expect(demoCiSubjects).toHaveLength(8)
+    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(36)
+    expect(demoCiSubjects).toHaveLength(28)
     expect(demoCiSubjectMatters.length).toBeGreaterThan(8)
     expect(demoCiSubjectMatters.some(matter => matter.name === 'Fractions et proportions')).toBe(true)
-    expect(demoCiClassSubjects).toHaveLength(33)
+    expect(demoCiClassSubjects).toHaveLength(35)
     expect(demoCiDataset.entities.students).toHaveLength(30)
     expect(demoCiAllStudentIds).toHaveLength(30)
     expect(demoCiSchedulingSlots).toHaveLength(6)
@@ -42,15 +49,20 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.extensions?.dailyAttendanceDays?.filter(day => day.classGroupId === 'ci-6a')).toHaveLength(3)
     expect(demoCiDataset.extensions?.dailyAttendanceDays?.filter(day => day.classGroupId === 'ci-6b')).toHaveLength(3)
     expect(demoCiDataset.entities.activities).toHaveLength(5)
-    expect(demoCiDataset.entities.fees).toHaveLength(5)
+    expect(demoCiDataset.entities.catalogServices).toHaveLength(9)
+    expect(demoCiDataset.entities.studentServiceEnrollments!.length).toBeGreaterThan(0)
     expect(demoCiDataset.entities.announcements).toHaveLength(5)
     expect(demoCiDataset.entities.incidents).toHaveLength(3)
     expect(demoCiDataset.entities.disciplinaryActions).toHaveLength(4)
     expect(demoCiDataset.entities.studentHealthProfiles).toHaveLength(3)
     expect(demoCiDataset.entities.attachments).toHaveLength(7)
     expect(demoCiDataset.extensions?.calendarEvents!.length).toBeGreaterThan(10)
-    expect(demoCiDataset.extensions?.reportCardDefinitionFixtures).toHaveLength(4)
-    expect(demoCiDataset.extensions?.reportCardResults).toHaveLength(90)
+    expect(demoCiDataset.extensions?.reportConfigurationFixtures).toHaveLength(4)
+    expect(demoCiDataset.extensions?.reportCardResults).toHaveLength(30)
+    expect(demoCiDataset.extensions?.publishAcademicPeriodIds).toEqual(['ci-2025-t1'])
+    expect(demoCiDataset.extensions?.schedulingReferenceWeekStart).toBe('2026-09-14')
+    expect(demoCiDataset.entities.academicYear?.name).toBe('2026 — 2027')
+    expect(demoCiDataset.entities.academicYear?.startDate).toBe('2026-09-14')
     expect(demoCiDataset.entities.guardians).toHaveLength(21)
     expect(demoCiDataset.entities.guardianLinks).toHaveLength(30)
   })
@@ -87,7 +99,18 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
       minPeriodSpan: 1,
       maxPeriodSpan: 2,
     })
-    expect(demoCiClassSubjects.filter(entry => entry.subjectId === 'ci-subj-math')).toHaveLength(5)
+    const mathSubjects = demoCiSubjects.filter(subject => subject.code === 'MATH')
+    expect(mathSubjects).toHaveLength(4)
+    expect(new Set(mathSubjects.map(subject => subject.gradeLevelId)).size).toBe(4)
+    const mathIds = new Set(mathSubjects.map(subject => subject.id))
+    const mathOfferings = demoCiClassSubjects.filter(entry => mathIds.has(entry.subjectId))
+    expect(mathOfferings).toHaveLength(5)
+    for (const offering of mathOfferings) {
+      const subject = mathSubjects.find(entry => entry.id === offering.subjectId)!
+      const group = demoCiClassGroups.find(entry => entry.id === offering.classGroupId)!
+      expect(subject.gradeLevelId).toBe(group.gradeLevelId)
+      expect(subject.academicYearId).toBe(group.academicYearId)
+    }
   })
 
   it('uses a realistic default min day gap for timetable generation', () => {
@@ -104,8 +127,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
       .map(assignment => assignment.classSubjectId)
       .filter((classSubjectId): classSubjectId is string => Boolean(classSubjectId))
 
-    expect(classSubjectIds).toHaveLength(33)
-    expect(assignedClassSubjectIds).toHaveLength(33)
+    expect(classSubjectIds).toHaveLength(35)
+    expect(assignedClassSubjectIds).toHaveLength(35)
     for (const classSubjectId of classSubjectIds) {
       expect(assignedClassSubjectIds).toContain(classSubjectId)
     }

@@ -45,5 +45,6 @@ export interface AuthLinkSeedPort {
   findGuardianById: (id: string) => Promise<AuthLinkGuardianRecord | undefined>
   findTeacherById: (id: string) => Promise<AuthLinkTeacherRecord | undefined>
   replaceGuardianSubjectId: (guardianId: string, subjectId: string) => Promise<void>
+  replaceTeacherSubjectId: (teacherId: string, subjectId: string) => Promise<void>
   linkActorSubject: (input: LinkSeedActorSubjectInput) => Promise<void>
 }

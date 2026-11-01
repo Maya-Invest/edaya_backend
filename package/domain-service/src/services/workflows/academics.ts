@@ -1,13 +1,18 @@
-import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
+import type { Subject, SubjectCategoryEntity, SubjectCategoryInput, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
+import type { SyncClassSubjectOptions } from './subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
+import { academicStateLock } from '../../capabilities/academics/marks-state'
+import { assertTeacherWorkflowWrite } from '../../capabilities/academics/teacher-workflow-boundaries'
+import { assertParticipationRevision, saveSubjectPolicy } from '../../capabilities/subject-enrollment/policy'
 
+import { assertClassSubjectGradingMutable } from '../entities/config/academics/class-subject'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
-import { removeMirroredClassSubjects, saveGradeLevelSubjectEntity, saveGradeLevelSubjectMatterEntity, syncGradeLevelSubjectMatterToClassSubject, syncGradeLevelSubjectsToClassGroup, syncGradeLevelSubjectToAllClassGroups } from './grade-level-subject-sync'
+import * as intake from './intake'
+import { removeMirroredClassSubjects, syncSubjectMatterToClassSubject, syncSubjectsToClassGroup, syncSubjectToAllClassGroups } from './subject-sync'
 
 export interface RecordLessonSessionProgressInput {
   id: string
@@ -18,36 +23,14 @@ export interface RecordLessonSessionProgressInput {
   recordedAt?: Date
 }
 
-export type OfferSubjectToClassInput = ClassSubjectInput
-
-export type AssignMatterToClassSubjectInput = ClassSubjectMatterInput
-
-export interface OfferSubjectToGradeLevelInput extends GradeLevelSubjectInput {
-  classSubjectIdsByClassGroupId?: Record<string, string>
-  classSubjectMatterIdsByClassGroupId?: Record<string, string>
-}
-
-export interface RemoveSubjectFromGradeLevelInput {
-  gradeLevelSubjectId: string
-}
-
-export interface UpdateGradeLevelSubjectInput {
-  gradeLevelSubjectId: string
-  coefficient?: number
-  isOptional?: boolean
-}
-
-export interface AddCustomClassSubjectInput {
-  id: string
-  classGroupId: string
-  subjectId: string
-  coefficient?: number
-  isOffered?: boolean
-}
+export interface RemoveSubjectMatterInput { subjectMatterId: string }
+export interface RemoveSubjectInput { subjectId: string }
+export type UpdateSubjectInput = Partial<Omit<SubjectInput, 'id' | 'schoolId' | 'gradeLevelId' | 'academicYearId' | 'createdAt'>> & { subjectId: string, expectedReportConfigurationRevision?: number, expectedParticipationRevisions?: Record<string, number> }
 
 export interface SetClassSubjectOfferedInput {
   classSubjectId: string
   isOffered: boolean
+  expectedParticipationRevision: number
 }
 
 export interface ConfigureClassSubjectTimetableInput {
@@ -57,11 +40,12 @@ export interface ConfigureClassSubjectTimetableInput {
   maxPeriodSpan?: number | null
 }
 
-export type AssignMatterToGradeLevelSubjectInput = GradeLevelSubjectMatterInput & {
-  classSubjectMatterIdsByClassGroupId?: Record<string, string>
+export type ConfigureSubjectInput = SubjectInput & {
+  classSubjectIdsByClassGroupId?: Record<string, string>
+  expectedReportConfigurationRevision?: number
+  expectedParticipationRevisions?: Record<string, number>
 }
-
-export type ConfigureSubjectInput = SubjectInput & { schoolId?: string }
+export type ConfigureSubjectCategoryInput = SubjectCategoryInput & { schoolId?: string }
 export type ConfigureSubjectMatterInput = SubjectMatterInput
 
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
@@ -72,119 +56,111 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     this.repositories = pickWorkflowRepositories('academics', base.repositories)
   }
 
-  async configureSubject(input: SubjectInput & { schoolId?: string }): Promise<Subject> {
+  configureAcademicDiscipline(input: Parameters<typeof intake.configureAcademicDiscipline>[1]) { return intake.configureAcademicDiscipline(this.baseService, input) }
+  configurePlacementStatus(input: Parameters<typeof intake.configurePlacementStatus>[1]) { return intake.configurePlacementStatus(this.baseService, input) }
+  upsertStudentAcademicYearProfile(input: Parameters<typeof intake.upsertStudentAcademicYearProfile>[1]) { return intake.upsertStudentAcademicYearProfile(this.baseService, input) }
+  upsertTeacherAcademicYearProfile(input: Parameters<typeof intake.upsertTeacherAcademicYearProfile>[1]) { return intake.upsertTeacherAcademicYearProfile(this.baseService, input) }
+  removeStudentAcademicYearProfile(input: Parameters<typeof intake.removeStudentAcademicYearProfile>[1]) { return intake.removeStudentAcademicYearProfile(this.baseService, input) }
+  removeTeacherAcademicYearProfile(input: Parameters<typeof intake.removeTeacherAcademicYearProfile>[1]) { return intake.removeTeacherAcademicYearProfile(this.baseService, input) }
+
+  private async assertReportRevision(gradeLevelId: string, academicYearId: string, expected: number | undefined, required: boolean) {
+    if (expected === undefined && !required)
+      return
+    const level = await this.baseService.repositories.gradeLevels.findById(gradeLevelId)
+    if (!level || expected !== level.reportSettingsFor(academicYearId).revision)
+      throw new BusinessRuleViolationError('REPORT_CONFIGURATION_REVISION_CONFLICT', 'Reload subjects and modules before saving')
+  }
+
+  async configureSubject(input: ConfigureSubjectInput): Promise<Subject> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const { classSubjectIdsByClassGroupId, expectedReportConfigurationRevision, ...data } = input
+      const schoolId = data.schoolId ?? this.baseService.actor.schoolId
+      this.checkActorSchool(schoolId)
+      const existing = await this.repositories.subjects.findById(data.id)
+      if (existing) {
+        if (existing.schoolId !== schoolId || existing.gradeLevelId !== data.gradeLevelId || existing.academicYearId !== data.academicYearId)
+          throw new BusinessRuleViolationError('SUBJECT_PLACEMENT_IMMUTABLE', 'A subject cannot move between schools, grades or academic years')
+        return this.updateSubject({ ...data, subjectId: data.id, expectedReportConfigurationRevision })
+      }
+      await this.assertReportRevision(data.gradeLevelId, data.academicYearId, expectedReportConfigurationRevision, !!data.reportModuleId)
+      const subject = new SubjectEntity({ ...data, schoolId })
+      await this.baseService.entities.subjects.save(subject)
+      await syncSubjectToAllClassGroups(this.baseService, subject, Object.fromEntries(
+        Object.entries(classSubjectIdsByClassGroupId ?? {}).map(([id, classSubjectId]) => [id, { classSubjectId }]),
+      ))
+      return subject
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
+  }
+
+  async configureSubjectCategory(input: ConfigureSubjectCategoryInput): Promise<SubjectCategoryEntity> {
     return this.baseService.atomicExecution.execute(async () => {
       const schoolId = input.schoolId ?? this.baseService.actor.schoolId
       this.checkActorSchool(schoolId)
-      const subject = new SubjectEntity({ ...input, schoolId })
-      await this.baseService.entities.subjects.save(subject)
-      return subject
+      const category = new SubjectCategoryRecord({ ...input, schoolId })
+      await this.baseService.entities.subjectCategories.save(category)
+      return category
     })
   }
 
   async configureSubjectMatter(input: SubjectMatterInput): Promise<SubjectMatter> {
     return this.baseService.atomicExecution.execute(async () => {
-      const subjectMatter = new SubjectMatterEntity(input)
-      await this.baseService.entities.subjectMatters.save(subjectMatter)
-      return subjectMatter
-    })
+      const chapter = new SubjectMatterEntity(input)
+      await this.baseService.entities.subjectMatters.save(chapter)
+      for (const offering of await this.repositories.classSubjects.list({ subjectId: chapter.subjectId }))
+        await syncSubjectMatterToClassSubject(this.baseService, offering, chapter)
+      return chapter
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async offerSubjectToGradeLevel(input: OfferSubjectToGradeLevelInput): Promise<GradeLevelSubject> {
+  async removeSubjectMatter({ subjectMatterId }: RemoveSubjectMatterInput): Promise<void> {
     return this.baseService.atomicExecution.execute(async () => {
-      const { classSubjectIdsByClassGroupId, classSubjectMatterIdsByClassGroupId, ...gradeLevelSubjectInput } = input
-
-      return this.baseService.atomicExecution.execute(async () => {
-        const gradeLevelSubject = await saveGradeLevelSubjectEntity(this.baseService, gradeLevelSubjectInput)
-        const optionsByClassGroupId = Object.fromEntries(
-          Object.entries(classSubjectIdsByClassGroupId ?? {}).map(([classGroupId, classSubjectId]) => [
-            classGroupId,
-            {
-              classSubjectId,
-              classSubjectMatterIdsByClassGroupId,
-            } satisfies SyncClassSubjectOptions,
-          ]),
-        )
-        await syncGradeLevelSubjectToAllClassGroups(this.baseService, gradeLevelSubject, optionsByClassGroupId)
-        return gradeLevelSubject
-      })
-    })
+      await this.baseService.entities.subjectMatters.delete(subjectMatterId)
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async removeSubjectFromGradeLevel({ gradeLevelSubjectId }: RemoveSubjectFromGradeLevelInput): Promise<void> {
+  async removeSubject({ subjectId }: RemoveSubjectInput): Promise<void> {
     return this.baseService.atomicExecution.execute(async () => {
-      await this.baseService.atomicExecution.execute(async () => {
-        const gradeLevelSubject = await this.requireGradeLevelSubject(gradeLevelSubjectId)
-        await removeMirroredClassSubjects(this.baseService, gradeLevelSubject.id)
-        const matters = await this.repositories.gradeLevelSubjectMatters.list({ gradeLevelSubjectId })
-        for (const matter of matters) {
-          await this.baseService.entities.gradeLevelSubjectMatters.delete(matter.id)
-        }
-        await this.baseService.entities.gradeLevelSubjects.delete(gradeLevelSubject.id)
-      })
-    })
+      const subject = await this.requireSubject(subjectId)
+      await this.baseService.access.entity('subjects').assertDelete([subject.id])
+      await removeMirroredClassSubjects(this.baseService, subjectId)
+      for (const chapter of await this.repositories.subjectMatters.list({ subjectId }))
+        await this.baseService.entities.subjectMatters.delete(chapter.id)
+      await this.baseService.entities.subjects.delete(subjectId)
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient, isOptional }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
+  async updateSubject({ subjectId, expectedParticipationRevisions, expectedReportConfigurationRevision, ...changes }: UpdateSubjectInput): Promise<Subject> {
     return this.baseService.atomicExecution.execute(async () => {
-      const existing = await this.requireGradeLevelSubject(gradeLevelSubjectId)
-      const updated = await saveGradeLevelSubjectEntity(this.baseService, {
-        ...existing.data,
-        coefficient: coefficient ?? existing.coefficient,
-        isOptional: isOptional ?? existing.isOptional,
-        createdAt: existing.createdAt,
-      })
-
-      const classSubjects = await this.repositories.classSubjects.list({ gradeLevelSubjectId })
-      const isOptionalChanged = updated.isOptional !== existing.isOptional
-      for (const classSubject of classSubjects) {
-        const next = new ClassSubject({
-          ...classSubject.data,
-          coefficient: coefficient ?? classSubject.coefficient,
-          isOffered: isOptionalChanged ? !updated.isOptional : classSubject.isOffered,
-          createdAt: classSubject.createdAt,
-        })
-        const scope = await this.baseService.access.curriculum.assertUpdateSubject(next, classSubject)
+      const existing = await this.requireSubject(subjectId)
+      const updated = existing.copyWith(changes)
+      await this.assertReportRevision(existing.gradeLevelId, existing.academicYearId, expectedReportConfigurationRevision, updated.reportModuleId !== existing.reportModuleId || updated.reportOrder !== existing.reportOrder)
+      if (existing.isOptional !== updated.isOptional)
+        await saveSubjectPolicy(this.baseService, updated, existing, expectedParticipationRevisions)
+      else
+        await this.baseService.entities.subjects.save(updated)
+      for (const offering of await this.repositories.classSubjects.list({ subjectId })) {
+        const workload = Object.fromEntries(['coefficient', 'periodsPerWeek', 'minPeriodSpan', 'maxPeriodSpan']
+          .filter(key => key in changes).map(key => [key, updated.data[key as keyof typeof updated.data]]))
+        const next = new ClassSubject({ ...offering.data, ...workload, isOffered: offering.isOffered })
+        if (next.minPeriodSpan !== undefined && next.maxPeriodSpan !== undefined && next.maxPeriodSpan < next.minPeriodSpan)
+          throw new BusinessRuleViolationError('CLASS_SUBJECT_PERIOD_SPAN_INVALID', 'maxPeriodSpan must be greater than or equal to minPeriodSpan')
+        const scope = await this.baseService.access.curriculum.assertUpdateSubject(next, offering)
+        await assertClassSubjectGradingMutable(next, offering, this.repositories)
         await this.repositories.classSubjects.forAccess(scope).save(next)
       }
-
+      await syncSubjectToAllClassGroups(this.baseService, updated)
       return updated
-    })
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async addCustomClassSubject({
-    id,
-    classGroupId,
-    subjectId,
-    coefficient,
-    isOffered = true,
-  }: AddCustomClassSubjectInput): Promise<ClassSubject> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const classGroup = await this.repositories.classGroups.findById(classGroupId)
-      if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
-        denyResourceAccess()
-      }
-      const classSubject = new ClassSubject({
-        id,
-        classGroupId,
-        subjectId,
-        coefficient,
-        isOffered,
-        completedPercentage: 0,
-      })
-      await this.baseService.entities.classSubjects.save(classSubject)
-      return classSubject
-    })
-  }
-
-  async setClassSubjectOffered({ classSubjectId, isOffered }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
+  async setClassSubjectOffered({ classSubjectId, isOffered, expectedParticipationRevision }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireClassSubject(classSubjectId)
       const updated = new ClassSubject({
+        ...existing.data,
         id: existing.id,
         classGroupId: existing.classGroupId,
         subjectId: existing.subjectId,
-        gradeLevelSubjectId: existing.gradeLevelSubjectId,
         coefficient: existing.coefficient,
         periodsPerWeek: existing.periodsPerWeek,
         minPeriodSpan: existing.minPeriodSpan,
@@ -193,9 +169,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         isOffered,
         createdAt: existing.createdAt,
       })
+      await this.baseService.access.curriculum.assertUpdateSubject(updated, existing)
+      assertParticipationRevision(existing, expectedParticipationRevision)
       await this.baseService.entities.classSubjects.save(updated)
-      return updated
-    })
+      return (await this.repositories.classSubjects.findById(updated.id))!
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   async configureClassSubjectTimetable({
@@ -221,10 +199,10 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         )
       }
       const updated = new ClassSubject({
+        ...existing.data,
         id: existing.id,
         classGroupId: existing.classGroupId,
         subjectId: existing.subjectId,
-        gradeLevelSubjectId: existing.gradeLevelSubjectId,
         coefficient: existing.coefficient,
         periodsPerWeek: periodsPerWeek === undefined
           ? existing.periodsPerWeek
@@ -240,59 +218,13 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  async assignMatterToGradeLevelSubject(input: AssignMatterToGradeLevelSubjectInput): Promise<GradeLevelSubjectMatter> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const { classSubjectMatterIdsByClassGroupId, ...matterInput } = input
-
-      return this.baseService.atomicExecution.execute(async () => {
-        const gradeLevelSubjectMatter = await saveGradeLevelSubjectMatterEntity(this.baseService, matterInput)
-        const classSubjects = await this.repositories.classSubjects.list({
-          gradeLevelSubjectId: gradeLevelSubjectMatter.gradeLevelSubjectId,
-        })
-        for (const classSubject of classSubjects) {
-          await syncGradeLevelSubjectMatterToClassSubject(
-            this.baseService,
-            classSubject,
-            gradeLevelSubjectMatter,
-            { classSubjectMatterIdsByClassGroupId },
-          )
-        }
-        return gradeLevelSubjectMatter
-      })
-    })
-  }
-
-  async syncGradeLevelSubjectsToClassGroup(classGroupId: string, optionsByGradeLevelSubjectId: Record<string, SyncClassSubjectOptions> = {}) {
+  async syncSubjectsToClassGroup(classGroupId: string, optionsBySubjectId: Record<string, SyncClassSubjectOptions> = {}) {
     return this.baseService.atomicExecution.execute(async () => {
       const scope = await this.baseService.access.curriculum.assertSyncClass(classGroupId)
       const classGroup = await this.repositories.classGroups.forAccess(scope).findById(classGroupId)
       if (!classGroup)
         denyResourceAccess()
-      return syncGradeLevelSubjectsToClassGroup(this.baseService, classGroup, optionsByGradeLevelSubjectId)
-    })
-  }
-
-  /** @internal */
-  async offerSubjectToClass(input: OfferSubjectToClassInput): Promise<ClassSubject> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const classSubject = new ClassSubject(input)
-      await this.baseService.access.curriculum.assertImportSubject(classSubject)
-      await this.baseService.entities.classSubjects.save(classSubject)
-      return classSubject
-    })
-  }
-
-  /** @internal */
-  async assignMatterToClassSubject(input: AssignMatterToClassSubjectInput): Promise<ClassSubjectMatter> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const matter = new ClassSubjectMatter({
-        ...input,
-        status: input.status ?? ClassSubjectMatterStatus.NotStarted,
-        completedPercentage: input.completedPercentage ?? 0,
-      })
-      await this.baseService.access.curriculum.assertImportMatter(matter)
-      await this.baseService.entities.classSubjectMatters.save(matter)
-      return matter
+      return syncSubjectsToClassGroup(this.baseService, classGroup, optionsBySubjectId)
     })
   }
 
@@ -305,6 +237,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     recordedAt,
   }: RecordLessonSessionProgressInput): Promise<ClassSubjectProgress> {
     return this.baseService.atomicExecution.execute(async () => {
+      await assertTeacherWorkflowWrite(this.baseService.actor, 'classSubjectProgress', { lessonSessionId }, undefined, this.baseService.repositories)
       const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
       const classSubject = await this.requireClassSubject(matter.classSubjectId)
       const lessonSession = await this.repositories.lessonSessions.findById(lessonSessionId)
@@ -356,19 +289,14 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       await this.repositories.classSubjectMatters.forAccess(scopes.matter).save(updatedMatter)
       await this.repositories.classSubjects.forAccess(scopes.subject).save(updatedSubject)
       return snapshot
-    })
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  private async requireGradeLevelSubject(gradeLevelSubjectId: string): Promise<GradeLevelSubject> {
-    const gradeLevelSubject = await this.repositories.gradeLevelSubjects.findById(gradeLevelSubjectId)
-    if (!gradeLevelSubject) {
+  private async requireSubject(subjectId: string): Promise<Subject> {
+    const subject = await this.repositories.subjects.findById(subjectId)
+    if (!subject || subject.schoolId !== this.baseService.actor.schoolId)
       denyResourceAccess()
-    }
-    const gradeLevel = await this.repositories.gradeLevels.findById(gradeLevelSubject.gradeLevelId)
-    if (!gradeLevel || gradeLevel.schoolId !== this.baseService.actor.schoolId) {
-      denyResourceAccess()
-    }
-    return gradeLevelSubject
+    return subject
   }
 
   private async requireClassSubjectMatter(classSubjectMatterId: string): Promise<ClassSubjectMatter> {

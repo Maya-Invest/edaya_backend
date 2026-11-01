@@ -19,13 +19,9 @@ export function authorityScopeContains(held: AuthorityScope, requested: Authorit
   if (held.kind === 'all') {
     if (held.grain === 'class_group' && 'classGroupId' in requested && requested.classGroupId)
       return true
-    if (held.grain === 'class_subject' && 'classSubjectId' in requested && requested.classSubjectId)
-      return true
   }
   if (held.kind === 'class_group' && 'classGroupId' in requested)
     return requested.classGroupId === held.classGroupId
-  if (held.kind === 'class_subject' && 'classSubjectId' in requested && 'classGroupId' in requested)
-    return held.classGroupId === requested.classGroupId && (!held.classSubjectId || held.classSubjectId === requested.classSubjectId)
   if (held.kind === 'lesson_session')
     return 'lessonSessionId' in requested && held.lessonSessionId === requested.lessonSessionId
   if (held.kind === 'activity_session')

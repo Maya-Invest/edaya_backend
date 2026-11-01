@@ -1,0 +1,1 @@
+{{schoolName}} invited you to Edaya. Accept: {{inviteUrl}}

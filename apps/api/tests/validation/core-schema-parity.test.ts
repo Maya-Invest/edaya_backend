@@ -1,11 +1,12 @@
-import { describe, expect, test } from "bun:test";
 import { attendanceRecordCreateSchema, paymentCreateSchema, schoolCreateSchema, studentClassEnrollmentCreateSchema, studentCreateSchema } from "@edaya/core";
+import { describe, expect, test } from "bun:test";
 import {
   enrollStudentCommandSchema,
   recordAttendanceCommandSchema,
   recordPaymentCommandSchema,
   registerSchoolCommandSchema,
   registerStudentCommandSchema,
+  updateSchoolConfigurationCommandSchema,
 } from "@/lib/school-api/schemas/commands";
 
 interface AnySchema {
@@ -97,8 +98,24 @@ describe("API command schemas cover core create required fields", () => {
 
   test("recordPaymentCommand", () => {
     assertCommandCoversCoreCreate(recordPaymentCommandSchema, paymentCreateSchema, {
-      // Currency/status/audit fields resolved from student fee or actor context.
-      allowedOmissions: ["currency", "status", "recordedById", "reversedAt", "reversedById", "cancelledAt", "cancelledById"],
+      // School/account identity, currency, and audit fields come from actor context or account resolution.
+      allowedOmissions: ["schoolId", "accountId", "academicYearId", "kind", "currency", "status", "recordedById", "reversedAt", "reversedById", "reversesPaymentId", "reversedByPaymentId"],
     });
   });
+});
+
+test("school section patches do not inject defaults or erase other sections", () => {
+  const input = { schoolId: "school", name: "New school name", shortName: "Saved" };
+  expect(updateSchoolConfigurationCommandSchema.parse(input)).toEqual(input);
+  expect(updateSchoolConfigurationCommandSchema.parse({ schoolId: "school", phone: null })).toEqual({ schoolId: "school", phone: null });
+  expect(updateSchoolConfigurationCommandSchema.safeParse({ schoolId: "school", shortName: "   " }).success).toBe(false);
+});
+
+test("report threshold patches distinguish omission, zero and explicit clearing", async () => {
+  const { configureReportSettingsCommandSchema } = await import("@/lib/school-api/schemas/report-modules");
+  const base = { requestId: "request", gradeLevelId: "grade", academicYearId: "year", expectedRevision: 0 };
+  expect(Object.hasOwn(configureReportSettingsCommandSchema.parse(base), "passThreshold")).toBe(false);
+  expect(configureReportSettingsCommandSchema.parse({ ...base, passThreshold: null }).passThreshold).toBeNull();
+  expect(configureReportSettingsCommandSchema.parse({ ...base, passThreshold: 0 }).passThreshold).toBe(0);
+  expect(configureReportSettingsCommandSchema.safeParse({ ...base, passThreshold: Infinity }).success).toBe(false);
 });

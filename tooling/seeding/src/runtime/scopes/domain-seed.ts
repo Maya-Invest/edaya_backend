@@ -1,6 +1,10 @@
 import type { DevSeedScope } from '../../orchestration/run-dev-seeds'
 import type { HttpSeedRuntimeContext, RunHttpDevSeedsResults } from '../types'
 import {
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
+} from '../../bootstrap/s2s-client'
+import {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
 } from '../../bootstrap/service-account'
@@ -64,6 +68,10 @@ export async function runDomainSeedScope(ctx: HttpSeedRuntimeContext): Promise<R
 
   if (scope === 'all') {
     await maybeProvisionSeedingServiceAccount(options, serviceAccountApiKey)
+    const s2s = await provisionEdayaSparkS2sClientHttp(client, {
+      schoolId: ctx.seedContext.schoolId,
+    })
+    logProvisionedEdayaSparkS2sClient(s2s)
   }
 
   if (options.log) {

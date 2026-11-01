@@ -1,0 +1,15 @@
+{
+  "key": "class-timetable.v1",
+  "formats": [
+    "pdf"
+  ],
+  "locales": [
+    "fr",
+    "en"
+  ],
+  "version": "1.0.0",
+  "title": {
+    "fr": "Emploi du temps de classe",
+    "en": "Class timetable"
+  }
+}

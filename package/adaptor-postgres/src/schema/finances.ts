@@ -1,32 +1,58 @@
-import { integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
-export const fees = pgTable('fees', {
+export const catalogServices = pgTable('catalog_services', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   name: text('name').notNull(),
-  category: text('category').notNull(),
   description: text('description'),
-  defaultAmount: integer('default_amount').notNull(),
+  category: text('category').notNull(),
+  autoBilling: jsonb('auto_billing').notNull(),
+  billingKind: text('billing_kind').notNull(),
+  defaultPrice: integer('default_price').notNull(),
   currency: text('currency').notNull(),
-  installments: jsonb('installments').notNull(),
+  billingTerms: jsonb('billing_terms').notNull(),
+  status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('fees', table))
+  updatedAt: timestamp('updated_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('catalog_services', table))
 
-// 12. Student Fee Table
-
-export const studentFees = pgTable('student_fees', {
+export const studentServiceEnrollments = pgTable('student_service_enrollments', {
   id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
   studentId: text('student_id').notNull(),
-  feeId: text('fee_id').notNull(),
+  catalogServiceId: text('catalog_service_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
+  status: text('status').notNull(),
+  source: text('source').notNull(),
+  automation: jsonb('automation'),
+  acceptedTerms: jsonb('accepted_terms').notNull(),
+  enrolledAt: timestamp('enrolled_at', { mode: 'date' }).notNull(),
+  cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
+  cancellationReason: text('cancellation_reason'),
+  cancelledById: text('cancelled_by_id'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('student_service_enrollments', table))
+
+export const studentCharges = pgTable('student_charges', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  studentId: text('student_id').notNull(),
+  enrollmentId: text('enrollment_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  label: text('label').notNull(),
   expectedAmount: integer('expected_amount').notNull(),
-  paidAmount: integer('paid_amount').notNull(),
+  allocatedAmount: integer('allocated_amount').notNull(),
   adjustmentAmount: integer('adjustment_amount').notNull(),
   adjustmentReason: text('adjustment_reason'),
   adjustedById: text('adjusted_by_id'),
   adjustedAt: timestamp('adjusted_at', { mode: 'date' }),
+  waiverAmount: integer('waiver_amount').notNull(),
+  waiverReason: text('waiver_reason'),
+  waivedById: text('waived_by_id'),
+  waivedAt: timestamp('waived_at', { mode: 'date' }),
   currency: text('currency').notNull(),
   dueDate: timestamp('due_date', { mode: 'date' }),
   status: text('status').notNull(),
@@ -36,13 +62,25 @@ export const studentFees = pgTable('student_fees', {
   installments: jsonb('installments').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }),
-}, table => definePerformanceIndexes('student_fees', table))
+}, table => definePerformanceIndexes('student_charges', table))
 
-// 13. Payment Table
+export const studentYearAccounts = pgTable('student_year_accounts', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  studentId: text('student_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  currency: text('currency').notNull(),
+  availableBalance: integer('available_balance').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('student_year_accounts', table))
 
 export const payments = pgTable('payments', {
   id: text('id').primaryKey(),
-  studentFeeId: text('student_fee_id').notNull(),
+  schoolId: text('school_id').notNull(),
+  accountId: text('account_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  kind: text('kind').notNull(),
   amount: integer('amount').notNull(),
   currency: text('currency').notNull(),
   paymentDate: timestamp('payment_date', { mode: 'date' }).notNull(),
@@ -51,11 +89,49 @@ export const payments = pgTable('payments', {
   reference: text('reference'),
   notes: text('notes'),
   recordedById: text('recorded_by_id'),
+  reversesPaymentId: text('reverses_payment_id'),
+  reversedByPaymentId: text('reversed_by_payment_id'),
   reversedAt: timestamp('reversed_at', { mode: 'date' }),
   reversedById: text('reversed_by_id'),
-  cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
-  cancelledById: text('cancelled_by_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('payments', table))
 
-// 14. Schedule Table
+export const allocations = pgTable('allocations', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  accountId: text('account_id').notNull(),
+  chargeId: text('charge_id').notNull(),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull(),
+  kind: text('kind').notNull(),
+  causedByPaymentId: text('caused_by_payment_id'),
+  reversesAllocationId: text('reverses_allocation_id'),
+  effectiveAt: timestamp('effective_at', { mode: 'date' }).notNull(),
+  recordedAt: timestamp('recorded_at', { mode: 'date' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('allocations', table))
+
+export const studentAccountEntries = pgTable('student_account_entries', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  accountId: text('account_id').notNull(),
+  direction: text('direction').notNull(),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull(),
+  sourceKind: text('source_kind').notNull(),
+  sourceId: text('source_id').notNull(),
+  commandId: text('command_id'),
+  effectiveAt: timestamp('effective_at', { mode: 'date' }).notNull(),
+  recordedAt: timestamp('recorded_at', { mode: 'date' }).notNull(),
+  resultingAvailableBalance: integer('resulting_available_balance').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('student_account_entries', table))
+
+export const autoBillingRuns = pgTable('auto_billing_runs', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  catalogServiceId: text('catalog_service_id').notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  payload: jsonb('payload').notNull(),
+}, table => [index('auto_billing_runs_fee_status_idx').on(table.schoolId, table.catalogServiceId, table.status, table.createdAt.desc())])

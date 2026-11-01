@@ -12,6 +12,7 @@ export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDiscipl
     repository: repositories.studentDisciplinaryActions,
     tenant: directSchoolTenant(),
     resource: 'studentDisciplinaryActions',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateStudentDisciplinaryActionSave,

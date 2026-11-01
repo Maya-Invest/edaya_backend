@@ -1,7 +1,7 @@
 import { S2sClient } from '@edaya/core'
 import { and, eq, isNull } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 export class PostgresS2sClientStore extends PostgresStore<S2sClient> {
   private readonly mapRow: (row: any) => S2sClient
@@ -22,7 +22,7 @@ export class PostgresS2sClientStore extends PostgresStore<S2sClient> {
     })
 
     super(
-      db,
+      asStoreDatabase(db),
       schema.s2sClients,
       (entity: S2sClient) => ({
         id: entity.id,

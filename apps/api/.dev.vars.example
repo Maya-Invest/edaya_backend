@@ -1,61 +1,24 @@
-# -----------------------------------------------------------------------------
-# Edaya API — Cloudflare / Wrangler secrets (+ wrangler-only local overrides)
-# Copy to `.dev.vars` (gitignored). Loaded by `wrangler dev --env-file` and deploy secrets.
-# NOT loaded by `bun dev` — use `apps/api/.env` for local process runtime.
-# Non-secret worker defaults: `wrangler.jsonc` [env.*.vars]
-# Bulk deploy secrets: secrets.json.example → secrets.staging.json / secrets.prod.json
-# -----------------------------------------------------------------------------
-
-# --- Wrangler local smoke overrides (optional; staging [vars] apply when --env staging) ---
-# NODE_ENV=development
-# LOG_LEVEL=info
-# RUNTIME=worker
-# API_ORIGIN=http://localhost:9999
-# IDENTITY_ISSUER=http://localhost:9900
-# IDENTITY_DIRECTORY_URL=http://localhost:9900
-# TRUSTED_ORIGINS=http://localhost:5173,http://localhost:4173
-# ALLOW_PUBLIC_SCHOOL_REGISTRATION=true
-
-# --- Required secret ---
-IDENTITY_DIRECTORY_SECRET=local-directory-secret
-
-# --- Hyperdrive local origin (wrangler dev only; must match --env Neon branch) ---
+# Wrangler-local secrets only. Copy to .dev.vars (gitignored).
+# bun --filter @edaya/api dev:worker loads config.staging.jsonc + this file.
+# bun dev uses config.local.jsonc + .env instead.
+# This file does not upload secrets to deployed Workers.
+BETTER_AUTH_SECRET=REPLACE_WITH_EXISTING_AT_LEAST_32_CHARACTER_SECRET
+ACCOUNT_SECURITY_KEYS={"v1":"REPLACE_WITH_BASE64_32_BYTE_KEY"}
+R2_ACCESS_KEY_ID=REPLACE_WITH_R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY=REPLACE_WITH_R2_SECRET_ACCESS_KEY
+# Wrangler-only local Hyperdrive origin overrides (match the staging database branch).
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
-
-# --- R2 (required on RUNTIME=worker; also used by `bun repo smoke-test r2`) ---
-# R2_BUCKET_NAME=edaya-files-staging
-# R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-# R2_ACCOUNT_ID=
-# R2_ACCESS_KEY_ID=
-# R2_SECRET_ACCESS_KEY=
-
-# --- Novu (staging: dev key; production: separate key in secrets.prod.json) ---
-# NOVU_SECRET_KEY=
-# NOVU_API_URL=https://api.novu.co
-# NOVU_WEBHOOK_SECRET=whsec_...
-
-# --- In-process notify (Worker Email binding + optional FCM) ---
-# EMAIL_TRANSPORT=cloudflare
-# EMAIL_FROM=EDAYA <noreply@edayaplus.com>
+CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://edaya_identity:password@host/edaya_identity?sslmode=require
+# Optional providers; omit unused entries. FCM is required by coordinated staging releases.
 # FCM_SERVICE_ACCOUNT_JSON=
-
-# --- Document rendering (in-process `@edaya/adaptor-docs`) ---
-# GOTENBERG_URL=http://localhost:3000   # Miniflare does not implement BROWSER.quickAction
-#   wrangler.jsonc already binds BROWSER; deployed Workers use it without remote
-#   wrangler dev real PDFs: GOTENBERG_URL or `"remote": true` on the browser binding
-# DOCS_RENDER_ON_PUBLISH=true
-
-# --- Optional ---
-# GRANTS_CACHE_TTL_MS=300000
-# WEBAPP_ORIGIN=https://staging.app.school.edayaplus.com
-# ACCOUNT_INVITATIONS_ENABLED=true
-
-# --- Not used in Wrangler / worker ---
-# PORT= / DATABASE_URL=pglite: / RUN_MIGRATIONS_ON_STARTUP= / LOCAL_FILES_* / CRON_JOB_KEYS=
-#   → local only: `apps/api/.env`
-# GRAPHQL_* / LOCAL_FILES_PORT=
-#   → local only
-
-# Upload deploy secrets (from apps/api):
-#   cp secrets.json.example secrets.staging.json
-#   bunx wrangler secret bulk secrets.staging.json --env staging
+# AFRICAS_TALKING_API_KEY=
+# WHATSAPP_ACCESS_TOKEN=
+# WHATSAPP_APP_SECRET=
+# WHATSAPP_WEBHOOK_VERIFY_TOKEN=
+# Keep mode/routes/usernames/sender IDs/WhatsApp IDs/templates in config.staging.jsonc.
+# Copy secrets.json.example to secrets.staging.json or secrets.prod.json for deployment.
+# Remove unused optional provider entries from that JSON before uploading.
+# Preserve existing account secrets and keyrings. ACCOUNT_SECURITY_KEYS is an encoded
+# JSON object mapping version to a base64-encoded 32-byte key. FCM is encoded JSON too.
+# From apps/api: bunx wrangler secret bulk secrets.staging.json --env staging
+# From repo root: bun repo ops vars push staging (configuration update only).

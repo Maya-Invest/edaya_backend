@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
-import { maintenanceResponse, stagingSwitch } from "@/staging-maintenance";
+import { isPaused, maintenanceResponse } from "@/operational-controls";
 
+import { runIndependentJobs } from "@/identity/jobs";
 import app from "@/app";
 import type { CronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
 import { runCronQueueBatch } from "@/cron/run-cron-queue-consumer";
@@ -11,14 +12,14 @@ import { parseRuntimeEnv } from "@/runtime/shared/env";
 
 export default {
   async fetch(request: Request, bindings: Record<string, unknown>, executionCtx: ExecutionContext) {
-    if (stagingSwitch(bindings, "STAGING_MAINTENANCE"))
+    if (isPaused(bindings, "PAUSE_API"))
       return maintenanceResponse();
     const env = parseRuntimeEnv(bindings, "worker");
     return app.fetch(request, env, executionCtx);
   },
 
   async scheduled(controller: ScheduledController, bindings: Record<string, unknown>, ctx: ExecutionContext) {
-    if (stagingSwitch(bindings, "STAGING_MAINTENANCE") || stagingSwitch(bindings, "STAGING_PAUSE_JOBS"))
+    if (isPaused(bindings, "PAUSE_SCHEDULER"))
       return;
     const env = parseRuntimeEnv(bindings, "worker");
     const logger = createAppLogger(env);
@@ -26,13 +27,15 @@ export default {
 
     ctx.waitUntil((async () => {
       try {
-        await runtime.getSchoolApplication();
-        await runtime.drainNotifications?.();
         const asOf = new Date(controller.scheduledTime);
-        await runCronHeartbeatWithRuntime(runtime, {
-          asOf,
-          requestIdPrefix: `worker-cron:${asOf.toISOString()}`,
-        }, logger);
+        await runIndependentJobs([
+          async () => (await runtime.getIdentityRuntime!()).auth.purgeExpiredCredentials(),
+          async () => {
+            await runtime.getSchoolApplication();
+            await runtime.drainNotifications?.();
+            await runCronHeartbeatWithRuntime(runtime, { asOf, requestIdPrefix: `worker-cron:${asOf.toISOString()}` }, logger);
+          },
+        ]);
       }
       catch (error) {
         logger.error({ event: "cron.tick", err: error, cron: controller.cron }, "cron heartbeat failed");
@@ -45,7 +48,7 @@ export default {
   },
 
   async queue(batch: MessageBatch<CronJobDispatchQueueBody>, bindings: Record<string, unknown>) {
-    if (stagingSwitch(bindings, "STAGING_MAINTENANCE") || stagingSwitch(bindings, "STAGING_PAUSE_JOBS")) {
+    if (isPaused(bindings, "PAUSE_JOBS")) {
       batch.retryAll({ delaySeconds: 60 });
       return;
     }

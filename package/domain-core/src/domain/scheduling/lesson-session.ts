@@ -6,17 +6,12 @@ import { parseDomain, zodDate } from '../shared/utils'
 
 import { OccurrenceStatus } from './occurrence-status'
 
-export enum TimetableGenerated {
-  Draft = 'draft',
-  Published = 'published',
-}
-
 export const lessonSessionBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   scheduleId: z.string().trim().min(1, 'scheduleId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  timetableGenerated: z.nativeEnum(TimetableGenerated).nullable().optional().transform(v => v === null ? undefined : v),
+  timetableGenerated: z.boolean().default(false),
   timetableTeacherIds: z.array(z.string().trim().min(1, 'timetable teacher id must not be blank')).default([]),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank'),
   status: z.nativeEnum(OccurrenceStatus).default(OccurrenceStatus.Pending),

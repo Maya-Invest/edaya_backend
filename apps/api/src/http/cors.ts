@@ -15,7 +15,7 @@ function isLocalDevOrigin(origin: string): boolean {
   try {
     const { hostname, protocol } = new URL(origin);
     return (protocol === "http:" || protocol === "https:")
-      && (hostname === "localhost" || hostname === "127.0.0.1");
+      && (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "10.0.2.2" || hostname === "[::1]");
   }
   catch {
     return false;

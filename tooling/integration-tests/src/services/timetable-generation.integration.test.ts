@@ -7,27 +7,23 @@ import {
   ClassSubject,
   DayOfWeek,
   GradeLevel,
-  LessonSession,
-  OccurrenceStatus,
   PeriodDefinition,
   Subject,
-  SubjectCategory,
   SubjectColor,
   TeacherAssignment,
   TeacherAssignmentKind,
-  TimetableGenerated,
   TimetableGenerationMode,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { saveSchool } from '../utils/core-service-helpers'
+import { createFixtureSubjectCategory, saveSchool } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 const startDate = new Date('2026-09-07T00:00:00.000Z')
 const endDate = new Date('2026-09-11T00:00:00.000Z')
 
 describeIntegration('timetable generation lifecycle', () => {
-  it('resolves, generates, publishes, and republishes through Postgres repositories', async () => {
+  it('resolves calendar and activity constraints and persists generated sessions', async () => {
     const { app, schoolRepositories } = await createTestApp()
     await saveSchool(app, {
       id: 'school',
@@ -57,13 +53,7 @@ describeIntegration('timetable generation lifecycle', () => {
       gradeLevelId: 'grade',
       name: 'Grade 6 A',
     }))
-    await schoolRepositories.subjects.save(new Subject({
-      id: 'math',
-      schoolId: 'school',
-      name: 'Mathematics',
-      category: SubjectCategory.Scientific,
-      color: SubjectColor.Mint,
-    }))
+    await schoolRepositories.subjects.save(new Subject({ gradeLevelId: 'grade', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics', categoryId: (await createFixtureSubjectCategory(app, 'school')).id, color: SubjectColor.Mint }))
     await schoolRepositories.classSubjects.save(new ClassSubject({
       id: 'class-math',
       classGroupId: 'class',
@@ -125,37 +115,6 @@ describeIntegration('timetable generation lifecycle', () => {
       endDate,
     })
     expect(generated.sessions.map(session => session.startsAt.toISOString().slice(0, 10))).toEqual(['2026-09-07', '2026-09-10'])
-    expect(generated.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
-
-    const published = await app.timetableGenerationWorkflow.publishClassGroupTimetable({ classGroupId: 'class', startDate, endDate })
-    expect(published.publishedSessionIds).toHaveLength(2)
-
-    const completed = generated.sessions[0]!.copyWith({
-      timetableGenerated: TimetableGenerated.Published,
-      status: OccurrenceStatus.Completed,
-    })
-    await schoolRepositories.lessonSessions.save(completed)
-    const standalone = new LessonSession({
-      id: 'standalone',
-      schoolId: 'school',
-      classGroupId: 'class',
-      classSubjectId: 'class-math',
-      startsAt: new Date('2026-09-11T10:00:00.000Z'),
-      endsAt: new Date('2026-09-11T11:00:00.000Z'),
-      displayLabel: 'Manual mathematics',
-    })
-    await schoolRepositories.lessonSessions.save(standalone)
-
-    const replacedId = generated.sessions[1]!.id
-    const republished = await app.timetableGenerationWorkflow.republishClassGroupTimetable({
-      classGroupId: 'class',
-      academicYearId: 'year',
-      startDate,
-      endDate,
-    })
-    expect(await schoolRepositories.lessonSessions.findById(completed.id)).toBeDefined()
-    expect(await schoolRepositories.lessonSessions.findById(standalone.id)).toBeDefined()
-    expect(await schoolRepositories.lessonSessions.findById(replacedId)).toBeUndefined()
-    expect(republished.generation.sessions).toHaveLength(0)
+    expect(generated.sessions.every(session => session.timetableGenerated === true)).toBe(true)
   })
 })

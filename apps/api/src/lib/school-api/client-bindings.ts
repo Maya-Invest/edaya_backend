@@ -1,20 +1,27 @@
+import { importClientBindings } from "@/lib/school-api/import-client-bindings";
 import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
-import type { ClientBindingsDocument } from "@edaya/client-codegen";
-import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@edaya/client-codegen";
+import type { ClientBindingsDocument } from "@maya-invest/edaya-api-client/contract";
+import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@maya-invest/edaya-api-client/contract";
 
 export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 
 const manualClientRoutes: Pick<
   ClientBindingsDocument,
-  "authorization" | "onboarding" | "files" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public" | "webhooks"
+  "authorization" | "onboarding" | "files" | "imports" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public"
 > = {
+  imports: importClientBindings,
   authorization: {
     effectiveGrants: {
       method: "GET",
       path: "authorization/effective-grants",
       responseSchemaName: "EffectiveGrantsResponse",
+    },
+    profiles: {
+      method: "GET",
+      path: "authorization/profiles",
+      responseSchemaName: "AuthorizationProfilesResponse",
     },
     permissionCatalog: {
       method: "GET",
@@ -27,8 +34,16 @@ const manualClientRoutes: Pick<
       requestSchemaName: "ScopeRenderRequest",
       responseSchemaName: "ScopeRenderResponse",
     },
+    scopeSelectionsRender: {
+      method: "POST",
+      path: "authorization/scope-selections/render",
+      requestSchemaName: "ScopeSelectionsRenderRequest",
+      responseSchemaName: "ScopeSelectionsRenderResponse",
+    },
   },
   onboarding: {
+    listDatasets: { method: "GET", path: "onboarding/datasets", responseSchemaName: "OnboardingDatasetChoices" },
+    getDataset: { method: "GET", path: "onboarding/datasets/{id}/{version}", pathParams: ["id", "version"], responseSchemaName: "OnboardingDataset" },
     registerSchool: {
       method: "POST",
       path: "onboarding/register-school",
@@ -189,13 +204,18 @@ const manualClientRoutes: Pick<
       basePath: "root",
       responseSchemaName: "AcceptInvitationResponse",
     },
-  },
-  webhooks: {
-    notificationDelivery: {
-      method: "POST",
-      path: "webhooks/notification-delivery",
+    listMyInvitations: {
+      method: "GET",
+      path: "public/me/invitations",
       basePath: "root",
-      responseSchemaName: "NotificationDeliveryWebhookResponse",
+      responseSchemaName: "ListMyInvitationsResponse",
+    },
+    acceptMyInvitation: {
+      method: "POST",
+      path: "public/me/invitations/{invitationId}/accept",
+      pathParams: ["invitationId"],
+      basePath: "root",
+      responseSchemaName: "AcceptInvitationResponse",
     },
   },
 };

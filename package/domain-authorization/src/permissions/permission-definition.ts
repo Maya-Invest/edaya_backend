@@ -1,8 +1,5 @@
-import type { Permission } from './permission'
-import type { ScopeType } from './scope-type'
+import type { CorePermissionDefinition, Permission } from '@edaya/core'
 
-export interface PermissionDefinition {
+export interface PermissionDefinition extends CorePermissionDefinition {
   permission: Permission
-  /** When omitted, permission is tenant-wide within the school (`{ kind: "school" }`). */
-  scope?: ScopeType
 }

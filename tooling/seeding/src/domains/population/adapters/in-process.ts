@@ -16,7 +16,7 @@ export function createInProcessPopulationSeedPort(
       })
     }),
     enrollStudent: record => withSeedPortError('population.enrollStudent', async () => {
-      await service.studentWorkflow.enrollStudent(record)
+      await service.studentWorkflow.enrollStudent({ ...record, enrolledAt: record.enrolledAt ? new Date(record.enrolledAt) : undefined })
     }),
     registerGuardian: record => withSeedPortError('population.registerGuardian', async () => {
       await service.studentWorkflow.registerGuardian(record)

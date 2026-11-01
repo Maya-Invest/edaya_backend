@@ -8,7 +8,6 @@ export type HttpFetch = (
 export interface HttpSeedClientOptions {
   baseUrl: string
   /** Central identity base URL for login, token exchange, and dev seed endpoints. */
-  authUrl?: string
   /** Trusted webapp origin for identity requests (Origin header). */
   appOrigin?: string
   fetch?: HttpFetch
@@ -123,13 +122,17 @@ export class HttpSeedClient {
 
   constructor(options: HttpSeedClientOptions) {
     this.baseUrl = normalizeBaseUrl(options.baseUrl)
-    this.authUrl = normalizeBaseUrl(options.authUrl ?? options.baseUrl)
+    this.authUrl = normalizeBaseUrl(options.baseUrl)
     this.appOrigin = options.appOrigin?.replace(/\/+$/, '')
     this.fetchImpl = options.fetch ?? globalThis.fetch
   }
 
   get origin(): string {
     return this.baseUrl
+  }
+
+  get identityOrigin(): string {
+    return this.authUrl
   }
 
   clearCookies(): void {

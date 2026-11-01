@@ -1,5 +1,6 @@
 import type { AcademicPeriod, ClassGroup, Student } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import { randomUUID } from 'node:crypto'
 import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess, requireActorSchoolId } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 
@@ -7,6 +8,19 @@ export class BaseServiceWorkflow {
   constructor(
     readonly baseService: BaseSchoolService,
   ) {}
+
+  protected async allocateNewEntityId(
+    findById: (id: string) => Promise<unknown | undefined>,
+    requestedId: string | undefined,
+    errorCode: string,
+    entityLabel: string,
+  ): Promise<string> {
+    const id = requestedId?.trim() || randomUUID()
+    if (await findById(id)) {
+      throw new BusinessRuleViolationError(errorCode, `${entityLabel} id ${id} already exists`)
+    }
+    return id
+  }
 
   protected checkActorSchool(schoolId: string): void {
     if (schoolId !== requireActorSchoolId(this.baseService.actor))

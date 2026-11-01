@@ -11,7 +11,7 @@ export class NotificationDeliveryAccessPolicy {
     const actor = this.access.actor
     if (actor.kind !== 'system' || actor.systemId !== 'notify-adapter' || actor.schoolId !== request.schoolId)
       return denied('Only the notification dispatcher may resolve a delivery recipient')
-    const scope = await this.access.scope(Permission.QUERY_COMMUNICATIONS_READ, 'messageDeliveries')
+    const scope = await this.access.scope(Permission.PERSONAL_COMMUNICATIONS_READ, 'messageDeliveries')
     const delivery = await this.access.repositories.messageDeliveries.forAccess(scope).findById(request.deliveryId)
     if (!delivery || delivery.subjectId !== request.subjectId || !delivery.recipientKind || !delivery.recipientId
       || delivery.status === MessageDeliveryStatus.Cancelled
@@ -38,7 +38,7 @@ export class NotificationDeliveryAccessPolicy {
   }
 
   private async assertSource(facts: AccessFacts, delivery: MessageDelivery, request: NotificationDispatchRequest) {
-    const { assessmentResultId, reportCardResultId, studentId, anchorKey, status, incidentId, assessmentId, activityId, calendarEventId } = request.metadata
+    const { assessmentResultId, marksRevision, reportCardResultId, studentId, anchorKey, status, incidentId, assessmentId, activityId, calendarEventId, campaignId, reminderKind, teacherId } = request.metadata
     if (delivery.announcementId) {
       const scope = resourceAccessScope(delivery.schoolId, 'announcements', [{ target: await facts.communicationAudience(delivery.recipientKind!, delivery.recipientId!) }])
       if (delivery.sourceKey !== delivery.announcementId || !await this.access.repositories.announcements.forAccess(scope).findById(delivery.announcementId))
@@ -50,11 +50,19 @@ export class NotificationDeliveryAccessPolicy {
         denied('Notification source metadata does not match its persisted source')
     }
     switch (request.eventKey) {
+      case 'conversation.message': {
+        const { conversationId, sequence } = request.metadata
+        requireSource(conversationId, sequence)
+        return
+      }
       case 'assessment.result_recorded': {
-        requireSource(assessmentResultId)
+        requireSource(assessmentResultId, marksRevision)
         const result = await facts.one('assessmentResults', assessmentResultId!)
+        const sheet = await facts.one('assessments', result.assessmentId)
+        if (sheet.id !== assessmentId || sheet.marksStatus !== 'submitted' || String(result.revision) !== marksRevision)
+          denied('Marks are no longer submitted at this revision')
         await this.assertStudentSource(facts, delivery, result.studentId, 'academic')
-        await this.assertVisibleStudentRecord(facts, 'assessmentResults', result.id, result.studentId, true)
+        await this.assertVisibleStudentRecord(facts, 'assessmentResults', result.id, result.studentId)
         return
       }
       case 'report_card.published': {
@@ -110,6 +118,28 @@ export class NotificationDeliveryAccessPolicy {
         const scope = resourceAccessScope(delivery.schoolId, 'calendarEvents', audience.classGroupIds.map(classGroupId => ({ target: { kind: 'class_group', classGroupId }, academicYearId: event.academicYearId, calendarAncestors: true })))
         if (!await this.access.repositories.calendarEvents.forAccess(scope).findById(event.id))
           return denied('Calendar event no longer affects this recipient')
+        return
+      }
+      case 'family_feedback.opened': {
+        requireSource(campaignId, studentId)
+        await this.assertStudentSource(facts, delivery, studentId!, 'general')
+        return
+      }
+      case 'family_feedback.reminder': {
+        requireSource(campaignId, studentId, reminderKind)
+        await this.assertStudentSource(facts, delivery, studentId!, 'general')
+        return
+      }
+      case 'family_feedback.published': {
+        requireSource(campaignId)
+        if (delivery.recipientKind !== 'teacher' || delivery.recipientId !== teacherId)
+          return denied('Published family feedback is only for the evaluated teacher')
+        return
+      }
+      case 'family_feedback.purge_reminder': {
+        requireSource(campaignId)
+        if (delivery.recipientKind !== 'staff')
+          return denied('Purge reminders are staff-only')
         return
       }
       default: return denied('Unknown notification source')

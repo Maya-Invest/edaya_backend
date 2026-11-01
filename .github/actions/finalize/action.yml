@@ -1,0 +1,31 @@
+name: Qualify candidate
+description: Join stage evidence and qualify the exact build without rerunning tasks.
+inputs:
+  target:
+    required: true
+    description: Release environment
+runs:
+  using: composite
+  steps:
+    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: build-${{ github.run_id }}-${{ github.run_attempt }}
+        path: .
+    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        pattern: stage-*-${{ github.run_id }}-${{ github.run_attempt }}
+        path: .ci-evidence/stages
+        merge-multiple: false
+    - shell: bash
+      env:
+        CI_TARGET: ${{ inputs.target }}
+      run: bun run repo ci finalize "$CI_TARGET"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: qualified-${{ github.run_id }}-${{ github.run_attempt }}
+        include-hidden-files: true
+        if-no-files-found: error
+        path: |
+          .release/
+          .generated/
+          .ci-evidence/

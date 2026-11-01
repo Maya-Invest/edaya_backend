@@ -1,34 +1,28 @@
-export type SmokeTestTarget = 'staging' | 'novu' | 'notify' | 'r2'
+import { commandUsage } from './catalog'
 
-export type ParsedSmokeTestCli
-  = | { kind: 'help' }
-    | { kind: 'run', target: SmokeTestTarget }
-
-const TARGETS = new Set<SmokeTestTarget>(['staging', 'novu', 'notify', 'r2'])
-
+export type SmokeTestTarget = 'staging' | 'notify' | 'r2'
+export type ParsedSmokeTestCli = { kind: 'help' } | { kind: 'run', target: SmokeTestTarget, curlOnly?: boolean }
 export function parseSmokeTestCliArgs(args: readonly string[]): ParsedSmokeTestCli {
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
+  if (!args.length || args.includes('--help') || args.includes('-h'))
     return { kind: 'help' }
+  const [subject, ...rest] = args
+  let target: SmokeTestTarget
+  if (subject === 'api' && rest.shift() === 'staging') {
+    target = 'staging'
   }
-
-  const [target] = args
-  if (!target || !TARGETS.has(target as SmokeTestTarget)) {
-    throw new Error(
-      `Unknown smoke-test target: ${target ?? '(missing)'}. Valid: ${[...TARGETS].join(', ')}`,
-    )
+  else if (subject === 'notify' && rest.shift() === 'local') {
+    target = 'notify'
   }
-
-  return { kind: 'run', target: target as SmokeTestTarget }
+  else if (subject === 'r2' && rest.shift() === 'staging') {
+    target = 'r2'
+  }
+  else {
+    throw new Error(commandUsage('smoke'))
+  }
+  if (rest.length > 1 || rest.some(arg => target !== 'r2' || arg !== '--curl-only'))
+    throw new Error('Unsupported smoke environment/option; use smoke --help')
+  return { kind: 'run', target, ...(rest.length ? { curlOnly: true } : {}) }
 }
-
 export function smokeTestCliUsage(): string {
-  return [
-    'Usage: bun repo smoke-test <target>',
-    '',
-    'Targets:',
-    '  staging      Tier-1 HTTP vs deployed staging API',
-    '  novu         Novu outbound + webhook e2e (legacy fallback)',
-    '  notify       In-process notify outbound e2e (school API)',
-    '  r2           Staging R2 PUT check (apps/api/secrets.staging.json + wrangler staging bucket)',
-  ].join('\n')
+  return commandUsage('smoke')
 }

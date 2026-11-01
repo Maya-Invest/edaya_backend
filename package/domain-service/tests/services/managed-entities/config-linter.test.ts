@@ -5,26 +5,25 @@ import { describe, expect, test } from 'bun:test'
 const configRoot = join(import.meta.dir, '../../../src/services/entities/config')
 
 const indirectParentGateExceptions = new Set([
-  'academics/subject-matter.ts',
   'scheduling/attendance.ts',
 ])
 
 const directDeleteGateExceptions = new Set([
   'access/account-invitation.ts',
-  'academics/subject.ts',
   'messaging/message-delivery.ts',
   'messaging/school-notification-templates.ts',
   'scheduling/calendar-event.ts',
   'scheduling/period-definition.ts',
   'school/attachment.ts',
-  'school/grade-level.ts',
-  'school/grade-scale.ts',
   'school/school.ts',
-  'school/staff-permission-assignment.ts',
+  'school/staff-manual-permission-assignment.ts',
+  'school/staff-permission-profile-binding.ts',
+  'school/staff-permission-scope-defaults.ts',
   'students/disciplinary-action.ts',
   'students/guardian-student-link.ts',
   'students/student-health-profile.ts',
   'students/student-note.ts',
+  'students/student-photo-submission.ts',
 ])
 
 interface ConfigSource {

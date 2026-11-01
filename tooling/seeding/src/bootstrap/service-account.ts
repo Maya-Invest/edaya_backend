@@ -141,7 +141,7 @@ export async function provisionSeedingServiceAccountHttp(
     if (!await isSeedingServiceAccountApiKeyReady(client, syncedApiKey)) {
       throw new Error(
         'Seeding service account API key was rotated but is still not ready for attachment commands. '
-        + 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.',
+        + 'Stop `bun repo dev`, run `bun repo ops seed clean --yes`, restart the API, then `bun repo ops seed`.',
       )
     }
 
@@ -162,7 +162,7 @@ export async function provisionSeedingServiceAccountHttp(
   if (!await isSeedingServiceAccountApiKeyReady(client, created.apiKey)) {
     throw new Error(
       'Seeding service account was created but the profile API key is still not ready. '
-      + 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.',
+      + 'Stop `bun repo dev`, run `bun repo ops seed clean --yes`, restart the API, then `bun repo ops seed`.',
     )
   }
 

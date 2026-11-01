@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { calculatedGradeSchema, originalGradeEntrySchema } from '../school/grading-policy'
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
 export enum DeadlineComplianceStatus {
@@ -11,9 +12,14 @@ export enum DeadlineComplianceStatus {
 
 export const assessmentResultSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
+  revision: z.number().int().nonnegative().default(0),
+  mentionId: z.string().trim().min(1).nullable().optional().transform(value => value ?? undefined),
+  originalEntry: originalGradeEntrySchema.optional(),
+  calculation: calculatedGradeSchema.optional(),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   assessmentId: z.string().trim().min(1, 'assessmentId must not be blank'),
-  score: z.number().finite().nonnegative('score must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  score: z.number().finite().nonnegative('score must be a finite, non-negative number').nullable().optional().transform(v => v === null ? undefined : v),
+  designation: z.enum(['scored', 'absent', 'exempt']).optional(),
   status: z.nativeEnum(DeadlineComplianceStatus).nullable().optional().transform(v => v === null ? undefined : v),
   notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdBy: z.string().trim().min(1, 'createdBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -35,13 +41,18 @@ export class AssessmentResult {
   readonly data: AssessmentResultData
 
   constructor(args: AssessmentResultInput) {
-    this.data = parseDomain(assessmentResultSchema, args)
+    this.data = parseDomain(assessmentResultSchema, { ...args, score: args.score == null || args.originalEntry ? args.score : roundTo2(args.score) })
   }
 
   get id() { return this.data.id }
+  get revision() { return this.data.revision }
+  get mentionId() { return this.data.mentionId }
+  get originalEntry() { return this.data.originalEntry }
+  get calculation() { return this.data.calculation }
   get studentId() { return this.data.studentId }
   get assessmentId() { return this.data.assessmentId }
   get score() { return this.data.score }
+  get designation() { return this.data.designation }
   get status() { return this.data.status }
   get notes() { return this.data.notes }
   get createdBy() { return this.data.createdBy }

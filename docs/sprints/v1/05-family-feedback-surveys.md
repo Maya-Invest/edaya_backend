@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Status | planned |
-| Created / updated | 2026-09-13 |
+| Status | on-going |
+| Created / updated | 2026-09-15 |
 | Target | Existing backend, staff campaign/moderation UI, guardian submission and teacher published-results UI |
 | Owner | Assign when implementation starts |
 | Common requirements | [Plan 00](00-common-requirements.md) |
@@ -59,36 +59,36 @@ Snapshot eligible student/evaluated-assignment slots on launch. Questions and ev
 
 ### 05.1 — Campaign domain, contracts and policies
 
-- [ ] Add campaign, question, eligibility, private-response and published-snapshot models with narrow repositories and explicit lifecycle commands.
-- [ ] Implement management scope and evaluated-assignment validation against actual year/period/class/subject/teacher relationships.
-- [ ] Separate campaign, submission, moderation and publication actions and register safe external interfaces. Generic entity APIs cannot expose raw responses or participation tables.
-- [ ] Implement audience preview and launch snapshot, freeze questions/assignment, and define stable invalid-lifecycle/eligibility/already-completed/closed failures.
+- [x] Add campaign, question, eligibility, private-response and published-snapshot models with narrow repositories and explicit lifecycle commands.
+- [x] Implement management scope and evaluated-assignment validation against actual year/period/class/subject/teacher relationships.
+- [x] Separate campaign, submission, moderation and publication actions and register safe external interfaces. Generic entity APIs cannot expose raw responses or participation tables.
+- [x] Implement audience preview and launch snapshot, freeze questions/assignment, and define stable invalid-lifecycle/eligibility/already-completed/closed failures.
 
 ### 05.2 — Submission, duplicate protection and lifecycle jobs
 
-- [ ] Materialize one response slot per campaign/student/evaluated assignment; multiple guardian accounts do not increase that student's permitted response count.
-- [ ] Recheck current guardian access and qualifying enrollment at submission, validate answer options/comment bounds, and atomically consume the slot with answer storage/replay/audit facts.
-- [ ] Return a completion receipt on retry, not raw answers. Another guardian sees “already completed,” never the first guardian's answers.
-- [ ] Serialize submission versus close/cancel on the campaign state. At the serialization point, accept only while the campaign is open and the server clock is before its cutoff; an earlier client/request timestamp cannot admit a submission after closure.
-- [ ] Use existing durable scheduling for open/close/reminders and retention, with idempotent occurrence keys and request-time lifecycle enforcement.
-- [ ] Keep drafts local for v1 if needed; final submission is immutable and cannot be edited/reopened through generic writes.
+- [x] Materialize one response slot per campaign/student/evaluated assignment; multiple guardian accounts do not increase that student's permitted response count.
+- [x] Recheck current guardian access and qualifying enrollment at submission, validate answer options/comment bounds, and atomically consume the slot with answer storage/replay/audit facts.
+- [x] Return a completion receipt on retry, not raw answers. Another guardian sees “already completed,” never the first guardian's answers.
+- [x] Serialize submission versus close/cancel on the campaign state. At the serialization point, accept only while the campaign is open and the server clock is before its cutoff; an earlier client/request timestamp cannot admit a submission after closure.
+- [x] Use existing durable scheduling for open/close/reminders and retention, with idempotent occurrence keys and request-time lifecycle enforcement.
+- [x] Keep drafts local for v1 if needed; final submission is immutable and cannot be edited/reopened through generic writes.
 
 ### 05.3 — Aggregation, moderation and publication
 
-- [ ] Compute counts/distributions with purpose-selected access before aggregation; keep respondent identity and raw payloads out of audit/metrics.
-- [ ] Enforce distinct-subject threshold per scored question/cohort, N/A denominator rules and complementary suppression across every supported fixed breakdown.
-- [ ] Provide safe management review and explicit publication of an immutable post-close aggregate snapshot.
-- [ ] Implement assigned non-conflicted comment moderation, access audit, theme draft/review and publication without raw comment release.
-- [ ] Enforce teacher conflict rules across profiles and exports; broad staff permission cannot bypass the restriction for the evaluated subject.
-- [ ] Implement retention deletion and pre-purge operator reminders; preserve safe aggregates and minimal lifecycle evidence only.
+- [x] Compute counts/distributions with purpose-selected access before aggregation; keep respondent identity and raw payloads out of audit/metrics.
+- [x] Enforce distinct-subject threshold per scored question/cohort, N/A denominator rules and complementary suppression across every supported fixed breakdown.
+- [x] Provide safe management review and explicit publication of an immutable post-close aggregate snapshot.
+- [x] Implement assigned non-conflicted comment moderation, access audit, theme draft/review and publication without raw comment release.
+- [x] Enforce teacher conflict rules across profiles and exports; broad staff permission cannot bypass the restriction for the evaluated subject.
+- [x] Implement retention deletion and pre-purge operator reminders; preserve safe aggregates and minimal lifecycle evidence only.
 
 ### 05.4 — Clients, delivery and reporting
 
-- [ ] Staff: campaign setup, audience preview, scheduling/open/close/cancel, aggregate review, moderator assignment, theme editing and publication.
-- [ ] Guardian: invitation/context, questionnaire, optional comment, submission confirmation/receipt and already-completed/closed/revoked states.
-- [ ] Teacher: explicitly published distributions, denominators and themes for permitted assignments, with “insufficient responses” for suppressed results.
-- [ ] Notifications: open, bounded reminders for incomplete slots, and publication; stop reminders after completion/close/cancel and reauthorize navigation on open.
-- [ ] Regenerate clients, localize separately from academic assessment labels and add deterministic campaign fixtures through admitted commands.
+- [x] Staff: campaign setup, audience preview, scheduling/open/close/cancel, aggregate review, moderator assignment, theme editing and publication.
+- [x] Guardian: invitation/context, questionnaire, optional comment, submission confirmation/receipt and already-completed/closed/revoked states.
+- [x] Teacher: explicitly published distributions, denominators and themes for permitted assignments, with “insufficient responses” for suppressed results.
+- [x] Notifications: open, bounded reminders for incomplete slots, and publication; stop reminders after completion/close/cancel and reauthorize navigation on open.
+- [x] Regenerate clients, localize separately from academic assessment labels and add deterministic campaign fixtures through admitted commands.
 
 ## Fixtures and acceptance tests
 
@@ -102,7 +102,7 @@ Snapshot eligible student/evaluated-assignment slots on launch. Questions and ev
 
 ## Completion evidence and exit gate
 
-Evidence: not collected; implementation has not started. Follow [Plan 00 verification requirements](00-common-requirements.md#fixtures-and-verification), recording exact revisions, cohort fixtures, API/SQL privacy tests, moderator access evidence and client campaign walkthroughs.
+Evidence: [05-family-feedback-surveys.md](evidence/05-family-feedback-surveys.md). Implementation has landed; keep this plan **on-going** until the live feature gate (staff launch → guardian submit → moderate → publish → teacher published view) passes. Do not mark `done` from automated tests alone.
 
 - [ ] Management can launch, close, moderate and publish a campaign through real UI/API paths.
 - [ ] One-response-per-student enforcement, current eligibility and deterministic closing pass under concurrency.

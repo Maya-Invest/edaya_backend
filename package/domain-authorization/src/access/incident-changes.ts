@@ -21,6 +21,6 @@ export function incidentWriteAction(after: Incident, before?: Incident): Permiss
   if (!changes.content && changes.resolution)
     return Permission.DISCIPLINE_VALIDATE
   if (!changes.content && changes.cancellation)
-    return Permission.DISCIPLINE_ARCHIVE
-  return Permission.DISCIPLINE_UPDATE
+    return Permission.DISCIPLINE_MANAGE
+  return Permission.DISCIPLINE_MANAGE
 }

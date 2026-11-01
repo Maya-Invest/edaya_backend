@@ -2,9 +2,9 @@ import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-
 import { ApiError } from '@maya-invest/edaya-api-client'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithMinimalSchool } from '../support/minimal-route-test-context'
 
-describeWithSeededSchool('upsert student health profile command', (getContext) => {
+describeWithMinimalSchool('upsert student health profile command', (getContext) => {
   it('creates and updates a health profile without client timestamps', async () => {
     const { app, authHeaders } = getContext()
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
@@ -12,7 +12,7 @@ describeWithSeededSchool('upsert student health profile command', (getContext) =
 
     const created = await client.commands.upsertStudentHealthProfile({
       id: 'route-shp-s2',
-      studentId: 's2',
+      studentId: 'ci-s2',
       bloodType: 'A+',
       allergies: 'Pollen',
       medicalConditions: 'Asthme',
@@ -24,7 +24,7 @@ describeWithSeededSchool('upsert student health profile command', (getContext) =
 
     expect(created).toMatchObject({
       id: 'route-shp-s2',
-      studentId: 's2',
+      studentId: 'ci-s2',
       bloodType: 'A+',
       allergies: 'Pollen',
       medicalConditions: 'Asthme',
@@ -32,7 +32,7 @@ describeWithSeededSchool('upsert student health profile command', (getContext) =
 
     const updated = await client.commands.upsertStudentHealthProfile({
       id: 'route-shp-s2',
-      studentId: 's2',
+      studentId: 'ci-s2',
       bloodType: 'O+',
       allergies: 'Pollen, peanuts',
       medicalConditions: 'Asthme',
@@ -66,7 +66,7 @@ describeWithSeededSchool('upsert student health profile command', (getContext) =
     try {
       await client.commands.upsertStudentHealthProfile({
         id: 'route-shp-skew',
-        studentId: 's4',
+        studentId: 'ci-s4',
         bloodType: 'B+',
         allergies: null,
         medicalConditions: null,
@@ -88,4 +88,4 @@ describeWithSeededSchool('upsert student health profile command', (getContext) =
     const body = typeof apiError.body === 'string' ? apiError.body : JSON.stringify(apiError.body)
     expect(body).toMatch(/updatedAt must not be before createdAt/i)
   })
-}, { isolate: true })
+}, ['ci-s2', 'ci-s4'])

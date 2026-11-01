@@ -10,6 +10,7 @@ import {
 import { signInViaHttp } from '../bootstrap/auth/http-provisioner'
 import { isSeedEntityKey } from '../transport/http/catalog'
 import { postEntityCount } from '../transport/http/core-entity'
+import { countPublishedProfilePhotos } from './published-profile-photos'
 
 export interface SeedEntityValidationResult {
   entity: string
@@ -56,7 +57,9 @@ async function validateEntityTarget(
     if (!isSeedEntityKey(target.serviceName)) {
       throw new Error(`Generated API bindings do not contain entity key: ${target.serviceName}`)
     }
-    const actual = await postEntityCount(options, target.serviceName)
+    const actual = target.entity === 'profile-photos'
+      ? await countPublishedProfilePhotos(options)
+      : await postEntityCount(options, target.serviceName)
     const passed = actual >= target.minCount
     return {
       entity: target.entity,

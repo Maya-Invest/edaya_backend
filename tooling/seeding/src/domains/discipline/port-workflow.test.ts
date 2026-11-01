@@ -5,7 +5,7 @@ import type {
   StudentDisciplinaryStatusSeedRecord,
 } from './port'
 import { DisciplinaryActionKind, StudentDisciplinaryActionStatus } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevDiscipline } from './workflow'
 
@@ -20,9 +20,9 @@ describe('discipline seed port workflow', () => {
       updateStudentDisciplinaryActionStatus: async record => void statuses.push(record),
     }
 
-    const counts = await seedDevDiscipline(port, demoDataset)
-    const disciplinaryActions = demoDataset.entities.disciplinaryActions ?? []
-    const studentDisciplinaryActions = demoDataset.entities.studentDisciplinaryActions ?? []
+    const counts = await seedDevDiscipline(port, demoCiDataset)
+    const disciplinaryActions = demoCiDataset.entities.disciplinaryActions ?? []
+    const studentDisciplinaryActions = demoCiDataset.entities.studentDisciplinaryActions ?? []
 
     expect(counts).toEqual({
       disciplinaryActions: disciplinaryActions.length,

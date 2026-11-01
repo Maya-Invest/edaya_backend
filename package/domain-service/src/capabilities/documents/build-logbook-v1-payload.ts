@@ -119,6 +119,27 @@ function normalizeStatus(
   return undefined
 }
 
+function guardianLogbookText(sessionNote: string | undefined): string | undefined {
+  const value = sessionNote?.trim()
+  if (!value)
+    return undefined
+  if (!value.startsWith('{"edayaLogbook":'))
+    return value
+  try {
+    const decoded = JSON.parse(value) as { edayaLogbook?: { content?: string, objectives?: string[], homework?: string } }
+    const envelope = decoded.edayaLogbook
+    if (!envelope)
+      return value
+    return [envelope.content, ...(envelope.objectives ?? []), envelope.homework]
+      .map(part => part?.trim())
+      .filter((part): part is string => Boolean(part))
+      .join('\n') || undefined
+  }
+  catch {
+    return value
+  }
+}
+
 function hasLogbookContent(input: {
   sessionNote?: string
   chapters: LogbookV1Chapter[]
@@ -183,7 +204,7 @@ export function buildLogbookV1Payload(input: BuildLogbookV1PayloadInput): Logboo
       })
       const homeworkTexts = homeworkBySession.get(session.id) ?? []
       const homework = homeworkTexts.length > 0 ? homeworkTexts.join('\n') : undefined
-      const content = session.sessionNote?.trim() || undefined
+      const content = guardianLogbookText(session.sessionNote) || undefined
 
       if (!hasLogbookContent({ sessionNote: content, chapters, homework })) {
         continue

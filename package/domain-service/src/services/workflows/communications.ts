@@ -1,8 +1,8 @@
-import type { AnnouncementInput, AnnouncementTarget, AnnouncementTargetInput, Guardian, MessageDeliveryRecipientKind, MessageDeliveryStatus, StaffMember } from '@edaya/core'
+import type { AnnouncementInput, AnnouncementTarget, AnnouncementTargetInput, MessageDeliveryRecipientKind, MessageDeliveryStatus, StaffMember } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { CommunicationsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, isInteractiveActor } from '@edaya/authorization'
-import { Announcement, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetEntity, BusinessRuleViolationError, MessageDeliveryStatus as DeliveryStatus, Guardian as GuardianEntity, MessageDelivery, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { Announcement, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetEntity, BusinessRuleViolationError, MessageDeliveryStatus as DeliveryStatus, MessageDelivery, StaffMember as StaffMemberEntity } from '@edaya/core'
 import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, buildNotificationDeliveryId, runWorkflowNotifications } from '../../capabilities/notifications'
 
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -60,11 +60,15 @@ export interface UpdateNotificationContactInput {
 }
 
 export interface RegisterPushDeviceInput {
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   token: string
   provider: 'fcm' | 'apns'
 }
 
 export interface UnregisterPushDeviceInput {
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   provider: 'fcm' | 'apns'
 }
 
@@ -84,8 +88,8 @@ const DELIVERY_STATUS_RANK: Record<MessageDeliveryStatus, number> = {
   [DeliveryStatus.Read]: 3,
 }
 
-function buildDeliveryId(announcementId: string, subjectId: string, recipientKind: MessageDeliveryRecipientKind, recipientId: string): string {
-  return buildNotificationDeliveryId(announcementId, subjectId, { kind: recipientKind, id: recipientId })
+function buildDeliveryId(schoolId: string, announcementId: string, subjectId: string, recipientKind: MessageDeliveryRecipientKind, recipientId: string): string {
+  return buildNotificationDeliveryId(schoolId, announcementId, subjectId, { kind: recipientKind, id: recipientId })
 }
 
 function canTransitionDeliveryStatus(
@@ -257,7 +261,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     const deliveries: MessageDelivery[] = []
     for (const recipient of recipients) {
       const { subjectId } = recipient
-      const deliveryId = buildDeliveryId(current.id, subjectId, recipient.recipientKind, recipient.recipientId)
+      const deliveryId = buildDeliveryId(current.schoolId, current.id, subjectId, recipient.recipientKind, recipient.recipientId)
       const existing = (await this.repositories.messageDeliveries.list({
         schoolId: current.schoolId,
         sourceKey: current.id,
@@ -378,7 +382,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async updateNotificationContact(
     input: UpdateNotificationContactInput,
-  ): Promise<StaffMember | Guardian> {
+  ): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const actor = await this.baseService.access.communications.assertOwnAccount()
 
@@ -421,40 +425,9 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         return staffMember
       }
 
-      if (actor.kind === 'guardian') {
-        const existing = await this.repositories.guardians.findById(actor.guardianId)
-        if (!existing) {
-          denyResourceAccess()
-        }
-        this.checkActorSchool(existing.schoolId)
-        if (!existing.subjectId) {
-          throw new BusinessRuleViolationError(
-            'NOTIFICATION_CONTACT_SUBJECT_REQUIRED',
-            'Link a login account before configuring notification contact details',
-          )
-        }
-        const guardian = new GuardianEntity({
-          ...existing.data,
-          id: existing.id,
-          schoolId: existing.schoolId,
-          firstName: existing.firstName,
-          lastName: existing.lastName,
-          contactMethods: [...existing.contactMethods],
-          notificationEmail,
-          notificationPhone,
-          subjectId: existing.subjectId,
-          hasAccess: existing.hasAccess,
-          createdAt: existing.createdAt,
-        })
-        const scope = await this.baseService.access.communications.assertContactUpdate('guardians', existing, guardian)
-        await this.repositories.guardians.forAccess(scope).save(guardian)
-
-        return guardian
-      }
-
       throw new BusinessRuleViolationError(
         'NOTIFICATION_CONTACT_UNSUPPORTED_ACTOR',
-        'Only linked staff and guardian accounts can update notification contact details',
+        'Only linked staff accounts can update notification contact details',
       )
     })
   }
@@ -478,7 +451,14 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         )
       }
 
+      if (input.appId !== actor.kind || !input.installationId.trim())
+        throw new BusinessRuleViolationError('PUSH_DEVICE_PROFILE_MISMATCH', 'The app must match the selected profile')
+      const profileId = actor.kind === 'staff' ? actor.staffMemberId : actor.kind === 'teacher' ? actor.teacherId : actor.kind === 'guardian' ? actor.guardianId : actor.studentId
       await gateway.registerPushDevice({
+        appId: input.appId,
+        installationId: input.installationId,
+        profileKind: actor.kind,
+        profileId,
         subjectId: actor.subjectId,
         schoolId: actor.schoolId,
         token: input.token.trim(),
@@ -497,6 +477,9 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
 
       await gateway.unregisterPushDevice({
+        appId: input.appId,
+        installationId: input.installationId,
+        schoolId: actor.schoolId,
         subjectId: actor.subjectId,
         provider: input.provider,
       })

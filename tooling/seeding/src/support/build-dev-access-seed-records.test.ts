@@ -3,9 +3,6 @@ import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-con
 import { describe, expect, test } from 'bun:test'
 import { buildDevAccessSeedRecords } from './build-dev-access-seed-records'
 
-/* eslint-disable-next-line dot-notation -- process.env index signature */
-process.env['SEED_DATASET'] = 'demo-ci'
-
 describe('buildDevAccessSeedRecords — demo-ci leadership scopes', () => {
   test('director preset supplies explicit, valid typed scopes for each action', () => {
     const context = resolveDevSeedContext()
@@ -16,8 +13,8 @@ describe('buildDevAccessSeedRecords — demo-ci leadership scopes', () => {
     expect(selections.length).toBeGreaterThan(0)
     for (const [permission, scopes] of selections) {
       expect(() => validatePermissionScopes(permission as Permission, scopes)).not.toThrow()
-      expect(scopes.every(scope => scope.kind === 'class_group' || scope.kind === 'class_subject')).toBe(true)
+      expect(scopes.every(scope => scope.kind === 'class_group' || scope.kind === 'subject')).toBe(true)
     }
-    expect(director?.scopesByPermission?.[Permission.QUERY_TIMETABLE_READ]?.length).toBeGreaterThan(0)
+    expect(director?.scopesByPermission?.[Permission.TIMETABLE_READ]?.length).toBeGreaterThan(0)
   })
 })

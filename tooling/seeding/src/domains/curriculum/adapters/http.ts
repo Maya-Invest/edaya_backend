@@ -1,6 +1,7 @@
 import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { CurriculumSeedPort } from '../port'
+import { Subject } from '@edaya/core'
 import { withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand } from '../../../transport/http/core-entity'
 
@@ -19,17 +20,17 @@ export function createHttpCurriculumSeedPort(
   }
 
   return {
+    saveSubjectCategory: record => withSeedPortError('curriculum.saveSubjectCategory', async () => {
+      await postCoreCommand(requestOptions, 'configureSubjectCategory', record)
+    }),
+    saveAcademicDiscipline: record => withSeedPortError('curriculum.saveAcademicDiscipline', async () => {
+      await postCoreCommand(requestOptions, 'configureAcademicDiscipline', record)
+    }),
     saveSubject: record => withSeedPortError('curriculum.saveSubject', async () => {
-      await postCoreCommand(requestOptions, 'configureSubject', record)
+      await postCoreCommand(requestOptions, 'configureSubject', { ...new Subject(record).data, classSubjectIdsByClassGroupId: record.classSubjectIdsByClassGroupId })
     }),
     saveSubjectMatter: record => withSeedPortError('curriculum.saveSubjectMatter', async () => {
       await postCoreCommand(requestOptions, 'configureSubjectMatter', record)
-    }),
-    offerSubjectToGradeLevel: record => withSeedPortError('curriculum.offerSubjectToGradeLevel', async () => {
-      await postCoreCommand(requestOptions, 'offerSubjectToGradeLevel', record)
-    }),
-    assignMatterToGradeLevelSubject: record => withSeedPortError('curriculum.assignMatterToGradeLevelSubject', async () => {
-      await postCoreCommand(requestOptions, 'assignMatterToGradeLevelSubject', record)
     }),
   }
 }

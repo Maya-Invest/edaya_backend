@@ -1,0 +1,95 @@
+{
+  "recordedAt": "2026-09-24T21:20:23.368842+00:00",
+  "releaseId": "28b4b1c33a65c439a60a7416e1a00bfb9a87acb63777c6ae53b6d9db02494272",
+  "sourceState": "uncommitted working tree; backend source content hash and generated artifacts pinned in release-contract.json",
+  "checks": [
+    {
+      "area": "backend",
+      "command": "bun repo verify --full",
+      "status": "passed",
+      "details": {
+        "unitTests": 1983,
+        "unitTestsByPackage": {
+          "@edaya/client-codegen": 9,
+          "@edaya/core": 309,
+          "@edaya/adaptor-docs": 27,
+          "@edaya/adaptor-notify": 33,
+          "@edaya/adaptor-local-fs": 14,
+          "@edaya/authorization": 106,
+          "@edaya/adaptor-r2": 18,
+          "@edaya/service": 756,
+          "@edaya/repo": 47,
+          "@edaya/adaptor-postgres": 195,
+          "@edaya/fixtures": 97,
+          "@edaya/seeding": 77,
+          "@edaya/db-migrate": 9,
+          "@edaya/api": 286
+        },
+        "serviceIntegrationTests": 18,
+        "httpIntegrationTests": 33
+      },
+      "logPath": "/tmp/edaya-fullverify10.log",
+      "logSha256": "27b15d91ed981bf7051f5801e8eaf8b8d951170584c9d552546b5a6d3e1fbfff"
+    },
+    {
+      "area": "native",
+      "command": "bun run test:integration:native",
+      "status": "passed",
+      "details": {
+        "passed": 60,
+        "skippedOptInBenchmarks": 3
+      },
+      "logPath": "/tmp/edaya-native-final2.log",
+      "logSha256": "075250a6f47e3c89db8e09dc67efccfbf6bf60b74b8e6159648f3e385ce4d421"
+    },
+    {
+      "area": "seed",
+      "command": "bun run test:integration:seed",
+      "status": "passed",
+      "details": {
+        "passed": 8
+      },
+      "logPath": "/tmp/edaya-seed-serial.log",
+      "logSha256": "c08ae93585118ce42085867dad5e9c075810a9f002b990ab53c7d313fac3e27d"
+    },
+    {
+      "area": "web",
+      "command": "bun run verify",
+      "status": "passed",
+      "details": {
+        "webappTests": 929
+      },
+      "logPath": "/tmp/edaya-web-verifyfinal2.log",
+      "logSha256": "3dd97c83c6ef90a6df098670abbeffac477d97e5f3907ad4ab4110a2ab617552"
+    },
+    {
+      "area": "mobile",
+      "command": "melos run verify",
+      "status": "passed",
+      "details": {
+        "packagesWithCleanAnalysis": 6,
+        "testsByPackage": {
+          "edaya_integration_tests": 6,
+          "edaya_api_client": 14,
+          "edaya_auth": 14,
+          "edaya_shared": 54,
+          "edaya_teacher": 13,
+          "edaya_guardian": 31
+        }
+      },
+      "logPath": "/tmp/edaya-mobile-verifyfinal2.log",
+      "logSha256": "471f5ca08edcb63e91330af6b6a6bf07f101ca1916eefd8786abf23984674d14"
+    }
+  ],
+  "benchmarkEvidence": "../performance/backend-remediation-benchmarks.json",
+  "scopeLimits": [
+    "No remote database reset or deployment performed.",
+    "Native document rendering uses a renderer test boundary; actual deployed PDFs require smoke verification.",
+    "Physical-device push and external provider delivery are pending coordinated release acceptance."
+  ],
+  "timingEvidence": {
+    "overlappingSeedRun": "/tmp/edaya-seed-final.log",
+    "result": "Setup exceeded the existing 180-second limit under overlapping verification; complete isolated rerun passed with unchanged timeouts.",
+    "routeFixtures": "Four route suites now use the existing lightweight fixture with explicit required curriculum and teacher records. Their assertions remain; full seeding has its separate eight-test suite."
+  }
+}

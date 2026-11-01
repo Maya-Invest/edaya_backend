@@ -4,7 +4,7 @@ import type {
   StudentSupportSeedPort,
 } from './port'
 import { StudentNoteCategory } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevStudentSupport } from './workflow'
 
@@ -21,17 +21,17 @@ describe('student-support seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevStudentSupport(port, demoDataset)
+    const counts = await seedDevStudentSupport(port, demoCiDataset)
 
-    const { studentHealthProfiles, studentNotes } = demoDataset.entities
+    const { studentHealthProfiles, studentNotes } = demoCiDataset.entities
     expect(counts).toEqual({
       studentHealthProfiles: studentHealthProfiles?.length ?? 0,
       studentNotes: studentNotes?.length ?? 0,
     })
-    expect(healthProfiles.find(profile => profile.id === 'hp-s3')?.allergies)
-      .toBe('Peanuts, Shellfish')
-    expect(healthProfiles.find(profile => profile.id === 'hp-s5')?.allergies).toBe('Aucune')
-    expect(healthProfiles.find(profile => profile.id === 'hp-s5')?.medicalConditions).toBe('Aucune')
+    expect(healthProfiles.find(profile => profile.id === 'ci-hp-s3')?.allergies)
+      .toBe('Arachides, fruits de mer')
+    expect(healthProfiles.find(profile => profile.id === 'ci-hp-s1')?.allergies).toBe('Pollen')
+    expect(healthProfiles.find(profile => profile.id === 'ci-hp-s11')?.medicalConditions).toBe('Aucune')
     expect(healthProfiles[0]?.lastVisit).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
     expect(notes.map(note => note.category)).toContain(StudentNoteCategory.Progress)
     expect(notes.map(note => note.category)).toContain(StudentNoteCategory.Behavior)

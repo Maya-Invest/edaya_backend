@@ -1,39 +1,44 @@
-import type { SQL, SQLWrapper } from 'drizzle-orm'
+import type { SQLWrapper } from 'drizzle-orm'
 import type { PgTable } from 'drizzle-orm/pg-core'
-import { and, eq, getTableColumns, getTableName, isNotNull, isNull, or, sql } from 'drizzle-orm'
+import { and, eq, getTableColumns, getTableName, is, isNotNull, isNull, or, SQL, sql } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
 
 // Adapter-owned relationships. Every supplied business reference must stay in the
 // tenant, including secondary references on records with their own schoolId.
 const relatedFields: Record<string, PgTable> = {
   academicYearId: schema.academicYears,
+  disciplineId: schema.academicDisciplines,
+  placementStatusId: schema.placementStatuses,
   periodId: schema.academicPeriods,
   gradeLevelId: schema.gradeLevels,
-  gradeLevelSubjectId: schema.gradeLevelSubjects,
   subjectMatterId: schema.subjectMatters,
   classGroupId: schema.classGroups,
   classSubjectId: schema.classSubjects,
   classSubjectMatterId: schema.classSubjectMatters,
   studentId: schema.students,
+  studentClassEnrollmentId: schema.studentClassEnrollments,
   guardianId: schema.guardians,
   staffId: schema.staffMembers,
+  profileId: schema.staffPermissionProfiles,
+  sourceProfileId: schema.staffPermissionProfiles,
   teacherId: schema.teachers,
   activityId: schema.activities,
-  feeId: schema.fees,
-  studentFeeId: schema.studentFees,
+  catalogServiceId: schema.catalogServices,
+  accountId: schema.studentYearAccounts,
+  enrollmentId: schema.studentServiceEnrollments,
+  chargeId: schema.studentCharges,
   assessmentId: schema.assessments,
   attendanceId: schema.attendances,
   lessonSessionId: schema.lessonSessions,
   activitySessionId: schema.activitySessions,
   scheduleId: schema.schedules,
-  reportCardDefinitionId: schema.reportCardDefinitions,
   gradeScaleId: schema.gradeScales,
   incidentId: schema.incidents,
   disciplinaryActionId: schema.disciplinaryActions,
   resourceId: schema.resources,
   announcementId: schema.announcements,
 }
-const academicSubjectTables = new Set(['subject_matters', 'class_subjects', 'grade_level_subjects', 'report_card_definition_sections'])
+const academicSubjectTables = new Set(['class_subjects', 'subject_matters'])
 const anchors: Record<string, Array<[string, PgTable]>> = {
   staff_assignments: [
     ['classGroupId', schema.classGroups],
@@ -58,7 +63,7 @@ export function schoolScope(table: PgTable, schoolId: string, proposed?: Record<
     const column = columns[field]
     if (!column)
       throw new Error(`Missing ownership column ${name}.${field}`)
-    return proposed ? sql`${sql.param(proposed[field] ?? null, column)}::text` : column
+    return proposed ? is(proposed[field], SQL) ? proposed[field] as SQL : sql`${sql.param(proposed[field] ?? null, column)}::text` : column
   }
   const parentScope = (field: string, parent: PgTable): SQL => {
     const { id: parentId } = getTableColumns(parent)
@@ -76,7 +81,7 @@ export function schoolScope(table: PgTable, schoolId: string, proposed?: Record<
     references.push(['subjectId', schema.subjects])
   for (const [field, target] of references) {
     const column = columns[field]
-    if (!column)
+    if (!column || (proposed && !column.notNull && proposed[field] == null))
       continue
     const withinSchool = parentScope(field, target)
     predicates.push(column.notNull ? withinSchool : or(isNull(value(field)), withinSchool)!)

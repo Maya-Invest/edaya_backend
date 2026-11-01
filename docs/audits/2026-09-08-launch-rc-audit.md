@@ -1,5 +1,7 @@
 # Edaya backend: launch audit and release-candidate plan
 
+> Historical; partner OAuth later cancelled (2026-09-15). First-party identity JWTs remain.
+
 Date: 8 September 2026. Audited baseline: `edaya_backend` commit `98b7a136`. Design comparison: `edaya_backend_new` commit `8b3e4d7` plus its visible working tree. The current backend was clean at the start; the newer repository already had substantial enrollment work in progress. No application changes, migrations, deployments, or production-data operations were performed.
 
 Follow-up: the [coding-agent implementation handoff](/Users/atoumbre/SoftiLab/maya_invest/edaya_backend/docs/sprints/backend-release-candidate-plan.md) records the subsequent product decisions and supersedes the tentative scope assumptions below. External access, web, and mobile are included in the RC; this audit remains the findings/evidence baseline.

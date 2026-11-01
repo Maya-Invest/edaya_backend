@@ -1,10 +1,12 @@
-import type { ReportCardDefinitionSectionKind, ReportCardResultSection } from '@edaya/core'
+import type { ReportCardResultSection, ReportCardResultSectionKind } from '@edaya/core'
 import { ReportCardResultSection as ReportCardResultSectionCtor } from '@edaya/core'
 
 export interface StoredReportCardResultSection {
   sectionId: string
-  sectionKind: ReportCardDefinitionSectionKind
+  sectionKind: ReportCardResultSectionKind
   name: string
+  grading?: import('@edaya/core').CalculatedGrade
+  rank?: number
   average: number
   weight: number
   parentSectionId?: string | null
@@ -28,10 +30,13 @@ export function enumValue<const T extends Record<string, string>>(
 
 export function serializeReportCardResultSection(section: ReportCardResultSection): StoredReportCardResultSection {
   return {
+    ...section.data,
     sectionId: section.sectionId,
     sectionKind: section.sectionKind,
     name: section.name,
     average: section.average,
+    grading: section.grading,
+    rank: section.rank,
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? null,
     classSubjectId: section.classSubjectId ?? null,
@@ -53,10 +58,13 @@ function unwrapReportCardResultSection(raw: StoredReportCardResultSection): Stor
 export function deserializeReportCardResultSection(raw: StoredReportCardResultSection): ReportCardResultSection {
   const section = unwrapReportCardResultSection(raw)
   return new ReportCardResultSectionCtor({
+    ...section,
     sectionId: section.sectionId,
     sectionKind: section.sectionKind,
     name: section.name,
     average: section.average,
+    grading: section.grading,
+    rank: section.rank,
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? undefined,
     classSubjectId: section.classSubjectId ?? undefined,

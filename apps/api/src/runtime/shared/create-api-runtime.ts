@@ -1,7 +1,6 @@
-import { allowStagingNotification } from "@/staging-notifications";
-import { createNovuEmailTransportFromSecretKey } from "@edaya/adaptor-novu";
+import { resolveSmsRouter } from "./adapters/sms-router";
 import { createSystemActorMetadata } from "@edaya/authorization";
-import { resolveNotificationDispatchRecipient } from "@edaya/service";
+import { resolveInvitationDispatchRecipient, resolveNotificationDispatchRecipient } from "@edaya/service";
 import { transactionContext } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import {
@@ -11,13 +10,15 @@ import {
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { createSchoolIdentityClient } from "@/runtime/shared/adapters/identity-client";
+import { composeIdentity } from "@/identity/composition";
 import { applyInProcessNotifyDeliveryEvent } from "@/runtime/shared/adapters/notify-delivery-sink";
 import { isNotifyConfigured } from "@/runtime/shared/adapters/notification-gateway";
+import { resolveEmailTransport } from "@/runtime/shared/adapters/email-transport";
+import { resolveSmsTransport } from "@/runtime/shared/adapters/sms-transport";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime, DatabaseHandle } from "@/runtime/types";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "../../identity/server/index";
 
 export interface InitSchoolApplicationExtras {
   identityClient: IdentityClient;
@@ -27,6 +28,7 @@ export interface InitSchoolApplicationExtras {
 export interface CreateApiRuntimeOptions {
   env: Environment;
   identityClient?: IdentityClient;
+  runBackground?: (work: () => Promise<void>) => Promise<void>;
   resolveSchoolHandle: () => Promise<DatabaseHandle>;
   initSchoolApplication: (
     db: PostgresTransactionalDb,
@@ -35,6 +37,9 @@ export interface CreateApiRuntimeOptions {
 }
 
 export async function createApiRuntime(options: CreateApiRuntimeOptions): Promise<ApiRuntime> {
+  const smsRouter = resolveSmsRouter(options.env);
+  let schoolApplicationPromise: Promise<ApiSchoolApplication> | undefined;
+  let closing: Promise<void> | undefined;
   let schoolApp: ApiSchoolApplication | null = null;
   let resolvedSchoolHandle: DatabaseHandle | null = null;
   let notifyRuntime: NotifyRuntime | undefined;
@@ -56,15 +61,15 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     const logger = options.env.LOG_LEVEL !== "silent"
       ? createAppLogger(options.env)
       : undefined;
-    if (options.env.EMAIL_TRANSPORT === "novu" && !options.env.NOVU_SECRET_KEY)
-      throw new Error("EMAIL_TRANSPORT=novu requires NOVU_SECRET_KEY");
+    const transportLog = logger
+      ? (message: string, extra?: Record<string, unknown>) => logger.info(extra ?? {}, message)
+      : () => {};
     notifyRuntime = createNotifyRuntimeFromDrizzle({
-      email: options.env.EMAIL_TRANSPORT === "novu"
-        ? createNovuEmailTransportFromSecretKey({ secretKey: options.env.NOVU_SECRET_KEY!, serverURL: options.env.NOVU_API_URL })
-        : undefined,
       db: handle.db,
       getExecutor: () => transactionContext.getStore() ?? handle.db,
       env: options.env,
+      email: resolveEmailTransport(options.env, transportLog),
+      sms: resolveSmsTransport(options.env, transportLog, smsRouter),
       log: logger
         ? (message, extra) => logger.info(extra ?? {}, message)
         : undefined,
@@ -72,8 +77,13 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
         if (!schoolApp)
           throw new Error("School notification resolver is not initialized");
         const actor = createSystemActorMetadata({ systemId: "notify-adapter", schoolId: request.schoolId, requestId: `notify:${request.deliveryId}`, reason: "Resolve current notification recipient" });
-        const profile = await resolveNotificationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
-        return allowStagingNotification(options.env.API_ORIGIN, profile?.email, options.env.STAGING_NOTIFICATION_EMAILS) ? profile : undefined;
+        return resolveNotificationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
+      },
+      resolveInvitationRecipient: async (request) => {
+        if (!schoolApp)
+          throw new Error("Invitation resolver is not initialized");
+        const actor = createSystemActorMetadata({ systemId: "invitation-dispatch", schoolId: request.schoolId, requestId: `invitation:${request.invitationId}`, reason: "Resolve current invitation delivery" });
+        return resolveInvitationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
       },
       onDeliveryEvent: async (event) => {
         await deliverySink.apply?.(event);
@@ -82,9 +92,14 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     return notifyRuntime;
   }
 
-  const identityClient = options.identityClient ?? createSchoolIdentityClient(options.env);
+  const identity = composeIdentity(options.env, getSchoolApplication, { smsRouter });
+  const identityClient = options.identityClient ?? identity.client;
 
-  async function getSchoolApplication() {
+  function getSchoolApplication(): Promise<ApiSchoolApplication> {
+    return schoolApplicationPromise ??= initializeSchoolApplication();
+  }
+
+  async function initializeSchoolApplication() {
     if (!schoolApp) {
       const handle = await getResolvedSchoolHandle();
       const runtime = await getNotifyRuntime();
@@ -102,19 +117,29 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
   return {
     env: options.env,
     async drainNotifications() {
-      await getSchoolApplication();
-      const runtime = await getNotifyRuntime();
-      if (runtime)
-        await drainPendingSchoolNotifications(runtime);
+      if (!options.runBackground && options.env.PAUSE_JOBS)
+        return;
+      const drain = async () => {
+        await getSchoolApplication();
+        const runtime = await getNotifyRuntime();
+        if (runtime)
+          await drainPendingSchoolNotifications(runtime);
+      };
+      if (options.runBackground)
+        await options.runBackground(drain);
+      else
+        await drain();
     },
     getSchoolApplication,
+    getIdentityRuntime: identity.resolve,
     getIdentityClient() {
       return identityClient;
     },
-    close: async () => {
-      if (resolvedSchoolHandle) {
-        await resolvedSchoolHandle.dispose();
-      }
-    },
+    close: () => closing ??= (async () => {
+      const results = await Promise.allSettled([identity.close(), resolvedSchoolHandle?.dispose()]);
+      const failures = results.filter(r => r.status === "rejected");
+      if (failures.length)
+        throw new AggregateError(failures.map(r => (r as PromiseRejectedResult).reason), "API cleanup failed");
+    })(),
   };
 }

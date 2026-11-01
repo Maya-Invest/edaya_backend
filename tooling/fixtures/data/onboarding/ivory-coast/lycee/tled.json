@@ -1,236 +1,638 @@
 {
+  "id": "ci-lycee:TLED",
   "code": "TLED",
   "name": "Terminale D",
-  "short_label": "Tle D",
-  "exam_year": true,
-  "exam_name": "BAC D",
-  "sections": [
+  "shortLabel": "Tle D",
+  "order": 8,
+  "examYear": true,
+  "examName": "BAC D",
+  "reportModules": [
     {
-      "role": "subjects",
-      "label": "Bilan Lettre",
+      "code": "MODULE_1",
+      "name": "Bilan Lettre",
       "order": 1,
-      "subject_codes": [
-        "FR",
-        "ANG",
-        "ALL",
-        "ESP",
-        "HG",
-        "PHILO"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan Science",
+      "code": "MODULE_2",
+      "name": "Bilan Science",
       "order": 2,
-      "subject_codes": [
-        "MATH",
-        "PC",
-        "SVT",
-        "TICE"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan autres",
+      "code": "MODULE_3",
+      "name": "Bilan autres",
       "order": 3,
-      "subject_codes": [
-        "EDHC",
-        "EPS"
-      ]
-    },
-    {
-      "role": "comments",
-      "label": "Appréciations",
-      "order": 4
+      "weightingMode": "subject_coefficients"
     }
   ],
+  "gradingPolicy": {
+    "gradeScaleCode": "NUMERIC_20",
+    "mode": "numeric-first",
+    "aggregateLabel": "Moyenne générale",
+    "passThreshold": 10
+  },
   "subjects": [
     {
       "code": "FR",
       "name": "Français",
-      "domain": "Langues",
+      "shortName": "Français",
+      "disciplineCode": "FR",
+      "categoryCode": "LANGUAGES",
       "coefficient": 4,
-      "matters": [
-        "Étude de textes littéraires et argumentatifs",
-        "Grammaire et stylistique avancées",
-        "Expression écrite : dissertation et commentaire",
-        "Oral et méthodologie de l'épreuve de français",
-        "Histoire littéraire et mouvements",
-        "Lecture méthodique et interprétation"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Étude de textes littéraires et argumentatifs",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Grammaire et stylistique avancées",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Expression écrite : dissertation et commentaire",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Oral et méthodologie de l'épreuve de français",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Histoire littéraire et mouvements",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Lecture méthodique et interprétation",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 1
     },
     {
       "code": "ANG",
       "name": "Anglais",
-      "domain": "Langues",
+      "shortName": "Anglais",
+      "disciplineCode": "ANG",
+      "categoryCode": "LANGUAGES",
       "coefficient": 3,
-      "matters": [
-        "Compréhension orale et expression orale",
-        "Compréhension écrite de textes authentiques",
-        "Vocabulaire thématique et expressions utiles",
-        "Grammaire : temps, structures et concordance",
-        "Production écrite guidée et libre",
-        "Civilisation et documents culturels"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension orale et expression orale",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Compréhension écrite de textes authentiques",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Vocabulaire thématique et expressions utiles",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Grammaire : temps, structures et concordance",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Production écrite guidée et libre",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Civilisation et documents culturels",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 2
     },
     {
       "code": "ALL",
       "name": "Allemand",
-      "domain": "Langues",
+      "shortName": "Allemand",
+      "disciplineCode": "ALL",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension et expression orale de base",
-        "Vocabulaire et structures grammaticales essentielles",
-        "Lecture de textes simples",
-        "Production écrite courte",
-        "Civilisation germanophone",
-        "Interaction en situations quotidiennes"
+      "isOptional": true,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension et expression orale de base",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vocabulaire et structures grammaticales essentielles",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de textes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Production écrite courte",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Civilisation germanophone",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Interaction en situations quotidiennes",
+          "order": 6
+        }
       ],
-      "optional": true
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 3
     },
     {
       "code": "ESP",
       "name": "Espagnol",
-      "domain": "Langues",
+      "shortName": "Espagnol",
+      "disciplineCode": "ESP",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension et expression orale de base",
-        "Vocabulaire et structures grammaticales essentielles",
-        "Lecture de textes simples",
-        "Production écrite courte",
-        "Civilisation hispanophone",
-        "Interaction en situations quotidiennes"
+      "isOptional": true,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension et expression orale de base",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vocabulaire et structures grammaticales essentielles",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de textes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Production écrite courte",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Civilisation hispanophone",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Interaction en situations quotidiennes",
+          "order": 6
+        }
       ],
-      "optional": true
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 4
     },
     {
       "code": "HG",
       "name": "Histoire-Géographie",
-      "domain": "Univers Social",
+      "shortName": "Histoire-Géographie",
+      "disciplineCode": "HG",
+      "categoryCode": "HUMANITIES",
       "coefficient": 3,
-      "matters": [
-        "Repères chronologiques et sociétés",
-        "Territoires, populations et activités",
-        "Lecture de cartes, frises et documents",
-        "Afrique et Côte d'Ivoire dans le monde",
-        "Enjeux contemporains",
-        "Méthodologie de l'étude de documents"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Repères chronologiques et sociétés",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Territoires, populations et activités",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de cartes, frises et documents",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Afrique et Côte d'Ivoire dans le monde",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Enjeux contemporains",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Méthodologie de l'étude de documents",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 5
     },
     {
       "code": "PHILO",
       "name": "Philosophie",
-      "domain": "Univers Social",
+      "shortName": "Philosophie",
+      "disciplineCode": "PHILO",
+      "categoryCode": "HUMANITIES",
       "coefficient": 4,
-      "matters": [
-        "La conscience et l'inconscient",
-        "Science, épistémologie et vérité",
-        "La société et l'État",
-        "Liberté, devoir et morale",
-        "Méthodologies (Dissertation et Commentaire)"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "La conscience et l'inconscient",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Science, épistémologie et vérité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "La société et l'État",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Liberté, devoir et morale",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Méthodologies (Dissertation et Commentaire)",
+          "order": 5
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 6
     },
     {
       "code": "MATH",
       "name": "Mathématiques",
-      "domain": "Sciences",
+      "shortName": "Mathématiques",
+      "disciplineCode": "MATH",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 4,
-      "matters": [
-        "Nombres complexes : algèbre et géométrie",
-        "Fonctions numériques : limites, continuité, dérivabilité",
-        "Fonctions logarithmes et exponentielles",
-        "Suites numériques (arithmétiques, géométriques)",
-        "Calcul intégral et calcul d'aires",
-        "Équations différentielles linéaires d'ordre 1 et 2",
-        "Probabilités : conditionnement, indépendance, variables aléatoires",
-        "Statistiques : nuages de points, droites de régression"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Nombres complexes : algèbre et géométrie",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Fonctions numériques : limites, continuité, dérivabilité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Fonctions logarithmes et exponentielles",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Suites numériques (arithmétiques, géométriques)",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Calcul intégral et calcul d'aires",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Équations différentielles linéaires d'ordre 1 et 2",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Probabilités : conditionnement, indépendance, variables aléatoires",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Statistiques : nuages de points, droites de régression",
+          "order": 8
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 1
     },
     {
       "code": "PC",
       "name": "Physique-Chimie",
-      "domain": "Sciences",
+      "shortName": "Physique-Chimie",
+      "disciplineCode": "PC",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 4,
-      "matters": [
-        "Physique : Cinématique du point matériel (vecteur position, vitesse, accélération)",
-        "Physique : Dynamique du point matériel (Lois de Newton, centre d'inertie)",
-        "Physique : Travail, énergie cinétique, énergie potentielle, énergie mécanique",
-        "Physique : Les oscillateurs mécaniques (pendule simple, pendule élastique)",
-        "Physique : Champ électrostatique et mouvement d'une particule chargée",
-        "Physique : Champ magnétique et force de Lorentz",
-        "Physique : La force de Laplace, le galvanomètre, le haut-parleur",
-        "Physique : Auto-induction et circuits RL",
-        "Physique : Circuits RLC en régime sinusoïdal forcé, résonance",
-        "Physique : Radioactivité, décroissance radioactive, énergie nucléaire (défaut de masse, fission, fusion)",
-        "Chimie : Cinétique chimique, vitesse de réaction, facteurs cinétiques",
-        "Chimie : Autoprotolyse de l'eau, pH des solutions aqueuses",
-        "Chimie : Acides forts/faibles, bases fortes/faibles, réactions acido-basiques, dosage pH-métrique",
-        "Chimie : Alcools (classes, oxydation ménagée)",
-        "Chimie : Composés carbonylés (aldéhydes et cétones)",
-        "Chimie : Acides carboxyliques et dérivés (chlorures d'acyle, anhydrides)",
-        "Chimie : Réaction d'estérification et d'hydrolyse",
-        "Chimie : Les amines, acides aminés et liaisons peptidiques"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Physique : Cinématique du point matériel (vecteur position, vitesse, accélération)",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Physique : Dynamique du point matériel (Lois de Newton, centre d'inertie)",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Physique : Travail, énergie cinétique, énergie potentielle, énergie mécanique",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Physique : Les oscillateurs mécaniques (pendule simple, pendule élastique)",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Physique : Champ électrostatique et mouvement d'une particule chargée",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Physique : Champ magnétique et force de Lorentz",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Physique : La force de Laplace, le galvanomètre, le haut-parleur",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Physique : Auto-induction et circuits RL",
+          "order": 8
+        },
+        {
+          "code": "CHAPTER_9",
+          "title": "Physique : Circuits RLC en régime sinusoïdal forcé, résonance",
+          "order": 9
+        },
+        {
+          "code": "CHAPTER_10",
+          "title": "Physique : Radioactivité, décroissance radioactive, énergie nucléaire (défaut de masse, fission, fusion)",
+          "order": 10
+        },
+        {
+          "code": "CHAPTER_11",
+          "title": "Chimie : Cinétique chimique, vitesse de réaction, facteurs cinétiques",
+          "order": 11
+        },
+        {
+          "code": "CHAPTER_12",
+          "title": "Chimie : Autoprotolyse de l'eau, pH des solutions aqueuses",
+          "order": 12
+        },
+        {
+          "code": "CHAPTER_13",
+          "title": "Chimie : Acides forts/faibles, bases fortes/faibles, réactions acido-basiques, dosage pH-métrique",
+          "order": 13
+        },
+        {
+          "code": "CHAPTER_14",
+          "title": "Chimie : Alcools (classes, oxydation ménagée)",
+          "order": 14
+        },
+        {
+          "code": "CHAPTER_15",
+          "title": "Chimie : Composés carbonylés (aldéhydes et cétones)",
+          "order": 15
+        },
+        {
+          "code": "CHAPTER_16",
+          "title": "Chimie : Acides carboxyliques et dérivés (chlorures d'acyle, anhydrides)",
+          "order": 16
+        },
+        {
+          "code": "CHAPTER_17",
+          "title": "Chimie : Réaction d'estérification et d'hydrolyse",
+          "order": 17
+        },
+        {
+          "code": "CHAPTER_18",
+          "title": "Chimie : Les amines, acides aminés et liaisons peptidiques",
+          "order": 18
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 2
     },
     {
       "code": "SVT",
       "name": "Sciences de la Vie et de la Terre",
-      "domain": "Sciences",
+      "shortName": "Sciences de la Vie et de la Terre",
+      "disciplineCode": "SVT",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 6,
-      "matters": [
-        "Le tissu nerveux et les propriétés du nerf (excitabilité, conductibilité, potentiel d'action)",
-        "Le réflexe myotatique et le fonctionnement des synapses",
-        "L'activité cérébrale et la motricité volontaire",
-        "Le milieu intérieur et la régulation de la pression artérielle",
-        "La régulation de la glycémie",
-        "La reproduction humaine : gamétogenèse, régulation hormonale chez l'homme et la femme",
-        "Génétique classique : lois de Mendel, monohybridisme, dihybridisme, liaison sexuelle",
-        "Génétique moléculaire : ADN, transcription, traduction, code génétique",
-        "Le système immunitaire : antigènes, anticorps, lymphocytes T et B, coopération cellulaire, VIH",
-        "L'évolution des espèces et les preuves de l'évolution"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Le tissu nerveux et les propriétés du nerf (excitabilité, conductibilité, potentiel d'action)",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Le réflexe myotatique et le fonctionnement des synapses",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "L'activité cérébrale et la motricité volontaire",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Le milieu intérieur et la régulation de la pression artérielle",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "La régulation de la glycémie",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "La reproduction humaine : gamétogenèse, régulation hormonale chez l'homme et la femme",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Génétique classique : lois de Mendel, monohybridisme, dihybridisme, liaison sexuelle",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Génétique moléculaire : ADN, transcription, traduction, code génétique",
+          "order": 8
+        },
+        {
+          "code": "CHAPTER_9",
+          "title": "Le système immunitaire : antigènes, anticorps, lymphocytes T et B, coopération cellulaire, VIH",
+          "order": 9
+        },
+        {
+          "code": "CHAPTER_10",
+          "title": "L'évolution des espèces et les preuves de l'évolution",
+          "order": 10
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 3
     },
     {
       "code": "EDHC",
       "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
-      "domain": "Univers Social",
+      "shortName": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+      "disciplineCode": "EDHC",
+      "categoryCode": "HUMANITIES",
       "coefficient": 1,
-      "matters": [
-        "Droits et devoirs du citoyen",
-        "Vivre ensemble et respect de la diversité",
-        "Institutions et vie démocratique",
-        "Santé, hygiène et responsabilité sociale",
-        "Développement durable",
-        "Engagement et solidarité"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Droits et devoirs du citoyen",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vivre ensemble et respect de la diversité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Institutions et vie démocratique",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Santé, hygiène et responsabilité sociale",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Développement durable",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Engagement et solidarité",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 1
     },
     {
       "code": "EPS",
       "name": "Éducation Physique et Sportive",
-      "domain": "Développement Physique",
+      "shortName": "Éducation Physique et Sportive",
+      "disciplineCode": "EPS",
+      "categoryCode": "SPORT",
       "coefficient": 2,
-      "matters": [
-        "Activités athlétiques et motricité",
-        "Sports collectifs",
-        "Gymnastique et expression corporelle",
-        "Condition physique et santé",
-        "Règles de sécurité et fair-play",
-        "Préparation et évaluation des APSA"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Activités athlétiques et motricité",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Sports collectifs",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Gymnastique et expression corporelle",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Condition physique et santé",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Règles de sécurité et fair-play",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Préparation et évaluation des APSA",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 2
     },
     {
       "code": "TICE",
       "name": "TICE",
-      "domain": "Sciences",
+      "shortName": "TICE",
+      "disciplineCode": "TICE",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 1,
-      "matters": [
-        "Système d'exploitation et fichiers",
-        "Traitement de texte et présentation",
-        "Recherche d'information et sources",
-        "Tableurs et multimédia",
-        "Citoyenneté et sécurité numériques",
-        "Collaboration et outils en ligne"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Système d'exploitation et fichiers",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Traitement de texte et présentation",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Recherche d'information et sources",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Tableurs et multimédia",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Citoyenneté et sécurité numériques",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Collaboration et outils en ligne",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 4
     }
   ]
 }

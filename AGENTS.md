@@ -6,7 +6,7 @@ Web frontends live in the sibling **[edaya_frontend](../edaya_frontend)** repo. 
 
 ## Architecture
 
-- **Ports and adapters** — domain types and ports in `@edaya/core`; business access policies in `@edaya/authorization`; school orchestration (workflows, entity configs, notifications, cron) in `@edaya/service`; Postgres in `@edaya/adaptor-postgres`; central auth persistence and Better Auth in sibling `edaya_identity`; school JWT/directory access through `@maya-invest/edaya-identity-client`; in-process notification adapters in `@edaya/adaptor-notify` (Novu is an email transport in `@edaya/adaptor-novu`); in-process document rendering in `@edaya/adaptor-docs`; migration CLI in `@edaya/db-migrate`; HTTP/runtime wiring in `apps/api`.
+- **Ports and adapters** — domain types and ports in `@edaya/core`; business access policies in `@edaya/authorization`; school orchestration (workflows, entity configs, notifications, cron) in `@edaya/service`; Postgres in `@edaya/adaptor-postgres`; Account policy in `package/domain-account`, durable identity persistence in `package/adaptor-account`, Better Auth in `package/adaptor-auth-better-auth`, and identity HTTP composition in `apps/api/src/identity`; school JWT/directory access through typed in-process Account ports; in-process notification adapters in `@edaya/adaptor-notify`; in-process document rendering in `@edaya/adaptor-docs`; migration and local-dev commands in `@edaya/repo` (`tooling/repo/db/` and `tooling/repo/dev/`); HTTP/runtime wiring in `apps/api`.
 - **Domain dependency direction** — `@edaya/service` → `@edaya/authorization` → `@edaya/core`. Production `src/` in core must not import `@edaya/authorization` or `@edaya/service`; authorization `src/` must not import `@edaya/service`. `Permission` and staff grant scope validation live in `@edaya/core`.
 - **Boundary rule** — `package/domain-core`, `package/domain-authorization`, `package/domain-service`, `package/adaptor-postgres`, and adaptor packages never depend on `apps/` or `tooling/`.
 - **Package READMEs** — describe **this** package’s folders only. The monorepo map lives in [README.md](README.md) and [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md).
@@ -26,7 +26,7 @@ After permission, relationship, or seed changes, verify teacher and family porta
 | API runtimes | [docs/reference/api-runtimes.md](docs/reference/api-runtimes.md) |
 | Runtime boundaries | [docs/reference/runtime-boundaries.md](docs/reference/runtime-boundaries.md) |
 | Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
-| Repo CLI (`bun repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
+| Repo CLI (`bun run repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
 | CI setup | [docs/reference/ci-setup.md](docs/reference/ci-setup.md) |
 | Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
 | Unit test coverage | [docs/reference/unit-test-coverage.md](docs/reference/unit-test-coverage.md) |
@@ -41,14 +41,16 @@ After permission, relationship, or seed changes, verify teacher and family porta
 Before opening a PR:
 
 ```sh
-bun repo verify --full   # PR blocking CI locally (verify + integration)
+bun run repo ci qualify staging   # PR blocking CI locally (verify + integration)
 # or separately:
 bun run verify           # repo hygiene, then quality + build + unit tests
 bun run test:integration
 ```
 
-For seed HTTP paths, also run `bun run test:integration:seed`.
+`test:integration` includes package integration, service/HTTP, seed and native PostgreSQL suites. Use `test:integration:seed` to iterate on seed paths alone. Large benchmarks run only through `bun run test:benchmarks`.
 
-Ad-hoc Turbo iteration: `bun run lint`, `bun run check`, `bun run test`, etc. Repo hygiene only: `bun repo verify`.
+Package `test` scripts exclude `*.integration.test.ts` and load the unit guard, which rejects PGlite allocation and listening servers. Mark SQL/application-composition tests with that suffix and run them through the package `test:integration` script. Keep pure calculations and mocked-port branches in ordinary `*.test.ts` files. The service integration command owns its database cleanup preload.
+
+Ad-hoc Turbo iteration: `bun run lint`, `bun run check`, `bun run test`, etc. Repo hygiene only: `bun run repo check`.
 
 Package-scoped iteration: `bun --filter @edaya/core test`, `bun --filter @edaya/api test`, etc.

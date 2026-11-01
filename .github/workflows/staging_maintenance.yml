@@ -1,0 +1,28 @@
+name: staging maintenance
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        options: [reset-reseed, recover]
+        default: reset-reseed
+      dry_run:
+        type: boolean
+        default: true
+      confirmation:
+        description: Type STAGING MAINTENANCE to apply changes
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+jobs:
+  maintenance:
+    uses: ./.github/workflows/_maintenance.yml
+    with:
+      operation: ${{ inputs.operation }}
+      dry_run: ${{ inputs.dry_run }}
+      confirmation: ${{ inputs.confirmation }}
+    secrets: inherit

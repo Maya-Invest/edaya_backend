@@ -1,16 +1,19 @@
+import { ImportFormatAdapter } from "@edaya/adaptor-import-format";
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
-import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
+import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
+import type { DirectoryClient } from "../../identity/server/index";
+import type { Environment } from "@/runtime/shared/env/schema";
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresImportStore, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import type { SQL } from "drizzle-orm";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
-import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
+import { resolveDocumentRenderer } from "@/runtime/shared/adapters/document-renderer";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
 import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-delivery";
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
-import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
-import type { Environment } from "@/runtime/shared/env/schema";
-import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
-import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
+import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
+import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl, resolveProfilePhotoMaxBytes } from "@/runtime/shared/env/derived";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
@@ -51,11 +54,17 @@ export async function buildSchoolApplication(
 
   return new ApiSchoolApplication({
     atomicExecution,
+    importPersistence: new PostgresImportStore(),
+    importFormat: new ImportFormatAdapter(),
+    commandJournal: new PostgresCommandJournal(),
+    durableWork: new PostgresDurableWork(db as PostgresTransactionalDb & { execute: (query: SQL) => Promise<unknown> }),
+    documentRenderer: resolveDocumentRenderer(options.env, logger),
     notificationGateway,
     fileStorage,
     invitationDelivery,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
+    profilePhotoMaxBytes: resolveProfilePhotoMaxBytes(options.env),
     authContactResolver: options.identityDirectory
       ? createAuthContactResolver(options.identityDirectory)
       : undefined,

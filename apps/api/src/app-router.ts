@@ -1,10 +1,15 @@
+import importsRouter from "@/routes/imports.routes";
 import { createRouter } from "@/http/create-app";
+import { edayaSparkResolveGuardianHandler, edayaSparkResolveGuardianRoute } from "@/routes/edaya-spark-internal.routes";
+import { getAuthorizationProfilesHandler, getAuthorizationProfilesRoute } from "@/routes/authorization-profiles.route";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
   getPermissionCatalogHandler,
   getPermissionCatalogRoute,
   postScopeRenderHandler,
   postScopeRenderRoute,
+  postScopeSelectionsRenderHandler,
+  postScopeSelectionsRenderRoute,
 } from "@/routes/authorization.routes";
 import {
   createServiceAccountHandler,
@@ -45,8 +50,12 @@ import {
   onboardingApplyStructureTemplateRoute,
   onboardingCompleteWizardHandler,
   onboardingCompleteWizardRoute,
+  onboardingGetDatasetHandler,
+  onboardingGetDatasetRoute,
   onboardingInviteStaffMembersHandler,
   onboardingInviteStaffMembersRoute,
+  onboardingListDatasetsHandler,
+  onboardingListDatasetsRoute,
   onboardingListStructureTemplatesHandler,
   onboardingListStructureTemplatesRoute,
   onboardingProvisionHandler,
@@ -55,14 +64,14 @@ import {
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
 import {
-  notificationDeliveryWebhookHandler,
-  notificationDeliveryWebhookRoute,
-} from "@/routes/notification-delivery-webhook.routes";
-import {
   acceptInvitationHandler,
   acceptInvitationRoute,
+  acceptMyInvitationHandler,
+  acceptMyInvitationRoute,
   invitationPreviewHandler,
   invitationPreviewRoute,
+  listMyInvitationsHandler,
+  listMyInvitationsRoute,
 } from "@/routes/invitation.routes";
 import {
   createFileUploadIntentHandler,
@@ -84,6 +93,7 @@ import { buildCoreRoutes } from "@/lib/school-api/routes";
 
 // Index route
 const router = createRouter()
+  .route("/", importsRouter)
   .openapi(
     createRoute({
       tags: ["Index"],
@@ -106,10 +116,15 @@ const router = createRouter()
 // Mount routes from route builders
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
+  .openapi(getAuthorizationProfilesRoute, getAuthorizationProfilesHandler)
   .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
   .openapi(postScopeRenderRoute, postScopeRenderHandler)
+  .openapi(postScopeSelectionsRenderRoute, postScopeSelectionsRenderHandler)
+  .openapi(edayaSparkResolveGuardianRoute, edayaSparkResolveGuardianHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
+  .openapi(onboardingListDatasetsRoute, onboardingListDatasetsHandler)
+  .openapi(onboardingGetDatasetRoute, onboardingGetDatasetHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
   .openapi(onboardingCompleteWizardRoute, onboardingCompleteWizardHandler)
@@ -128,7 +143,8 @@ router
   .openapi(createS2sClientRoute, createS2sClientHandler)
   .openapi(revokeS2sClientRoute, revokeS2sClientHandler)
   .openapi(rotateS2sClientKeyRoute, rotateS2sClientKeyHandler)
-  .openapi(notificationDeliveryWebhookRoute, notificationDeliveryWebhookHandler)
+  .openapi(listMyInvitationsRoute, listMyInvitationsHandler)
+  .openapi(acceptMyInvitationRoute, acceptMyInvitationHandler)
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
   .openapi(acceptInvitationRoute, acceptInvitationHandler)
   .openapi(createFileUploadIntentRoute, createFileUploadIntentHandler)

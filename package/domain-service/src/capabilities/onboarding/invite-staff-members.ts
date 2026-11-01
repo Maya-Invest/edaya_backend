@@ -2,8 +2,9 @@ import type { ActorMetadata } from '@edaya/authorization'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
 import { randomUUID } from 'node:crypto'
-import { AuthorizationError, AuthorizationErrorCode, permissionRowsFromPreset } from '@edaya/authorization'
-import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, presetScopeSelections, StaffMember } from '@edaya/core'
+import { ensureSchoolPermissionProfiles } from '../access-control/seed-staff-permission-profiles'
 import { getStaffInvitePermissionPreset } from './default-access-roles'
 import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
 
@@ -177,6 +178,12 @@ export async function inviteStaffMembers(
   let invitedCount = 0
 
   await service.baseService.atomicExecution.execute(async () => {
+    await ensureSchoolPermissionProfiles(application.repositories, schoolId)
+    const schoolProfiles = await application.repositories.staffPermissionProfiles.list({ schoolId })
+    const profilesBySourceKey = new Map(
+      schoolProfiles.filter(profile => profile.sourceKey).map(profile => [profile.sourceKey!, profile]),
+    )
+
     for (const invite of invites) {
       const { firstName, lastName } = namesFromInviteEmail(invite.email)
       const staffId = randomUUID()
@@ -205,20 +212,23 @@ export async function inviteStaffMembers(
         profileRole: invite.role,
       }))
 
-      const permissionRows = permissionRowsFromPreset(
-        staffId,
-        schoolId,
-        academicYear.id,
-        preset.permissions,
-      )
-      await Promise.all(permissionRows.map(row =>
-        service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({
-          id: randomUUID(),
-          ...row,
-          status: 'active',
-        })),
-      ))
-      permissionAssignmentsEnsured += permissionRows.length
+      for (const sourceKey of [preset.id]) {
+        const profile = profilesBySourceKey.get(sourceKey)
+        if (!profile) {
+          throw new BusinessRuleViolationError(
+            'STAFF_INVITE_INVALID_ROLE',
+            `No permission profile for invite role fragment: ${sourceKey}`,
+          )
+        }
+        await service.accessControlWorkflow.applyStaffPermissionProfile({
+          staffId,
+          profileId: profile.id,
+          academicYearId: academicYear.id,
+          customScopes: presetScopeSelections(profile.permissions),
+          useDefaultScopes: false,
+        })
+      }
+      permissionAssignmentsEnsured += (await application.repositories.staffPermissionAssignments.list({ staffId })).length
 
       await service.accountInvitationWorkflow.sendAccountInvitation({
         kind: AccountInvitationKind.Staff,

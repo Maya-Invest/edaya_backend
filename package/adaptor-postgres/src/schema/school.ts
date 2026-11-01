@@ -1,3 +1,4 @@
+import type { EventNotificationTemplateEntry, InvitationNotificationTemplateEntry } from '@edaya/core'
 import { sql } from 'drizzle-orm'
 import { boolean, check, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
@@ -17,10 +18,11 @@ export const schools = pgTable('schools', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   timeZone: text('time_zone').notNull(),
+  financeCurrency: text('finance_currency'),
   ownerSubjectId: text('owner_subject_id'),
   consortiumId: text('consortium_id'),
   pendingOwnerStaffId: text('pending_owner_staff_id'),
-  type: text('type'),
+  shortName: text('short_name').notNull(),
   country: text('country'),
   city: text('city'),
   enforceScheduleConflicts: boolean('enforce_schedule_conflicts').notNull().default(false),
@@ -33,6 +35,17 @@ export const schools = pgTable('schools', {
   timetableGenerationMode: text('timetable_generation_mode').notNull().default('weekly'),
   timetableMinPeriodSpan: integer('timetable_min_period_span').notNull().default(1),
   timetableMaxPeriodSpan: integer('timetable_max_period_span').notNull().default(1),
+  postalAddress: text('postal_address'),
+  phone: text('phone'),
+  email: text('email'),
+  schoolCode: text('school_code'),
+  issuingName: text('issuing_name'),
+  logoAttachmentId: text('logo_attachment_id'),
+  crestAttachmentId: text('crest_attachment_id'),
+  stampAttachmentId: text('stamp_attachment_id'),
+  signatureAttachmentId: text('signature_attachment_id'),
+  issuanceAssetVersion: integer('issuance_asset_version').notNull().default(0),
+  publicBrandingPurposes: jsonb('public_branding_purposes').notNull().default([]),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -46,6 +59,7 @@ export const staffMembers = pgTable('staff_members', {
   code: text('code'),
   photoUrl: text('photo_url'),
   email: text('email'),
+  phone: text('phone'),
   notificationEmail: text('notification_email'),
   notificationPhone: text('notification_phone'),
   subjectId: text('subject_id'),
@@ -103,7 +117,22 @@ export const accountInvitations = pgTable('account_invitations', {
 
 export const schoolNotificationTemplates = pgTable('school_notification_templates', {
   id: text('school_id').primaryKey(),
-  templates: jsonb('templates').notNull(),
+  invitationSmsEnabled: boolean('invitation_sms_enabled').notNull().default(false),
+  announcementPublished: jsonb('announcement_published').$type<EventNotificationTemplateEntry>().notNull(),
+  reportCardPublished: jsonb('report_card_published').$type<EventNotificationTemplateEntry>().notNull(),
+  attendanceRecorded: jsonb('attendance_recorded').$type<EventNotificationTemplateEntry>().notNull(),
+  assessmentResultRecorded: jsonb('assessment_result_recorded').$type<EventNotificationTemplateEntry>().notNull(),
+  incidentRecorded: jsonb('incident_recorded').$type<EventNotificationTemplateEntry>().notNull(),
+  assessmentDueSoon: jsonb('assessment_due_soon').$type<EventNotificationTemplateEntry>().notNull(),
+  activityReminder: jsonb('activity_reminder').$type<EventNotificationTemplateEntry>().notNull(),
+  calendarEventReminder: jsonb('calendar_event_reminder').$type<EventNotificationTemplateEntry>().notNull(),
+  studentPhotoApproved: jsonb('student_photo_approved').$type<EventNotificationTemplateEntry>(),
+  studentPhotoRejected: jsonb('student_photo_rejected').$type<EventNotificationTemplateEntry>(),
+  familyFeedbackOpened: jsonb('family_feedback_opened').$type<EventNotificationTemplateEntry>(),
+  familyFeedbackReminder: jsonb('family_feedback_reminder').$type<EventNotificationTemplateEntry>(),
+  familyFeedbackPublished: jsonb('family_feedback_published').$type<EventNotificationTemplateEntry>(),
+  familyFeedbackPurgeReminder: jsonb('family_feedback_purge_reminder').$type<EventNotificationTemplateEntry>(),
+  accountInvitation: jsonb('account_invitation').$type<InvitationNotificationTemplateEntry>().notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })
@@ -132,12 +161,40 @@ export const staffPermissionAssignments = pgTable('staff_permission_assignments'
   status: text('status').notNull(),
   startsAt: timestamp('starts_at', { mode: 'date' }),
   endsAt: timestamp('ends_at', { mode: 'date' }),
+  sourceProfileId: text('source_profile_id'),
+  sourceManualAssignmentId: text('source_manual_assignment_id'),
+  sourceProfileBindingId: text('source_profile_binding_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => ({
   ...definePerformanceIndexes('staff_permission_assignments', table),
   scopesNonempty: check('staff_grant_scopes_nonempty', sql`jsonb_typeof(${table.scopes}) = 'array' AND jsonb_array_length(${table.scopes}) > 0`),
 }))
+
+export const staffPermissionProfiles = pgTable('staff_permission_profiles', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  permissions: jsonb('permissions').$type<string[]>().notNull(),
+  sourceKey: text('source_key'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_profiles', table))
+
+export const staffPermissionProfileBindings = pgTable('staff_permission_profile_bindings', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  staffId: text('staff_id').notNull(),
+  profileId: text('profile_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  customScopes: jsonb('custom_scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  useDefaultScopes: boolean('use_default_scopes').notNull().default(true),
+  warnings: jsonb('warnings').$type<import('@edaya/core').PermissionResolutionWarning[]>().notNull().default([]),
+  sortOrder: integer('sort_order').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_profile_bindings', table))
 
 // 8. Attachment Table
 
@@ -146,6 +203,7 @@ export const attachments = pgTable('attachments', {
   schoolId: text('school_id').notNull(),
   ownerKind: text('owner_kind').notNull(),
   ownerId: text('owner_id').notNull(),
+  purpose: text('purpose').notNull().default('general'),
   fileName: text('file_name').notNull(),
   storageKey: text('storage_key'),
   fileUrl: text('file_url'),
@@ -182,12 +240,15 @@ export const resourceAssignments = pgTable('resource_assignments', {
 // 11. Fee Table
 
 export const teachers = pgTable('teachers', {
+  sourceFullName: text('source_full_name'),
+
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   code: text('code'),
   photoUrl: text('photo_url'),
+  signatureAttachmentId: text('signature_attachment_id'),
   email: text('email'),
   phone: text('phone'),
   notificationEmail: text('notification_email'),
@@ -254,3 +315,29 @@ export const s2sClients = pgTable('s2s_clients', {
   revokedAt: timestamp('revoked_at', { mode: 'date' }),
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('s2s_clients', table))
+
+export const staffPermissionScopeDefaults = pgTable('staff_permission_scope_defaults', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  staffId: text('staff_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  scopes: jsonb('scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_scope_defaults', table))
+
+export const staffManualPermissionAssignments = pgTable('staff_manual_permission_assignments', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  staffId: text('staff_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  permission: text('permission').notNull(),
+  customScopes: jsonb('custom_scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  useDefaultScopes: boolean('use_default_scopes').notNull().default(true),
+  status: text('status').notNull().default('active'),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
+  warnings: jsonb('warnings').$type<import('@edaya/core').PermissionResolutionWarning[]>().notNull().default([]),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_manual_permission_assignments', table))

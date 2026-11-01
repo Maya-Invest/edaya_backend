@@ -14,7 +14,7 @@
 | **`free`** | No | Current behaviour: solve independently on each calendar week’s concrete cells across the full range. |
 
 - Operator chooses mode per generation run (class or school).
-- **Regeneration / discard / publish rules are unchanged** — same reset applies regardless of mode.
+- **Generation is final** — saved sessions are current and printable. Both modes replace only untouched pending generated sessions; recorded work, manual exceptions, cancellations and linked records survive.
 - School default: `timetableGenerationMode: 'weekly'`.
 
 ---
@@ -24,7 +24,7 @@
 | Step | Phase | Status | Deliverable |
 |------|-------|--------|-------------|
 | 1 | **A** — Day-based gap | ✅ Done | `minDayGapSameSubject`; gap across full range in `free` mode |
-| 2 | **C** — Weekly template core | ✅ Done | Logical week grid, in-memory template solve, spread → draft sessions, workload assessment |
+| 2 | **C** — Weekly template core | ✅ Done | Logical week grid, in-memory template solve, spread → current sessions, workload assessment |
 | 3 | **A** — Weekly gap scope | ✅ Done | Day gap restricted to template week (single `WEEKLY_TEMPLATE_WEEK_KEY` solve) |
 | 4 | **C** — School orchestration | ✅ Done | School-wide template solve (shared-teacher occupancy), then per-class spread |
 | 5 | **C** — API + web | ✅ Done | `generationMode` (`weekly` default), mode selector in advanced panel |
@@ -49,7 +49,7 @@ Implemented. Replaces slot-index spacing with **calendar-day spacing** (`minDayG
 
 | Mode | Where day gap applies |
 |------|------------------------|
-| `weekly` | During **template-week solve** only (logical Mon–Sun grid). |
+| `weekly` | During **template-week solve** and concrete-week repair, including preserved lesson dates. |
 | `free` | Across the **full selected date range** (current implementation). |
 
 ---
@@ -96,10 +96,10 @@ maxPeriodSpanByClassSubjectId?: Record<string, number>
 | # | Decision |
 |---|----------|
 | 1 | **Template source** — the **defined weekly `PeriodDefinition` grid** (`dayOfWeek` × period slots). Not anchored to the first calendar week in the range. Template solve uses a logical week; spread maps `(dayOfWeek, periodDefinitionId)` → concrete dates. |
-| 2 | **Short / partial weeks** — **dropped sessions only**. No redistribution within the week. If Tue is a non-school day, Tuesday template slots are omitted that week; workload assessment reflects the shortfall. |
+| 2 | **Short / partial weeks** — Closed dates are excluded. Retain available template lessons, fill missing workload, and replan affected weeks when necessary. Preserved sessions remain fixed; strict fulfillment still fails if the bounded solver cannot complete the workload. |
 | 3 | **Existing sessions & occupancy** — considered **only when spreading**, not during template resolution. Template build is **in-memory only** (no persistence). **`LessonSession` rows are created during spread** only. |
-| 4 | **School generation** — solve **all classes for the template week first** (sequential by grade order, shared-teacher occupancy pinned across classes — same as today but on one logical week), then **spread each class pattern** across the date range. |
-| 5 | **Regeneration** — operator selects `weekly` or `free` per run; **existing discard / republish / conflict rules unchanged**. |
+| 4 | **School generation** — solve **all classes for the template week first** (sequential by grade order, shared-teacher occupancy pinned across classes — same as today but on one logical week), then **spread each class pattern** across the date range. Repair remaining shortfalls jointly across selected classes in the affected week, trying a bounded set of deterministic placement orders. Persist the final plans only after conflict and workload checks in the shared transaction. |
+| 5 | **Regeneration** — operator selects `weekly` or `free` per run; **the same protected replacement and transaction rules apply to both modes**. |
 
 ### Pipeline
 
@@ -115,7 +115,7 @@ flowchart TD
     WKS[For each calendar week in range]
     CAL[Skip non-school dates]
     OCC[Apply existing session / assessment occupancy]
-    SES[Create draft LessonSessions]
+    SES[Save current LessonSessions]
   end
 
   subgraph assess [3. Assess]
@@ -141,7 +141,7 @@ flowchart TD
   - Skip if date is non-school (calendar event, out of range).
   - Check occupancy from **existing** lessons, assessments, activities, teacher unavailability in range.
   - Skip conflicting slots (dropped, not moved).
-  - Create `LessonSession` (`timetableGenerated: draft`).
+  - Create `LessonSession` (`timetableGenerated: true`).
 
 ### Workload assessment
 
@@ -171,7 +171,7 @@ interface TimetableGenerationDefaults {
 
 - Template: 6A pattern stable across 3 identical teaching weeks.
 - Short week: Christmas week drops Fri sessions only; unmet workload reported.
-- Spread: existing published session blocks slot; template unchanged.
+- Spread: preserved active session blocks slot and counts toward workload; template unchanged.
 - School: two classes sharing `ci-t5` get non-overlapping template slots.
 - `free` mode regression suite unchanged.
 

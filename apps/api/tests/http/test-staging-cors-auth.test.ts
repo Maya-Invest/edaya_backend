@@ -10,9 +10,6 @@ const stagingEnv = parseEnv({
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
   API_ORIGIN: "https://api.school.edaya.test",
-  IDENTITY_ISSUER: "https://identity.edaya.test",
-  IDENTITY_DIRECTORY_URL: "https://identity.edaya.test",
-  IDENTITY_DIRECTORY_SECRET: "test-directory-secret",
   TRUSTED_ORIGINS: "https://app.edaya.test",
 });
 

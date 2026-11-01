@@ -40,7 +40,7 @@ export function resolvePgliteDataDir(databaseUrl: string): string | undefined {
 
 /**
  * Resolves persisted PGlite paths for local dev. Relative `.data/…` is anchored to `repoRoot`
- * so migrations (`bun repo db migrate local`) and the API use the same files regardless of cwd.
+ * so migrations (`bun repo ops db migrate school local`) and the API use the same files regardless of cwd.
  */
 export function resolvePersistedPgliteDataDir(
   databaseUrl: string,

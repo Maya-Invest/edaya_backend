@@ -1,4 +1,4 @@
-import { Guardian, GuardianContactMethod, GuardianContactMethodType, GuardianStudentLink, MessageDeliveryRecipientKind, StaffMember, Student, Teacher } from '@edaya/core'
+import { Guardian, GuardianStudentLink, MessageDeliveryRecipientKind, StaffMember, Student, Teacher } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import {
   buildGuardianRecipientProfile,
@@ -8,6 +8,16 @@ import {
 } from '../../src/capabilities/notifications/delivery/build-recipient-profile'
 
 describe('build recipient profiles', () => {
+  test('guardian switches are independent and never disable the inbox or select the alternative phone', () => {
+    const guardian = new Guardian({ id: 'g', schoolId: 'school', firstName: 'Ada', lastName: 'Parent', subjectId: 'login', phone: '+22501020304', alternativePhone: '+22505060708', email: 'saved@example.test', emailNotificationsEnabled: false, smsNotificationsEnabled: true, pushNotificationsEnabled: false })
+    const profile = buildGuardianRecipientProfile(guardian, [])!
+    expect(profile.fallbackPhone).toBe('+22501020304')
+    expect(profile.fallbackEmail).toBe('saved@example.test')
+    expect(profile.preferences.channels).toEqual({ email: false, sms: true, push: false, in_app: true })
+    const noMainPhone = buildGuardianRecipientProfile(new Guardian({ ...guardian.data, phone: null, emailNotificationsEnabled: true, pushNotificationsEnabled: true }), [])!
+    expect(noMainPhone.fallbackPhone).toBeUndefined()
+    expect(noMainPhone.preferences.channels).toEqual({ email: true, sms: false, push: true, in_app: true })
+  })
   test('buildStaffRecipientProfile returns undefined without subjectId', () => {
     expect(buildStaffRecipientProfile(new StaffMember({
       id: 'st1',
@@ -40,7 +50,7 @@ describe('build recipient profiles', () => {
       fallbackEmail: 'ada@school.edu',
       preferences: {
         allowsNotifications: true,
-        channels: { email: true, in_app: true },
+        channels: { email: true, sms: false, in_app: true },
       },
     })
   })
@@ -52,14 +62,7 @@ describe('build recipient profiles', () => {
       firstName: 'Grace',
       lastName: 'Hopper',
       subjectId: 'auth-g1',
-      contactMethods: [
-        new GuardianContactMethod({
-          type: GuardianContactMethodType.Email,
-          value: 'grace@mail.com',
-          isPrimary: true,
-          allowsNotifications: true,
-        }),
-      ],
+      email: 'grace@mail.com',
     })
     const links = [
       new GuardianStudentLink({
@@ -144,7 +147,7 @@ describe('build recipient profiles', () => {
       fallbackEmail: 'alan@school.edu',
       preferences: {
         allowsNotifications: true,
-        channels: { email: true, in_app: true },
+        channels: { email: true, sms: false, in_app: true },
       },
     })
   })

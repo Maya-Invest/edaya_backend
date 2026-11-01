@@ -1,10 +1,12 @@
-import type { AtomicExecutionPort, NotificationGatewayPort } from '@edaya/core'
+import type { AtomicExecutionPort, DurableWorkPort, NotificationGatewayPort } from '@edaya/core'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ManagedEntityServiceConfig } from '../../entities/managed-entity-service'
 
 export interface EntityConfigFactoryInput {
   repositories: SchoolRepositories
   atomicExecution: AtomicExecutionPort
+  commandJournal?: import('@edaya/core').CommandJournalPort
+  durableWork?: DurableWorkPort
   notificationGateway: NotificationGatewayPort
 }
 

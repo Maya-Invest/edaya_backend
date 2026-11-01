@@ -1,5 +1,5 @@
 import type { AuthContactResolverPort } from "@edaya/core";
-import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
+import type { DirectoryClient } from "../../../identity/server/index";
 
 export function createAuthContactResolver(directory: DirectoryClient): AuthContactResolverPort {
   return {

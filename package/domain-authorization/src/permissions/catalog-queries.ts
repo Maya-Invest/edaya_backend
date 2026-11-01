@@ -4,13 +4,16 @@ import { permissionDefinitions } from './permission-definitions'
 
 export function listPermissionsWithCatalogScope(scope: ScopeType): readonly Permission[] {
   return Object.values(Permission).filter(
-    permission => permissionDefinitions[permission].scope === scope,
+    (permission) => {
+      const policy = permissionDefinitions[permission].scopePolicy
+      return scope === 'platform' ? policy.mode === 'platform' : policy.mode === 'resources' && policy.allowedKinds.includes(scope)
+    },
   )
 }
 
 export function listTenantWidePermissions(): readonly Permission[] {
   return Object.values(Permission).filter(
-    permission => permissionDefinitions[permission].scope === undefined,
+    permission => permissionDefinitions[permission].scopePolicy.mode === 'none',
   )
 }
 

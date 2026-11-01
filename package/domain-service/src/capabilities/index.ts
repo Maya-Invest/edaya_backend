@@ -1,3 +1,5 @@
+export * from './documents'
+export * from './edaya-spark'
 export * from './files'
 export * from './invitations'
 export * from './notifications'

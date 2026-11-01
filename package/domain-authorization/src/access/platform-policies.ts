@@ -24,12 +24,12 @@ export class PlatformPolicies {
 
   readUsers = () => this.assertAction(P.PLATFORM_USER_READ)
   readClients = () => this.assertAction(P.S2S_CLIENT_READ)
-  createClient = () => this.assertAction(P.S2S_CLIENT_CREATE)
-  revokeClient = () => this.assertAction(P.S2S_CLIENT_REVOKE)
-  rotateClientKey = () => this.assertAction(P.S2S_CLIENT_ROTATE_KEY)
+  createClient = () => this.assertAction(P.S2S_CLIENT_MANAGE)
+  revokeClient = () => this.assertAction(P.S2S_CLIENT_MANAGE)
+  rotateClientKey = () => this.assertAction(P.S2S_CLIENT_MANAGE)
 
   async createUser(requested?: readonly PlatformAction[]) {
-    const user = await this.assertAction(P.PLATFORM_USER_CREATE)
+    const user = await this.assertAction(P.PLATFORM_USER_MANAGE)
     const permissions = [...new Set(requested ?? user.permissions)]
     if (!permissions.length || permissions.some(permission => !user.permissions.includes(permission)))
       denied('Platform delegation exceeds the operator’s permissions')
@@ -37,7 +37,7 @@ export class PlatformPolicies {
   }
 
   async deactivateUser(id: string) {
-    const user = await this.assertAction(P.PLATFORM_USER_DEACTIVATE)
+    const user = await this.assertAction(P.PLATFORM_USER_MANAGE)
     if (user.id === id)
       throw new BusinessRuleViolationError('PLATFORM_USER_SELF_DEACTIVATE', 'A platform user cannot deactivate themselves')
   }

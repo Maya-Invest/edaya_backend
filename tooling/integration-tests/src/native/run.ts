@@ -1,12 +1,17 @@
-import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { spawn, spawnSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve as resolvePath } from 'node:path'
 import process from 'node:process'
+import { nativeTestExitCode } from './test-result'
 
 // Always create a new local cluster. Never load a project DATABASE_URL or reset
 // a database that this process did not create.
+const seedSuite = process.argv.includes('--seed')
+const benchmarkSuite = process.argv.includes('--benchmarks')
+if (seedSuite && benchmarkSuite)
+  throw new Error('Choose either seed integration or benchmarks')
 const directory = mkdtempSync(join(tmpdir(), 'edaya-rc-postgres-'))
 const data = join(directory, 'data')
 let started = false
@@ -36,13 +41,30 @@ async function main() {
     run('initdb', ['-D', data, '-A', 'trust', '-U', 'edaya_rc', '--no-locale', '--encoding=UTF8'])
     run('pg_ctl', ['-D', data, '-l', join(directory, 'server.log'), '-o', `-h 127.0.0.1 -p ${port} -k ${directory}`, '-w', 'start'])
     started = true
-    const result = spawnSync('bun', ['test', 'src/native', '--parallel=1'], {
-      stdio: 'inherit',
-      env: { ...process.env, EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres` },
+    const reportPath = join(directory, 'results.xml')
+    const exitCode = await new Promise<number>((resolve, reject) => {
+      const child = spawn('bun', ['test', seedSuite ? 'src/seed' : benchmarkSuite ? 'src/benchmarks' : 'src/native', '--parallel=1', '--reporter=junit', `--reporter-outfile=${reportPath}`, ...process.argv.slice(2).filter(arg => arg !== '--seed' && arg !== '--benchmarks')], {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          EDAYA_BENCHMARK_OUTPUT: benchmarkSuite ? process.env.EDAYA_BENCHMARK_OUTPUT ?? resolvePath(import.meta.dirname, '../../../../.ci-evidence/dashboard-benchmark.json') : undefined,
+          EDAYA_IMPORT_BENCHMARK_OUTPUT: benchmarkSuite ? process.env.EDAYA_IMPORT_BENCHMARK_OUTPUT ?? resolvePath(import.meta.dirname, '../../../../.ci-evidence/enrollment-benchmark.json') : undefined,
+          EDAYA_NATIVE_SEED: seedSuite ? '1' : '',
+          EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres`,
+        },
+      })
+      const interrupt = () => child.kill('SIGINT')
+      const terminate = () => child.kill('SIGTERM')
+      process.once('SIGINT', interrupt)
+      process.once('SIGTERM', terminate)
+      child.once('error', reject)
+      child.once('exit', (code) => {
+        process.removeListener('SIGINT', interrupt)
+        process.removeListener('SIGTERM', terminate)
+        resolve(code ?? 130)
+      })
     })
-    if (result.error)
-      throw result.error
-    process.exitCode = result.status ?? 1
+    return nativeTestExitCode(exitCode, readFileSync(reportPath, 'utf8'))
   }
   finally {
     if (started)
@@ -51,7 +73,7 @@ async function main() {
   }
 }
 
-void main().catch((error) => {
+void main().then(code => process.exit(code)).catch((error) => {
   console.error(error)
-  process.exitCode = 1
+  process.exit(1)
 })

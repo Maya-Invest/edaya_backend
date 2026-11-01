@@ -2,36 +2,22 @@ import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSI
 import { AcademicPeriodType, AttendanceStatus, GradeLevel, School, StaffMember, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import {
-  createAcademicPeriod,
-  createClassGroup,
-  publishAcademicPeriod,
-  saveClassSubject,
-  saveFee,
-  saveGuardian,
-  saveLessonSession,
-  saveSchool,
-  saveStaffAssignment,
-  saveStaffMember,
-  saveStudent,
-  seedStaffPermissionTemplate,
-  updateSchool,
-} from '../utils/core-service-helpers'
+import { createAcademicPeriod, createClassGroup, createFixtureSubjectCategory, publishAcademicPeriod, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, updateSchool, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
-  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.CLASS_LOGBOOK_MANAGE,
   Permission.ATTENDANCE_RECORD,
   Permission.DISCIPLINE_CREATE,
-  Permission.GRADE_INPUT,
-  Permission.CLASS_LOGBOOK_UPDATE,
+  Permission.GRADE_MANAGE,
+  Permission.CLASS_LOGBOOK_MANAGE,
 ]
 
 async function setupBaselineFixture() {
   const { app, repositories, schoolRepositories, forActor } = await createTestApp()
 
   // Standard Admin setup of tenant school
-  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
+  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC', financeCurrency: 'USD' })
   await app.setupWorkflow.createAcademicYear({
     id: 'acad-year',
     schoolId: 'school',
@@ -93,19 +79,16 @@ async function setupBaselineFixture() {
 
   // Create students & guardians
   await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
-  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
   await saveGuardian(app, { id: 'active-guardian', schoolId: 'school', firstName: 'Eva', lastName: 'Craig' })
-  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
   await app.baseService.entities.subjects.save(
-    new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
+    new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school')).id, gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' })),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-subject-english',
     classGroupId: 'class-7a',
     subjectId: 'english-lit',
-    gradeLevelSubjectId: 'gls-english-lit',
   })
 
   await saveStaffAssignment(app, {
@@ -127,6 +110,10 @@ async function setupBaselineFixture() {
   })
 
   // Create session
+  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a', enrolledAt: new Date('2026-09-01T00:00:00Z') })
+
+  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
+
   const session = await saveLessonSession(app, {
     id: 'active-session',
     schoolId: 'school',
@@ -211,7 +198,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       assuranceLevel: ActorAssuranceLevel.Verified,
     }))
 
-    // Accountants can create fees
+    // Accountants can create catalog services
     const fee = await saveFee(accountantApp, {
       id: 'tuition-fee',
       schoolId: 'school',

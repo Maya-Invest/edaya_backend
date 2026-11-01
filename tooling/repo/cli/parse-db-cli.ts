@@ -1,110 +1,63 @@
+import { commandUsage } from './catalog'
+
 export type DbMigrateTarget = 'local' | 'staging' | 'production'
 export type DbMigrateSlice = 'school'
 export type DbBrowserTarget = 'school'
-
 export type ParsedDbCli
   = | { kind: 'help' }
-    | { kind: 'migrate', target: DbMigrateTarget, slice: DbMigrateSlice }
-    | { kind: 'reset', target: Extract<DbMigrateTarget, 'staging' | 'production'>, yes: boolean }
-    | { kind: 'flatten' }
+    | { kind: 'migrate', target: DbMigrateTarget, slice: 'school' }
+    | { kind: 'identity-migrate', target: DbMigrateTarget }
+    | { kind: 'identity-wipe', target: 'local' | 'staging', yes: boolean }
+    | { kind: 'reset', target: 'staging' | 'production', yes: boolean }
+    | { kind: 'flatten', yes?: boolean }
     | { kind: 'generate' }
-    | { kind: 'browser', target: DbBrowserTarget }
-
-const MIGRATE_TARGETS = new Set<DbMigrateTarget>(['local', 'staging', 'production'])
-const BROWSER_TARGETS = new Set<DbBrowserTarget>(['school'])
-
-function parseResetArgs(args: readonly string[]): ParsedDbCli {
-  const [target, ...flags] = args
-  if (target !== 'staging' && target !== 'production') {
-    throw new Error(
-      `Usage: bun repo db reset <staging|production> [--yes]. Got: ${target ?? '(missing)'}`,
-    )
-  }
-
-  return {
-    kind: 'reset',
-    target,
-    yes: flags.includes('--yes') || flags.includes('-y'),
-  }
+    | { kind: 'browser', target: 'school' }
+const targets = new Set(['local', 'staging', 'production'])
+function yesFlag(flags: readonly string[]): boolean {
+  if (flags.length > 1 || flags.some(flag => flag !== '--yes' && flag !== '-y'))
+    throw new Error('Only --yes is supported for this operation')
+  return flags.length > 0
 }
-
-function parseMigrateArgs(args: readonly string[]): ParsedDbCli {
-  const [target, ...flags] = args
-  if (!target || !MIGRATE_TARGETS.has(target as DbMigrateTarget)) {
-    throw new Error(
-      `Usage: bun repo db migrate <local|staging|production>. Got: ${target ?? '(missing)'}`,
-    )
-  }
-
-  if (flags.length > 0) {
-    throw new Error('School migrations do not accept auth slices.')
-  }
-
-  return { kind: 'migrate', target: target as DbMigrateTarget, slice: 'school' }
-}
-
-function parseGenerateArgs(args: readonly string[]): ParsedDbCli {
-  if (args.length > 0) {
-    throw new Error('Usage: bun repo db generate')
-  }
-  return { kind: 'generate' }
-}
-
-function parseBrowserArgs(args: readonly string[]): ParsedDbCli {
-  const [target] = args
-  if (!target || !BROWSER_TARGETS.has(target as DbBrowserTarget)) {
-    throw new Error(`Usage: bun repo db browser school. Got: ${target ?? '(missing)'}`)
-  }
-  return { kind: 'browser', target: target as DbBrowserTarget }
-}
-
 export function parseDbCliArgs(args: readonly string[]): ParsedDbCli {
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
+  if (!args.length || args.includes('--help') || args.includes('-h'))
     return { kind: 'help' }
+  const [action, ...rest] = args
+  if (action === 'migrate') {
+    const database = rest.shift()
+    if (database !== 'school' && database !== 'identity')
+      throw new Error(commandUsage('db'))
+    const target = rest.shift()
+    if (!target || !targets.has(target) || rest.length)
+      throw new Error('Usage: bun repo ops db migrate <school|identity> <local|staging|production>')
+    return database === 'identity' ? { kind: 'identity-migrate', target: target as DbMigrateTarget } : { kind: 'migrate', target: target as DbMigrateTarget, slice: 'school' }
   }
-
-  const [subcommand, ...rest] = args
-  switch (subcommand) {
-    case 'migrate':
-      return parseMigrateArgs(rest)
-    case 'reset':
-      return parseResetArgs(rest)
-    case 'flatten':
-      if (rest.length > 0) {
-        throw new Error('Usage: bun repo db flatten')
-      }
-      return { kind: 'flatten' }
-    case 'generate':
-      return parseGenerateArgs(rest)
-    case 'browser':
-      return parseBrowserArgs(rest)
-    default:
-      throw new Error(
-        `Unknown db subcommand: ${subcommand}. Valid: migrate, reset, flatten, generate, browser`,
-      )
+  if (action === 'reset') {
+    if (rest.shift() !== 'school')
+      throw new Error(commandUsage('db'))
+    const target = rest.shift()
+    if (target !== 'staging' && target !== 'production')
+      throw new Error('Usage: bun repo ops db reset school <staging|production> [--yes]')
+    return { kind: 'reset', target, yes: yesFlag(rest) }
   }
+  if (action === 'wipe') {
+    const [database, target, ...flags] = rest
+    if (database !== 'identity' || (target !== 'local' && target !== 'staging'))
+      throw new Error('Usage: bun repo ops db wipe identity <local|staging> [--yes]')
+    return { kind: 'identity-wipe', target, yes: yesFlag(flags) }
+  }
+  if (action === 'flatten') {
+    const yes = yesFlag(rest)
+    return { kind: 'flatten', ...(yes ? { yes } : {}) }
+  }
+  if (action === 'generate' && !rest.length)
+    return { kind: 'generate' }
+  if (action === 'browser' && rest.length === 1 && rest[0] === 'school')
+    return { kind: 'browser', target: 'school' }
+  throw new Error(commandUsage('db'))
 }
-
 export function dbCliUsage(): string {
-  return [
-    'Usage: bun repo db <subcommand>',
-    '',
-    'Subcommands:',
-    '  migrate <local|staging|production>',
-    '  reset <staging|production> [--yes]',
-    '  flatten',
-    '  generate',
-    '  browser school',
-    '',
-    'Examples:',
-    '  bun repo db migrate local',
-    '  bun repo db reset staging --yes',
-    '  bun repo db flatten',
-    '  bun repo db generate',
-    '  bun repo db browser school',
-  ].join('\n')
+  return commandUsage('db')
 }
-
 export function dbMigrateScriptName(target: DbMigrateTarget, slice: DbMigrateSlice): string {
   return `migrate:${target}:${slice}`
 }

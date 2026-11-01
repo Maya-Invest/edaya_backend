@@ -83,7 +83,7 @@
       <thead>
         <tr>
           <th class="col-discipline">{{labels.disciplines}}</th>
-          <th class="col-moy">{{labels.moyOver20}}</th>
+          <th class="col-moy">{{#if gradingMaximum}}{{labels.average}} / {{gradingMaximum}}{{else}}{{labels.moyOver20}}{{/if}}</th>
           <th class="col-coef">{{labels.coef}}</th>
           <th class="col-total">{{labels.total}}</th>
           <th class="col-rank">{{labels.rank}}</th>
@@ -100,7 +100,7 @@
             <td class="num">{{total}}</td>
             <td class="num">{{rank}}</td>
             <td>{{appreciation}}</td>
-            <td>{{teacherName}}</td>
+            <td>{{#if teachers}}{{#each teachers}}<div class="teacher-pair"><span>{{name}}</span>{{#if signatureUrl}}<img class="teacher-signature" src="{{signatureUrl}}" alt="{{../../labels.signature}}" />{{/if}}</div>{{/each}}{{else}}{{teacherName}}{{/if}}</td>
           </tr>
         {{/each}}
       </tbody>
@@ -135,7 +135,7 @@
       <div class="summary-card summary-average">
         <h3>{{labels.semesterMean}}</h3>
         {{#if semesterAverage}}
-          <p class="big-average">{{semesterAverage}}</p>
+          <p class="big-average">{{#if aggregateLabel}}<span>{{aggregateLabel}}</span> {{/if}}{{semesterAverage}}</p>
         {{/if}}
         {{#if semesterRank}}
           <p class="rank-line">{{labels.rank}} · {{semesterRank}}</p>
@@ -188,11 +188,17 @@
       <div class="council-appreciation">
         <h3>{{labels.councilAppreciation}}</h3>
         <p class="appreciation-text">{{#if council.appreciation}}{{council.appreciation}}{{/if}}</p>
+        {{#if council.homeroomTeachers}}
+          <div class="homeroom"><span class="lbl">{{labels.homeroomTeacher}}</span>
+            {{#each council.homeroomTeachers}}<div class="teacher-pair"><span>{{name}}</span>{{#if signatureUrl}}<img class="teacher-signature" src="{{signatureUrl}}" alt="{{../labels.signature}}" />{{/if}}</div>{{/each}}
+          </div>
+        {{else}}
         {{#if council.homeroomTeacherName}}
           <p class="homeroom">
             <span class="lbl">{{labels.homeroomTeacher}}</span>
             {{council.homeroomTeacherName}}
           </p>
+        {{/if}}
         {{/if}}
       </div>
       <div class="council-sign">

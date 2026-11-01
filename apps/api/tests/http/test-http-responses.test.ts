@@ -1,6 +1,6 @@
-import { describe, expect, it, mock } from "bun:test";
-import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
 import { AuthorizationError, AuthorizationErrorCode } from "@edaya/authorization";
+import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
+import { describe, expect, it, mock } from "bun:test";
 import {
   badRequestResponse,
   conflictResponse,
@@ -43,6 +43,13 @@ describe("routeErrorResponse", () => {
       { message: "Capacity exceeded", code: "CLASS_GROUP_CAPACITY_EXCEEDED" },
       409,
     );
+  });
+
+  it("includes structured workload details for localized generation feedback", () => {
+    const { context, json } = createTestContext();
+    const details = { classGroupId: "class", classSubjectId: "english", weekKey: "2026-09-14", placed: 2, required: 3 };
+    routeErrorResponse(context as any, new BusinessRuleViolationError("TIMETABLE_WORKLOAD_UNSATISFIED", "Unmet workload", details));
+    expect(json).toHaveBeenCalledWith({ message: "Unmet workload", code: "TIMETABLE_WORKLOAD_UNSATISFIED", details }, 409);
   });
 
   it("maps unknown errors to 500", () => {

@@ -1,11 +1,16 @@
 import type { HttpSeedRuntimeContext, RunHttpDevSeedsResults } from '../types'
 import { ownerSubjectIdFromAuthProvision } from '../../bootstrap/dev-staff-auth-seed'
 import {
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
+} from '../../bootstrap/s2s-client'
+import {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
 } from '../../bootstrap/service-account'
 import { bootstrapHttpCoreSession } from '../../bootstrap/session/http-core-session'
 import { throwHttpBootstrapFailure } from '../../bootstrap/session/local-dev-errors'
+import { seedDevFamilyFeedback } from '../../domains/family-feedback/workflow'
 import {
   runDevAccessAssignmentsSeedWithPort,
   runDevAccessRolesSeedWithPort,
@@ -71,7 +76,7 @@ export async function tryRunAllFreshBootstrap(
   if (!serviceAccountApiKeyFromProvision) {
     throw new Error(
       'Seeding service account already exists but the profile API key is not available. '
-      + 'Run `bun repo seed --scope service-account` or wipe `.data` and run `bun repo seed`.',
+      + 'Run `bun repo ops seed --scope service-account` or wipe `.data` and run `bun repo ops seed`.',
     )
   }
 
@@ -82,7 +87,7 @@ export async function tryRunAllFreshBootstrap(
   if (!seedingAuthKey) {
     throw new Error(
       'Seeding service account is not ready after provisioning. '
-      + 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.',
+      + 'Stop `bun repo dev`, run `bun repo ops seed clean --yes`, restart the API, then `bun repo ops seed`.',
     )
   }
 
@@ -101,11 +106,19 @@ export async function tryRunAllFreshBootstrap(
     createHttpAccessSeedPort({ client, serviceAccountApiKey: seedingAuthKey }),
     { progress },
   )
+  await seedDevFamilyFeedback(ports.familyFeedbackPort, seedContext.dataset)
   if (options.skipProfilePhotos) {
     results.profilePhotos = 0
     results.profilePhotosSkipped = true
     results.profilePhotosSkipReason = options.profilePhotosSkipReason
   }
+
+  await runSeedProgressStep(progress, async () => {
+    const s2s = await provisionEdayaSparkS2sClientHttp(client, {
+      schoolId: seedContext.schoolId,
+    })
+    logProvisionedEdayaSparkS2sClient(s2s)
+  })
 
   if (options.log) {
     logDevSeedResults({

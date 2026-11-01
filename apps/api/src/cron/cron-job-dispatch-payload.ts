@@ -1,27 +1,18 @@
-import type { CronJobDispatchMessage, CronJobKey } from "@edaya/service";
+import type { CronJobDispatchMessage } from "@edaya/service";
 
-/** JSON-safe queue body for Cloudflare Queues. */
-export interface CronJobDispatchQueueBody {
-  jobKey: CronJobKey;
-  schoolId: string;
-  asOf: string;
-  requestId: string;
+export type CronJobDispatchQueueBody = CronJobDispatchMessage;
+
+export function parseCronJobDispatchQueueBody(body: unknown): CronJobDispatchMessage {
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    throw new Error("CRON_QUEUE_PAYLOAD_INVALID");
+  const value = body as Record<string, unknown>;
+  if (Object.keys(value).length !== 1 || typeof value.jobId !== "string"
+    || !/^cron-execute:[0-9a-f-]{36}$/.test(value.jobId)) {
+    throw new Error("CRON_QUEUE_PAYLOAD_INVALID");
+  }
+  return { jobId: value.jobId };
 }
 
 export function toCronJobDispatchQueueBody(message: CronJobDispatchMessage): CronJobDispatchQueueBody {
-  return {
-    jobKey: message.jobKey,
-    schoolId: message.schoolId,
-    asOf: message.asOf.toISOString(),
-    requestId: message.requestId,
-  };
-}
-
-export function parseCronJobDispatchQueueBody(body: CronJobDispatchQueueBody): CronJobDispatchMessage {
-  return {
-    jobKey: body.jobKey,
-    schoolId: body.schoolId,
-    asOf: new Date(body.asOf),
-    requestId: body.requestId,
-  };
+  return parseCronJobDispatchQueueBody(message);
 }

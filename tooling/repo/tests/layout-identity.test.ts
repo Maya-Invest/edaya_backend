@@ -72,7 +72,7 @@ export default antfu({}, {
     mkdirSync(join(root, 'package/domain-authorization/src'), { recursive: true })
     mkdirSync(join(root, 'package/domain-service/src'), { recursive: true })
     mkdirSync(join(root, 'package/adaptor-postgres'), { recursive: true })
-    mkdirSync(join(root, 'package/adaptor-novu'), { recursive: true })
+    mkdirSync(join(root, 'package/adaptor-notify'), { recursive: true })
     mkdirSync(join(root, 'package/adaptor-r2'), { recursive: true })
     mkdirSync(join(root, 'package/adaptor-local-fs'), { recursive: true })
     writeFileSync(join(root, 'package/domain-core/src/index.ts'), 'export {}\n')

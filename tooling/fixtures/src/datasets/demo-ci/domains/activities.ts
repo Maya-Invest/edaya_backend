@@ -13,8 +13,8 @@ export const demoCiActivities = [
     participants: 12,
     capacity: 20,
     description: 'Conception et programmation de robots avec Arduino.',
-    startDate: '2025-09-15T12:00:00.000Z',
-    endDate: '2026-06-12T12:00:00.000Z',
+    startDate: '2026-09-14T12:00:00.000Z',
+    endDate: '2027-06-11T12:00:00.000Z',
   },
   {
     id: 'ci-act-chorale',
@@ -26,8 +26,8 @@ export const demoCiActivities = [
     participants: 18,
     capacity: 30,
     description: 'Ensemble vocal préparant les concerts trimestriels.',
-    startDate: '2025-09-20T12:00:00.000Z',
-    endDate: '2026-06-20T12:00:00.000Z',
+    startDate: '2026-09-18T12:00:00.000Z',
+    endDate: '2027-06-18T12:00:00.000Z',
   },
   {
     id: 'ci-act-foot',
@@ -39,8 +39,8 @@ export const demoCiActivities = [
     participants: 16,
     capacity: 18,
     description: 'Entraînements et tournois inter-établissements.',
-    startDate: '2025-09-08T12:00:00.000Z',
-    endDate: '2026-05-30T12:00:00.000Z',
+    startDate: '2026-09-14T12:00:00.000Z',
+    endDate: '2027-05-28T12:00:00.000Z',
   },
   {
     id: 'ci-act-anglais',
@@ -52,8 +52,8 @@ export const demoCiActivities = [
     participants: 8,
     capacity: 15,
     description: 'Ateliers d\'expression orale en petits groupes.',
-    startDate: '2025-10-01T12:00:00.000Z',
-    endDate: '2026-06-05T12:00:00.000Z',
+    startDate: '2026-09-21T12:00:00.000Z',
+    endDate: '2027-06-04T12:00:00.000Z',
   },
   {
     id: 'ci-act-theatre',
@@ -65,8 +65,8 @@ export const demoCiActivities = [
     participants: 14,
     capacity: 20,
     description: 'Mise en scène d\'une pièce jouée en fin d\'année.',
-    startDate: '2025-10-05T12:00:00.000Z',
-    endDate: '2026-06-25T12:00:00.000Z',
+    startDate: '2026-09-23T12:00:00.000Z',
+    endDate: '2027-06-25T12:00:00.000Z',
   },
 ] as const satisfies readonly ActivityInput[]
 

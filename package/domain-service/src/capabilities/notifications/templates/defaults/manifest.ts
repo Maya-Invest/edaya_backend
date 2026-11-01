@@ -1,66 +1,101 @@
-import type { NotificationChannelTemplate, SchoolNotificationTemplateDocument } from '../document-schema'
-import { schoolNotificationTemplateDocumentSchema } from '../document-schema'
+import type { EventNotificationTemplateEntry, SchoolNotificationTemplateCatalog } from '../document-schema'
+import { schoolNotificationTemplateCatalogSchema } from '../document-schema'
 import { loadAccountInvitationDefaultFiles } from './load-default-files'
 
-function dualChannelFromPlain(subject: string, body: string): {
-  email: NotificationChannelTemplate
-  in_app: NotificationChannelTemplate
-} {
+function eventFromPlain(title: string, body: string): EventNotificationTemplateEntry {
   return {
-    email: { subject, body: `<p>${body}</p>` },
-    in_app: { subject, body },
+    enable_email: true,
+    enable_push: true,
+    enable_sms: false,
+    base_message: { title, body },
+    rich_message: { subject: title, body: `<p>${body}</p>` },
+    simple_message: { body: `${title}: ${body}` },
   }
 }
 
-/** Platform default notification template document — copied once per school at registration. */
-export async function buildDefaultNotificationTemplateDocument(): Promise<SchoolNotificationTemplateDocument> {
+/** Platform default notification catalog — copied once per school at registration. */
+export async function buildDefaultNotificationTemplateDocument(): Promise<SchoolNotificationTemplateCatalog> {
   const accountInvitation = await loadAccountInvitationDefaultFiles()
-  const document: SchoolNotificationTemplateDocument = {
-    'announcement.published': {
-      email: {
+  const document: SchoolNotificationTemplateCatalog = {
+    invitationSmsEnabled: false,
+    announcementPublished: {
+      enable_email: true,
+      enable_push: true,
+      enable_sms: false,
+      base_message: {
+        title: '{{schoolName}}: {{announcementTitle}}',
+        body: '{{announcementBodyShort}}',
+      },
+      rich_message: {
         subject: '{{schoolName}}: {{announcementTitle}}',
         body: '<p>{{announcementBody}}</p>',
       },
-      in_app: {
-        subject: '{{schoolName}}: {{announcementTitle}}',
-        body: '{{announcementBodyShort}}',
+      simple_message: {
+        body: '{{schoolName}}: {{announcementTitle}} — {{announcementBodyShort}}',
       },
     },
-    'report_card.published': dualChannelFromPlain(
+    reportCardPublished: eventFromPlain(
       'Report card — {{studentName}}',
       '{{periodName}} results for {{classGroupName}} are available.',
     ),
-    'attendance.recorded': dualChannelFromPlain(
+    attendanceRecorded: eventFromPlain(
       '{{studentName}} — {{statusLabel}}',
       '{{sessionTitle}} on {{sessionDate}} at {{sessionTime}} ({{classGroupName}})',
     ),
-    'assessment.result_recorded': dualChannelFromPlain(
+    assessmentResultRecorded: eventFromPlain(
       '{{studentName}} — {{assessmentTitle}}',
       'Score {{scoreDisplay}} · {{subjectName}}',
     ),
-    'incident.recorded': dualChannelFromPlain(
+    incidentRecorded: eventFromPlain(
       '{{studentName}} — {{incidentTitle}}',
       '{{incidentKindLabel}} on {{incidentDate}}. {{incidentDescription}}',
     ),
-    'assessment.due_soon': dualChannelFromPlain(
+    assessmentDueSoon: eventFromPlain(
       '{{assessmentTitle}} due {{dueDateLabel}}',
       '{{subjectName}} · {{classGroupName}} — due {{dueDateLabel}}',
     ),
-    'activity.reminder': dualChannelFromPlain(
+    activityReminder: eventFromPlain(
       'Reminder: {{activityName}}',
       '{{startDate}} · {{activitySchedule}} ({{coachName}})',
     ),
-    'calendar.event_reminder': dualChannelFromPlain(
+    calendarEventReminder: eventFromPlain(
       'Reminder: {{eventTitle}}',
       '{{dateRange}} · {{scopeLabel}}',
     ),
-    'account_invitation': {
-      email: {
+    studentPhotoApproved: eventFromPlain(
+      'Photo approved — {{studentName}}',
+      'The portrait for {{studentName}} is now published.',
+    ),
+    studentPhotoRejected: eventFromPlain(
+      'Photo not approved — {{studentName}}',
+      '{{rejectionReason}}',
+    ),
+    familyFeedbackOpened: eventFromPlain(
+      'Family feedback — {{studentName}}',
+      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
+    ),
+    familyFeedbackReminder: eventFromPlain(
+      'Reminder: family feedback — {{studentName}}',
+      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
+    ),
+    familyFeedbackPublished: eventFromPlain(
+      'Family feedback published — {{subjectName}}',
+      'Aggregated results for {{classGroupName}} are available.',
+    ),
+    familyFeedbackPurgeReminder: eventFromPlain(
+      'Family feedback comments will be deleted',
+      'Raw answers for this campaign will be deleted on {{purgeAtLabel}}.',
+    ),
+    accountInvitation: {
+      rich_message: {
         subject: accountInvitation.subject,
         body: accountInvitation.body,
+      },
+      simple_message: {
+        body: accountInvitation.smsBody,
       },
     },
   }
 
-  return schoolNotificationTemplateDocumentSchema.parse(document)
+  return schoolNotificationTemplateCatalogSchema.parse(document)
 }

@@ -2,6 +2,9 @@ import { boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/p
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const students = pgTable('students', {
+  nationalMatricule: text('national_matricule'),
+  sourceFullName: text('source_full_name'),
+
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
@@ -12,6 +15,7 @@ export const students = pgTable('students', {
   nationality: text('nationality'),
   matricule: text('matricule'),
   photoUrl: text('photo_url'),
+  photoAttachmentId: text('photo_attachment_id'),
   subjectId: text('subject_id'),
   status: text('status').notNull(),
   enrollmentDate: timestamp('enrollment_date', { mode: 'date' }),
@@ -42,6 +46,9 @@ export const studentClassEnrollments = pgTable('student_class_enrollments', {
 // 35. Guardian Table
 
 export const guardians = pgTable('guardians', {
+  occupation: text('occupation'),
+  sourceFullName: text('source_full_name'),
+
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
@@ -50,10 +57,11 @@ export const guardians = pgTable('guardians', {
   photoUrl: text('photo_url'),
   email: text('email'),
   phone: text('phone'),
-  notificationEmail: text('notification_email'),
-  notificationPhone: text('notification_phone'),
+  alternativePhone: text('alternative_phone'),
+  emailNotificationsEnabled: boolean('email_notifications_enabled').default(true).notNull(),
+  smsNotificationsEnabled: boolean('sms_notifications_enabled').default(true).notNull(),
+  pushNotificationsEnabled: boolean('push_notifications_enabled').default(true).notNull(),
   subjectId: text('subject_id'),
-  contactMethods: jsonb('contact_methods').notNull(),
   hasAccess: boolean('has_access').default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('guardians', table))
@@ -92,6 +100,21 @@ export const studentNotes = pgTable('student_notes', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('student_notes', table))
+
+export const studentPhotoSubmissions = pgTable('student_photo_submissions', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  studentId: text('student_id').notNull(),
+  attachmentId: text('attachment_id').notNull(),
+  submitterGuardianId: text('submitter_guardian_id').notNull(),
+  status: text('status').notNull(),
+  version: integer('version').notNull(),
+  reviewerStaffId: text('reviewer_staff_id'),
+  reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+  rejectionReason: text('rejection_reason'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('student_photo_submissions', table))
 
 // 38. Student Health Profile Table
 

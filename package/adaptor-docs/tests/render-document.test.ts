@@ -4,7 +4,7 @@ import { createDocumentRenderer } from "../src/document-renderer";
 import { DocumentRenderError } from "../src/errors";
 import { createStubPdfRenderer } from "../src/adapters/stub-pdf-renderer";
 import { renderDocument } from "../src/services/render-document";
-import { getTemplateDefinition } from "../src/templates/registry";
+import { getTemplateDefinition, listTemplateDefinitions } from "../src/templates/registry";
 import { DOCUMENT_RENDERING_FAILURES } from "../src/types";
 import { EXAMPLE_LOGBOOK_RENDER_REQUEST, EXAMPLE_RENDER_REQUEST } from "./examples";
 import { createRecordingPdfRenderer } from "./recording-renderer";
@@ -32,6 +32,40 @@ describe("renderDocument", () => {
     expect(pdfRenderer.calls[0]?.html).toContain("YAO Curie Marie Christelle Ahou");
     expect(pdfRenderer.calls[0]?.html).toContain("Français");
     expect(pdfRenderer.calls[0]?.html).toContain("10,75 / 20");
+  });
+
+  test("rejects a root principalStampUrl that letter and report-card schemas do not allow", () => {
+    const extra = { principalStampUrl: "data:image/png;base64,xx" };
+    const letter = getTemplateDefinition("enrollment-record.v1");
+    expect(letter).not.toBeNull();
+    expect(letter!.validatePayload({
+      studentName: "Yao Christelle",
+      schoolName: "LYCEE MAMIE ADJOUA",
+      schoolYear: "2025-2026",
+      ...extra,
+    })).toMatch(/additional/i);
+
+    const incident = getTemplateDefinition("incident-report.v1");
+    expect(incident).not.toBeNull();
+    expect(incident!.validatePayload({
+      schoolName: "LYCEE MAMIE ADJOUA",
+      paragraphs: [{ text: "Bagare" }],
+      ...extra,
+    })).toMatch(/additional/i);
+
+    const bulletin = getTemplateDefinition("report-card.v1");
+    expect(bulletin).not.toBeNull();
+    expect(bulletin!.validatePayload({
+      ...(EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>),
+      ...extra,
+    })).toMatch(/additional/i);
+    expect(bulletin!.validatePayload({
+      ...(EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>),
+      council: {
+        ...(EXAMPLE_RENDER_REQUEST.payload as { council?: Record<string, unknown> }).council,
+        principalStampUrl: "data:image/png;base64,xx",
+      },
+    })).toBeNull();
   });
 
   test("rejects invalid payload", async () => {
@@ -85,22 +119,42 @@ describe("renderDocument", () => {
     expect(html).toContain("--brand: #1f4b7a");
   });
 
+  test("compiles every group B-E template from a closed payload", () => {
+    const payload = {
+      studentName: "Yao Christelle",
+      schoolName: "LYCEE MAMIE ADJOUA",
+      schoolYear: "2025-2026",
+      classLabel: "6ème A",
+      documentTitle: "Document officiel",
+      paragraphs: [{ text: "Document officiel." }],
+      fields: [{ label: "Classe", value: "6ème A" }],
+      columns: ["Libellé", "Montant"],
+      rows: [{ cells: ["Scolarité", "60 000 XOF"] }],
+    };
+    const skipped = new Set(["report-card.v1", "annual-report-card.v1", "logbook.v1"]);
+    for (const template of listTemplateDefinitions()) {
+      if (skipped.has(template.key)) {
+        continue;
+      }
+      expect(template.validatePayload(payload)).toBeNull();
+      const html = template.compileHtml("fr", payload);
+      expect(html).toContain("Yao Christelle");
+      expect(html).toContain("LYCEE MAMIE ADJOUA");
+    }
+  });
+
   test("overlays signature images onto PDF", async () => {
     const result = await renderDocument({
       ...EXAMPLE_RENDER_REQUEST,
       options: {
         signatures: [{
           slot: "principal",
-          imageUrl: "https://signatures.example/principal.png",
+          imageBytes: new Uint8Array(TINY_PNG),
           position: { page: "last", x: 400, y: 80, width: 120 },
         }],
       },
     }, {
       pdfRenderer: createStubPdfRenderer(),
-      fetchImpl: (async () => new Response(TINY_PNG, {
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-      })) as unknown as typeof fetch,
     });
 
     expect(result.kind).toBe("success");

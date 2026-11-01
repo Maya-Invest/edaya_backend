@@ -106,7 +106,7 @@ describe('actor metadata', () => {
       actorId: 's2s-1',
       schoolId: 'school-1',
       requestId: 'request-s2s',
-      clientId: 'children-ai',
+      clientId: 'edaya-spark',
     })
 
     expect(Object.keys(platform)).not.toContain('permissions')

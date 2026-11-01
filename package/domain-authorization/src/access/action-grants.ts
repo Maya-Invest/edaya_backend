@@ -28,6 +28,8 @@ export async function describeActionGrants(actor: ActorMetadata, repositories: A
     const grants: ActionGrantDisplay[] = owner
       ? SCHOOL_OWNER_ACTIONS.map(permission => ({ permission, scopes: [{ kind: 'school' }], source: 'owner' }))
       : (await facts.staffGrants()).map(grant => ({ ...grant, scopes: [...grant.scopes] }))
+    if (!owner && actor.accountKind !== 'service')
+      grants.push({ permission: P.WORKSPACE_ACCESS, scopes: [{ kind: 'school' }], source: 'relationship' })
     return grants.filter((grant) => {
       try {
         assertHumanOnlyPermission(actor.accountKind, grant.permission, owner)
@@ -46,7 +48,8 @@ export async function describeActionGrants(actor: ActorMetadata, repositories: A
     const policy = actor.kind === 'teacher' ? teacherPolicy : familyPolicy
     const clauses = [
       ...await policy(facts, permission, undefined, 'read'),
-      ...await policy(facts, permission, undefined, 'write'),
+      ...await policy(facts, permission, undefined, 'write', 'create'),
+      ...await policy(facts, permission, undefined, 'write', 'update'),
     ]
     const scopes = clauses.flatMap((clause) => {
       const parsed = grantScopeSchema.safeParse(clause.target)

@@ -43,7 +43,7 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Activity> 
     }
 
     if (entity.endDate.getTime() < Date.now()) {
-      await context.notificationGateway.cancel(idempotencyKey)
+      await context.notificationGateway.cancel(idempotencyKey, context.actor.schoolId)
       return null
     }
 

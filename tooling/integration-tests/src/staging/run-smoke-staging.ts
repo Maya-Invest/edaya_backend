@@ -110,26 +110,15 @@ async function checkCorsDeny(client: HttpSeedClient): Promise<SmokeCheckResult> 
 
 async function checkSignIn(
   client: HttpSeedClient,
-  appOrigin: string,
+  _appOrigin: string,
   email: string,
   password: string,
 ): Promise<SmokeCheckResult> {
-  const response = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'origin': appOrigin,
-    },
-    body: JSON.stringify({ email, password }),
-  })
-
-  if (!response.ok) {
-    return {
-      id: 'S5',
-      label: 'Identity sign-in',
-      status: 'failed',
-      detail: `${response.status} ${truncateBody(await response.text())}`,
-    }
+  try {
+    await signInViaHttp(client, { email, password })
+  }
+  catch (error) {
+    return { id: 'S5', label: 'Identity sign-in', status: 'failed', detail: error instanceof Error ? error.message : 'Sign-in failed' }
   }
 
   if (!client.cookieHeader()) {
@@ -148,11 +137,11 @@ async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | un
   const { response, body } = await client.jsonRequest<{
     session?: { id?: string }
     user?: { email?: string }
-  }>('/auth/get-session')
+  }>('/auth/edaya/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
 
   if (response.ok && body?.session && body?.user) {
     const email = body.user.email ?? 'unknown'
-    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo seed --staging\``
+    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo ops seed staging\``
   }
 
   return undefined
@@ -206,7 +195,7 @@ async function checkServiceAccount(apiUrl: string, apiKey: string): Promise<Smok
       label: 'Service account entity access',
       status: 'failed',
       detail: response.status === 401 || response.status === 500
-        ? `${response.status} — service account key may be missing on staging; run \`bun repo seed --staging\``
+        ? `${response.status} — service account key may be missing on staging; run \`bun repo ops seed staging\``
         : `${response.status}`,
     }
   }
@@ -259,7 +248,6 @@ export async function runSmokeStaging(): Promise<SmokeStagingResult> {
   const staffPassword = env.staffPassword
   const client = new HttpSeedClient({
     baseUrl: env.apiUrl,
-    authUrl: env.authUrl,
     appOrigin: env.appOrigin,
   })
   const checks: SmokeCheckResult[] = []

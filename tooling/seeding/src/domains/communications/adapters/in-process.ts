@@ -47,7 +47,7 @@ export function createInProcessCommunicationsSeedPort(
         recipientId: record.recipientId,
       })
       if (existing) {
-        for (const event of seedDeliveryEvents(record)) {
+        for (const event of seedDeliveryEvents(record, existing.sentAt)) {
           await service.communicationsWorkflow.applyDeliveryEvent({
             ...event,
             deliveryId: existing.id,

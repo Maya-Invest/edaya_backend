@@ -29,6 +29,8 @@ export interface TimetableGenerationDefaults {
 }
 
 export interface TimetableSubjectDemand {
+  /** Set only when solving several classes together. */
+  classGroupId?: string
   classSubjectId: string
   displayLabel: string
   periodsPerWeek: number
@@ -70,10 +72,13 @@ export interface UnmetTimetableWorkload {
 }
 
 export interface SolveTimetableInput {
+  /** Bounded deterministic alternate ordering, used only for school-week repair. */
+  searchAttempt?: number
   classGroupId: string
   cells: ResolvedTimetableCell[]
   subjects: TimetableSubjectDemand[]
   occupiedIntervals: OccupiedInterval[]
+  existingSubjectDates?: readonly { classSubjectId: string, date: string }[]
   existingWorkloadByClassSubjectAndWeek?: Record<string, Record<string, number>>
   options: TimetableGenerationDefaults
 }
@@ -84,6 +89,8 @@ export interface SolveTimetableResult {
 }
 
 export interface SpreadWeeklyTemplateInput {
+  existingSubjectDates?: readonly { classSubjectId: string, date: string }[]
+  existingWorkloadByClassSubjectAndWeek?: Record<string, Record<string, number>>
   classGroupId: string
   templatePlacements: readonly TimetablePlacement[]
   periodById: ReadonlyMap<string, PeriodDefinition>

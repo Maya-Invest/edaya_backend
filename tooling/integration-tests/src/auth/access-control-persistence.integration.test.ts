@@ -24,7 +24,7 @@ describeIntegration('typed staff authorization persistence', () => {
     expect(await describeActionGrants(actor, repos)).toContainEqual(expect.objectContaining({ permission: row.permission, scopes: row.scopes, source: 'manual', startsAt: row.startsAt, endsAt: row.endsAt }))
     await access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')
     await expect(access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['other'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
-    await expect(access().assertResources(Permission.GRADE_INPUT, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
+    await expect(access().assertResources(Permission.GRADE_MANAGE, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
     await repos.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...row.data, endsAt: new Date('2021-01-01') }))
     await expect(access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
   })

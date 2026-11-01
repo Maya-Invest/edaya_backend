@@ -44,6 +44,7 @@ describe("createR2FileStorage", () => {
     expect(presigned.uploadUrl).toContain("/edaya-files-dev/");
     expect(presigned.uploadUrl).not.toContain("x-amz-sdk-checksum-algorithm");
     expect(presigned.headers).toEqual({ "Content-Type": "image/jpeg" });
+    expect(new URL(presigned.uploadUrl).searchParams.get("X-Amz-SignedHeaders")?.split(";")).toContain("content-length");
   });
 
   it("mints presigned upload URLs against an explicit endpoint", async () => {

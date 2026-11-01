@@ -1,4 +1,5 @@
 import type { Resource, StaffAssignment, StaffMember, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   Attachment as AttachmentCtor,
@@ -7,7 +8,11 @@ import {
   ResourceKind,
   School as SchoolCtor,
   StaffAssignment as StaffAssignmentCtor,
+  StaffManualPermissionAssignment as StaffManualPermissionAssignmentCtor,
   StaffMember as StaffMemberCtor,
+  StaffPermissionProfileBinding as StaffPermissionProfileBindingCtor,
+  StaffPermissionProfile as StaffPermissionProfileCtor,
+  StaffPermissionScopeDefaults as StaffPermissionScopeDefaultsCtor,
   TeacherAssignment as TeacherAssignmentCtor,
   TeacherAssignmentKind,
   TeacherAssignmentStatus,
@@ -23,7 +28,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
+export function createSchoolEntityStores(db: StoreDatabase): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'staffPermissionProfiles' | 'staffPermissionProfileBindings' | 'staffManualPermissionAssignments' | 'staffPermissionScopeDefaults' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
   return {
     consortiums: customStore(
       db,
@@ -59,6 +64,7 @@ export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiu
         code: entity.code ?? null,
         photoUrl: entity.photoUrl ?? null,
         email: entity.email ?? null,
+        phone: entity.phone ?? null,
         notificationEmail: entity.notificationEmail ?? null,
         notificationPhone: entity.notificationPhone ?? null,
         subjectId: entity.subjectId ?? null,
@@ -80,6 +86,7 @@ export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiu
         code: row.code,
         photoUrl: row.photoUrl,
         email: row.email,
+        phone: row.phone,
         notificationEmail: row.notificationEmail,
         notificationPhone: row.notificationPhone,
         subjectId: row.subjectId,
@@ -126,6 +133,11 @@ export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiu
       }),
     ),
 
+    staffPermissionScopeDefaults: defaultStore(db, schema.staffPermissionScopeDefaults, StaffPermissionScopeDefaultsCtor),
+    staffManualPermissionAssignments: defaultStore(db, schema.staffManualPermissionAssignments, StaffManualPermissionAssignmentCtor),
+    staffPermissionProfiles: defaultStore(db, schema.staffPermissionProfiles, StaffPermissionProfileCtor),
+    staffPermissionProfileBindings: defaultStore(db, schema.staffPermissionProfileBindings, StaffPermissionProfileBindingCtor),
+
     teachers: customStore(
       db,
       schema.teachers,
@@ -134,8 +146,10 @@ export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiu
         schoolId: entity.schoolId,
         firstName: entity.firstName,
         lastName: entity.lastName,
+        sourceFullName: entity.sourceFullName ?? null,
         code: entity.code ?? null,
         photoUrl: entity.photoUrl ?? null,
+        signatureAttachmentId: entity.signatureAttachmentId ?? null,
         email: entity.email ?? null,
         phone: entity.phone ?? null,
         notificationEmail: entity.notificationEmail ?? null,
@@ -149,8 +163,10 @@ export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiu
         schoolId: row.schoolId,
         firstName: row.firstName,
         lastName: row.lastName,
+        sourceFullName: row.sourceFullName,
         code: row.code,
         photoUrl: row.photoUrl,
+        signatureAttachmentId: row.signatureAttachmentId,
         email: row.email,
         phone: row.phone,
         notificationEmail: row.notificationEmail,

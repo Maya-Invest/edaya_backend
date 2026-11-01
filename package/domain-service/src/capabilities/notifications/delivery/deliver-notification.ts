@@ -4,8 +4,8 @@ import { AccessPolicies, createSystemActorMetadata } from '@edaya/authorization'
 import { MessageDelivery } from '@edaya/core'
 import { resolveRecipientSubjectId, uniqueNotificationRecipients } from './recipient-utils'
 
-export function buildNotificationDeliveryId(sourceKey: string, subjectId: string, recipient: Pick<NotificationRecipient, 'kind' | 'id'>): string {
-  return `delivery:${[sourceKey, subjectId, recipient.kind, recipient.id].map(encodeURIComponent).join(':')}`
+export function buildNotificationDeliveryId(schoolId: string, sourceKey: string, subjectId: string, recipient: Pick<NotificationRecipient, 'kind' | 'id'>): string {
+  return `delivery:v2:${[schoolId, sourceKey, subjectId, recipient.kind, recipient.id].map(encodeURIComponent).join(':')}`
 }
 
 export interface DeliverNotificationDeps {
@@ -22,6 +22,10 @@ export interface DeliverNotificationInput {
   body: string
   emailSubject?: string
   emailBody?: string
+  smsBody?: string
+  enableEmail?: boolean
+  enablePush?: boolean
+  enableSms?: boolean
   recipients: readonly NotificationRecipient[]
   announcementId?: string
   priority?: AnnouncementPriority
@@ -54,7 +58,7 @@ export async function deliverNotification(
       recipientId: recipient.id,
       $limit: 1,
     }))[0]
-    const deliveryId = existing?.id ?? buildNotificationDeliveryId(input.idempotencyKeyPrefix, subjectId, recipient)
+    const deliveryId = existing?.id ?? buildNotificationDeliveryId(input.schoolId, input.idempotencyKeyPrefix, subjectId, recipient)
     const delivery = new MessageDelivery({
       id: deliveryId,
       schoolId: input.schoolId,
@@ -83,6 +87,10 @@ export async function deliverNotification(
       body: input.body,
       emailSubject: input.emailSubject,
       emailBody: input.emailBody,
+      smsBody: input.smsBody,
+      enableEmail: input.enableEmail,
+      enablePush: input.enablePush,
+      enableSms: input.enableSms,
       recipients: [{
         kind: recipient.kind,
         id: recipient.id,
@@ -93,6 +101,8 @@ export async function deliverNotification(
       metadata: {
         ...input.metadata,
         deliveryId,
+        recipientId: recipient.id,
+        recipientKind: recipient.kind,
       },
     })
   }
@@ -111,6 +121,10 @@ export async function deliverNotificationFromEnqueueInput(
     body: input.body,
     emailSubject: input.emailSubject,
     emailBody: input.emailBody,
+    smsBody: input.smsBody,
+    enableEmail: input.enableEmail,
+    enablePush: input.enablePush,
+    enableSms: input.enableSms,
     recipients: input.recipients,
     announcementId: input.announcementId,
     priority: input.priority,
@@ -133,5 +147,5 @@ export async function cancelNotificationDeliveries(
   const scope = await access.entity('messageDeliveries').readScope()
   const deliveries = await deps.repositories.messageDeliveries.forAccess(scope).list({ sourceKey })
   for (const delivery of deliveries)
-    await deps.notificationGateway.cancel(delivery.id)
+    await deps.notificationGateway.cancel(delivery.id, schoolId)
 }

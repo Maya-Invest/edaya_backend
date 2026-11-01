@@ -5,22 +5,18 @@ import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorizat
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { hashInvitationToken } from "@edaya/service";
-import { createDirectoryClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
-import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
+import { verifyIdentityToken } from "../../src/identity/server/index";
+import type { IdentityClient } from "../../src/identity/server/index";
+import { createTestIdentityKeys, signTestIdentityToken } from "../../src/identity/server/testing";
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 
-const issuer = "http://localhost:9900";
+const issuer = "http://localhost:9999";
 const audience = "http://localhost:9999";
 const keys = await createTestIdentityKeys();
 const baseEnv = parseEnv({ RUNTIME: "in-memory", NODE_ENV: "test", DATABASE_URL: "pglite" });
 const identityClient: IdentityClient = {
-  directory: createDirectoryClient({
-    baseUrl: issuer,
-    secret: "test",
-    fetch: (async () => new Response(null, { status: 404 })) as unknown as typeof fetch,
-  }),
+  directory: { lookupByContact: async () => undefined, resolveBySubjectId: async () => ({ identifiers: [{ kind: "email", value: "staff@school.edu" }, { kind: "phone", value: "+2250102030405" }] }) },
   verifyAccessToken: token => verifyIdentityToken(token, { issuer, audience, jwks: keys.jwks }),
 };
 
@@ -84,10 +80,10 @@ async function tokenFor(email?: string) {
 }
 
 describe("invitation accept route", () => {
-  it("accepts a matching identity JWT", async () => {
+  it("accepts a verified directory alias even when the JWT email differs", async () => {
     const invitationToken = "accept-token-123";
     const { app, acceptAccountInvitation } = createInvitationApp(invitationToken);
-    const jwt = await tokenFor("staff@school.edu");
+    const jwt = await tokenFor("primary@school.edu");
     const response = await app.request(`/public/invitations/${invitationToken}/accept`, {
       method: "POST",
       headers: { authorization: `Bearer ${jwt}` },
@@ -150,5 +146,25 @@ describe("invitation accept route", () => {
       headers: { authorization: `Bearer ${jwt}` },
     });
     expect(response.status).toBe(409);
+  });
+
+  it("accepts a staff invitation into a second school", async () => {
+    const actor = createStaffActorMetadata({
+      schoolId: "other-school",
+      subjectId: "identity-user-1",
+      requestId: "req-2",
+      authenticatedAt: new Date(),
+      assuranceLevel: ActorAssuranceLevel.Standard,
+      staffMemberId: "staff-home",
+    });
+    const invitationToken = "accept-token-second-school";
+    const { app, acceptAccountInvitation } = createInvitationApp(invitationToken, actor);
+    const jwt = await tokenFor("staff@school.edu");
+    const response = await app.request(`/public/invitations/${invitationToken}/accept`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${jwt}` },
+    });
+    expect(response.status).toBe(200);
+    expect(acceptAccountInvitation).toHaveBeenCalled();
   });
 });

@@ -6,6 +6,8 @@
   "required": ["studentName", "periodLabel", "schoolName", "subjects"],
   "additionalProperties": false,
   "properties": {
+    "aggregateLabel": { "type": "string" },
+    "gradingMaximum": { "type": "string" },
     "republicLabel": { "type": "string" },
     "ministryLabel": { "type": "string" },
     "crestUrl": { "type": "string", "minLength": 1 },
@@ -56,7 +58,32 @@
           "total": { "type": "string" },
           "rank": { "type": "string" },
           "appreciation": { "type": "string" },
-          "teacherName": { "type": "string" }
+          "teacherName": { "type": "string" },
+          "teachers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "teacherId",
+                "name"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "teacherId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "signatureUrl": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -113,12 +140,40 @@
         },
         "appreciation": { "type": "string" },
         "homeroomTeacherName": { "type": "string" },
+        "homeroomTeachers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "teacherId",
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "teacherId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "signatureUrl": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
         "principalName": { "type": "string" },
         "principalStampUrl": { "type": "string", "minLength": 1 },
         "signedAt": { "type": "string" }
       }
     },
     "motto": { "type": "string" },
-    "notice": { "type": "string" }
+    "notice": { "type": "string" },
+    "watermark": { "type": "boolean" },
+    "stampUrl": { "type": "string", "minLength": 1 },
+    "signatureUrl": { "type": "string", "minLength": 1 }
   }
 }

@@ -1,4 +1,4 @@
-import type { EmailSendInput, EmailTransportPort } from "./port";
+import type { EmailSendInput, EmailTransportPort } from "@edaya/core";
 
 export interface CloudflareEmailBinding {
   send: (message: {

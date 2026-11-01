@@ -1,6 +1,6 @@
 # API folder structure
 
-The `apps/api` package separates **route registration** (thin HTTP surface) from **shared implementation** under `lib/`. Core entity/command/query routes are generated from the school API registry; hand-written routes cover authorization, onboarding, and system operations. HTTP infrastructure and dual-runtime wiring live at the top level (`http/`, `runtime/`). GraphQL is mounted from `app.ts` (not `app-router.ts`).
+The `apps/api` package separates **route registration** (thin HTTP surface) from **shared implementation** under `lib/`. Core entity/command/query routes are generated from the school API registry; hand-written routes cover authorization, onboarding, and system operations. HTTP infrastructure and dual-runtime wiring live at the top level (`http/`, `runtime/`).
 
 ## Layout
 
@@ -11,7 +11,7 @@ src/
 │   ├── local.ts               # Local dev server entry (PGlite / Postgres)
 │   ├── worker.ts              # Cloudflare Worker export
 │   └── cron-local.ts          # Local cron tick
-├── app.ts                     # Hono app: createApp + OpenAPI + GraphQL + mount app-router
+├── app.ts                     # Hono app: createApp + OpenAPI + mount app-router
 ├── app-router.ts              # Composes REST route modules (no /auth mount)
 │
 ├── routes/                    # Hand-written OpenAPI route modules
@@ -21,8 +21,7 @@ src/
 │   ├── invitation.routes.ts
 │   ├── file-storage.routes.ts
 │   ├── service-accounts.routes.ts
-│   ├── seed-auth.routes.ts
-│   └── notification-delivery-webhook.routes.ts
+│   └── seed-auth.routes.ts
 │
 ├── http/                      # App factory, CORS, DI, middleware, responses
 │   ├── bindings.ts            # AppBindings (used by http/ and runtime/)
@@ -43,7 +42,6 @@ src/
 └── lib/
     ├── authorization/         # Grants cache + serialization
     ├── documents/             # Report-card / logbook document payloads
-    ├── graphql/               # POST /graphql + optional GraphiQL
     ├── school-api/            # Registry, schemas, dispatch, route builders
     │   ├── application.ts
     │   ├── dispatch/          # Command + entity dispatch to SchoolService
@@ -57,9 +55,8 @@ src/
 
 - **`routes/`** — Hand-crafted OpenAPI routes only. No business logic beyond request/response wiring. Login lives on Central Identity, not this API.
 - **`lib/school-api/routes/`** — Route factories that generate the bulk of `/core/*` endpoints from `registry.ts` (commands, queries, entities). Shared helpers live in `entity-handlers.ts` and `shared.ts`.
-- **`lib/graphql/`** — Supported second contract. Schema and resolvers are derived from the same registry as REST. Mounted in `app.ts` via `mountGraphQLRoute`. The typed client is REST-only; production web/mobile use REST. GraphiQL (`/graphiql`) is off in production unless `GRAPHQL_GRAPHIQL=true`. Vite proxies `/graphql` for local exploration.
 - **`routes/onboarding.routes.ts`** — Thin HTTP for school registration. Orchestration lives in `@edaya/service` (`capabilities/onboarding`). Template catalogs stay in `@edaya/fixtures/onboarding`.
-- **`runtime/`** — Env parsing, database handles, identity-client wiring, Hyperdrive resolution, and the Node process runtime registry.
+- **`runtime/`** — Env parsing, database handles, Account composition, Hyperdrive resolution, and the Node process runtime registry.
 - **`http/dependencies/`** — Request-scoped dependency injection: env → school runtime → auth → session actor. Worker runtimes are resolved per request and closed in `onRequestComplete`.
 - **`cron/`** — Worker `scheduled()` heartbeat and queue consumer.
 - **`app-router.ts`** — REST composition point: index, effective grants, onboarding, system routes, generated core routes. Identity `/auth/*` is not mounted here.
@@ -74,7 +71,7 @@ src/
 | `buildQueryRoutes()` | `/core/queries/*` | `registry.ts` query definitions |
 | `buildEntityRoutes()` | `/core/entities/*` | `registry.ts` entity configs |
 
-All generated REST routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api/routes/paths.ts`. GraphQL exposes the same commands, queries, and entities at `POST /graphql`.
+All generated REST routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api/routes/paths.ts`.
 
 ## Import paths
 
@@ -89,7 +86,6 @@ All generated REST routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/schoo
 | OpenAPI schemas | `@/lib/school-api/schemas/*` |
 | Hand-written routes | `@/routes/*` |
 | Core route builders | `@/lib/school-api/routes` |
-| GraphQL mount | `@/lib/graphql` |
 | App router | `@/app-router` |
 
 ## Scripts
@@ -98,10 +94,12 @@ All generated REST routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/schoo
 |--------|---------|
 | `dev` | `bun --watch src/entries/local.ts` |
 | `dev:worker` | `wrangler dev --env staging --env-file .dev.vars` |
-| `build` | `tsup` → `dist/node.js` from `src/entries/local.ts` |
+| `check` | `tsc --noEmit` |
+| `deploy:production:dry-run` | `wrangler deploy --env prod --dry-run` |
+| `deploy:staging:dry-run` | `wrangler deploy --env staging --dry-run` |
 | `deploy:production` | `wrangler deploy --env prod` |
 | `deploy:staging` | `wrangler deploy --env staging` |
 
 TypeScript client bindings are generated at the repo root from the exported OpenAPI document: `bun tooling/repo/openapi/generate-bindings.ts`. OpenAPI export: `bun tooling/repo/openapi/export.ts`.
 
-Root shortcuts: `bun repo deploy api production` → `@edaya/api deploy:production`; `bun repo deploy api staging` → `deploy:staging`.
+Root shortcuts: `bun repo ops emergency-deploy production` → `@edaya/api deploy:production`; `bun repo ops emergency-deploy staging` → `deploy:staging`.

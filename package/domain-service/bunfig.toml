@@ -1,4 +1,4 @@
+env = false
+
 [test]
-# Turbo runs this package from its own directory, so the root bunfig is not read.
-preload = ["../../tooling/test-support/preload.ts"]
 timeout = 30_000

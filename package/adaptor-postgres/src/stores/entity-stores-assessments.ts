@@ -1,4 +1,5 @@
-import type { Assessment, AssessmentResult, GradeScale, ReportCardDefinitionSection, ReportCardResult } from '@edaya/core'
+import type { Assessment, AssessmentResult, GradeScale, ReportCardResult, ReportModule } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { StoredReportCardResultSection } from './entity-store-helpers'
 import type { EntityStores } from './entity-stores-types'
 import {
@@ -8,14 +9,12 @@ import {
   AttendanceSummary,
   DeadlineComplianceStatus,
   GradeScale as GradeScaleCtor,
-  ReportCardDefinition as ReportCardDefinitionCtor,
-  ReportCardDefinitionSection as ReportCardDefinitionSectionCtor,
-  ReportCardDefinitionSectionKind,
   ReportCardResult as ReportCardResultCtor,
   ReportCardResultStatus,
+  ReportModule as ReportModuleCtor,
 } from '@edaya/core'
 import { deserializeJsonb } from '../lib/mappers'
-import { customStore, defaultStore } from '../lib/store-factory'
+import { customStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 import {
   deserializeReportCardResultSection,
@@ -23,7 +22,18 @@ import {
   serializeReportCardResultSection,
 } from './entity-store-helpers'
 
-export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'assessments' | 'assessmentResults' | 'gradeScales' | 'definitions' | 'sections' | 'results'> {
+function numberToNumeric(value: number): string {
+  return value.toFixed(2)
+}
+
+function numericToNumber(value: string | number): number {
+  const parsed = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(parsed))
+    throw new Error(`Invalid numeric grade value: ${value}`)
+  return parsed
+}
+
+export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntityStores, 'assessments' | 'assessmentResults' | 'gradeScales' | 'reportModules' | 'results'> {
   return {
     assessments: customStore(
       db,
@@ -35,8 +45,8 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         periodId: entity.periodId,
         title: entity.title,
         kind: entity.kind,
-        maxScore: entity.maxScore,
-        coefficient: entity.coefficient,
+        maxScore: numberToNumeric(entity.maxScore),
+        coefficient: numberToNumeric(entity.coefficient),
         description: entity.description ?? null,
         attachments: entity.attachments,
         lessonSessionId: entity.lessonSessionId ?? null,
@@ -44,6 +54,9 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         endsAt: entity.endsAt ?? null,
         dueAt: entity.dueAt ?? null,
         completedAt: entity.completedAt ?? null,
+        marksStatus: entity.marksStatus,
+        marksRevision: entity.marksRevision,
+        marksReview: entity.marksReview,
         createdAt: entity.createdAt,
       }),
       row => new AssessmentCtor({
@@ -53,8 +66,8 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         periodId: row.periodId,
         title: row.title,
         kind: enumValue(AssessmentKind, row.kind, 'assessments.kind'),
-        maxScore: row.maxScore,
-        coefficient: row.coefficient,
+        maxScore: numericToNumber(row.maxScore),
+        coefficient: numericToNumber(row.coefficient),
         description: row.description ?? undefined,
         attachments: deserializeJsonb(row.attachments) ?? [],
         lessonSessionId: row.lessonSessionId ?? undefined,
@@ -62,6 +75,9 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         endsAt: row.endsAt ?? undefined,
         dueAt: row.dueAt,
         completedAt: row.completedAt,
+        marksStatus: row.marksStatus,
+        marksRevision: row.marksRevision,
+        marksReview: deserializeJsonb(row.marksReview),
         createdAt: row.createdAt,
       }),
     ),
@@ -70,20 +86,30 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
       db,
       schema.assessmentResults,
       (entity: AssessmentResult) => ({
+        revision: entity.revision,
         id: entity.id,
         studentId: entity.studentId,
         assessmentId: entity.assessmentId,
-        score: entity.score ?? null,
+        mentionId: entity.mentionId ?? null,
+        originalEntry: entity.originalEntry ?? null,
+        calculation: entity.calculation ?? null,
+        designation: entity.designation ?? null,
+        score: entity.score == null ? null : String(entity.score),
         status: entity.status ?? null,
         notes: entity.notes ?? null,
         createdBy: entity.createdBy ?? null,
         createdAt: entity.createdAt,
       }),
       row => new AssessmentResultCtor({
+        revision: row.revision,
         id: row.id,
         studentId: row.studentId,
         assessmentId: row.assessmentId,
-        score: row.score,
+        mentionId: row.mentionId ?? undefined,
+        originalEntry: deserializeJsonb(row.originalEntry) ?? undefined,
+        calculation: deserializeJsonb(row.calculation) ?? undefined,
+        designation: row.designation ?? undefined,
+        score: row.score == null ? undefined : numericToNumber(row.score),
         status: row.status === null ? undefined : enumValue(DeadlineComplianceStatus, row.status, 'assessmentResults.status'),
         notes: row.notes,
         createdBy: row.createdBy,
@@ -98,10 +124,13 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         id: entity.id,
         schoolId: entity.schoolId,
         name: entity.name,
-        minScore: entity.minScore,
-        maxScore: entity.maxScore,
+        minScore: String(entity.minScore),
+        maxScore: String(entity.maxScore),
         ranges: entity.ranges,
         decimalPlaces: entity.decimalPlaces,
+        roundingMode: entity.roundingMode,
+        intervalConvention: entity.intervalConvention,
+        revision: entity.revision,
         description: entity.description,
         isDefault: entity.isDefault,
         createdAt: entity.createdAt,
@@ -110,48 +139,24 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         id: row.id,
         schoolId: row.schoolId,
         name: row.name,
-        minScore: row.minScore,
-        maxScore: row.maxScore,
-        ranges: deserializeJsonb(row.ranges) || [],
+        minScore: numericToNumber(row.minScore),
+        maxScore: numericToNumber(row.maxScore),
+        ranges: [...deserializeJsonb(row.ranges)],
         decimalPlaces: row.decimalPlaces,
+        roundingMode: row.roundingMode as GradeScale['roundingMode'],
+        intervalConvention: row.intervalConvention as GradeScale['intervalConvention'],
+        revision: row.revision,
         description: row.description,
         isDefault: row.isDefault,
         createdAt: row.createdAt,
       }),
     ),
 
-    definitions: defaultStore(db, schema.reportCardDefinitions, ReportCardDefinitionCtor),
-
-    sections: customStore(
+    reportModules: customStore(
       db,
-      schema.reportCardDefinitionSections,
-      (entity: ReportCardDefinitionSection) => ({
-        id: entity.id,
-        reportCardDefinitionId: entity.reportCardDefinitionId,
-        name: entity.name,
-        role: entity.role ?? null,
-        coefficient: entity.coefficient ?? null,
-        order: entity.order,
-        weight: entity.weight,
-        parentSectionId: entity.parentSectionId ?? null,
-        subjectId: entity.subjectId ?? null,
-        createdAt: entity.createdAt,
-      }),
-      row => new ReportCardDefinitionSectionCtor({
-        id: row.id,
-        reportCardDefinitionId: row.reportCardDefinitionId,
-        name: row.name,
-        kind: row.subjectId
-          ? ReportCardDefinitionSectionKind.Subject
-          : ReportCardDefinitionSectionKind.Group,
-        role: row.role ?? undefined,
-        coefficient: row.coefficient ?? undefined,
-        order: row.order,
-        weight: row.weight,
-        parentSectionId: row.parentSectionId,
-        subjectId: row.subjectId,
-        createdAt: row.createdAt,
-      }),
+      schema.reportModules,
+      (entity: ReportModule) => ({ ...entity.data, explicitWeight: entity.explicitWeight ?? null }),
+      row => new ReportModuleCtor({ ...row, weightingMode: row.weightingMode as ReportModule['weightingMode'] }),
     ),
 
     results: customStore(
@@ -162,14 +167,27 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         studentId: entity.studentId,
         classGroupId: entity.classGroupId,
         periodId: entity.periodId,
-        reportCardDefinitionId: entity.reportCardDefinitionId,
+        gradeLevelId: entity.gradeLevelId,
+        academicYearId: entity.academicYearId,
+        reportConfigurationRevision: entity.reportConfigurationRevision,
         sectionResults: entity.sectionResults.map(serializeReportCardResultSection),
         attendanceSummary: entity.attendanceSummary,
         assessmentResultCount: entity.assessmentResultCount,
-        overallAverage: entity.overallAverage ?? null,
+        version: entity.version,
+        sourceMarks: entity.sourceMarks,
+        pendingCorrectionIds: entity.pendingCorrectionIds,
+        sourceAssessments: entity.sourceAssessments,
+        pendingAssessmentIds: entity.pendingAssessmentIds,
+        calculationStale: entity.calculationStale,
+        grading: entity.grading ?? null,
+        aggregateLabel: entity.aggregateLabel ?? null,
+        gradingPolicyRevision: entity.gradingPolicyRevision ?? null,
+        revisedDraft: entity.revisedDraft ?? null,
+        publicationHistory: entity.publicationHistory,
+        overallAverage: entity.overallAverage == null ? null : String(entity.overallAverage),
         rank: entity.rank ?? null,
         classSize: entity.classSize ?? null,
-        passThreshold: entity.passThreshold ?? null,
+        passThreshold: entity.passThreshold == null ? null : String(entity.passThreshold),
         teacherComment: entity.teacherComment ?? null,
         principalComment: entity.principalComment ?? null,
         status: entity.status,
@@ -183,17 +201,30 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
 
         return new ReportCardResultCtor({
           id: row.id,
-          reportCardDefinitionId: row.reportCardDefinitionId,
+          gradeLevelId: row.gradeLevelId,
+          academicYearId: row.academicYearId,
+          reportConfigurationRevision: row.reportConfigurationRevision,
           studentId: row.studentId,
           classGroupId: row.classGroupId,
           periodId: row.periodId,
           sectionResults: (sectionsData as StoredReportCardResultSection[]).map(deserializeReportCardResultSection),
           attendanceSummary: new AttendanceSummary(attendanceData),
           assessmentResultCount: row.assessmentResultCount,
-          overallAverage: row.overallAverage,
+          version: row.version,
+          sourceMarks: deserializeJsonb(row.sourceMarks),
+          pendingCorrectionIds: deserializeJsonb(row.pendingCorrectionIds),
+          sourceAssessments: deserializeJsonb(row.sourceAssessments),
+          pendingAssessmentIds: deserializeJsonb(row.pendingAssessmentIds),
+          calculationStale: row.calculationStale,
+          grading: deserializeJsonb(row.grading) ?? undefined,
+          aggregateLabel: row.aggregateLabel ?? undefined,
+          gradingPolicyRevision: row.gradingPolicyRevision ?? undefined,
+          revisedDraft: deserializeJsonb(row.revisedDraft) ?? undefined,
+          publicationHistory: deserializeJsonb(row.publicationHistory) ?? [],
+          overallAverage: row.overallAverage == null ? undefined : numericToNumber(row.overallAverage),
           rank: row.rank,
           classSize: row.classSize,
-          passThreshold: row.passThreshold,
+          passThreshold: row.passThreshold == null ? undefined : numericToNumber(row.passThreshold),
           teacherComment: row.teacherComment,
           principalComment: row.principalComment,
           status: enumValue(ReportCardResultStatus, row.status, 'reportCardResults.status'),

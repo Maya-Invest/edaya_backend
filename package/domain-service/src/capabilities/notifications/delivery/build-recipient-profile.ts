@@ -1,20 +1,11 @@
 import type { Guardian, GuardianStudentLink, NotificationRecipientProfile, StaffMember, Student, Teacher } from '@edaya/core'
-import { GuardianContactMethodType, MessageDeliveryRecipientKind } from '@edaya/core'
+import { MessageDeliveryRecipientKind } from '@edaya/core'
 import { normalizeInvitationEmail } from '../../invitations/resolve-invitation-contact'
 import {
   guardianFallbackEmail,
   guardianFallbackPhone,
   staffFallbackEmail,
 } from './resolve-notification-contact'
-
-function guardianAllowsChannel(
-  guardian: Guardian,
-  types: readonly GuardianContactMethodType[],
-): boolean {
-  return guardian.contactMethods.some(method =>
-    types.includes(method.type) && method.allowsNotifications,
-  )
-}
 
 export function buildStaffRecipientProfile(staff: StaffMember): NotificationRecipientProfile | undefined {
   if (!staff.subjectId || staff.accountKind !== 'human' || !staff.isActive) {
@@ -38,6 +29,7 @@ export function buildStaffRecipientProfile(staff: StaffMember): NotificationReci
       allowsNotifications: true,
       channels: {
         email: Boolean(staff.notificationEmail ?? fallbackEmail),
+        sms: Boolean(staff.notificationPhone),
         in_app: true,
       },
     },
@@ -52,7 +44,6 @@ export function buildGuardianRecipientProfile(
     return undefined
   }
 
-  const allowsNotifications = guardian.contactMethods.some(method => method.allowsNotifications)
   const fallbackEmail = guardianFallbackEmail(guardian)
   const fallbackPhone = guardianFallbackPhone(guardian)
 
@@ -64,23 +55,17 @@ export function buildGuardianRecipientProfile(
       subjectId: guardian.subjectId,
     },
     displayName: guardian.fullName,
-    notificationEmail: guardian.notificationEmail,
-    notificationPhone: guardian.notificationPhone,
     fallbackEmail,
     fallbackPhone,
     preferences: {
-      allowsNotifications,
+      allowsNotifications: true,
       receivesAcademicReports: links.some(link => link.receivesAcademicReports),
       receivesAttendanceAlerts: links.some(link => link.receivesAttendanceAlerts),
       channels: {
-        email: guardianAllowsChannel(guardian, [GuardianContactMethodType.Email]),
-        sms: guardianAllowsChannel(guardian, [
-          GuardianContactMethodType.Phone,
-          GuardianContactMethodType.Sms,
-          GuardianContactMethodType.Whatsapp,
-        ]),
-        in_app: allowsNotifications,
-        push: allowsNotifications,
+        email: guardian.emailNotificationsEnabled && Boolean(guardian.email),
+        sms: guardian.smsNotificationsEnabled && Boolean(guardian.phone),
+        in_app: true,
+        push: guardian.pushNotificationsEnabled,
       },
     },
   }
@@ -130,6 +115,7 @@ export function buildTeacherRecipientProfile(teacher: Teacher): NotificationReci
       allowsNotifications: true,
       channels: {
         email: Boolean(teacher.notificationEmail ?? fallbackEmail),
+        sms: Boolean(teacher.notificationPhone),
         in_app: true,
       },
     },

@@ -12,7 +12,7 @@ export interface WipeLocalDataResult {
 }
 
 export function resolveLocalDataDir(repoRoot: string): string {
-  return path.join(repoRoot, '.data')
+  return path.join(repoRoot, '.data', 'school')
 }
 
 export async function wipeLocalData(options: WipeLocalDataOptions): Promise<WipeLocalDataResult> {

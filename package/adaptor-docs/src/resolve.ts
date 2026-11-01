@@ -1,11 +1,12 @@
 import type { BrowserRunBinding } from "./adapters/browser-run-pdf-renderer";
 import { createBrowserRunPdfRenderer } from "./adapters/browser-run-pdf-renderer";
+import { createChromePdfRenderer, detectChromeExecutable } from "./adapters/chrome-pdf-renderer";
 import { createGotenbergPdfRenderer } from "./adapters/gotenberg-pdf-renderer";
 import { createStubPdfRenderer } from "./adapters/stub-pdf-renderer";
 import type { DocsRendererEnv } from "./env";
 import type { PdfRenderer } from "./ports/pdf-renderer";
 
-export type ResolvedPdfRendererKind = "browser" | "gotenberg" | "stub";
+export type ResolvedPdfRendererKind = "browser" | "gotenberg" | "chrome" | "stub";
 
 export interface ResolvedPdfRenderer {
   kind: ResolvedPdfRendererKind;
@@ -33,6 +34,10 @@ export function resolvePdfRenderer(env: DocsRendererEnv): ResolvedPdfRenderer | 
   }
 
   if (env.RUNTIME === "local") {
+    const chromePath = detectChromeExecutable(env.CHROME_PATH);
+    if (chromePath) {
+      return { kind: "chrome", renderer: createChromePdfRenderer(chromePath) };
+    }
     return { kind: "stub", renderer: createStubPdfRenderer() };
   }
 

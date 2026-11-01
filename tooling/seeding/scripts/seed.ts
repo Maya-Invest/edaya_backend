@@ -9,6 +9,9 @@ import { resolveStagingSeedApiUrl } from '../src/support/resolve-seed-env.ts'
 import { runSeedHttpCli } from './run-seed-http-cli.ts'
 
 loadSeedEnvFiles()
+// Root dotenv may contain deployment credentials; seed work never needs them.
+for (const key of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_KEY', 'CLOUDFLARE_EMAIL'])
+  delete process.env[key]
 
 let invocation
 try {
@@ -43,10 +46,12 @@ if (invocation.kind === 'clean') {
 }
 
 if (invocation.clean) {
-  await runSeedCleanup({
+  if (!await runSeedCleanup({
     target: invocation.target,
-    yes: true,
-  })
+    yes: invocation.yes ?? false,
+  })) {
+    process.exit(0)
+  }
 }
 
 process.exit(await runSeedHttpCli(invocation))

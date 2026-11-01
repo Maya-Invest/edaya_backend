@@ -1,11 +1,10 @@
 import { Permission } from './permission'
 
-/** Permissions derived from `StaffAssignment` rows (class / course / session). */
+/** Default teaching-duty seed bundle. Eligibility is defined by catalog assignmentTargets. */
 export const ASSIGNMENT_SCOPED_PERMISSIONS: readonly Permission[] = [
-  Permission.GRADE_INPUT,
+  Permission.GRADE_MANAGE,
   Permission.ATTENDANCE_RECORD,
-  Permission.CLASS_LOGBOOK_CREATE,
-  Permission.CLASS_LOGBOOK_UPDATE,
+  Permission.CLASS_LOGBOOK_MANAGE,
   Permission.DISCIPLINE_CREATE,
 ]
 

@@ -6,6 +6,7 @@ import type {
   PutObjectInput,
   PutObjectResult,
 } from '../ports/gateways/file-storage'
+import { assertStorageReadLimit, readBoundedStorageBody } from '../shared/bounded-storage-read'
 import { readStorageBody } from '../shared/read-storage-body'
 
 interface StoredObject {
@@ -21,6 +22,14 @@ export function createInMemoryFileStorage(): FileStoragePort & {
 
   return {
     objects,
+    async readObject(key, { maxBytes }) {
+      assertStorageReadLimit(maxBytes)
+      const stored = objects.get(key)
+      if (!stored)
+        return null
+      const body = await readBoundedStorageBody(stored.body, maxBytes)
+      return { body, sizeBytes: body.byteLength, contentType: stored.contentType }
+    },
     async putObject(input: PutObjectInput): Promise<PutObjectResult> {
       const body = await readStorageBody(input.body)
       objects.set(input.key, {

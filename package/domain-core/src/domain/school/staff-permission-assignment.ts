@@ -19,6 +19,9 @@ export const staffPermissionAssignmentBaseSchema = z.object({
   status: z.enum(['active', 'inactive', 'expired']).default('active'),
   startsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   endsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  sourceManualAssignmentId: z.string().trim().min(1).nullable().optional().transform(v => v ?? undefined),
+  sourceProfileBindingId: z.string().trim().min(1).nullable().optional().transform(v => v ?? undefined),
+  sourceProfileId: z.string().trim().min(1, 'sourceProfileId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
   updatedAt: zodDate().optional(),
 })
@@ -82,6 +85,9 @@ export class StaffPermissionAssignment {
   get status() { return this.data.status }
   get startsAt() { return this.data.startsAt }
   get endsAt() { return this.data.endsAt }
+  get sourceManualAssignmentId() { return this.data.sourceManualAssignmentId }
+  get sourceProfileBindingId() { return this.data.sourceProfileBindingId }
+  get sourceProfileId() { return this.data.sourceProfileId }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
 }

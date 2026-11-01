@@ -125,7 +125,7 @@ describe('HttpSeedClient.request', () => {
     let identityCalls = 0
     const client = new HttpSeedClient({
       baseUrl: 'http://localhost:9999',
-      authUrl: 'http://localhost:9900',
+
       fetch: async (input) => {
         if (String(input).includes('/auth/sign-in/email')) {
           identityCalls += 1

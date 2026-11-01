@@ -3,6 +3,8 @@ import type { FileStoragePort, Filter, NotificationGatewayPort, QueryOptions } f
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
+import { PostgresDurableWork } from '../../../adaptor-postgres/src/stores/durable-work-store'
 import { acquireDatabase } from './database-pool'
 import { matchesFilter } from './filter-matcher'
 import { testFileStorage } from './test-file-storage'
@@ -112,13 +114,13 @@ const failureResources = {
   lessonSessionRepository: 'lessonSessions',
   activitySessionRepository: 'activitySessions',
   studentClassEnrollmentRepository: 'enrollments',
-  studentFeeRepository: 'studentFees',
+  studentFeeRepository: 'studentCharges',
 } as const
 export type FailableRepository = keyof typeof failureResources
 
 /** Uses the production SQL compiler and transaction implementation; no test authorization evaluator. */
-export async function createTestApp(actor?: ActorMetadata, options: { owner?: boolean, notificationGateway?: NotificationGatewayPort, fileStorage?: FileStoragePort } = {}) {
-  const { repositories: nativeRepositories, atomic: atomicExecution } = await acquireDatabase()
+export async function createTestApp(actor?: ActorMetadata, options: { owner?: boolean, notificationGateway?: NotificationGatewayPort, fileStorage?: FileStoragePort, documentRenderer?: import('@edaya/core').DocumentRendererPort } = {}) {
+  const { repositories: nativeRepositories, atomic: atomicExecution, db, connection } = await acquireDatabase()
   let saveFailure: { repository: FailableRepository, remainingAttempts: number } | undefined
   const failSaveOnAttempt = (repository: FailableRepository, attempt = 1) => {
     saveFailure = { repository, remainingAttempts: attempt }
@@ -157,11 +159,15 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     assuranceLevel: ActorAssuranceLevel.Strong,
   })
   if (defaultActor.kind === 'staff') {
-    await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
+    await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', financeCurrency: 'USD', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
     await nativeRepositories.staffMembers.save(new StaffMember({ id: defaultActor.staffMemberId, schoolId: defaultActor.schoolId, firstName: 'Fixture', lastName: 'Staff', accountKind: defaultActor.accountKind, ...(defaultActor.accountKind === 'human' ? { subjectId: defaultActor.subjectId } : { serviceId: 'fixture-service' }) }))
   }
+  const durableWork = new PostgresDurableWork(connection)
   const application = new SchoolApplication({
     atomicExecution,
+    commandJournal: new PostgresCommandJournal(),
+    durableWork,
+    documentRenderer: options.documentRenderer,
     notificationGateway: options.notificationGateway ?? noOpNotificationGateway,
     fileStorage: options.fileStorage ?? testFileStorage,
     repositories: schoolRepositories,
@@ -173,7 +179,10 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     schools: schoolRepositories.schools,
     students: schoolRepositories.students,
     staffMembers: schoolRepositories.staffMembers,
-    studentFees: schoolRepositories.studentFees,
+    catalogServiceRepository: schoolRepositories.catalogServices,
+    studentFeeRepository: schoolRepositories.studentCharges,
+    studentChargeRepository: schoolRepositories.studentCharges,
+    studentYearAccountRepository: schoolRepositories.studentYearAccounts,
     payments: schoolRepositories.payments,
     attendance: schoolRepositories.attendance,
     incidents: schoolRepositories.incidents,
@@ -201,14 +210,17 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     attendanceRepository: schoolRepositories.attendance,
     assessmentResultRepository: schoolRepositories.assessmentResults,
     gradeScaleRepository: schoolRepositories.gradeScales,
-    reportCardDefinitionRepository: schoolRepositories.definitions,
-    reportCardDefinitionSectionRepository: schoolRepositories.sections,
+    reportModuleRepository: schoolRepositories.reportModules,
     reportCardResultRepository: schoolRepositories.results,
     announcementRepository: schoolRepositories.announcements,
     announcementTargetRepository: schoolRepositories.announcementTargets,
     messageDeliveryRepository: schoolRepositories.messageDeliveries,
-    feeRepository: schoolRepositories.fees,
-    studentFeeRepository: schoolRepositories.studentFees,
+    catalogServices: schoolRepositories.catalogServices,
+    studentServiceEnrollments: schoolRepositories.studentServiceEnrollments,
+    studentCharges: schoolRepositories.studentCharges,
+    studentYearAccounts: schoolRepositories.studentYearAccounts,
+    allocations: schoolRepositories.allocations,
+    studentAccountEntries: schoolRepositories.studentAccountEntries,
     paymentRepository: schoolRepositories.payments,
     scheduleRepository: schoolRepositories.schedules,
     calendarEventRepository: schoolRepositories.calendarEvents,
@@ -225,10 +237,26 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
   }
   return {
     app: application.forActor(defaultActor),
+    application,
+    durableWork,
     repositories: testRepositories,
     schoolRepositories,
     forActor: (boundActor: ActorMetadata) => application.forActor(boundActor),
     failSaveOnAttempt,
     atomicExecution,
+    db,
   }
+}
+
+/** Explicit curriculum fixture setup; generic school fixtures remain category-free. */
+export async function createCurriculumTestApp(...args: Parameters<typeof createTestApp>) {
+  const fixture = await createTestApp(...args)
+  const { subjectCategories } = (await import('../../../../tooling/fixtures/src/onboarding/ivory-coast/parse-ivory-coast-templates')).IVORY_COAST_ONBOARDING_DATASET
+  const { ensureDatasetSubjectCategories } = await import('../../src/capabilities/academics/dataset-subject-categories')
+  const { SubjectCategoryEntity } = await import('@edaya/core')
+  for (const school of await fixture.schoolRepositories.schools.list()) {
+    await ensureDatasetSubjectCategories(fixture.schoolRepositories, school.id, subjectCategories)
+    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity({ id: 'test-category', schoolId: school.id, name: 'Fixture category' }))
+  }
+  return fixture
 }

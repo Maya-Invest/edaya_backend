@@ -92,6 +92,286 @@
       "when": 1789240219790,
       "tag": "0012_notification_contact_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789358400000,
+      "tag": "0013_notification_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789358400001,
+      "tag": "0014_command_journal",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789360200000,
+      "tag": "0015_cron_occurrences",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789362000000,
+      "tag": "0016_notification_tenants",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789363200000,
+      "tag": "0017_attachment_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789365000000,
+      "tag": "0018_private_file_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789378200000,
+      "tag": "0019_attachment_purposes",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789380000000,
+      "tag": "0020_notification_copy_types",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789381800000,
+      "tag": "0021_account_invitation_contact_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789383600000,
+      "tag": "0022_student_photos",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789385400000,
+      "tag": "0023_service_catalog_accounting",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789387200000,
+      "tag": "0024_official_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789389000000,
+      "tag": "0025_school_branding",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1789390800000,
+      "tag": "0026_family_feedback",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789392600000,
+      "tag": "0027_staff_permission_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789394400000,
+      "tag": "0028_invitation_lifecycle_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789396200000,
+      "tag": "0029_subject_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789482600000,
+      "tag": "0030_fractional_assessment_scores",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790208000000,
+      "tag": "0031_marks_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790208001000,
+      "tag": "0032_school_finance_currency",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790208002000,
+      "tag": "0033_push_installations",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790208003000,
+      "tag": "0034_marks_corrections",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791072000000,
+      "tag": "0035_teacher_corrections",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791072001000,
+      "tag": "0036_guardian_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791244800000,
+      "tag": "0037_permission_scope_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791244801000,
+      "tag": "0038_teacher_signatures",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791676800000,
+      "tag": "0039_timetable_generation_final",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791763200000,
+      "tag": "0040_grading_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791936000000,
+      "tag": "0041_configuration_editors",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1792108800000,
+      "tag": "0042_report_card_pass_threshold",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1792108800001,
+      "tag": "0043_report_correction_publication",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1792195200000,
+      "tag": "0044_grade_year_subjects",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1792281600000,
+      "tag": "0045_unified_subject_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1792454400000,
+      "tag": "0046_school_intake_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792540800000,
+      "tag": "0047_durable_school_imports",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792540800001,
+      "tag": "0048_student_subject_enrollments",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792886400000,
+      "tag": "0049_auto_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792972800000,
+      "tag": "0050_import_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1793059200000,
+      "tag": "0051_flat_guardian_contacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1793145600000,
+      "tag": "0052_flat_report_modules",
+      "breakpoints": true
     }
   ]
 }

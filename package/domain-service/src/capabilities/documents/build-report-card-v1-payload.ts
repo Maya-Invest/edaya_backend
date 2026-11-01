@@ -1,10 +1,11 @@
 import type {
+  DocumentTeacher,
   ReportCardResult,
   ReportCardResultSection,
   School,
   Student,
 } from '@edaya/core'
-import { ReportCardDefinitionSectionKind } from '@edaya/core'
+import { ReportCardResultSectionKind } from '@edaya/core'
 import {
   catalogBulletinSection,
   catalogClassName,
@@ -27,12 +28,14 @@ export interface ReportCardDocumentContext {
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>
   /** Subject teachers keyed by class subject id. */
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>
+  teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>
   classResults?: {
     classAverage?: string
     lowestAverage?: string
     highestAverage?: string
   }
   homeroomTeacherName?: string
+  homeroomTeachers?: readonly DocumentTeacher[]
   principalName?: string
 }
 
@@ -45,6 +48,7 @@ export interface ReportCardV1SubjectRow {
   rank?: string
   appreciation?: string
   teacherName?: string
+  teachers?: readonly DocumentTeacher[]
 }
 
 export interface ReportCardV1Payload {
@@ -60,6 +64,8 @@ export interface ReportCardV1Payload {
   birthPlace?: string
   nationality?: string
   gender?: string
+  aggregateLabel?: string
+  gradingMaximum?: string
   semesterAverage?: string
   semesterRank?: string
   schoolCity?: string
@@ -76,14 +82,17 @@ export interface ReportCardV1Payload {
   council?: {
     appreciation?: string
     homeroomTeacherName?: string
+    homeroomTeachers?: readonly DocumentTeacher[]
     principalName?: string
   }
 }
 
-function formatNumber(value: number, locale: string): string {
+function formatNumber(value: number | undefined, locale: string, decimalPlaces = 2): string {
+  if (value === undefined)
+    return '—'
   return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
   }).format(value)
 }
 
@@ -118,13 +127,8 @@ function resolveSectionName(
   lang: ReturnType<typeof catalogLangFromLocale>,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
 ): string {
-  if (section.classSubjectId && subjectNameByClassSubjectId) {
-    const resolved = subjectNameByClassSubjectId.get(section.classSubjectId)
-    if (resolved) {
-      return catalogSubjectName(resolved, lang)
-    }
-  }
-  return catalogBulletinSection(catalogText(section.name, lang), lang)
+  void subjectNameByClassSubjectId
+  return section.sectionKind === ReportCardResultSectionKind.Subject ? catalogSubjectName(section.name, lang) : catalogBulletinSection(catalogText(section.name, lang), lang)
 }
 
 function mapSubjectRow(
@@ -134,22 +138,26 @@ function mapSubjectRow(
   classSize?: number,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
+  teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
 ): ReportCardV1SubjectRow {
-  const total = section.average * section.weight
+  const total = section.average === undefined ? undefined : (section.grading?.value ?? section.average) * section.weight
   const teacherName = section.classSubjectId
     ? teacherNameByClassSubjectId?.get(section.classSubjectId)
     : undefined
   return {
     name: resolveSectionName(section, catalogLangFromLocale(locale), subjectNameByClassSubjectId),
     kind,
-    average: formatNumber(section.average, locale),
-    coefficient: String(section.weight),
+    average: `${formatNumber(section.average, locale, section.grading?.decimalPlaces)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
+    coefficient: kind === 'subject' ? (section.coefficient === undefined ? '—' : String(section.coefficient)) : String(section.weight),
     total: formatNumber(total, locale),
     ...(section.rank !== undefined && classSize !== undefined
       ? { rank: formatRank(section.rank, classSize, locale) }
       : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
     ...(teacherName ? { teacherName } : {}),
+    ...(kind === 'subject' && section.classSubjectId && teachersByClassSubjectId?.get(section.classSubjectId)?.length
+      ? { teachers: teachersByClassSubjectId.get(section.classSubjectId) }
+      : {}),
   }
 }
 
@@ -159,11 +167,12 @@ function flattenSections(
   classSize?: number,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
+  teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
 ): ReportCardV1SubjectRow[] {
   const rows: ReportCardV1SubjectRow[] = []
 
   for (const section of sections) {
-    if (section.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+    if (section.sectionKind === ReportCardResultSectionKind.Subject) {
       rows.push(mapSubjectRow(
         section,
         'subject',
@@ -171,12 +180,13 @@ function flattenSections(
         classSize,
         subjectNameByClassSubjectId,
         teacherNameByClassSubjectId,
+        teachersByClassSubjectId,
       ))
       continue
     }
 
     for (const child of section.subResults) {
-      if (child.sectionKind === ReportCardDefinitionSectionKind.Subject) {
+      if (child.sectionKind === ReportCardResultSectionKind.Subject) {
         rows.push(mapSubjectRow(
           child,
           'subject',
@@ -184,6 +194,7 @@ function flattenSections(
           classSize,
           subjectNameByClassSubjectId,
           teacherNameByClassSubjectId,
+          teachersByClassSubjectId,
         ))
       }
     }
@@ -196,6 +207,7 @@ function flattenSections(
         classSize,
         subjectNameByClassSubjectId,
         teacherNameByClassSubjectId,
+        teachersByClassSubjectId,
       ))
     }
   }
@@ -216,6 +228,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     input.result.classSize,
     input.subjectNameByClassSubjectId,
     input.teacherNameByClassSubjectId,
+    input.teachersByClassSubjectId,
   )
 
   if (subjects.length === 0) {
@@ -224,9 +237,9 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
 
   if (input.result.overallAverage !== undefined) {
     subjects.push({
-      name: catalogDocumentLabel('TOTAL', lang),
+      name: input.result.aggregateLabel ?? catalogDocumentLabel('TOTAL', lang),
       kind: 'totals',
-      average: formatNumber(input.result.overallAverage, locale),
+      average: formatNumber(input.result.overallAverage, locale, input.result.grading?.decimalPlaces),
       ...(input.result.rank !== undefined && input.result.classSize !== undefined
         ? { rank: formatRank(input.result.rank, input.result.classSize, locale) }
         : {}),
@@ -236,6 +249,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
   const attendance = input.result.attendanceSummary
   const appreciation = input.result.teacherComment ?? input.result.principalComment
   const payload: ReportCardV1Payload = {
+    ...(input.result.grading ? { aggregateLabel: input.result.aggregateLabel, gradingMaximum: String(input.result.grading.maximum) } : {}),
     studentName: input.student.fullName,
     periodLabel: catalogPeriodLabel(input.periodLabel, lang),
     schoolName: input.school.name,
@@ -250,7 +264,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     ...(input.student.gender ? { gender: input.student.gender } : {}),
     ...(input.result.overallAverage !== undefined
       ? {
-          semesterAverage: `${formatNumber(input.result.overallAverage, locale)} / 20`,
+          semesterAverage: `${formatNumber(input.result.overallAverage, locale, input.result.grading?.decimalPlaces)} / ${input.result.grading?.maximum ?? 20}${input.result.grading ? ` · ${input.result.grading.mention.code} — ${input.result.grading.mention.label}` : ''}`,
         }
       : {}),
     ...(input.result.rank !== undefined && input.result.classSize !== undefined
@@ -265,11 +279,12 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
       absenceHoursUnjustified: String(Math.max(0, attendance.absenceCount - attendance.excusedAbsenceCount)),
     },
     ...(input.classResults ? { classResults: input.classResults } : {}),
-    ...(appreciation || input.homeroomTeacherName || input.principalName
+    ...(appreciation || input.homeroomTeacherName || input.homeroomTeachers?.length || input.principalName
       ? {
           council: {
             ...(appreciation ? { appreciation } : {}),
             ...(input.homeroomTeacherName ? { homeroomTeacherName: input.homeroomTeacherName } : {}),
+            ...(input.homeroomTeachers?.length ? { homeroomTeachers: input.homeroomTeachers } : {}),
             ...(input.principalName ? { principalName: input.principalName } : {}),
           },
         }

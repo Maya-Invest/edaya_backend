@@ -52,6 +52,9 @@ export async function seedDevSchoolStructure(
   if (!school) {
     throw new Error('Fixture dataset must include school for school-structure seeding')
   }
+  if (!school.financeCurrency) {
+    throw new Error('Seed school must configure financeCurrency before financial seeding')
+  }
   if (!academicYear) {
     throw new Error('Fixture dataset must include academicYear for school-structure seeding')
   }
@@ -61,10 +64,19 @@ export async function seedDevSchoolStructure(
       id: school.id,
       name: school.name,
       timeZone: school.timeZone,
+      financeCurrency: school.financeCurrency,
       city: school.city ?? undefined,
       country: school.country ?? undefined,
+      issuingName: school.issuingName ?? undefined,
+      postalAddress: school.postalAddress ?? undefined,
+      phone: school.phone ?? undefined,
+      email: school.email ?? undefined,
+      schoolCode: school.schoolCode ?? undefined,
       ...(options.ownerSubjectId ? { ownerSubjectId: options.ownerSubjectId } : {}),
     })
+  }
+  else {
+    await port.configureFinanceCurrency(school.id, school.financeCurrency)
   }
 
   for (const gradeLevel of gradeLevels) {
@@ -88,6 +100,10 @@ export async function seedDevSchoolStructure(
 
   await port.publishAcademicYear(academicYear.id)
 
+  const publishPeriodIds = dataset.extensions?.publishAcademicPeriodIds
+  const shouldPublishPeriod = (periodId: string): boolean =>
+    publishPeriodIds === undefined || publishPeriodIds.includes(periodId)
+
   for (const period of academicPeriods) {
     await port.createAcademicPeriod({
       id: period.id,
@@ -98,7 +114,9 @@ export async function seedDevSchoolStructure(
       startDate: seedDateTime(isoDateString(period.startDate)),
       endDate: seedDateTime(isoDateString(period.endDate)),
     })
-    await port.publishAcademicPeriod(period.id)
+    if (shouldPublishPeriod(period.id)) {
+      await port.publishAcademicPeriod(period.id)
+    }
   }
 
   for (const slot of periodDefinitions) {

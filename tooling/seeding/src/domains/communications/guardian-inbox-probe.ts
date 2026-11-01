@@ -31,6 +31,16 @@ function resolveInboxProbeAnnouncement(dataset: FixtureDataset) {
   return match
 }
 
+function announcementTimestamp(value: unknown): string | undefined {
+  if (typeof value === 'string' && value.length > 0) {
+    return value
+  }
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+  return undefined
+}
+
 /**
  * Records unread inbox deliveries keyed to each auth-linked guardian's current subjectId.
  * Profiles without a central identity link receive no delivery until that link exists.
@@ -44,7 +54,11 @@ export async function seedAuthLinkedGuardianInboxProbes(
   guardianIds: readonly string[],
 ): Promise<number> {
   const announcement = resolveInboxProbeAnnouncement(dataset)
-  const sentAt = seedDateAndMinute('2026-01-28T18:05:00.000Z')
+  const sentAt = seedDateAndMinute(
+    announcementTimestamp(announcement.publishedAt)
+    ?? announcementTimestamp(announcement.createdAt)
+    ?? '2026-01-28T18:05:00.000Z',
+  )
   let recorded = 0
 
   for (const guardianId of guardianIds) {

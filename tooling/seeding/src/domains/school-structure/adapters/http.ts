@@ -37,6 +37,9 @@ export function createHttpSchoolStructureSeedPort(
     registerSchool: record => withSeedPortError('schoolStructure.registerSchool', async () => {
       await postCoreCommand(requestOptions, 'registerSchool', record)
     }),
+    configureFinanceCurrency: (schoolId, financeCurrency) => withSeedPortError('schoolStructure.configureFinanceCurrency', async () => {
+      await postCoreCommand(requestOptions, 'updateSchoolConfiguration', { schoolId, financeCurrency })
+    }),
     saveGradeLevel: record => withSeedPortError('schoolStructure.saveGradeLevel', async () => {
       await postCoreCommand(requestOptions, 'configureGradeLevel', record)
     }),

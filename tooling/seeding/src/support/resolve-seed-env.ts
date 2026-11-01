@@ -2,11 +2,11 @@
 import process from 'node:process'
 
 export const DEFAULT_LOCAL_API_URL = 'http://localhost:9999'
-export const DEFAULT_LOCAL_AUTH_URL = 'http://localhost:9900'
+export const DEFAULT_LOCAL_AUTH_URL = DEFAULT_LOCAL_API_URL
 export const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
-export const DEFAULT_STAGING_API_URL = 'https://staging.api.school.edayaplus.com'
-export const DEFAULT_STAGING_AUTH_URL = 'https://staging.identity.edayaplus.com'
-export const DEFAULT_STAGING_APP_ORIGIN = 'https://staging.app.school.edayaplus.com'
+export const DEFAULT_STAGING_API_URL = 'https://staging.api.edayaplus.com'
+export const DEFAULT_STAGING_AUTH_URL = DEFAULT_STAGING_API_URL
+export const DEFAULT_STAGING_APP_ORIGIN = 'https://staging.app.edayaplus.com'
 
 export type SeedHttpTarget = 'local' | 'staging'
 
@@ -14,24 +14,24 @@ function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, '')
 }
 
-/** Local API base URL (`bun repo seed`, `bun repo seed --scope doctor`, …). */
+/** Local API base URL (`bun repo ops seed`, `bun repo ops seed --scope doctor`, …). */
 export function resolveLocalSeedApiUrl(): string {
   const configured = process.env['SEED_API_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_LOCAL_API_URL)
 }
 
 export function resolveLocalSeedAuthUrl(): string {
-  return normalizeUrl(process.env['SEED_AUTH_URL']?.trim() || DEFAULT_LOCAL_AUTH_URL)
+  return resolveLocalSeedApiUrl()
 }
 
-/** Staging API base URL (`bun repo seed --staging`, `bun repo smoke-test staging`). */
+/** Staging API base URL (`bun repo ops seed staging`, `bun repo ops smoke api staging`). */
 export function resolveStagingSeedApiUrl(): string {
   const configured = process.env['SEED_STAGING_API_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_STAGING_API_URL)
 }
 
 export function resolveStagingSeedAuthUrl(): string {
-  return normalizeUrl(process.env['SEED_STAGING_AUTH_URL']?.trim() || DEFAULT_STAGING_AUTH_URL)
+  return resolveStagingSeedApiUrl()
 }
 
 /** Trusted webapp `Origin` for local identity sign-in. */
@@ -68,12 +68,16 @@ export function isStagingSeedApiUrl(apiUrl: string): boolean {
   try {
     const hostname = new URL(trimmed).hostname.toLowerCase()
     return hostname === 'staging.api.edayaplus.com'
+      || hostname === 'staging.api.school.edayaplus.com'
+      || hostname === 'staging.api.edayaplus.com'
+      || hostname.startsWith('staging.school.api.')
       || hostname.startsWith('staging.api.')
       || hostname.startsWith('api-staging.')
   }
   catch {
     const lower = trimmed.toLowerCase()
-    return lower.includes('staging.api.')
+    return lower.includes('staging.school.api.')
+      || lower.includes('staging.api.')
       || lower.includes('api-staging.')
   }
 }

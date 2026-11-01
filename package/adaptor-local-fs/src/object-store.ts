@@ -1,5 +1,8 @@
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
+import { assertStorageReadLimit, readBoundedStorageBody } from "@edaya/core";
 
 export interface LocalFileObjectStoreConfig {
   rootDir: string;
@@ -69,10 +72,17 @@ export function createLocalFileObjectStore(config: LocalFileObjectStoreConfig): 
         throw error;
       }
     },
-    async readObject(key: string): Promise<{ body: Uint8Array; contentType?: string } | null> {
+    async readObject(key: string, maxBytes?: number): Promise<{ body: Uint8Array; contentType?: string } | null> {
+      if (maxBytes !== undefined) {
+        assertStorageReadLimit(maxBytes);
+      }
       const objectPath = resolveObjectPath(rootDir, key);
       try {
-        const body = new Uint8Array(await readFile(objectPath));
+        // Open only after confirming existence; stream bounds still apply if the object grows.
+        const fileStat = await stat(objectPath);
+        const body = maxBytes === undefined
+          ? new Uint8Array(await readFile(objectPath))
+          : await readBoundedStorageBody(Readable.toWeb(createReadStream(objectPath)), maxBytes, fileStat.size);
         let contentType: string | undefined;
         try {
           const metadata = JSON.parse(await readFile(metadataPath(objectPath), "utf8")) as StoredObjectMetadata;
@@ -92,10 +102,13 @@ export function createLocalFileObjectStore(config: LocalFileObjectStoreConfig): 
     },
     async deleteObject(key: string): Promise<void> {
       const objectPath = resolveObjectPath(rootDir, key);
-      await Promise.allSettled([
+      const results = await Promise.allSettled([
         unlink(objectPath),
         unlink(metadataPath(objectPath)),
       ]);
+      if (results.some(result => result.status === "rejected" && (result.reason as NodeJS.ErrnoException)?.code !== "ENOENT")) {
+        throw new Error("LOCAL_FILE_DELETE_FAILED");
+      }
     },
     resolvePath(key: string): string {
       return resolveObjectPath(rootDir, key);
@@ -107,7 +120,7 @@ export interface LocalFileObjectStore {
   rootDir: string;
   putObject: (input: { key: string; body: Uint8Array; contentType: string }) => Promise<{ sizeBytes: number }>;
   headObject: (key: string) => Promise<{ sizeBytes: number; contentType?: string } | null>;
-  readObject: (key: string) => Promise<{ body: Uint8Array; contentType?: string } | null>;
+  readObject: (key: string, maxBytes?: number) => Promise<{ body: Uint8Array; contentType?: string } | null>;
   deleteObject: (key: string) => Promise<void>;
   resolvePath: (key: string) => string;
 }

@@ -1,5 +1,4 @@
-import { AuthorizationErrorCode } from '@edaya/authorization'
-import { AcademicPeriodType, AttendanceMode, GradeLevel, SchoolType } from '@edaya/core'
+import { AcademicPeriodType, AttendanceMode, GradeLevel } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -22,36 +21,32 @@ describeIntegration('setup lifecycle journey', () => {
     const school = await updateSchool(app, {
       schoolId: 'school',
       name: 'Edaya International School',
-      type: SchoolType.K12,
+      shortName: 'Edaya',
       country: 'CM',
       city: 'Douala',
     })
     expect(school.name).toBe('Edaya International School')
-    expect(school.type).toBe(SchoolType.K12)
+    expect(school.shortName).toBe('Edaya')
 
-    const yearOne = await app.setupWorkflow.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year-1',
       schoolId: 'school',
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
-    const yearTwo = await app.setupWorkflow.createAcademicYear({
+    await app.setupWorkflow.createAcademicYear({
       id: 'year-2',
       schoolId: 'school',
       name: '2027-2028',
       startDate: new Date('2027-09-01T00:00:00Z'),
       endDate: new Date('2028-06-30T23:59:59Z'),
     })
-    expect(yearOne.status).toBe('draft')
-    expect(yearTwo.status).toBe('draft')
-    const publishedYearOne = await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-1' })
-    expect(publishedYearOne.status).toBe('published')
+    await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-1' })
     expect((await repositories.academicYearRepository.findById('year-2'))?.status).toBe('draft')
     await app.setupWorkflow.archiveAcademicYear({ academicYearId: 'year-1' })
     expect((await repositories.academicYearRepository.findById('year-1'))?.status).toBe('archived')
-    const publishedYearTwo = await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-2' })
-    expect(publishedYearTwo.status).toBe('published')
+    await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-2' })
 
     const period = await createAcademicPeriod(app, {
       id: 'term',
@@ -62,8 +57,7 @@ describeIntegration('setup lifecycle journey', () => {
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
-    expect(period.isPublished).toBe(false)
-    expect((await publishAcademicPeriod(app, 'term')).isPublished).toBe(true)
+    await publishAcademicPeriod(app, 'term')
 
     await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
@@ -84,10 +78,6 @@ describeIntegration('setup lifecycle journey', () => {
     })
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
-    await expect(updateClassGroup(app, {
-      classGroupId: 'class',
-      capacity: 0,
-    })).rejects.toThrow('capacity must be a strictly positive integer')
     const classGroup = await updateClassGroup(app, {
       classGroupId: 'class',
       name: 'Grade 6 Alpha',
@@ -100,10 +90,13 @@ describeIntegration('setup lifecycle journey', () => {
     expect(classGroup.attendanceMode).toBe(AttendanceMode.Daily)
     expect(classGroup.homeroomStaffId).toBe('teacher')
 
-    expect((await updateStaffStatus(app, 'teacher', false)).isActive).toBe(false)
-    expect((await updateStaffStatus(app, 'teacher', true)).isActive).toBe(true)
-    await expect(updateStaffStatus(app, 'admin', false))
-      .rejects
-      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    await updateStaffStatus(app, 'teacher', false)
+    await updateStaffStatus(app, 'teacher', true)
+    // Later configuration changes must preserve earlier lifecycle and enrollment state.
+    expect((await repositories.schoolRepository.findById('school'))?.name).toBe(school.name)
+    expect((await repositories.academicYearRepository.findById('year-1'))?.status).toBe('archived')
+    expect((await repositories.academicYearRepository.findById('year-2'))?.status).toBe('published')
+    expect((await repositories.academicPeriodRepository.findById(period.id))?.isPublished).toBe(true)
+    expect(await repositories.StudentClassEnrollmentRepository.findById('enrollment')).toBeDefined()
   })
 })

@@ -1,6 +1,6 @@
-import type { AppBindings, AppRouteHandler } from "@/http/types";
-import type { Context } from "hono";
 import type { RouteConfig } from "@hono/zod-openapi";
+import type { Context } from "hono";
+import type { AppBindings, AppRouteHandler } from "@/http/types";
 import { z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -31,6 +31,7 @@ const commandMessageSchema = createMessageObjectSchema();
 const businessRuleViolationSchema = z.object({
   message: z.string(),
   code: z.string(),
+  details: z.record(z.string(), z.unknown()).optional(),
 }).openapi("BusinessRuleViolationResponse");
 
 export const coreRouteErrorResponses = {
