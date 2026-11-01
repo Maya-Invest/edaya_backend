@@ -6,7 +6,6 @@ import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
-import { parseRuntimeEnv } from "@/runtime/shared/env/schema";
 import { createAccountAuthHandler, isAccountAuthRoute } from "../account-auth";
 import { parseEnv } from "../env";
 import { ensureIdentitySigningKeys } from "../jwt-keys";
@@ -46,6 +45,14 @@ test("missing and outdated acceptance fail before delivery, even for repeat sign
   const result = await service.verify(challenge.challenge, "123456");
   expect(result.state).toBe("complete");
   await expect(service.begin({ kind: "email", value: "repeat@example.com", ip: "repeat" })).rejects.toMatchObject({ code: "terms_acceptance_required" });
+});
+
+test("an unavailable live policy blocks authentication before sending a code", async () => {
+  const unavailable = createTermsPolicy({ NODE_ENV: "test", AUTH_TERMS_MODE: "live" }, { fetch: async () => new Response(null, { status: 503 }) });
+  const accounts = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, phone, unavailable);
+  const before = sends;
+  await expect(accounts.begin({ kind: "email", value: "unavailable@example.com", ip: "unavailable", termsAcceptance: consent() })).rejects.toMatchObject({ code: "terms_unavailable", status: 503 });
+  expect(sends).toBe(before);
 });
 
 test("failed verification writes no receipt; completed login stores server-owned evidence once", async () => {
@@ -167,24 +174,6 @@ test("authenticated linking and enrollment do not request or invent acceptance",
   expect(await receipts(result.account.id)).toHaveLength(0);
 });
 
-test("draft previews are explicit, localized and cannot be enabled in production", () => {
-  const off = createTermsPolicy({ NODE_ENV: "production", AUTH_TERMS_MODE: "off" });
-  expect(off.current("en")).toEqual({ enforced: false, document: null });
-  const preview = createTermsPolicy({ NODE_ENV: "test", AUTH_TERMS_MODE: "preview" });
-  expect(preview.current("en").document?.status).toBe("draft");
-  expect(preview.current("fr").document?.locale).toBe("fr");
-  expect(preview.current("fr").document?.documentHash).not.toBe(preview.current("en").document?.documentHash);
-  expect(() => createTermsPolicy({ NODE_ENV: "production", AUTH_TERMS_MODE: "preview" })).toThrow("production");
-  expect(() => createTermsPolicy({ NODE_ENV: "production", AUTH_TERMS_MODE: "enforced", AUTH_TERMS_VERSION: "draft-2026-10-25" })).toThrow("approved");
-});
-
-test("unified API configuration preserves terms enforcement through identity parsing", () => {
-  const runtime = parseRuntimeEnv({ NODE_ENV: "test", DATABASE_URL: "pglite:memory", AUTH_TERMS_MODE: "preview", AUTH_TERMS_VERSION: "draft-version" });
-  const identity = parseEnv({ ...runtime, BETTER_AUTH_SECRET: "test-only-key-with-more-than-32-characters", BETTER_AUTH_URL: runtime.API_ORIGIN, FIRST_PARTY_API_ORIGINS: runtime.API_ORIGIN }, "local");
-  expect(identity.AUTH_TERMS_VERSION).toBe("draft-version");
-  expect(createTermsPolicy(identity).current("en")).toMatchObject({ enforced: true, document: { status: "draft" } });
-});
-
 test("public terms HTTP endpoint validates locale and serializes published content without session", async () => {
   const env = parseEnv({ NODE_ENV: "test", AUTH_DATABASE_URL: "pglite:memory://", BETTER_AUTH_SECRET: "test-only-key-with-more-than-32-characters", BETTER_AUTH_URL: "http://localhost:9999", FIRST_PARTY_API_ORIGINS: "http://localhost:9999" }, "test");
   const handler = createAccountAuthHandler(service, env, await ensureIdentitySigningKeys(db));
@@ -193,6 +182,6 @@ test("public terms HTTP endpoint validates locale and serializes published conte
   const response = await handler(request);
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("no-store");
-  expect(await response.json() as TermsResponse).toEqual(service.getTerms("en"));
+  expect(await response.json() as TermsResponse).toEqual(await service.getTerms("en"));
   expect((await handler(new Request("http://localhost:9999/auth/edaya/terms?locale=invalid"))).status).toBe(400);
 });

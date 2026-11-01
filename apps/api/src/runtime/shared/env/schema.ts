@@ -1,3 +1,4 @@
+import { resolveTermsMode, termsModeSchema } from "@/lib/terms-mode";
 import { smsEnvironmentFields, validateSmsEnvironment } from "@/lib/sms-config";
 import type { BrowserRunBinding } from "@edaya/adaptor-docs";
 import type { CloudflareEmailBinding } from "@edaya/adaptor-notify";
@@ -27,7 +28,7 @@ export const EnvSchema = z.object({
   ACCOUNT_SECURITY_KEYS: z.string().optional(),
   ACCOUNT_SECURITY_KEY_VERSION: z.string().default("v1"),
   AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),
-  AUTH_TERMS_MODE: z.enum(["off", "preview", "enforced"]).default("off"),
+  AUTH_TERMS_MODE: termsModeSchema.optional(),
   AUTH_TERMS_VERSION: z.string().optional(),
   PHONE_AUTH_MODE: z.enum(["disabled", "sms_only", "whatsapp_first"]).default("disabled"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173,http://localhost:5174,http://localhost:5175,http://127.0.0.1:5175"),
@@ -78,7 +79,10 @@ export const EnvSchema = z.object({
   LOCAL_FILES_SECRET: z.string().min(1).optional(),
   /** Local one-shot cron (`bun cron:local`): comma-separated job keys; default runs heartbeat tick */
   CRON_JOB_KEYS: z.string().optional(),
-}).catchall(z.any()).superRefine(validateSmsEnvironment);
+}).catchall(z.any()).superRefine(validateSmsEnvironment).transform(env => ({
+  ...env,
+  AUTH_TERMS_MODE: resolveTermsMode(env.AUTH_TERMS_MODE, env.NODE_ENV),
+}));
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;

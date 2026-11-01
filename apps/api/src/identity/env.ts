@@ -1,3 +1,4 @@
+import { resolveTermsMode, termsModeSchema } from "@/lib/terms-mode";
 import process from "node:process";
 
 import { z } from "zod";
@@ -121,7 +122,7 @@ const RawEnvSchema = z.object({
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173,http://localhost:5174,http://localhost:5175,http://127.0.0.1:5175"),
   WEBAPP_ORIGIN: z.string().url().optional(),
   REQUIRE_PRIVILEGED_TOTP: envBoolean.optional(),
-  AUTH_TERMS_MODE: z.enum(["off", "preview", "enforced"]).default("off"),
+  AUTH_TERMS_MODE: termsModeSchema.optional(),
   AUTH_TERMS_VERSION: z.string().optional(),
   AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),
   ACCOUNT_SECURITY_KEYS: z.string().optional(),
@@ -142,8 +143,6 @@ const RawEnvSchema = z.object({
   CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
 }).superRefine((env, ctx) => {
   validateSmsEnvironment(env, ctx);
-  if (env.AUTH_TERMS_MODE === "preview" && env.NODE_ENV === "production")
-    ctx.addIssue({ code: "custom", path: ["AUTH_TERMS_MODE"], message: "Draft terms cannot be enabled in production" });
   const required = env.PHONE_AUTH_MODE === "whatsapp_first" ? ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "WHATSAPP_AUTH_TEMPLATES", "WHATSAPP_API_VERSION"] : [];
   for (const key of required) {
     if (!env[key as keyof typeof env])
@@ -168,6 +167,7 @@ export const EnvSchema = RawEnvSchema.transform((env) => {
   const { SCHOOL_API_ORIGIN: _removed, ...rest } = env;
   return {
     ...rest,
+    AUTH_TERMS_MODE: resolveTermsMode(env.AUTH_TERMS_MODE, env.NODE_ENV),
     firstPartyApiOrigins: parseFirstPartyApiOrigins(env.FIRST_PARTY_API_ORIGINS),
   };
 });

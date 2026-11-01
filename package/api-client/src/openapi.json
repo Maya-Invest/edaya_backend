@@ -708,6 +708,13 @@
                 "items": {
                   "$ref": "#/components/schemas/AuthTermsSection"
                 }
+              },
+              "sourceUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "html": {
+                "type": "string"
               }
             },
             "required": [
@@ -756,6 +763,13 @@
             "items": {
               "$ref": "#/components/schemas/AuthTermsSection"
             }
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "html": {
+            "type": "string"
           }
         },
         "required": [

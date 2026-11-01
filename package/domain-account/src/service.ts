@@ -24,12 +24,12 @@ export class AccountService {
     return result.value
   }
 
-  getTerms(locale: TermsLocale) {
+  async getTerms(locale: TermsLocale) {
     return this.terms?.current(locale) ?? { enforced: false, document: null }
   }
 
-  private acceptedTerms(input?: TermsAcceptanceInput): AcceptedTerms | undefined {
-    const policy = this.getTerms(input?.locale ?? 'fr')
+  private async acceptedTerms(input?: TermsAcceptanceInput): Promise<AcceptedTerms | undefined> {
+    const policy = await this.getTerms(input?.locale ?? 'fr')
     if (!policy.enforced)
       return undefined
     if (!policy.document)
@@ -52,7 +52,7 @@ export class AccountService {
     credential?: string
     recoveryEligible?: boolean
   }) {
-    const terms = input.credential ? undefined : this.acceptedTerms(input.termsAcceptance)
+    const terms = input.credential ? undefined : await this.acceptedTerms(input.termsAcceptance)
     return this.beginAccepted(input, terms)
   }
 
