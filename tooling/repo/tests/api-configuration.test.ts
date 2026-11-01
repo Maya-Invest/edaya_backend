@@ -16,6 +16,8 @@ describe('API configuration ownership', () => {
     expect(() => validateConfig(secret)).toThrow('secret key')
   })
   test('accepts terms settings in configuration and rejects unsupported modes', () => {
+    for (const target of ['local', 'staging', 'production'])
+      expect(readConfig(target)).toMatchObject({ AUTH_TERMS_MODE: 'live' })
     expect(validateConfig({ AUTH_TERMS_MODE: 'preview' }, 'config', 'local')).toEqual({ AUTH_TERMS_MODE: 'preview' })
     expect(validateConfig({ AUTH_TERMS_MODE: 'enforced', AUTH_TERMS_VERSION: 'approved-v1' }, 'config', 'production')).toEqual({ AUTH_TERMS_MODE: 'enforced', AUTH_TERMS_VERSION: 'approved-v1' })
     expect(() => validateConfig({ AUTH_TERMS_MODE: 'enabled' })).toThrow('unsupported setting')

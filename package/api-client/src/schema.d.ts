@@ -13094,6 +13094,9 @@ export interface components {
                 /** @enum {string} */
                 status: "draft" | "published";
                 sections: components["schemas"]["AuthTermsSection"][];
+                /** Format: uri */
+                sourceUrl?: string;
+                html?: string;
             } | null;
         };
         AuthTermsDocument: {
@@ -13105,6 +13108,9 @@ export interface components {
             /** @enum {string} */
             status: "draft" | "published";
             sections: components["schemas"]["AuthTermsSection"][];
+            /** Format: uri */
+            sourceUrl?: string;
+            html?: string;
         };
         AuthUnlink: {
             identifierId: string;

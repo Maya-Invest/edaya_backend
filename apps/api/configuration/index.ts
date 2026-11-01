@@ -36,7 +36,7 @@ const enumValues: Record<string, string[]> = {
   NODE_ENV: ["development", "production", "test"],
   LOG_LEVEL: ["fatal", "error", "warn", "info", "debug", "trace", "silent"],
   PHONE_AUTH_MODE: ["disabled", "sms_only", "whatsapp_first"],
-  AUTH_TERMS_MODE: ["off", "preview", "enforced"],
+  AUTH_TERMS_MODE: ["off", "live", "preview", "enforced"],
   EMAIL_TRANSPORT: ["log", "cloudflare", "smtp"],
   SMS_TRANSPORT: ["log", "unimplemented", "router"],
 };

@@ -7,6 +7,9 @@ export interface TermsDocument extends AcceptedTerms {
   title: string
   status: 'draft' | 'published'
   sections: { heading: string, paragraphs: string[] }[]
+  sourceUrl?: string
+  /** Sanitized legal-content fragment, pinned to documentHash. */
+  html?: string
 }
 export interface TermsResponse { enforced: boolean, document: TermsDocument | null }
-export interface TermsPolicyPort { current: (locale: TermsLocale) => TermsResponse }
+export interface TermsPolicyPort { current: (locale: TermsLocale) => TermsResponse | Promise<TermsResponse> }

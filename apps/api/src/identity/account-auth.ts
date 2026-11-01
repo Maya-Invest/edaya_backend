@@ -70,7 +70,7 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
         return webhook(request);
       if (request.method === "GET" && path === "/auth/edaya/terms") {
         const locale = z.enum(["fr", "en"]).parse(url.searchParams.get("locale") ?? "fr");
-        return json(service.getTerms(locale));
+        return json(await service.getTerms(locale));
       }
       if (request.method === "GET" && path === "/auth/edaya/methods") {
         return json({ methods: [

@@ -16,6 +16,7 @@
   // Optional rendering: GOTENBERG_URL, DOCS_RENDER_ON_PUBLISH.
   // See docs/reference/api-configuration.md and phone-verification.md.
   "NODE_ENV": "production",
+  "AUTH_TERMS_MODE": "live",
   "LOG_LEVEL": "info",
   "RUNTIME": "worker",
   "PAUSE_API": "false",
