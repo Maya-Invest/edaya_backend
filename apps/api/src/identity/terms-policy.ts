@@ -57,7 +57,7 @@ export function createTermsPolicy(env: Pick<Environment, "NODE_ENV" | "AUTH_TERM
     const timeout = setTimeout(() => controller.abort(), 5000);
     try {
       const [fr, en] = await Promise.all((["fr", "en"] as const).map(async (locale) => {
-        const response = await fetchPage(SOURCES[locale], { signal: controller.signal, redirect: "error", headers: { accept: "text/html" } });
+        const response = await fetchPage(SOURCES[locale], { signal: controller.signal, redirect: "manual", headers: { accept: "text/html" } });
         return extractTermsContent(await readPage(response), locale, SOURCES[locale]);
       }));
       const version = `live-${createHash("sha256").update(`${fr.documentHash}:${en.documentHash}`).digest("hex")}`;

@@ -74,6 +74,15 @@ describe("live policy", () => {
     failed = false;
     expect((await policy.current("fr")).document?.version).toBe(first.document?.version);
   });
+  test("uses Worker-compatible manual redirects and rejects redirected agreements", async () => {
+    const redirects: (RequestRedirect | undefined)[] = [];
+    const policy = createTermsPolicy(live, { fetch: async (_url, init) => {
+      redirects.push(init.redirect);
+      return Response.redirect("https://example.org/other-agreement", 302);
+    } });
+    await expect(policy.current("en")).rejects.toMatchObject({ code: "terms_unavailable", status: 503 });
+    expect(redirects).toEqual(["manual", "manual"]);
+  });
   test("rejects malformed pages and oversized responses", async () => {
     for (const body of ["<html>Unavailable</html>", "x".repeat(512 * 1024 + 1)]) {
       const policy = createTermsPolicy(live, { fetch: async () => response(body) });
