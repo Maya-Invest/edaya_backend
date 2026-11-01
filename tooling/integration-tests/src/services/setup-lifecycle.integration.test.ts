@@ -44,9 +44,6 @@ describeIntegration('setup lifecycle journey', () => {
     })
     await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-1' })
     expect((await repositories.academicYearRepository.findById('year-2'))?.status).toBe('draft')
-    await app.setupWorkflow.archiveAcademicYear({ academicYearId: 'year-1' })
-    expect((await repositories.academicYearRepository.findById('year-1'))?.status).toBe('archived')
-    await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-2' })
 
     const period = await createAcademicPeriod(app, {
       id: 'term',
@@ -58,6 +55,10 @@ describeIntegration('setup lifecycle journey', () => {
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
     await publishAcademicPeriod(app, 'term')
+
+    await app.setupWorkflow.archiveAcademicYear({ academicYearId: 'year-1' })
+    expect((await repositories.academicYearRepository.findById('year-1'))?.status).toBe('archived')
+    await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-2' })
 
     await app.baseService.entities.gradeLevels.save(
       new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
