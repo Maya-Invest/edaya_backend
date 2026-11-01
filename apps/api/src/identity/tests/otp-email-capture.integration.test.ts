@@ -66,7 +66,12 @@ describe("email delivery with OTP extraction", () => {
     expect(sent.at(-1)?.text).toContain(nextCode);
     const verified = await request("otp/verify", { challenge: replacement, code: nextCode });
     expect(verified.status).toBe(200);
-    const token = (await verified.json() as { token: string }).token;
+    const offer = await verified.json() as { state: string; eligible: boolean; proof: string };
+    expect(offer).toMatchObject({ state: "registration_required", eligible: true });
+    const registered = await request("registration/complete", { challenge: replacement, proof: offer.proof });
+    expect(registered.status).toBe(200);
+    const token = (await registered.json() as { token: string }).token;
+    expect(token).toBeTruthy();
     expect((await request("testing/otp", { challenge: replacement })).status).toBe(404);
 
     const linked = await begin("capture-linked@example.com", token);

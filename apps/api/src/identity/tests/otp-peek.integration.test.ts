@@ -34,8 +34,12 @@ async function login(value: string) {
   const code = (await (await reveal(challenge)).json() as { otp: string }).otp;
   const response = await request("otp/verify", { challenge, code }, undefined, { "x-edaya-client": "native" });
   expect(response.status).toBe(200);
-  const offer = await response.json() as { proof: string };
+  const offer = await response.json() as { state: string; proof: string; token: string };
+  if (offer.state === "complete")
+    return offer.token;
+  expect(offer.state).toBe("registration_required");
   const registered = await request("registration/complete", { challenge, proof: offer.proof }, undefined, { "x-edaya-client": "native" });
+  expect(registered.status).toBe(200);
   return (await registered.json() as { token: string }).token;
 }
 
