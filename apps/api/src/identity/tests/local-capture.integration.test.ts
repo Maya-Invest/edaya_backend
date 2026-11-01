@@ -7,7 +7,7 @@ import { createOtpDelivery } from "../otp-delivery";
 import { parseEnv } from "../env";
 
 const origin = "http://127.0.0.1:9999";
-const source = { NODE_ENV: "development", RUNTIME: "local", LOG_LEVEL: "silent", BETTER_AUTH_SECRET: "local-capture-disposable-secret-at-least-32-characters", BETTER_AUTH_URL: origin, FIRST_PARTY_API_ORIGINS: origin, TRUSTED_ORIGINS: origin, EMAIL_TRANSPORT: "log" };
+const source = { ALLOW_PUBLIC_ACCOUNT_REGISTRATION: true, NODE_ENV: "development", RUNTIME: "local", LOG_LEVEL: "silent", BETTER_AUTH_SECRET: "local-capture-disposable-secret-at-least-32-characters", BETTER_AUTH_URL: origin, FIRST_PARTY_API_ORIGINS: origin, TRUSTED_ORIGINS: origin, EMAIL_TRANSPORT: "log" };
 test("development captures one delivered code and retains identities across restart", async () => {
   const root = mkdtempSync(join(tmpdir(), "local-capture-"));
   const env = parseEnv({ ...source, AUTH_DATABASE_URL: `pglite:${root}/identity` }, "local");
@@ -30,7 +30,13 @@ test("development captures one delivered code and retains identities across rest
     await request("testing/otp", { challenge });
     const verified = await request("otp/verify", { challenge, code: otp });
     expect(verified.status).toBe(200);
-    return (await verified.json() as { user: { id: string } }).user.id;
+    const outcome = await verified.json() as { state: "complete"; user: { id: string } } | { state: "registration_required"; proof: string };
+    if (outcome.state === "complete")
+      return outcome.user.id;
+    expect(outcome.state).toBe("registration_required");
+    const completion = await request("registration/complete", { challenge, proof: outcome.proof });
+    expect(completion.status).toBe(200);
+    return (await completion.json() as { user: { id: string } }).user.id;
   }
   try {
     const id = await signIn();
