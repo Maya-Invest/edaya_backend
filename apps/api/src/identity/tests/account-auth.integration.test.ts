@@ -7,6 +7,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
+import { verifyFixture } from "./register-fixture";
 
 const database = new PGlite();
 const db = drizzle(database);
@@ -18,7 +19,7 @@ const delivery = { async send(input: { destination: string; code: string }) {
 } };
 const adapter = createBetterAuthAdapter(transactionalDb, { secret: "test-only-secret-with-at-least-32-characters", baseUrl: "http://localhost:9999", generation: "better-auth:test", delivery });
 let now = Date.now();
-const service = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, false, { mode: "whatsapp_first", supports: phone => phone.startsWith("+225"), delivery });
+const service = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, false, { mode: "whatsapp_first", supports: phone => phone.startsWith("+225"), delivery }, undefined, async () => true);
 beforeAll(async () => {
   await runMigrations(db, { driver: "pglite" });
   await runAccountMigrations(db, "pglite");
@@ -28,7 +29,7 @@ afterAll(async () => {
 });
 async function login(value: string) {
   const challenge = await service.begin({ kind: "email", value, channel: "email", ip: value });
-  return service.verify(challenge.challenge, delivered.get(value)!);
+  return verifyFixture(service, challenge.challenge, delivered.get(value)!);
 }
 test("real provider aliases belong to one Account; another Account cannot claim them", async () => {
   const first = await login("one@example.com");
@@ -69,13 +70,13 @@ test("failed verification attempts persist", async () => {
   await expect(service.verify(challenge.challenge, delivered.get("wrong@example.com")!)).rejects.toMatchObject({ code: "attempts_exhausted" });
 });
 test("successful OTP proofs reset attempts, while resends preserve failed attempts", async () => {
-  const repeated = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, true);
+  const repeated = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, true, undefined, undefined, async () => true);
   const value = "repeated-proof@example.com";
   for (let index = 0;
     index < 7;
     index++) {
     const challenge = await repeated.begin({ kind: "email", value, channel: "email", ip: value });
-    const complete = await repeated.verify(challenge.challenge, delivered.get(value)!);
+    const complete = await verifyFixture(repeated, challenge.challenge, delivered.get(value)!);
     expect(complete.state).toBe("complete");
   }
   const valueWithFailures = "resend-budget@example.com";
@@ -125,9 +126,9 @@ test("MFA, recovery and provider replacement preserve Account and authenticator"
 });
 
 test("mandatory enrollment cannot issue a session or disable MFA", async () => {
-  const required = new AccountService(repository, adapter, security, { requiresTotp: async () => true }, () => now);
+  const required = new AccountService(repository, adapter, security, { requiresTotp: async () => true }, () => now, false, undefined, undefined, async () => true);
   const challenge = await required.begin({ kind: "email", value: "owner@example.com", channel: "email", ip: "owner" });
-  const pending = await required.verify(challenge.challenge, delivered.get("owner@example.com")!);
+  const pending = await verifyFixture(required, challenge.challenge, delivered.get("owner@example.com")!);
   if (pending.state !== "enrollment_required") {
     throw new Error("Enrollment required");
   }
@@ -156,4 +157,47 @@ test("unlink preserves a recovery contact and revokes sessions", async () => {
   await expect(service.getSession(first.credential)).rejects.toMatchObject({ status: 401 });
   const remaining = await repository.get(first.account.id);
   expect(remaining!.identifiers.map(i => i.value)).toEqual(["unlink-alias@example.com"]);
+});
+
+test("registration requires an unconsumed, unexpired proof and current eligibility", async () => {
+  let eligible = true;
+  const accounts = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, true, undefined, undefined, async (_email, hash) => eligible && hash === "matching");
+  const value = "registration@example.com";
+  const start = () => accounts.begin({ kind: "email", value, ip: "fixture", invitationHash: "matching" });
+  const offer = async () => {
+    const challenge = await start();
+    const result = await accounts.verify(challenge.challenge, delivered.get(value)!);
+    if (result.state !== "registration_required")
+      throw new Error("Expected registration");
+    expect(result.eligible).toBe(eligible);
+    expect(await repository.find("email", value)).toBeNull();
+    return result;
+  };
+  const superseded = await offer();
+  const expired = await offer();
+  await expect(accounts.completeRegistration(superseded)).rejects.toMatchObject({ code: "registration_expired" });
+  now += 300001;
+  await expect(accounts.completeRegistration(expired)).rejects.toMatchObject({ code: "registration_expired" });
+  const current = await offer();
+  eligible = false;
+  await expect(accounts.completeRegistration(current)).rejects.toMatchObject({ code: "registration_unavailable" });
+  expect(await repository.find("email", value)).toBeNull();
+  eligible = true;
+  const results = await Promise.allSettled([accounts.completeRegistration(current), accounts.completeRegistration(current)]);
+  expect(results.filter(result => result.status === "fulfilled")).toHaveLength(1);
+  expect((await repository.find("email", value))?.status).toBe("active");
+});
+
+test("a rejected Better Auth email dispatch consumes the failed challenge and preserves cooldown", async () => {
+  let attemptId: string | undefined;
+  const failing = createBetterAuthAdapter(transactionalDb, { secret: "test-only-secret-with-at-least-32-characters", baseUrl: "http://localhost:9999", generation: "test", delivery: { async send(input) {
+    attemptId = input.attemptId;
+    throw new Error("transport rejected");
+  } } });
+  const accounts = new AccountService(repository, failing, security, { requiresTotp: async () => false }, () => now);
+  const start = () => accounts.begin({ kind: "email", value: "delivery@example.com", ip: "delivery" });
+  await expect(start()).rejects.toMatchObject({ code: "delivery_unavailable", status: 503, details: { nextResendAt: now + 60000, serverNow: now } });
+  expect((await repository.challenge(attemptId!))?.consumed).toBe(true);
+  await expect(start()).rejects.toMatchObject({ code: "rate_limited" });
+  await expect(accounts.verify(attemptId!, "123456")).rejects.toMatchObject({ code: "challenge_expired" });
 });

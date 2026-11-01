@@ -8,6 +8,7 @@ import { localOperations } from "../../../configuration/local-operations.ts";
 import { createAuthEmailSenders } from "../email";
 import { createAppLogger } from "../logger";
 import { attachIdentityRuntime } from "../runtime";
+import { invitedEmailPolicy } from "../registration-policy";
 import { createTestingIdentity } from "./composition";
 import { parseTestingEnv } from "./env";
 import { startFixtureBackgroundTasks } from "./background";
@@ -29,7 +30,9 @@ export async function startTestingServer(source: Record<string, string | undefin
     writeFileSync(clock, "0", { mode: 0o600 });
   if (policy)
     writeFileSync(policy, "[]", { mode: 0o600 });
+  const apiEnv = parseRuntimeEnv({ ...localEnv, ...env, LOG_LEVEL: localEnv.LOG_LEVEL ?? "error", RUNTIME: "local", API_ORIGIN: origin, PORT: port });
   const test = await createTestingIdentity(env, {
+    invitedEmail: apiEnv.ACCOUNT_INVITATIONS_ENABLED === false ? undefined : invitedEmailPolicy(async () => (await getApiRuntime(apiEnv)).getSchoolApplication()),
     emailDelivery: email.sendAuthVerificationOtp,
     operationsScope: localOperations({ ...localEnv, ...env, API_ORIGIN: origin }).scope,
     operationsRootId: localOperations({ ...localEnv, ...env, API_ORIGIN: origin }).rootId,
@@ -52,7 +55,6 @@ export async function startTestingServer(source: Record<string, string | undefin
         } }
       : undefined,
   });
-  const apiEnv = parseRuntimeEnv({ ...localEnv, ...env, LOG_LEVEL: localEnv.LOG_LEVEL ?? "error", RUNTIME: "local", API_ORIGIN: origin, PORT: port });
   attachIdentityRuntime(apiEnv, test.runtime);
   const server = serve({ hostname: "127.0.0.1", port, fetch: (request) => {
     // Private testing routes exist only in this explicitly isolated entry.

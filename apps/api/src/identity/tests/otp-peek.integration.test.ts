@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { createIdentityApp } from "../app";
 import { parseEnv } from "../env";
@@ -9,7 +9,7 @@ import { assertTestingEnvironment, createTestingIdentity } from "../testing/comp
 
 const issuer = "http://127.0.0.1:9999";
 const origin = "http://localhost:5173";
-const env = parseEnv({ NODE_ENV: "test", AUTH_DATABASE_URL: "pglite:memory", LOG_LEVEL: "silent", BETTER_AUTH_SECRET: "test-secret-at-least-32-characters", BETTER_AUTH_URL: issuer, FIRST_PARTY_API_ORIGINS: "http://localhost:9999", TRUSTED_ORIGINS: origin }, "test");
+const env = parseEnv({ ALLOW_PUBLIC_ACCOUNT_REGISTRATION: true, NODE_ENV: "test", AUTH_DATABASE_URL: "pglite:memory", LOG_LEVEL: "silent", BETTER_AUTH_SECRET: "test-secret-at-least-32-characters", BETTER_AUTH_URL: issuer, FIRST_PARTY_API_ORIGINS: "http://localhost:9999", TRUSTED_ORIGINS: origin }, "test");
 const directory = mkdtempSync(join(tmpdir(), "edaya-otp-access-"));
 const mailbox = join(directory, "mailbox.jsonl");
 const deliveryCount = () => readFileSync(mailbox, "utf8").trim().split("\n").filter(Boolean).length;
@@ -34,7 +34,9 @@ async function login(value: string) {
   const code = (await (await reveal(challenge)).json() as { otp: string }).otp;
   const response = await request("otp/verify", { challenge, code }, undefined, { "x-edaya-client": "native" });
   expect(response.status).toBe(200);
-  return (await response.json() as { token: string }).token;
+  const offer = await response.json() as { proof: string };
+  const registered = await request("registration/complete", { challenge, proof: offer.proof }, undefined, { "x-edaya-client": "native" });
+  return (await registered.json() as { token: string }).token;
 }
 
 describe("test-only OTP access", () => {

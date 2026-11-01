@@ -13,7 +13,7 @@ export function createBetterAuthAdapter(database: unknown, options: {
   generation: string
   delivery: OtpDeliveryPort
 }): AuthenticationProviderPort {
-  type Dispatch = { channel: OtpChannel, attemptId?: string, delivery?: Promise<void> }
+  interface Dispatch { channel: OtpChannel, attemptId?: string, delivery?: Promise<void> }
   const context = new AsyncLocalStorage<Dispatch>()
   const preparation = new AsyncLocalStorage<{ code?: string }>()
   const hashOtp = (value: string) => createHmac('sha256', options.secret).update(`edaya:otp:${value}`).digest('hex')
@@ -93,8 +93,9 @@ export function createBetterAuthAdapter(database: unknown, options: {
             throw new Error('Email delivery unavailable')
           }
         }
-        else
+        else {
           await auth.api.sendPhoneNumberOTP({ body: { phoneNumber: input.value } })
+        }
       })
     },
     async verifyOtp(input) {
