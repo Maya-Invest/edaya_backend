@@ -246,14 +246,6 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
   const school = await c.get("schoolApp").repositories.schools.findById(invitation.schoolId);
   const inviteeName = await resolveInviteeName(c.get("schoolApp").repositories, invitation);
 
-  let authAccountExists: boolean | undefined;
-  if (invitation.contactChannel === AccountInvitationContactChannel.Email && invitation.contactValue) {
-    authAccountExists = await c.get("schoolApp").hasAuthAccountForEmail(invitation.contactValue);
-  }
-  else if (invitation.contactChannel === AccountInvitationContactChannel.Phone && invitation.contactValue) {
-    authAccountExists = await c.get("schoolApp").hasAuthAccountForPhone(invitation.contactValue);
-  }
-
   return c.json({
     status: invitation.status,
     kind: invitation.kind,
@@ -265,11 +257,10 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
     ...(invitation.contactChannel === AccountInvitationContactChannel.Email
       ? {
           contactEmail: invitation.contactValue,
-          ...(authAccountExists !== undefined ? { authAccountExists } : {}),
         }
       : {
           contactPhone: invitation.contactValue,
-          ...(authAccountExists !== undefined ? { authAccountExists } : {}),
+          ...(invitation.contactValue ? { authAccountExists: await c.get("schoolApp").hasAuthAccountForPhone(invitation.contactValue) } : {}),
         }),
   }, HttpStatusCodes.OK);
 };
