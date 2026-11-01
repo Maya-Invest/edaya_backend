@@ -1,261 +1,707 @@
 {
+  "id": "ci-college:4EME",
   "code": "4EME",
   "name": "Quatrième",
-  "short_label": "4ème",
-  "sections": [
+  "shortLabel": "4ème",
+  "order": 3,
+  "reportModules": [
     {
-      "role": "subjects",
-      "label": "Bilan Lettre",
+      "code": "MODULE_1",
+      "name": "Bilan Lettre",
       "order": 1,
-      "subject_codes": [
-        "FR",
-        "ANG",
-        "ALL",
-        "ESP",
-        "HG"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan Science",
+      "code": "MODULE_2",
+      "name": "Bilan Science",
       "order": 2,
-      "subject_codes": [
-        "MATH",
-        "PC",
-        "SVT",
-        "TECH",
-        "TICE"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan autres",
+      "code": "MODULE_3",
+      "name": "Bilan autres",
       "order": 3,
-      "subject_codes": [
-        "EDHC",
-        "AP",
-        "MUS",
-        "EPS"
-      ]
-    },
-    {
-      "role": "comments",
-      "label": "Appréciations",
-      "order": 4
+      "weightingMode": "subject_coefficients"
     }
   ],
+  "gradingPolicy": {
+    "gradeScaleCode": "NUMERIC_20",
+    "mode": "numeric-first",
+    "aggregateLabel": "Moyenne générale",
+    "passThreshold": 10
+  },
   "subjects": [
     {
       "code": "MATH",
       "name": "Mathématiques",
-      "domain": "Sciences",
+      "shortName": "Mathématiques",
+      "disciplineCode": "MATH",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 3,
-      "matters": [
-        "Nombres rationnels et irrationnels : racines carrées",
-        "Calcul littéral : développement, factorisation, identités remarquables",
-        "Équations et inéquations du 1er degré à une inconnue",
-        "Systèmes d'équations à deux inconnues dans R2",
-        "Applications affines et linéaires : expressions, représentations graphiques, coefficient directeur",
-        "Vecteurs et translations : relations de Chasles, colinéarité, repères du plan",
-        "Théorème de Thalès et sa réciproque",
-        "Théorème de Pythagore et sa réciproque",
-        "Trigonométrie dans le triangle rectangle (cos, sin, tan)",
-        "Angles inscrits et polygones réguliers",
-        "Géométrie dans l'espace : cônes, cylindres, pyramides, sphères (sections et volumes)",
-        "Statistiques : moyennes, médianes, fréquences, diagrammes"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Nombres rationnels et irrationnels : racines carrées",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Calcul littéral : développement, factorisation, identités remarquables",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Équations et inéquations du 1er degré à une inconnue",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Systèmes d'équations à deux inconnues dans R2",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Applications affines et linéaires : expressions, représentations graphiques, coefficient directeur",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Vecteurs et translations : relations de Chasles, colinéarité, repères du plan",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Théorème de Thalès et sa réciproque",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Théorème de Pythagore et sa réciproque",
+          "order": 8
+        },
+        {
+          "code": "CHAPTER_9",
+          "title": "Trigonométrie dans le triangle rectangle (cos, sin, tan)",
+          "order": 9
+        },
+        {
+          "code": "CHAPTER_10",
+          "title": "Angles inscrits et polygones réguliers",
+          "order": 10
+        },
+        {
+          "code": "CHAPTER_11",
+          "title": "Géométrie dans l'espace : cônes, cylindres, pyramides, sphères (sections et volumes)",
+          "order": 11
+        },
+        {
+          "code": "CHAPTER_12",
+          "title": "Statistiques : moyennes, médianes, fréquences, diagrammes",
+          "order": 12
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 1
     },
     {
       "code": "FR",
       "name": "Français",
-      "domain": "Langues",
+      "shortName": "Français",
+      "disciplineCode": "FR",
+      "categoryCode": "LANGUAGES",
       "coefficient": 3,
-      "matters": [
-        "Lecture expliquée de textes littéraires (auteurs africains et français)",
-        "Grammaire de la phrase complexe : la juxtaposition, la coordination, la subordination",
-        "Les propositions subordonnées relatives, conjonctives, circonstancielles (cause, but, conséquence, condition)",
-        "Le discours rapporté : style direct et indirect, concordance des temps",
-        "La voix active et la voix passive",
-        "Expression écrite : le texte narratif avec dialogue intégré, le résumé d'un texte argumentatif",
-        "Figures de style : métaphore, comparaison, hyperbole, anaphore, personnification"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Lecture expliquée de textes littéraires (auteurs africains et français)",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Grammaire de la phrase complexe : la juxtaposition, la coordination, la subordination",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Les propositions subordonnées relatives, conjonctives, circonstancielles (cause, but, conséquence, condition)",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Le discours rapporté : style direct et indirect, concordance des temps",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "La voix active et la voix passive",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Expression écrite : le texte narratif avec dialogue intégré, le résumé d'un texte argumentatif",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Figures de style : métaphore, comparaison, hyperbole, anaphore, personnification",
+          "order": 7
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 1
     },
     {
       "code": "ANG",
       "name": "Anglais",
-      "domain": "Langues",
+      "shortName": "Anglais",
+      "disciplineCode": "ANG",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension orale et expression orale",
-        "Compréhension écrite de textes authentiques",
-        "Vocabulaire thématique et expressions utiles",
-        "Grammaire : temps, structures et concordance",
-        "Production écrite guidée et libre",
-        "Civilisation et documents culturels"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension orale et expression orale",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Compréhension écrite de textes authentiques",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Vocabulaire thématique et expressions utiles",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Grammaire : temps, structures et concordance",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Production écrite guidée et libre",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Civilisation et documents culturels",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 2
     },
     {
       "code": "HG",
       "name": "Histoire-Géographie",
-      "domain": "Univers Social",
+      "shortName": "Histoire-Géographie",
+      "disciplineCode": "HG",
+      "categoryCode": "HUMANITIES",
       "coefficient": 2,
-      "matters": [
-        "Repères chronologiques et sociétés",
-        "Territoires, populations et activités",
-        "Lecture de cartes, frises et documents",
-        "Afrique et Côte d'Ivoire dans le monde",
-        "Enjeux contemporains",
-        "Méthodologie de l'étude de documents"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Repères chronologiques et sociétés",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Territoires, populations et activités",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de cartes, frises et documents",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Afrique et Côte d'Ivoire dans le monde",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Enjeux contemporains",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Méthodologie de l'étude de documents",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 5
     },
     {
       "code": "PC",
       "name": "Physique-Chimie",
-      "domain": "Sciences",
+      "shortName": "Physique-Chimie",
+      "disciplineCode": "PC",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 2,
-      "matters": [
-        "Notion de force, le poids, la masse, relation P = mg",
-        "La poussée d'Archimède dans les liquides",
-        "Masse volumique et densité",
-        "Structure de la matière : atomes, molécules",
-        "Les ions et les solutions aqueuses",
-        "Acides et bases : pH, réactions acido-basiques",
-        "Oxydoréduction (actions des acides sur les métaux)",
-        "Le courant alternatif : tension efficace, période, fréquence",
-        "Résistance électrique et Loi d'Ohm",
-        "Énergie et puissance électrique"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Notion de force, le poids, la masse, relation P = mg",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "La poussée d'Archimède dans les liquides",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Masse volumique et densité",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Structure de la matière : atomes, molécules",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Les ions et les solutions aqueuses",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Acides et bases : pH, réactions acido-basiques",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Oxydoréduction (actions des acides sur les métaux)",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Le courant alternatif : tension efficace, période, fréquence",
+          "order": 8
+        },
+        {
+          "code": "CHAPTER_9",
+          "title": "Résistance électrique et Loi d'Ohm",
+          "order": 9
+        },
+        {
+          "code": "CHAPTER_10",
+          "title": "Énergie et puissance électrique",
+          "order": 10
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 2
     },
     {
       "code": "SVT",
       "name": "Sciences de la Vie et de la Terre",
-      "domain": "Sciences",
+      "shortName": "Sciences de la Vie et de la Terre",
+      "disciplineCode": "SVT",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 2,
-      "matters": [
-        "La digestion et l'absorption intestinale",
-        "Le sang et la circulation sanguine",
-        "La respiration chez l'homme",
-        "L'excrétion urinaire",
-        "Le système nerveux : centres nerveux, organes des sens, l'œil",
-        "La reproduction humaine : puberté, appareils génitaux, cycle menstruel, fécondation",
-        "Les maladies nutritionnelles (carences)",
-        "Immunologie de base : microbes, infection, phagocytose, anticorps, VIH/SIDA",
-        "Les roches sédimentaires et la formation des sols"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "La digestion et l'absorption intestinale",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Le sang et la circulation sanguine",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "La respiration chez l'homme",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "L'excrétion urinaire",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Le système nerveux : centres nerveux, organes des sens, l'œil",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "La reproduction humaine : puberté, appareils génitaux, cycle menstruel, fécondation",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Les maladies nutritionnelles (carences)",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Immunologie de base : microbes, infection, phagocytose, anticorps, VIH/SIDA",
+          "order": 8
+        },
+        {
+          "code": "CHAPTER_9",
+          "title": "Les roches sédimentaires et la formation des sols",
+          "order": 9
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 3
     },
     {
       "code": "ALL",
       "name": "Allemand",
-      "domain": "Langues",
+      "shortName": "Allemand",
+      "disciplineCode": "ALL",
+      "categoryCode": "LANGUAGES",
       "coefficient": 1,
-      "matters": [
-        "Compréhension et expression orale de base",
-        "Vocabulaire et structures grammaticales essentielles",
-        "Lecture de textes simples",
-        "Production écrite courte",
-        "Civilisation germanophone",
-        "Interaction en situations quotidiennes"
+      "isOptional": true,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension et expression orale de base",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vocabulaire et structures grammaticales essentielles",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de textes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Production écrite courte",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Civilisation germanophone",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Interaction en situations quotidiennes",
+          "order": 6
+        }
       ],
-      "optional": true
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 3
     },
     {
       "code": "ESP",
       "name": "Espagnol",
-      "domain": "Langues",
+      "shortName": "Espagnol",
+      "disciplineCode": "ESP",
+      "categoryCode": "LANGUAGES",
       "coefficient": 1,
-      "matters": [
-        "Compréhension et expression orale de base",
-        "Vocabulaire et structures grammaticales essentielles",
-        "Lecture de textes simples",
-        "Production écrite courte",
-        "Civilisation hispanophone",
-        "Interaction en situations quotidiennes"
+      "isOptional": true,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension et expression orale de base",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vocabulaire et structures grammaticales essentielles",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de textes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Production écrite courte",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Civilisation hispanophone",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Interaction en situations quotidiennes",
+          "order": 6
+        }
       ],
-      "optional": true
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 4
     },
     {
       "code": "EDHC",
       "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
-      "domain": "Univers Social",
+      "shortName": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+      "disciplineCode": "EDHC",
+      "categoryCode": "HUMANITIES",
       "coefficient": 1,
-      "matters": [
-        "Droits et devoirs du citoyen",
-        "Vivre ensemble et respect de la diversité",
-        "Institutions et vie démocratique",
-        "Santé, hygiène et responsabilité sociale",
-        "Développement durable",
-        "Engagement et solidarité"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Droits et devoirs du citoyen",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vivre ensemble et respect de la diversité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Institutions et vie démocratique",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Santé, hygiène et responsabilité sociale",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Développement durable",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Engagement et solidarité",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 1
     },
     {
       "code": "EPS",
       "name": "Éducation Physique et Sportive",
-      "domain": "Développement Physique",
+      "shortName": "Éducation Physique et Sportive",
+      "disciplineCode": "EPS",
+      "categoryCode": "SPORT",
       "coefficient": 1,
-      "matters": [
-        "Activités athlétiques et motricité",
-        "Sports collectifs",
-        "Gymnastique et expression corporelle",
-        "Condition physique et santé",
-        "Règles de sécurité et fair-play",
-        "Préparation et évaluation des APSA"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Activités athlétiques et motricité",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Sports collectifs",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Gymnastique et expression corporelle",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Condition physique et santé",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Règles de sécurité et fair-play",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Préparation et évaluation des APSA",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 4
     },
     {
       "code": "AP",
       "name": "Arts Plastiques",
-      "domain": "Arts",
+      "shortName": "Arts Plastiques",
+      "disciplineCode": "AP",
+      "categoryCode": "ARTS",
       "coefficient": 1,
-      "matters": [
-        "Dessin et représentation",
-        "Couleurs, formes et composition",
-        "Techniques plastiques",
-        "Lecture d'œuvres",
-        "Expression créative",
-        "Projet plastique personnel"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Dessin et représentation",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Couleurs, formes et composition",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Techniques plastiques",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Lecture d'œuvres",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Expression créative",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Projet plastique personnel",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 2
     },
     {
       "code": "MUS",
       "name": "Éducation Musicale",
-      "domain": "Arts",
+      "shortName": "Éducation Musicale",
+      "disciplineCode": "MUS",
+      "categoryCode": "ARTS",
       "coefficient": 1,
-      "matters": [
-        "Écoute et discrimination sonore",
-        "Chant et rythme",
-        "Notions de solfège de base",
-        "Musiques traditionnelles et contemporaines",
-        "Pratique collective",
-        "Culture musicale"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Écoute et discrimination sonore",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Chant et rythme",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Notions de solfège de base",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Musiques traditionnelles et contemporaines",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Pratique collective",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Culture musicale",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 3
     },
     {
       "code": "TECH",
       "name": "Technologie",
-      "domain": "Sciences",
+      "shortName": "Technologie",
+      "disciplineCode": "TECH",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 1,
-      "matters": [
-        "Objets techniques et matériaux",
-        "Mesure, dessin et représentation technique",
-        "Énergie et systèmes simples",
-        "Démarche de projet technologique",
-        "Sécurité et usage des outils",
-        "Innovation et design"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Objets techniques et matériaux",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Mesure, dessin et représentation technique",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Énergie et systèmes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Démarche de projet technologique",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Sécurité et usage des outils",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Innovation et design",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 4
     },
     {
       "code": "TICE",
       "name": "TICE",
-      "domain": "Sciences",
+      "shortName": "TICE",
+      "disciplineCode": "TICE",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 1,
-      "matters": [
-        "Système d'exploitation et fichiers",
-        "Traitement de texte et présentation",
-        "Recherche d'information et sources",
-        "Tableurs et multimédia",
-        "Citoyenneté et sécurité numériques",
-        "Collaboration et outils en ligne"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Système d'exploitation et fichiers",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Traitement de texte et présentation",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Recherche d'information et sources",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Tableurs et multimédia",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Citoyenneté et sécurité numériques",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Collaboration et outils en ligne",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 5
     }
   ]
 }

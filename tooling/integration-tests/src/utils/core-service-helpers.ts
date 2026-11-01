@@ -2,7 +2,7 @@ import type { Permission } from '@edaya/authorization'
 import type { AttendanceJustificationStatus, SubjectInput } from '@edaya/core'
 import type { SchoolRepositories, SchoolService } from '@edaya/service'
 import { AuthorizationError, AuthorizationErrorCode, resolveAuditActorId } from '@edaya/authorization'
-import { AcademicDiscipline, AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
+import { AcademicDiscipline, AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote, SubjectCategoryEntity } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
 
@@ -41,6 +41,13 @@ export async function seedStaffPermissionTemplate(
 /** Explicit synthetic catalogue fixture; production schools start empty. */
 export function withFixtureDiscipline(input: SubjectInput): SubjectInput {
   return { ...input, disciplineId: input.disciplineId ?? `fixture-discipline-${input.schoolId}` }
+}
+
+/** Called only by curriculum fixtures; school-only fixtures remain category-free. */
+export async function createFixtureSubjectCategory(app: SchoolService, schoolId: string): Promise<SubjectCategoryEntity> {
+  const category = new SubjectCategoryEntity({ id: `fixture-category-${schoolId}`, schoolId, name: 'Synthetic test category' })
+  await app.baseService.entities.subjectCategories.save(category)
+  return category
 }
 
 export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School>): Promise<School> {

@@ -1,6 +1,6 @@
 import { AcademicDiscipline, AcademicYear, BusinessRuleViolationError, GradeLevel } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
 describe('subject category catalog', () => {

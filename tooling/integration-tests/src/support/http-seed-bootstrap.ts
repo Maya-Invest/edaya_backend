@@ -1,4 +1,5 @@
 import type { HttpSeedClient } from '@edaya/seeding/http'
+import process from 'node:process'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { bootstrapHttpCoreSession } from '@edaya/seeding/bootstrap'
@@ -15,6 +16,7 @@ export async function bootstrapHttpSeedForDiagnostics(
   client: HttpSeedClient,
   options: BootstrapHttpSeedOptions = {},
 ): Promise<string> {
+  const started = performance.now()
   await runHttpDevSeeds({ client, scope: 'auth' })
   await bootstrapHttpCoreSession(client)
 
@@ -44,5 +46,6 @@ export async function bootstrapHttpSeedForDiagnostics(
     })
   }
 
+  process.stdout.write(`[fixture bootstrap] ${JSON.stringify({ kind: 'http-seed', durationMs: performance.now() - started })}\n`)
   return serviceAccountApiKey
 }

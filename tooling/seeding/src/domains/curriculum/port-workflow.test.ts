@@ -10,11 +10,14 @@ import { seedDevCurriculum } from './workflow'
 
 describe('curriculum seed port workflow', () => {
   test('seeds validated subject and grade-level curriculum records', async () => {
+    const categoryIds = new Set<string>()
     const seededSubjects: SubjectSeedRecord[] = []
     const seededMatters: SubjectMatterSeedRecord[] = []
     const port: CurriculumSeedPort = {
+      saveSubjectCategory: async (record) => { categoryIds.add(record.id) },
       saveAcademicDiscipline: async () => {},
       saveSubject: async (record) => {
+        expect(categoryIds.has(record.categoryId!)).toBe(true)
         seededSubjects.push(record)
       },
       saveSubjectMatter: async (record) => {
@@ -24,6 +27,7 @@ describe('curriculum seed port workflow', () => {
 
     await seedDevCurriculum(port, demoCiDataset)
 
+    expect(categoryIds.size).toBe(6)
     const curriculumPlan = buildFixtureCurriculumPlan(demoCiDataset.entities)
     const fixtureSubjects = demoCiDataset.entities.subjects ?? []
     const fixtureSubjectMatters = demoCiDataset.entities.subjectMatters ?? []

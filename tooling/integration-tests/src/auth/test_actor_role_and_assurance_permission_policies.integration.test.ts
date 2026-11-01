@@ -2,7 +2,7 @@ import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSI
 import { AcademicPeriodType, AttendanceStatus, GradeLevel, School, StaffMember, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { createAcademicPeriod, createClassGroup, publishAcademicPeriod, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, updateSchool, withFixtureDiscipline } from '../utils/core-service-helpers'
+import { createAcademicPeriod, createClassGroup, createFixtureSubjectCategory, publishAcademicPeriod, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, updateSchool, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
@@ -83,7 +83,7 @@ async function setupBaselineFixture() {
 
   // Academics setup
   await app.baseService.entities.subjects.save(
-    new Subject(withFixtureDiscipline({ gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' })),
+    new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school')).id, gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' })),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-subject-english',

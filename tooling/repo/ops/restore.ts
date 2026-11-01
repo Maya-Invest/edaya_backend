@@ -37,9 +37,15 @@ export async function restore(): Promise<void> {
     await run(['unzip', '-q', zip, '-d', directory], { quiet: true })
     const evidence = JSON.parse(readFileSync(resolve(directory, '.ci-evidence/qualification.json'), 'utf8')) as {
       sourceCommit: string
+      environment: string
+      runId: string
+      attempt: string
       checks: Record<string, boolean>
     }
     sha(evidence.sourceCommit)
+    const expected = await run(['git', 'rev-parse', 'HEAD'], { quiet: true })
+    if (evidence.sourceCommit !== expected || evidence.environment !== process.env.CI_TARGET || evidence.runId !== runId || evidence.attempt !== attempt)
+      throw new Error('Candidate source, environment or run identity mismatch')
     if (evidence.checks.verification !== true || evidence.checks.integration !== true)
       throw new Error('Candidate did not pass full validation')
     await run(['git', 'fetch', 'origin', evidence.sourceCommit], { quiet: true, env: gitEnvironment() })

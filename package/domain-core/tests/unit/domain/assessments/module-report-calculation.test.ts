@@ -13,7 +13,7 @@ const policy = gradingPolicySchema.parse({ academicYearId: 'year', revision: 1, 
   ranges: [{ id: 'pass', minScore: 0, maxScore: 20, letter: 'A', interpretation: 'Pass' }],
 } })
 const module = (id: string, weight?: number) => new ReportModule({ id, schoolId: 'school', gradeLevelId: 'level', academicYearId: 'year', name: id, order: id === 'languages' ? 2 : 1, weightingMode: weight === undefined ? 'subject_coefficients' : 'explicit', explicitWeight: weight })
-const row = (id: string, average: number | undefined, coefficient: number | undefined, reportModuleId?: string) => ({ subject: new Subject({ id, schoolId: 'school', gradeLevelId: 'level', academicYearId: 'year', name: id, coefficient, reportModuleId }), classSubjectId: `offering:${id}`, average })
+const row = (id: string, average: number | undefined, coefficient: number | undefined, reportModuleId?: string) => ({ subject: new Subject({ categoryId: 'test-category', id, schoolId: 'school', gradeLevelId: 'level', academicYearId: 'year', name: id, coefficient, reportModuleId }), classSubjectId: `offering:${id}`, average })
 const subjects = () => [row('maths', 16, 4, 'science'), row('physics', 10, 2, 'science'), row('languages', 12, 3, 'languages')]
 
 describe('flat report module calculation', () => {

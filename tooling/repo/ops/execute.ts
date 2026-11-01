@@ -1,10 +1,12 @@
-import { mkdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { clientArguments, seedArguments } from './arguments'
 import { commandDocs } from './command-docs'
+import { integrationGroups, runIntegrationGroup } from './integration-groups'
 import { main, reference } from './main'
-import { buildRelease, deployRelease, qualifyRelease, validateRelease } from './release'
-import { assertCommittedSource, environment, githubOutput, root, run, sha, verificationPhase, writeJson } from './runtime'
+import { finalizeQualification, recordStage, resetQualification, stageContext } from './qualification'
+import { buildRelease, deployRelease, validateRelease } from './release'
+import { assertCommittedSource, environment, githubOutput, root, run, verificationPhase, writeJson } from './runtime'
 import { tool } from './tools'
 
 export async function executeCommand(args: string[]): Promise<void> {
@@ -46,17 +48,29 @@ export async function executeCommand(args: string[]): Promise<void> {
       return
     }
   }
-  if (group === 'test' && !rest.length) {
+  if (group === 'test') {
     if (name === 'tooling') {
       await run(['bun', 'run', 'test'], { cwd: resolve(root, 'tooling/repo') })
       return
     }
     if (name === 'unit') {
-      await run(['bun', 'run', 'test'], { timeout: 120 * 60000 })
+      await recordStage('unit', () => run(['bun', 'run', 'test'], { timeout: 120 * 60000 }))
       return
     }
     if (name === 'integration') {
-      await run(['bun', 'run', 'test:integration'], { timeout: 120 * 60000 })
+      const selected = rest.length ? [rest[1]] : [...integrationGroups]
+      if (rest.length && (rest[0] !== '--group' || rest.length !== 2 || !integrationGroups.includes(rest[1] as typeof integrationGroups[number])))
+        throw new Error('Expected --group services|adapters-http|seed-native')
+      for (const selectedGroup of selected) {
+        const integrationGroup = selectedGroup as typeof integrationGroups[number]
+        await recordStage(`integration-${integrationGroup}`, async () => {
+          await runIntegrationGroup(integrationGroup)
+          if (integrationGroup === 'adapters-http') {
+            const { compatibility } = await import('./compatibility')
+            await compatibility(process.env.CI_TARGET ?? 'staging')
+          }
+        })
+      }
       return
     }
   }
@@ -117,12 +131,54 @@ export async function executeCommand(args: string[]): Promise<void> {
       await run([await tool('actionlint'), '-shellcheck=', ...Array.from(new Bun.Glob('.github/workflows/*.yml').scanSync({ cwd: root }))])
       return
     }
+    if (name === 'quality') {
+      const { finalizeQuality, qualityParts, recordQualityPart, resetQuality } = await import('./quality')
+      const part = rest[0]
+      const executePart = (part: typeof qualityParts[number]) => recordQualityPart(part, async () => {
+        if (part === 'checks') {
+          await verificationPhase('repository checks', () => main(['check']))
+          await verificationPhase('workflow lint', () => main(['ci', 'workflows']))
+        }
+        else {
+          await verificationPhase(part === 'lint' ? 'ESLint' : 'TypeScript', () => run(['bun', 'run', part === 'lint' ? 'lint' : 'check']))
+        }
+      })
+      if (part === 'checks')
+        resetQuality()
+      if (part === 'finalize') {
+        await finalizeQuality()
+      }
+      else if (part && qualityParts.includes(part as typeof qualityParts[number])) {
+        await executePart(part as typeof qualityParts[number])
+      }
+      else if (!part) {
+        resetQuality()
+        try {
+          for (const part of qualityParts)
+            await executePart(part)
+        }
+        finally { await finalizeQuality() }
+      }
+      else { throw new Error('Unknown quality phase') }
+      return
+    }
+    if (name === 'build') {
+      const target = environment(rest[0])
+      await recordStage('build', async () => {
+        await run(['bun', 'run', 'build'])
+        await buildRelease(target)
+        await main(['ci', 'archive-inputs'])
+      }, target)
+      return
+    }
+    if (name === 'finalize') {
+      await finalizeQualification(environment(rest[0]))
+      return
+    }
     if (name === 'verify') {
-      await verificationPhase('repository checks', () => main(['check']))
-      await verificationPhase('workflow lint', () => main(['ci', 'workflows']))
-      await verificationPhase('lint and type checks', () => run(['bun', 'run', 'quality']))
+      await main(['ci', 'quality'])
       await verificationPhase('workspace build', () => run(['bun', 'run', 'build']))
-      await verificationPhase('workspace tests (including tooling)', () => main(['test', 'unit']))
+      await main(['test', 'unit'])
       return
     }
     if (name === 'fixture') {
@@ -141,6 +197,7 @@ export async function executeCommand(args: string[]): Promise<void> {
         throw new Error('Migrations require the fully qualified deployment artifacts')
       await main(['ops', 'db', 'migrate', 'identity', target])
       await main(['ops', 'db', 'migrate', 'school', target])
+      writeJson(resolve(root, '.ci-evidence/migration.json'), { ...await stageContext(target), status: 'passed' })
       return
     }
     if (name === 'archive-inputs') {
@@ -159,35 +216,33 @@ export async function executeCommand(args: string[]): Promise<void> {
     }
     if (name === 'deploy') {
       const { recordDeployment } = await import('./github')
-      if (rest.includes('--dry-run'))
+      if (rest.includes('--dry-run')) {
         await deployRelease(environment(rest[0]), true)
-      else
-        await recordDeployment(environment(rest[0]), () => deployRelease(environment(rest[0])))
+      }
+      else {
+        const target = environment(rest[0])
+        const expected = await stageContext(target)
+        const migration = JSON.parse(readFileSync(resolve(root, '.ci-evidence/migration.json'), 'utf8'))
+        if (migration.status !== 'passed' || Object.entries(expected).some(([key, value]) => migration[key] !== value))
+          throw new Error('Deployment requires successful migration evidence for this candidate and run')
+        await recordDeployment(target, () => deployRelease(target))
+      }
       return
     }
     if (name === 'qualify') {
       const target = environment(rest[0])
-      mkdirSync(resolve(root, '.ci-evidence'), { recursive: true })
-      const evidence = { sourceCommit: sha(await run(['git', 'rev-parse', 'HEAD'], { quiet: true })), environment: target, checks: { verification: false, integration: false, compatibility: false } }
-      writeJson(resolve(root, '.ci-evidence/qualification.json'), evidence)
-      try {
-        await main(['ci', 'verify'])
-        evidence.checks.verification = true
-        await main(['test', 'integration'])
-        evidence.checks.integration = true
-        const { compatibility } = await import('./compatibility')
-        await compatibility(target)
-        evidence.checks.compatibility = true
-      }
-      finally {
-        writeJson(resolve(root, '.ci-evidence/qualification.json'), evidence)
-      }
-      await buildRelease(target)
-      await qualifyRelease(target)
+      process.env.CI_TARGET = target
+      process.env.EDAYA_QUALIFICATION_ATTEMPT = crypto.randomUUID()
+      resetQualification()
+      await main(['ci', 'quality'])
+      await main(['test', 'unit'])
+      await main(['ci', 'build', target])
+      await main(['test', 'integration'])
+      await finalizeQualification(target)
       return
     }
     if (name === 'resolve') {
-      githubOutput('source_sha', sha(await run(['git', 'rev-parse', 'HEAD'], { quiet: true })))
+      githubOutput('source_sha', (await stageContext()).sourceCommit)
       return
     }
   }

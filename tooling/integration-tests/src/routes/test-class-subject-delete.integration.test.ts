@@ -7,11 +7,11 @@ describeWithLightSchool('generic class subject deletion', (getContext) => {
     const { application, app, authHeaders } = getContext()
     const repositories = application.repositories
     const classGroup = (await repositories.classGroups.list({ $limit: 1 }))[0]!
-    await repositories.subjects.save(new Subject({ gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: 'delete-inherited-subject', schoolId: classGroup.schoolId, name: 'Inherited subject' }))
+    await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: 'delete-inherited-subject', schoolId: classGroup.schoolId, name: 'Inherited subject' }))
     const inherited = new ClassSubject({ id: 'delete-inherited-allocation', classGroupId: classGroup.id, subjectId: 'delete-inherited-subject' })
     await repositories.classSubjects.save(inherited)
     for (const suffix of ['unused', 'used']) {
-      await repositories.subjects.save(new Subject({ gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: `delete-subject-${suffix}`, schoolId: classGroup!.schoolId, name: `Delete test ${suffix}` }))
+      await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: `delete-subject-${suffix}`, schoolId: classGroup!.schoolId, name: `Delete test ${suffix}` }))
       await repositories.classSubjects.save(new ClassSubject({ id: `delete-allocation-${suffix}`, classGroupId: classGroup!.id, subjectId: `delete-subject-${suffix}` }))
     }
     await repositories.subjectMatters.save(new SubjectMatter({ id: 'delete-matter', subjectId: 'delete-subject-used', name: 'Preserve curriculum', sequenceOrder: 1 }))

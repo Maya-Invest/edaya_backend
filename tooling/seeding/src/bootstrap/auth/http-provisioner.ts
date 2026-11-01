@@ -45,8 +45,18 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
     response = await client.request('/auth/edaya/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
   }
   else {
-    const termsAcceptance = await localTermsAcceptance(client)
-    const send = await client.request('/auth/edaya/otp/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'email', value: email, channel: 'email', ...(termsAcceptance ? { termsAcceptance } : {}) }) })
+    const termsResponse = await client.request('/auth/edaya/terms?locale=en')
+    if (!termsResponse.ok)
+      throw new Error(`Seed terms lookup failed (${termsResponse.status})`)
+    const terms = await termsResponse.json() as { enforced: boolean, document: { version: string, locale: 'fr' | 'en', status: 'draft' | 'published' } | null }
+    // Local fixtures may acknowledge preview text; published agreements require
+    // an operator-authenticated session, just like remote seeding.
+    if (terms.enforced && (terms.document?.status !== 'draft' || !terms.document.version || terms.document.locale !== 'en'))
+      throw new Error('Local fixture OTP requires draft terms; use SEED_AUTH_SESSIONS_FILE for published terms')
+    const termsAcceptance = terms.enforced && terms.document
+      ? { version: terms.document.version, locale: terms.document.locale, accepted: true }
+      : undefined
+    const send = await client.request('/auth/edaya/otp/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'email', value: email, channel: 'email', termsAcceptance }) })
     if (!send.ok)
       throw new Error(`Seed OTP delivery failed (${send.status}: ${(await send.text()).slice(0, 180)})`)
     const { challenge } = await send.json() as { challenge: string }

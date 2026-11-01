@@ -359,7 +359,12 @@ export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   recipientKind: field.string(),
   recipientId: field.id(),
   status: field.string(),
-});
+  title: field.string(),
+  body: field.string(),
+  eventKey: field.string(),
+  sentAt: field.optionalDate(),
+  createdAt: field.optionalDate(),
+}, undefined, ["title", "body"]);
 
 export const schoolNotificationTemplatesQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),

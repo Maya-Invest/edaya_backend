@@ -1,22 +1,22 @@
 import type { ActorMetadata, EdayaSparkS2sKeyMode } from '@edaya/authorization'
 import type { CommandJson } from '@edaya/core'
-import type { ApplyStructureTemplateResult, ReviewedDisciplineMapping } from './apply-structure-template'
+import type { ApplyStructureTemplateResult } from './apply-structure-template'
 import type { InviteStaffMembersResult } from './invite-staff-members'
 import type { OnboardingAccountStatus } from './onboarding-account-state'
 import type { OnboardingSchoolApplication } from './onboarding-application'
+import type { OnboardingDataset } from './onboarding-dataset'
 import type { RegisterSchoolOwnerSession } from './register-school-with-owner'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { digestCommandRequest } from '../../services/commands/command-execution'
-import { applyStructureTemplate } from './apply-structure-template'
+import { applyStructureTemplate, resolveDatasetStructure } from './apply-structure-template'
 import { ensureAcademicStructureFromDraft } from './ensure-academic-structure-from-draft'
 import { inviteStaffMembers } from './invite-staff-members'
 import { completeOnboardingWizard } from './onboarding-account-state'
+import { onboardingDatasetSchema } from './onboarding-dataset'
 import { registerSchoolWithOwner } from './register-school-with-owner'
 import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { isStructureTemplateId } from './structure-naming'
 
 export interface ProvisionOnboardingSchoolInput {
   name: string
@@ -36,9 +36,8 @@ export interface ProvisionOnboardingSchoolInput {
 }
 
 export interface ProvisionOnboardingStructureInput {
-  disciplineMappings?: ReviewedDisciplineMapping[]
   templates: string[]
-  templateSnapshots?: StructureTemplateDefinition[]
+  dataset: OnboardingDataset
   levels: Array<{
     gradeLevelId: string
     classCount: number
@@ -114,26 +113,6 @@ function toOwnerSession(session: RegisterSchoolOwnerSession) {
       ...(session.user.name ? { name: session.user.name } : {}),
     },
   }
-}
-
-function parseTemplates(templates: string[]): StructureTemplateId[] {
-  if (!templates.length) {
-    throw new BusinessRuleViolationError(
-      'STRUCTURE_TEMPLATE_REQUIRED',
-      'At least one school template must be selected',
-    )
-  }
-  const parsed: StructureTemplateId[] = []
-  for (const template of templates) {
-    if (!isStructureTemplateId(template)) {
-      throw new BusinessRuleViolationError(
-        'STRUCTURE_TEMPLATE_INVALID',
-        `Invalid structure template id: ${template}`,
-      )
-    }
-    parsed.push(template)
-  }
-  return parsed
 }
 
 function parseInvites(invites: ProvisionOnboardingInviteInput[] | undefined): Array<{
@@ -292,7 +271,7 @@ async function executeProvision(
     }
   }
 
-  const templates = parseTemplates(input.structure.templates)
+  const templates = input.structure.templates
   const invites = parseInvites(input.invites)
   let actor: ActorMetadata
 
@@ -334,11 +313,9 @@ async function executeProvision(
   try {
     structure = await applyStructureTemplate(application, actor, {
       templates,
-      ...(input.structure.templateSnapshots
-        ? { templateSnapshots: input.structure.templateSnapshots }
-        : {}),
+      dataset: input.structure.dataset,
+      academicYearId: academic.yearId,
       levels: input.structure.levels,
-      disciplineMappings: input.structure.disciplineMappings,
     })
     for (const phase of structure.phases) {
       phases.push(phase)
@@ -399,6 +376,9 @@ export async function provisionOnboarding(
     )
   }
 
+  input = { ...input, structure: { ...input.structure, dataset: onboardingDatasetSchema.parse(input.structure.dataset) } }
+  resolveDatasetStructure(input.structure)
+
   const schoolId = requireUuid(input.schoolId, 'ONBOARDING_SCHOOL_ID_INVALID', 'A stable school identity is required')
   const requestId = requireUuid(
     input.requestId || options.requestId || '',
@@ -423,7 +403,7 @@ export async function provisionOnboarding(
       structure: {
         templates: input.structure.templates,
         levels: input.structure.levels,
-        disciplineMappings: input.structure.disciplineMappings,
+        dataset: input.structure.dataset,
       },
       invites: parseInvites(input.invites),
     },

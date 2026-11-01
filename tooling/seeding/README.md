@@ -44,10 +44,11 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/conf
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 
 ```sh
-bun repo ops seed clean --yes && bun repo ops seed              # local school fresh start
+# Stop bun repo dev first. This command owns temporary API/file services.
+bun repo ops seed local --clean --yes                          # reset + full local reseed
 bun repo ops seed clean staging --yes && bun repo ops seed staging   # staging school fresh start
 # Account/auth data: `bun repo ops db wipe identity local --yes` (or staging)
-# or
+# or (API stopped)
 bun repo ops seed --clean                 # prompts; add --yes for automation
 bun repo ops seed staging --clean       # prompts; add --yes for automation
 ```
@@ -58,11 +59,17 @@ bun repo ops seed staging --clean       # prompts; add --yes for automation
 2. Seed: `bun repo ops seed`
 3. Log in at http://localhost:5173/login
 
+Local fixture OTP sign-in reads and acknowledges the current draft terms when preview mode is enabled. Published terms require operator-authenticated sessions supplied through `SEED_AUTH_SESSIONS_FILE`; the seeder does not accept published agreements automatically.
+
 After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
+
+For a complete local reset, stop `bun repo dev`, run `bun repo ops seed local --clean --yes`, then restart `bun repo dev`. The combined command starts temporary services without file watching, waits for both API and file storage readiness, and shuts down only its own services on success or failure. Identity data is retained. A running API, including one returning HTTP 500, blocks deletion of the school database.
 
 ### Profile photos
 
 Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`bun tooling/repo/dev/local-files.ts`** on port **9200**, started automatically by `bun repo dev`.
+
+Fixture photos are stable per owner. Rerunning the full seed repairs missing portraits even when school data already exists. Completed seed portraits are reused; interrupted PUT/completion requests retry the same identity and bytes. Expired or conflicting upload intents receive a newly authorized replacement, which is reused after publication. Unknown conflicts and authorization errors fail the seed rather than being reported as completed uploads.
 
 | Situation | Behavior |
 |-----------|----------|

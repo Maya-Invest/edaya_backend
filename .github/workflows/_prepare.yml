@@ -1,0 +1,56 @@
+name: Preparation
+on:
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        required: true
+      source_ref:
+        type: string
+        required: true
+      release_mode:
+        type: boolean
+        default: false
+    outputs:
+      source_sha:
+        value: ${{ jobs.source.outputs.source_sha }}
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+jobs:
+  source:
+    name: Prepare immutable source
+    runs-on: ubuntu-24.04
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Validate release destination
+        env:
+          RELEASE_MODE: ${{ inputs.release_mode }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          if [ "$RELEASE_MODE" != "true" ]; then exit 0; fi
+          if [ "$REF_TYPE" != "branch" ]; then
+            echo "::error::Deploy must run from the staging or main workflow branch, not a tag."
+            exit 1
+          fi
+          case "$REF_NAME" in
+            staging) expected=staging ;;
+            main) expected=production ;;
+            *) echo "::error::Deploy must run from the staging or main workflow branch."; exit 1 ;;
+          esac
+          if [ "$TARGET" != "$expected" ]; then
+            echo "::error::Deployment target does not match the selected workflow branch."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+      - id: source
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Preparation resolved $(git rev-parse HEAD) in ${SECONDS}s" >> "$GITHUB_STEP_SUMMARY"

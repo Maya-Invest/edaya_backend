@@ -20,6 +20,9 @@ export function createDatabasePool(baseline: DatabaseBaseline = 'initialized') {
   let closed = false
   let initializations = 0
   let acquisitions = 0
+  let initializationMs = 0
+  let resetMs = 0
+  let checkpointMs = 0
 
   function wrap(db: PGlite): RepositoryDatabase {
     const connection = drizzle(db)
@@ -27,6 +30,7 @@ export function createDatabasePool(baseline: DatabaseBaseline = 'initialized') {
   }
 
   async function reset(db: PGlite) {
+    const started = performance.now()
     const { rows } = await db.query<{ schemaname: string, tablename: string }>(`SELECT schemaname, tablename FROM pg_tables
       WHERE schemaname NOT IN ('pg_catalog', 'information_schema', $1) AND schemaname NOT LIKE 'pg_toast%'`, [MIGRATIONS_SCHEMA])
     const quote = (name: string) => `"${name.replaceAll('"', '""')}"`
@@ -38,7 +42,10 @@ export function createDatabasePool(baseline: DatabaseBaseline = 'initialized') {
       await seedCronJobSchedules({ execute: async query => connection.execute(query as SQL) })
     }
     // Reclaim relation files deferred by TRUNCATE before the next lease/shutdown.
+    const checkpointStarted = performance.now()
     await db.exec('CHECKPOINT')
+    checkpointMs += performance.now() - checkpointStarted
+    resetMs += performance.now() - started
   }
 
   async function acquire(): Promise<RepositoryDatabase> {
@@ -46,7 +53,9 @@ export function createDatabasePool(baseline: DatabaseBaseline = 'initialized') {
       throw new Error('Cannot acquire from a closed test database pool')
     let db = idle.pop()
     if (!db) {
+      const started = performance.now()
       const fresh = await createRepositoryDatabase()
+      initializationMs += performance.now() - started
       db = fresh.db
       owned.add(db)
       initializations++
@@ -117,7 +126,7 @@ export function createDatabasePool(baseline: DatabaseBaseline = 'initialized') {
     const errors = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected').map(result => result.reason)
     const { EDAYA_TEST_POOL_METRICS: metrics } = process.env
     if (metrics === 'true')
-      process.stdout.write(`[test database pool] ${JSON.stringify({ baseline, initializations, acquisitions })}\n`)
+      process.stdout.write(`[test database pool] ${JSON.stringify({ baseline, initializations, acquisitions, initializationMs, resetMs, checkpointMs })}\n`)
     if (leaked)
       errors.push(new Error(`${leaked} unreleased test database lease(s)`))
     if (errors.length)

@@ -28,6 +28,7 @@ describeIntegration('demo school timetable generation', () => {
     await repos.calendarEvents.batchSave(events)
     const weekday = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     const preserved: LessonSession[] = []
+    const activities: ActivitySession[] = []
     for (let date = new Date(entities.academicYear.startDate); date <= new Date(entities.academicYear.endDate); date.setUTCDate(date.getUTCDate() + 1)) {
       const key = date.toISOString().slice(0, 10)
       for (const slot of extensions.schedulingSlots) {
@@ -41,11 +42,12 @@ describeIntegration('demo school timetable generation', () => {
           preserved.push(new LessonSession({ ...session, classSubjectId: schedule.classSubjectId }))
         }
         else {
-          await repos.activitySessions.save(new ActivitySession({ ...session, scheduleId: schedule.id, activityId: schedule.activityId }))
+          activities.push(new ActivitySession({ ...session, scheduleId: schedule.id, activityId: schedule.activityId }))
         }
       }
     }
     expect(preserved.length).toBeGreaterThan(100)
+    await repos.activitySessions.batchSave(activities)
     await repos.lessonSessions.batchSave(preserved)
     const input = { academicYearId: entities.academicYear.id, startDate: new Date(entities.academicYear.startDate), endDate: new Date(entities.academicYear.endDate), options: { generationMode: TimetableGenerationMode.Weekly, enforceWorkloadFulfillment: true } }
     const result = await app.timetableGenerationWorkflow.generateSchoolTimetable(input)

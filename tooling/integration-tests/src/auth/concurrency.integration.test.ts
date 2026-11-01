@@ -2,7 +2,7 @@ import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createGuardianActor
 import { AttendanceStatus, GradeLevel, PaymentMethod, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { buildFeeSummary, createClassGroup, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, withFixtureDiscipline } from '../utils/core-service-helpers'
+import { buildFeeSummary, createClassGroup, createFixtureSubjectCategory, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 async function createConcurrencyFixture() {
@@ -59,7 +59,7 @@ async function createConcurrencyFixture() {
 
   // Offer subject and class details
   await app.baseService.entities.subjects.save(
-    new Subject(withFixtureDiscipline({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' })),
+    new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school')).id, gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' })),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-math',

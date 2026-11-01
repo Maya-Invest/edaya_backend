@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicYear, ClassGroup, ClassSubject, GradeLevel, Guardian, GuardianStudentLink, Permission, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject, Teacher, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, ClassGroup, ClassSubject, GradeLevel, Guardian, GuardianStudentLink, Permission, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject, SubjectCategoryEntity, Teacher, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
 
 /** Fresh synthetic data only; persistence belongs to the consuming harness or admitted seed workflow. */
 export function createAuthorizationScenario() {
@@ -37,7 +37,9 @@ export function createAuthorizationScenario() {
   const guardians = [ids.guardian, ids.coGuardian, ids.unrelatedGuardian, ids.disabledGuardian, ids.foreignGuardian].map((id, index) => new Guardian({ id, schoolId: index === 4 ? ids.foreignSchool : ids.school, firstName: id, lastName: 'Fixture', subjectId: index === 0 ? ids.sharedSubject : `${id}-subject`, hasAccess: id !== ids.disabledGuardian, createdAt }))
   const guardianLinks = [[ids.guardian, ids.child], [ids.guardian, ids.sibling], [ids.coGuardian, ids.child], [ids.disabledGuardian, ids.child], [ids.unrelatedGuardian, ids.unrelatedChild], [ids.foreignGuardian, ids.foreignChild]].map(([guardianId, studentId]) => new GuardianStudentLink({ id: `${guardianId}-${studentId}`, guardianId: guardianId!, studentId: studentId!, schoolId: guardianId === ids.foreignGuardian ? ids.foreignSchool : ids.school, createdAt }))
   const teachers = [new Teacher({ id: ids.teacher, schoolId: ids.school, firstName: 'Assigned', lastName: 'Fixture', subjectId: ids.sharedSubject, createdAt }), new Teacher({ id: ids.unassignedTeacher, schoolId: ids.school, firstName: 'Unassigned', lastName: 'Fixture', subjectId: `${ids.unassignedTeacher}-subject`, createdAt })]
-  const subjects = [new Subject({ gradeLevelId: gradeLevels[0]!.id, academicYearId: ids.year, id: 'v1-math', schoolId: ids.school, name: 'Fixture math', createdAt })]
+  const subjectCategories = [new SubjectCategoryEntity({ id: 'v1-category', schoolId: ids.school, name: 'Fixture category', createdAt })]
+  const academicDisciplines = [new AcademicDiscipline({ id: 'v1-discipline', schoolId: ids.school, code: 'MATH', name: 'Fixture math', createdAt })]
+  const subjects = [new Subject({ gradeLevelId: gradeLevels[0]!.id, academicYearId: ids.year, id: 'v1-math', categoryId: subjectCategories[0]!.id, disciplineId: academicDisciplines[0]!.id, schoolId: ids.school, name: 'Fixture math', createdAt })]
   const classSubjects = [new ClassSubject({ id: 'v1-class-math', classGroupId: ids.class, subjectId: subjects[0]!.id, createdAt })]
   const teacherAssignments = [new TeacherAssignment({ id: 'v1-teaching', teacherId: ids.teacher, academicYearId: ids.year, kind: TeacherAssignmentKind.Subject, classSubjectId: classSubjects[0]!.id, createdAt })]
   const staffPermissionAssignments = [new StaffPermissionAssignment({ id: 'v1-student-read', staffId: ids.staff, schoolId: ids.school, academicYearId: ids.year, permission: Permission.STUDENT_READ, scopes: [{ kind: 'student', studentId: ids.child }, { kind: 'student', studentId: ids.sibling }], createdAt })]
@@ -54,5 +56,5 @@ export function createAuthorizationScenario() {
     foreignGuardian: createGuardianActorMetadata({ ...context, schoolId: ids.foreignSchool, academicYearId: ids.foreignYear, guardianId: ids.foreignGuardian, subjectId: `${ids.foreignGuardian}-subject` }),
     student: createStudentActorMetadata({ ...context, studentId: ids.child, subjectId: ids.sharedSubject }),
   }
-  return { ids, actors, schools, academicYears, gradeLevels, classGroups, staffMembers, students, enrollments, guardians, guardianLinks, teachers, subjects, classSubjects, teacherAssignments, staffPermissionAssignments }
+  return { ids, actors, schools, academicYears, gradeLevels, classGroups, staffMembers, students, enrollments, guardians, guardianLinks, teachers, subjectCategories, academicDisciplines, subjects, classSubjects, teacherAssignments, staffPermissionAssignments }
 }

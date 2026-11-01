@@ -123,10 +123,11 @@ export function getQueryOptionFieldSchemas(schema: z.ZodTypeAny): Record<string,
   return queryOptionFieldSchemas.get(schema) ?? {};
 }
 
-function createFieldFilterSchema(valueSchema: z.ZodTypeAny) {
+function createFieldFilterSchema(valueSchema: z.ZodTypeAny, searchable = false) {
   return z.union([
     valueSchema,
     z.object({
+      ...(searchable ? { $contains: z.string().max(200).optional() } : {}),
       $eq: valueSchema.optional(),
       $ne: valueSchema.optional(),
       $in: z.array(valueSchema).optional(),
@@ -150,10 +151,11 @@ let filterCounter = 0;
 export function createQueryOptionsSchema<T extends Record<string, unknown>>(
   allowedFields: Record<keyof T, z.ZodTypeAny>,
   entityName?: string,
+  searchableFields: readonly string[] = [],
 ) {
   const filterShape: Record<string, z.ZodTypeAny> = {};
   for (const key of Object.keys(allowedFields) as Array<keyof T>) {
-    filterShape[key as string] = createFieldFilterSchema(allowedFields[key]).optional();
+    filterShape[key as string] = createFieldFilterSchema(allowedFields[key], searchableFields.includes(key as string)).optional();
   }
 
   const schemaName = entityName ?? `Filter_${++filterCounter}`;

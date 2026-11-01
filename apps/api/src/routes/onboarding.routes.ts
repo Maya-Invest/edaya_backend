@@ -1,11 +1,10 @@
-import type { StructureTemplateDefinition } from "@edaya/service";
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import type { AppRouteHandler } from "@/http/types";
 import { randomUUID } from "node:crypto";
 import { ActorAssuranceLevel, resolveEdayaSparkS2sKeyMode } from "@edaya/authorization";
 import { BusinessRuleViolationError } from "@edaya/core";
-import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
-import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
+import { listOnboardingDatasets, listStructureTemplatesForCountry, resolveOnboardingDataset, resolveOnboardingDatasetInput } from "@edaya/fixtures/onboarding";
+import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, onboardingDatasetSchema, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -74,11 +73,13 @@ const structureTemplateDefinitionSchema = z.object({
     examName: z.string().trim().min(1).optional(),
     reportCardStructure: structureTemplateReportCardStructureSchema.optional(),
   }).passthrough()).min(1),
+  subjectCategories: z.array(z.object({ code: z.string().trim().min(1), name: z.string().trim().min(1) })).optional(),
   subjects: z.array(z.object({
     code: z.string().trim().min(1),
     shortName: z.string().trim().min(1),
     domain: z.string().trim().min(1),
     defaultCoefficient: z.number(),
+    categoryCode: z.string().trim().min(1).optional(),
   }).passthrough()).min(1),
   curriculum: z.array(z.object({
     levelCode: z.string().trim().min(1),
@@ -98,7 +99,21 @@ const onboardingListStructureTemplatesResponseSchema = z.object({
   templates: z.array(structureTemplateDefinitionSchema),
 }).openapi("OnboardingListStructureTemplatesResponse");
 
-const structureTemplateSnapshotSchema = structureTemplateDefinitionSchema;
+const datasetSelectionFields = {
+  dataset: z.object({ id: z.string().trim().min(1), version: z.string().regex(/^\d+\.\d+\.\d+$/) }).optional(),
+  datasetSnapshot: onboardingDatasetSchema.openapi("OnboardingDataset").optional(),
+};
+// Reject obsolete snapshots before object parsing strips unknown wizard fields.
+function rejectLegacySnapshots<T extends z.ZodTypeAny>(schema: T) {
+  return z.preprocess((value, context) => {
+    if (value && typeof value === "object" && "templateSnapshots" in value) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["templateSnapshots"], message: "Legacy template snapshots are unsupported; supply a canonical datasetSnapshot" });
+      return z.NEVER;
+    }
+    return value;
+  }, schema);
+}
+const exclusiveDatasetSelection = (value: { dataset?: unknown; datasetSnapshot?: unknown }) => !(value.dataset && value.datasetSnapshot);
 
 const classNamingModeSchema = z.enum(["alphabetical", "numerical"]).default("numerical");
 
@@ -109,18 +124,12 @@ const onboardingStructureLevelSchema = z.object({
   classNamingMode: classNamingModeSchema.optional(),
 });
 
-const reviewedDisciplineMappingsSchema = z.array(z.object({
-  subjectCode: z.string().trim().min(1),
-  disciplineCode: z.string().trim().min(1),
-  disciplineName: z.string().trim().min(1),
-}));
-
-const onboardingApplyStructureTemplateRequestSchema = z.object({
-  disciplineMappings: reviewedDisciplineMappingsSchema.optional(),
-  templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
-  templateSnapshots: z.array(structureTemplateSnapshotSchema).optional(),
+const onboardingApplyStructureTemplateRequestSchema = rejectLegacySnapshots(z.object({
+  ...datasetSelectionFields,
+  templates: z.array(z.string().trim().min(1)).min(1),
+  academicYearId: z.string().trim().min(1).optional(),
   levels: z.array(onboardingStructureLevelSchema).min(1),
-}).openapi("OnboardingApplyStructureTemplateRequest");
+}).refine(exclusiveDatasetSelection, "Supply a dataset reference or snapshot, not both")).openapi("OnboardingApplyStructureTemplateRequest");
 
 const onboardingApplyStructureTemplateResponseSchema = z.object({
   gradeLevelCount: z.number().int(),
@@ -174,11 +183,11 @@ const onboardingProvisionRequestSchema = z.object({
       end: z.string().trim().min(1),
     })).min(1),
   }),
-  structure: z.object({
-    disciplineMappings: reviewedDisciplineMappingsSchema.optional(),
-    templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
+  structure: rejectLegacySnapshots(z.object({
+    ...datasetSelectionFields,
+    templates: z.array(z.string().trim().min(1)).min(1),
     levels: z.array(onboardingStructureLevelSchema).min(1),
-  }),
+  }).refine(exclusiveDatasetSelection, "Supply a dataset reference or snapshot, not both")),
   invites: z.array(z.object({
     email: z.string().trim().email(),
     role: z.string().trim().min(1).refine(isOnboardingStaffInviteRoleKey, "Invalid staff invite role"),
@@ -305,7 +314,7 @@ export const onboardingListStructureTemplatesHandler: AppRouteHandler<typeof onb
   const result = listStructureTemplatesForCountry(query.country);
   return c.json({
     countryCode: result.countryCode,
-    templates: [...result.templates],
+    templates: result.templates.map(({ subjectCategories: _categories, ...template }) => ({ ...template, subjects: template.subjects.map(({ categoryCode: _code, ...subject }) => subject) })),
   }, HttpStatusCodes.OK);
 };
 
@@ -341,12 +350,9 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
   try {
     const result = await applyStructureTemplate(c.get("schoolApp"), actor, {
       templates: body.templates,
-      templateSnapshots: resolveStructureTemplates(
-        body.templates,
-        (body.templateSnapshots as StructureTemplateDefinition[] | undefined) ?? [],
-      ),
+      dataset: resolveOnboardingDatasetInput(body),
+      academicYearId: body.academicYearId,
       levels: body.levels,
-      disciplineMappings: body.disciplineMappings,
     });
     await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
       maxReachedStep: 3,
@@ -514,7 +520,7 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
         school: body.school,
         structure: {
           ...body.structure,
-          templateSnapshots: resolveStructureTemplates(body.structure.templates),
+          dataset: resolveOnboardingDatasetInput(body.structure),
         },
         ...(body.invites ? { invites: body.invites } : {}),
       },
@@ -566,3 +572,33 @@ function toOwnerSession(session: AuthenticatedSession) {
     },
   };
 }
+
+const onboardingDatasetChoicesSchema = z.object({
+  datasets: z.array(z.object({ id: z.string(), version: z.string(), countryCode: z.string(), label: z.string(), isDefault: z.boolean() })),
+}).openapi("OnboardingDatasetChoices");
+export const onboardingListDatasetsRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("onboarding", "datasets"),
+  tags: ["Core Onboarding"],
+  summary: "List published onboarding datasets",
+  ...clientRouteOperation({ namespace: "onboarding", clientKey: "listDatasets", path: "onboarding/datasets", responseSchemaName: "OnboardingDatasetChoices" }),
+  request: { query: z.object({ country: z.string().optional() }) },
+  responses: { [HttpStatusCodes.OK]: jsonContent(onboardingDatasetChoicesSchema, "Published datasets"), ...coreRouteErrorResponses },
+});
+export const onboardingListDatasetsHandler: AppRouteHandler<typeof onboardingListDatasetsRoute> = async c => c.json({ datasets: listOnboardingDatasets(c.req.valid("query").country) }, HttpStatusCodes.OK);
+export const onboardingGetDatasetRoute = createRoute({
+  method: "get",
+  path: schoolApiPath("onboarding", "datasets", "{id}", "{version}"),
+  tags: ["Core Onboarding"],
+  summary: "Read an exact onboarding dataset version",
+  ...clientRouteOperation({ namespace: "onboarding", clientKey: "getDataset", path: "onboarding/datasets/{id}/{version}", pathParams: ["id", "version"], responseSchemaName: "OnboardingDataset" }),
+  request: { params: z.object({ id: z.string().min(1), version: z.string().min(1) }) },
+  responses: { [HttpStatusCodes.OK]: jsonContent(onboardingDatasetSchema.openapi("OnboardingDataset"), "Canonical dataset"), ...coreRouteErrorResponses },
+});
+export const onboardingGetDatasetHandler: AppRouteHandler<typeof onboardingGetDatasetRoute> = async (c) => {
+  try {
+    const { id, version } = c.req.valid("param");
+    return c.json(resolveOnboardingDataset(id, version), HttpStatusCodes.OK);
+  }
+  catch (error) { return routeErrorResponse(c, error); }
+};

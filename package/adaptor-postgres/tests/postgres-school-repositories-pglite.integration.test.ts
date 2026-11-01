@@ -1,6 +1,6 @@
 import type { PGlite } from '@electric-sql/pglite'
 import type { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevel, LessonSession, PeriodDefinition, ReportCardResult, School, Subject, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevel, LessonSession, PeriodDefinition, ReportCardResult, School, Subject, SubjectCategoryEntity, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { usePooledDatabases } from './support/pooled-database'
 
@@ -133,7 +133,9 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       endTime: '09:00',
       isTeachingSlot: false,
     }))
+    await repos.subjectCategories.save(new SubjectCategoryEntity({ id: 'category-1', schoolId: 'school-1', name: 'Scientific' }))
     await repos.subjects.save(new Subject({
+      categoryId: 'category-1',
       id: 'subject-1',
       schoolId: 'school-1',
       name: 'Math',

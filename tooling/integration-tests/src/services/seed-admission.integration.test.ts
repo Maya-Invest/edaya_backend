@@ -1,26 +1,30 @@
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import type { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import type { PGlite } from '@electric-sql/pglite'
+import { PostgresAtomicExecution, PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { bootstrapSeedDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { SchoolApplication } from '@edaya/service'
-import { PGlite } from '@electric-sql/pglite'
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { drizzle } from 'drizzle-orm/pglite'
+import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createDatabasePool } from '../../../../package/adaptor-postgres/tests/support/database-pool'
 import { createInProcessAuthLinkSeedPort } from '../../../seeding/src/domains/auth-link/adapters/in-process'
 
 describe('seed mutation admission', () => {
   let db: PGlite
   let application: SchoolApplication
   let repositories: PostgresSchoolRepositories
+  const pool = createDatabasePool()
+  afterAll(() => pool.close())
+  afterEach(() => pool.releaseAll())
+
   beforeEach(async () => {
-    db = new PGlite()
-    const connection = drizzle(db)
-    repositories = new PostgresSchoolRepositories(connection)
-    await repositories.init({ driver: 'pglite' })
+    const fixture = await pool.acquire()
+    db = fixture.db
+    const { connection, repositories: pooledRepositories } = fixture
+    repositories = pooledRepositories
     application = new SchoolApplication({ repositories, atomicExecution: new PostgresAtomicExecution(connection), commandJournal: new PostgresCommandJournal(), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
   })
-  afterEach(async () => db.close())
 
   test('minimal bootstrap commits school, staff and guardian together and safely repeats', async () => {
     const save = repositories.guardians.save.bind(repositories.guardians)

@@ -3,7 +3,6 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
 import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
-import { ensureDefaultSubjectCategories } from '../../capabilities/academics/ensure-default-subject-categories'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
@@ -128,7 +127,6 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       const school = new SchoolEntity(schoolInput)
       await this.baseService.entities.schools.save(school)
       await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
-      await ensureDefaultSubjectCategories(this.baseService.repositories, school.id)
       await ensureSchoolPermissionProfiles(this.baseService.repositories, school.id)
       return school
     })

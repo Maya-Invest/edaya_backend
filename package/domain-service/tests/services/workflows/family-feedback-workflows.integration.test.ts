@@ -26,7 +26,7 @@ import {
 } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { runCronJobs } from '../../../src/capabilities/scheduling-jobs/cron-job-runner'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 
 const SCHOOL = 'school'
 const ANSWERS = {
@@ -67,7 +67,7 @@ async function seedAssignment(repositories: Awaited<ReturnType<typeof createTest
   }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: SCHOOL, name: 'CM1', label: 'CM1', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: SCHOOL, academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'CM1 A' }))
-  await repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'math', schoolId: SCHOOL, name: 'Mathematics' }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'math', schoolId: SCHOOL, name: 'Mathematics' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'math', coefficient: 1 }))
   await repositories.teachers.save(new Teacher({
     id: 'teacher1',

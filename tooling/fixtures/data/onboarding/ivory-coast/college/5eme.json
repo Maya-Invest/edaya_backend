@@ -1,212 +1,536 @@
 {
+  "id": "ci-college:5EME",
   "code": "5EME",
   "name": "Cinquième",
-  "short_label": "5ème",
-  "sections": [
+  "shortLabel": "5ème",
+  "order": 2,
+  "reportModules": [
     {
-      "role": "subjects",
-      "label": "Bilan Lettre",
+      "code": "MODULE_1",
+      "name": "Bilan Lettre",
       "order": 1,
-      "subject_codes": [
-        "FR",
-        "ANG",
-        "HG"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan Science",
+      "code": "MODULE_2",
+      "name": "Bilan Science",
       "order": 2,
-      "subject_codes": [
-        "MATH",
-        "PC",
-        "SVT",
-        "TECH",
-        "TICE"
-      ]
+      "weightingMode": "subject_coefficients"
     },
     {
-      "role": "subjects",
-      "label": "Bilan autres",
+      "code": "MODULE_3",
+      "name": "Bilan autres",
       "order": 3,
-      "subject_codes": [
-        "EDHC",
-        "AP",
-        "MUS",
-        "EPS"
-      ]
-    },
-    {
-      "role": "comments",
-      "label": "Appréciations",
-      "order": 4
+      "weightingMode": "subject_coefficients"
     }
   ],
+  "gradingPolicy": {
+    "gradeScaleCode": "NUMERIC_20",
+    "mode": "numeric-first",
+    "aggregateLabel": "Moyenne générale",
+    "passThreshold": 10
+  },
   "subjects": [
     {
       "code": "MATH",
       "name": "Mathématiques",
-      "domain": "Sciences",
+      "shortName": "Mathématiques",
+      "disciplineCode": "MATH",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 3,
-      "matters": [
-        "Arithmétique : PGCD, PPCM, division euclidienne, nombres premiers",
-        "Nombres relatifs : addition, soustraction, repérage sur un axe",
-        "Fractions : opérations simples, fractions équivalentes",
-        "Géométrie plane : points, segments, droites sécantes, parallèles, perpendiculaires",
-        "Angles : mesure, angles adjacents, complémentaires, supplémentaires",
-        "Symétrie axiale et centrale : propriétés de conservation",
-        "Les triangles : propriétés, inégalité triangulaire, droites remarquables",
-        "Parallélogrammes particuliers",
-        "Initiation aux probabilités et statistiques (tableaux d'effectifs)"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Arithmétique : PGCD, PPCM, division euclidienne, nombres premiers",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Nombres relatifs : addition, soustraction, repérage sur un axe",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Fractions : opérations simples, fractions équivalentes",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Géométrie plane : points, segments, droites sécantes, parallèles, perpendiculaires",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Angles : mesure, angles adjacents, complémentaires, supplémentaires",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Symétrie axiale et centrale : propriétés de conservation",
+          "order": 6
+        },
+        {
+          "code": "CHAPTER_7",
+          "title": "Les triangles : propriétés, inégalité triangulaire, droites remarquables",
+          "order": 7
+        },
+        {
+          "code": "CHAPTER_8",
+          "title": "Parallélogrammes particuliers",
+          "order": 8
+        },
+        {
+          "code": "CHAPTER_9",
+          "title": "Initiation aux probabilités et statistiques (tableaux d'effectifs)",
+          "order": 9
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 1
     },
     {
       "code": "FR",
       "name": "Français",
-      "domain": "Langues",
+      "shortName": "Français",
+      "disciplineCode": "FR",
+      "categoryCode": "LANGUAGES",
       "coefficient": 3,
-      "matters": [
-        "Lecture et compréhension de textes narratifs et documentaires",
-        "Grammaire de la phrase simple : classes et fonctions",
-        "Conjugaison des temps courants",
-        "Expression écrite : récit et description"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Lecture et compréhension de textes narratifs et documentaires",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Grammaire de la phrase simple : classes et fonctions",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Conjugaison des temps courants",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Expression écrite : récit et description",
+          "order": 4
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 1
     },
     {
       "code": "ANG",
       "name": "Anglais",
-      "domain": "Langues",
+      "shortName": "Anglais",
+      "disciplineCode": "ANG",
+      "categoryCode": "LANGUAGES",
       "coefficient": 2,
-      "matters": [
-        "Compréhension orale et expression orale",
-        "Compréhension écrite de textes authentiques",
-        "Vocabulaire thématique et expressions utiles",
-        "Grammaire : temps, structures et concordance",
-        "Production écrite guidée et libre",
-        "Civilisation et documents culturels"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Compréhension orale et expression orale",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Compréhension écrite de textes authentiques",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Vocabulaire thématique et expressions utiles",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Grammaire : temps, structures et concordance",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Production écrite guidée et libre",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Civilisation et documents culturels",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 2
     },
     {
       "code": "HG",
       "name": "Histoire-Géographie",
-      "domain": "Univers Social",
+      "shortName": "Histoire-Géographie",
+      "disciplineCode": "HG",
+      "categoryCode": "HUMANITIES",
       "coefficient": 2,
-      "matters": [
-        "Repères chronologiques et sociétés",
-        "Territoires, populations et activités",
-        "Lecture de cartes, frises et documents",
-        "Afrique et Côte d'Ivoire dans le monde",
-        "Enjeux contemporains",
-        "Méthodologie de l'étude de documents"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Repères chronologiques et sociétés",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Territoires, populations et activités",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Lecture de cartes, frises et documents",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Afrique et Côte d'Ivoire dans le monde",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Enjeux contemporains",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Méthodologie de l'étude de documents",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_1",
+      "reportOrder": 3
     },
     {
       "code": "PC",
       "name": "Physique-Chimie",
-      "domain": "Sciences",
+      "shortName": "Physique-Chimie",
+      "disciplineCode": "PC",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 2,
-      "matters": [
-        "États de la matière et changements d'état",
-        "Notions de masse, volume et température",
-        "Circuits électriques simples",
-        "Introduction aux forces et au mouvement"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "États de la matière et changements d'état",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Notions de masse, volume et température",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Circuits électriques simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Introduction aux forces et au mouvement",
+          "order": 4
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 2
     },
     {
       "code": "SVT",
       "name": "Sciences de la Vie et de la Terre",
-      "domain": "Sciences",
+      "shortName": "Sciences de la Vie et de la Terre",
+      "disciplineCode": "SVT",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 2,
-      "matters": [
-        "Organisation du vivant : cellule et organismes",
-        "Nutrition et fonctions vitales chez les êtres vivants",
-        "Environnement et écosystèmes de base",
-        "Hygiène et prévention des maladies"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Organisation du vivant : cellule et organismes",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Nutrition et fonctions vitales chez les êtres vivants",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Environnement et écosystèmes de base",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Hygiène et prévention des maladies",
+          "order": 4
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 3
     },
     {
       "code": "EDHC",
       "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
-      "domain": "Univers Social",
+      "shortName": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+      "disciplineCode": "EDHC",
+      "categoryCode": "HUMANITIES",
       "coefficient": 1,
-      "matters": [
-        "Droits et devoirs du citoyen",
-        "Vivre ensemble et respect de la diversité",
-        "Institutions et vie démocratique",
-        "Santé, hygiène et responsabilité sociale",
-        "Développement durable",
-        "Engagement et solidarité"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Droits et devoirs du citoyen",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Vivre ensemble et respect de la diversité",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Institutions et vie démocratique",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Santé, hygiène et responsabilité sociale",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Développement durable",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Engagement et solidarité",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 1
     },
     {
       "code": "EPS",
       "name": "Éducation Physique et Sportive",
-      "domain": "Développement Physique",
+      "shortName": "Éducation Physique et Sportive",
+      "disciplineCode": "EPS",
+      "categoryCode": "SPORT",
       "coefficient": 1,
-      "matters": [
-        "Activités athlétiques et motricité",
-        "Sports collectifs",
-        "Gymnastique et expression corporelle",
-        "Condition physique et santé",
-        "Règles de sécurité et fair-play",
-        "Préparation et évaluation des APSA"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Activités athlétiques et motricité",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Sports collectifs",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Gymnastique et expression corporelle",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Condition physique et santé",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Règles de sécurité et fair-play",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Préparation et évaluation des APSA",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 4
     },
     {
       "code": "AP",
       "name": "Arts Plastiques",
-      "domain": "Arts",
+      "shortName": "Arts Plastiques",
+      "disciplineCode": "AP",
+      "categoryCode": "ARTS",
       "coefficient": 1,
-      "matters": [
-        "Dessin et représentation",
-        "Couleurs, formes et composition",
-        "Techniques plastiques",
-        "Lecture d'œuvres",
-        "Expression créative",
-        "Projet plastique personnel"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Dessin et représentation",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Couleurs, formes et composition",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Techniques plastiques",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Lecture d'œuvres",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Expression créative",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Projet plastique personnel",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 2
     },
     {
       "code": "MUS",
       "name": "Éducation Musicale",
-      "domain": "Arts",
+      "shortName": "Éducation Musicale",
+      "disciplineCode": "MUS",
+      "categoryCode": "ARTS",
       "coefficient": 1,
-      "matters": [
-        "Écoute et discrimination sonore",
-        "Chant et rythme",
-        "Notions de solfège de base",
-        "Musiques traditionnelles et contemporaines",
-        "Pratique collective",
-        "Culture musicale"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Écoute et discrimination sonore",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Chant et rythme",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Notions de solfège de base",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Musiques traditionnelles et contemporaines",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Pratique collective",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Culture musicale",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_3",
+      "reportOrder": 3
     },
     {
       "code": "TECH",
       "name": "Technologie",
-      "domain": "Sciences",
+      "shortName": "Technologie",
+      "disciplineCode": "TECH",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 1,
-      "matters": [
-        "Objets techniques et matériaux",
-        "Mesure, dessin et représentation technique",
-        "Énergie et systèmes simples",
-        "Démarche de projet technologique",
-        "Sécurité et usage des outils",
-        "Innovation et design"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Objets techniques et matériaux",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Mesure, dessin et représentation technique",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Énergie et systèmes simples",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Démarche de projet technologique",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Sécurité et usage des outils",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Innovation et design",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 4
     },
     {
       "code": "TICE",
       "name": "TICE",
-      "domain": "Sciences",
+      "shortName": "TICE",
+      "disciplineCode": "TICE",
+      "categoryCode": "SCIENTIFIC",
       "coefficient": 1,
-      "matters": [
-        "Système d'exploitation et fichiers",
-        "Traitement de texte et présentation",
-        "Recherche d'information et sources",
-        "Tableurs et multimédia",
-        "Citoyenneté et sécurité numériques",
-        "Collaboration et outils en ligne"
-      ]
+      "isOptional": false,
+      "chapters": [
+        {
+          "code": "CHAPTER_1",
+          "title": "Système d'exploitation et fichiers",
+          "order": 1
+        },
+        {
+          "code": "CHAPTER_2",
+          "title": "Traitement de texte et présentation",
+          "order": 2
+        },
+        {
+          "code": "CHAPTER_3",
+          "title": "Recherche d'information et sources",
+          "order": 3
+        },
+        {
+          "code": "CHAPTER_4",
+          "title": "Tableurs et multimédia",
+          "order": 4
+        },
+        {
+          "code": "CHAPTER_5",
+          "title": "Citoyenneté et sécurité numériques",
+          "order": 5
+        },
+        {
+          "code": "CHAPTER_6",
+          "title": "Collaboration et outils en ligne",
+          "order": 6
+        }
+      ],
+      "reportModuleCode": "MODULE_2",
+      "reportOrder": 5
     }
   ]
 }

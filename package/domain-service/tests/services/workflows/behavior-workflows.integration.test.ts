@@ -7,7 +7,7 @@ import { createStudentTransitionContext } from './student-workflow-context'
 async function createBehaviorContext({ existingInvolvement = false, activeEnrollment = true, incidentStatus = IncidentStatus.Open, catalogActionSchoolId = 'sch1', lessonSessionScope = false, notificationGateway = noOpNotificationGateway }: { existingInvolvement?: boolean, activeEnrollment?: boolean, incidentStatus?: IncidentStatus, catalogActionSchoolId?: string, lessonSessionScope?: boolean, notificationGateway?: NotificationGatewayPort } = {}) {
   const fixture = await createStudentTransitionContext({ notificationGateway, activeEnrollmentId: activeEnrollment ? 'enr1' : '' })
   const { repositories } = fixture
-  await repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject', schoolId: 'sch1', name: 'Math' }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject', schoolId: 'sch1', name: 'Math' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject' }))
   await repositories.lessonSessions.save(new LessonSession({ id: 'sess1', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Math', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z') }))
   await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', subjectId: 'subject:gua1' }))

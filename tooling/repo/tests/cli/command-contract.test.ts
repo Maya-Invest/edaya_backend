@@ -41,7 +41,7 @@ test('pause operations affect only their selected flags', () => {
 test('documentation and CI use the shared definitions', () => {
   const root = join(import.meta.dirname, '../../../..')
   expect(readFileSync(join(root, 'docs/reference/repo-cli.md'), 'utf8')).toContain(reference().trimEnd())
-  expect(readFileSync(join(root, '.github/workflows/_qualify.yml'), 'utf8')).toContain('bun run repo ci qualify')
+  expect(readFileSync(join(root, '.github/actions/finalize/action.yml'), 'utf8')).toContain('bun run repo ci finalize')
 })
 
 test('command documentation check catches and repairs drift in the generated table', () => {

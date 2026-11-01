@@ -1,6 +1,6 @@
 export type CountryCode = 'CI' | 'FR'
 
-/** Builtin CI ids look like `ci-college`; any `ci-*` string is accepted at runtime. */
+/** Legacy read-side identity; canonical writes validate IDs against dataset membership. */
 export type StructureTemplateId = string
 
 export interface StructureTemplateGradeLevel {
@@ -12,11 +12,12 @@ export interface StructureTemplateGradeLevel {
   order: number
   examYear?: boolean
   examName?: string
-  /** Per-level bulletin layout — preferred over template.reportCardStructure.sections. */
+  /** Per-level compatibility projection for older template-list clients. */
   reportCardStructure?: StructureTemplateReportCardStructure
 }
 
 export interface StructureTemplateSubject {
+  categoryCode?: string
   code: string
   shortName: string
   domain: string
@@ -47,20 +48,11 @@ export interface StructureTemplateReportCardDomainCategory {
   weight?: number
 }
 
-export type StructureTemplateReportCardSectionRole = 'subjects' | 'summary' | 'comments'
-
-export interface StructureTemplateReportCardSection {
-  role: StructureTemplateReportCardSectionRole
-  label: string
-  order: number
-  subjectCodes?: string[]
-}
-
 export interface StructureTemplateReportCardStructure {
   gradingScale: number
   periods: StructureTemplateReportCardPeriod[]
   passingGrade: number
-  /** Optional catalog metadata; bulletin layout prefers `sections` when present. */
+  /** Legacy presentation metadata derived from canonical categories. */
   domainCategories?: StructureTemplateReportCardDomainCategory[]
   modules?: Array<{ name: string, order: number, subjectCodes: string[], weightingMode: 'subject_coefficients' | 'explicit', explicitWeight?: number }>
   includeSummary?: boolean
@@ -69,6 +61,7 @@ export interface StructureTemplateReportCardStructure {
 }
 
 export interface StructureTemplateDefinition {
+  subjectCategories?: Array<{ code: string, name: string }>
   id: StructureTemplateId
   countryCode: CountryCode
   label: string

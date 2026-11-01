@@ -1,5 +1,5 @@
 import type { BaseRepositoryInterface } from '@edaya/core'
-import { Subject, SubjectMatter } from '@edaya/core'
+import { Subject, SubjectCategoryEntity, SubjectMatter } from '@edaya/core'
 import { CORE_ENTITY_KEYS } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
@@ -23,8 +23,10 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     const school = (await repos.schools.list({ $limit: 1 }))[0]!
     const classGroup = (await repos.classGroups.list({ schoolId: school.id, $limit: 1 }))[0]!
     const placement = { gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId }
-    await repos.subjects.save(new Subject({ ...placement, id: 'scope-foreign-subject', schoolId: 'other-school', name: 'Foreign' }))
-    await repos.subjects.save(new Subject({ ...placement, id: 'scope-local-subject', schoolId: school.id, name: 'Local' }))
+    await repos.subjectCategories.save(new SubjectCategoryEntity({ id: 'scope-foreign-category', schoolId: 'other-school', name: 'Foreign' }))
+    await repos.subjectCategories.save(new SubjectCategoryEntity({ id: 'scope-local-category', schoolId: school.id, name: 'Local' }))
+    await repos.subjects.save(new Subject({ ...placement, id: 'scope-foreign-subject', categoryId: 'scope-foreign-category', schoolId: 'other-school', name: 'Foreign' }))
+    await repos.subjects.save(new Subject({ ...placement, id: 'scope-local-subject', categoryId: 'scope-local-category', schoolId: school.id, name: 'Local' }))
     for (const [id, subjectId] of [['0-foreign-matter', 'scope-foreign-subject'], ['1-local-matter', 'scope-local-subject'], ['2-local-matter', 'scope-local-subject']]) {
       await repos.subjectMatters.save(new SubjectMatter({ id: id!, subjectId: subjectId!, name: 'Scope test', sequenceOrder: 1 }))
     }

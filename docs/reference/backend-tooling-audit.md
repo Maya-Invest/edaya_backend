@@ -28,7 +28,7 @@ All 786 external resolutions remain pinned to their original versions. No additi
 | `@edaya/db-migrate` | Consolidate | CLI scripts, without package exports or a separate deployable artifact. Commands moved to `tooling/repo/db/school/`. Schema generation continues to belong to `@edaya/adaptor-postgres`. |
 | `@edaya/identity-migrate` | Consolidate | Private migration and wipe commands. Moved to `tooling/repo/db/identity/`; Account and provider SQL remain in their adapters. |
 | `@edaya/local-files-server` | Consolidate | One executable entry point wrapping the existing local filesystem adapter. Moved to `tooling/repo/dev/local-files.ts`. The adapter still owns the HTTP implementation. |
-| `@edaya/fixtures` | Keep | Shared dataset and helper exports used independently by API tests, integration tests, and seeding. Its onboarding subpath also serves the API's structure-template catalog. Keeping this data contract separate avoids making catalog and fixture consumers depend on seed orchestration. |
+| `@edaya/fixtures` | Keep | Shared dataset and helper exports used independently by API tests, integration tests, and seeding. Its onboarding subpath serves the API's versioned canonical dataset catalog and legacy template-list projection. Keeping this data contract separate avoids making catalog and fixture consumers depend on seed orchestration. |
 | `@edaya/seeding` | Keep | Owns HTTP orchestration, repair, cleanup, seed ports, and workflows. It has independent exports and test coverage beyond the fixture data. |
 | `@edaya/integration-tests` | Keep | Owns distinct API, HTTP, seed, and native PostgreSQL suites with dedicated runtime setup. Its separate commands and dependency graph preserve test isolation and CI scheduling. |
 

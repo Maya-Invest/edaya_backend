@@ -3,6 +3,7 @@ import type { FileStoragePort } from '@edaya/core'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
+  AuthorizationErrorCode,
   createStaffActorMetadata,
 } from '@edaya/authorization'
 import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DayOfWeek, GradeLevel, Resource, ResourceKind, School, StaffMember, Student } from '@edaya/core'
@@ -136,7 +137,7 @@ describe('SchoolService setup workflows', () => {
     expect((await schools.findById('sch-new'))?.name).toBe('New School')
     expect(await schoolNotificationTemplates.findById('sch-new')).toBeDefined()
     expect(await staffPermissionProfiles.count({ schoolId: 'sch-new' })).toBeGreaterThan(0)
-    expect(await subjectCategories.count({ schoolId: 'sch-new' })).toBe(6)
+    expect(await subjectCategories.count({ schoolId: 'sch-new' })).toBe(0)
   })
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {
@@ -243,6 +244,8 @@ describe('SchoolService setup workflows', () => {
       attendanceMode: AttendanceMode.Session,
     }))
 
+    await expect(service.setupWorkflow.updateClassGroupConfiguration({ classGroupId: 'cg-existing', capacity: 0 })).rejects.toThrow('capacity must be a strictly positive integer')
+
     const updated = await service.setupWorkflow.updateClassGroupConfiguration({
       classGroupId: 'cg-existing',
       name: 'Grade 7B Honors',
@@ -283,6 +286,8 @@ describe('SchoolService setup workflows', () => {
 
     expect(deactivated.isActive).toBe(false)
     expect((await staffMembers.findById('staff-new'))?.isActive).toBe(false)
+    expect((await service.setupWorkflow.updateStaffMemberStatus({ staffId: 'staff-new', isActive: true })).isActive).toBe(true)
+    await expect(service.setupWorkflow.updateStaffMemberStatus({ staffId: 'user1', isActive: false })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })
 
   test('registerStaffMember persists code and rejects an existing id', async () => {

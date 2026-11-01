@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -60,6 +61,13 @@ export function createRandomProfilePictureAllocator(): () => string {
 
 export function resolveProfilePicturePath(fileName: string): string {
   return path.join(DEV_FIXTURES_PICTURES_DIR, fileName)
+}
+
+/** Keep upload metadata and bytes stable when an interrupted seed is rerun. */
+export function profilePictureForOwner(ownerKind: string, ownerId: string): string {
+  const files = listProfilePictureFiles()
+  const index = createHash('sha256').update(JSON.stringify([ownerKind, ownerId])).digest().readUInt32BE(0)
+  return files[index % files.length]!
 }
 
 export function buildSeedProfileAttachmentId(ownerKind: 'student' | 'guardian' | 'staff' | 'teacher', ownerId: string): string {

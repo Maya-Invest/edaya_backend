@@ -1,25 +1,23 @@
-import { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import type { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import type { drizzle } from 'drizzle-orm/pglite'
 import { Permission } from '@edaya/authorization'
 import { CatalogService, CatalogServiceStatus, DomainValidationError, StaffMember, StaffPermissionAssignment } from '@edaya/core'
-import { PGlite } from '@electric-sql/pglite'
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/pglite'
+import { createDatabasePool } from '../../../../package/adaptor-postgres/tests/support/database-pool'
 
 describe('[Postgres PGlite] JSONB read validation', () => {
-  let pglite: PGlite
   let db: ReturnType<typeof drizzle>
   let repos: PostgresSchoolRepositories
 
-  beforeEach(async () => {
-    pglite = new PGlite()
-    db = drizzle(pglite)
-    repos = new PostgresSchoolRepositories(db)
-    await repos.init({ driver: 'pglite' })
-  })
+  const pool = createDatabasePool()
+  afterAll(() => pool.close())
+  afterEach(() => pool.releaseAll())
 
-  afterEach(async () => {
-    await pglite.close()
+  beforeEach(async () => {
+    const fixture = await pool.acquire()
+    db = fixture.connection
+    repos = fixture.repositories
   })
 
   test('CatalogService rejects corrupt billing terms JSON on read', async () => {

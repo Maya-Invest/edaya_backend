@@ -12,7 +12,7 @@ This is a source-coverage audit. Qualification and browser evidence are recorded
 | Guardians | One shared relationship editor for relationship, primary/billing/legal flags, pickup, priority, academic/attendance subscriptions, restrictions and notes. Summaries retain the related child. |
 | Health and notes | Arbitrary medical text, protocols, last visit and blood type require existing health permissions. Note title/category/body/visibility use note permissions. |
 | Annual profiles | Selected-year placement/repeating and teacher catalogue declarations/hours/period; unknown differs from false/zero. No automatic year copying. |
-| Curriculum | Discipline, code, name/short name, coefficient, optionality, category/color/workload, class offerings, chapters and logbook progress. New subjects, including onboarding templates, require reviewed discipline configuration. |
+| Curriculum | Discipline, code, name/short name, coefficient, optionality, category/color/workload, class offerings, chapters and logbook progress. Manually configured subjects require an explicit discipline association; onboarding subjects use the selected canonical dataset’s discipline references. |
 | Staffing/access | Codes, status, assignment responsibilities/dates/end state, availability rules and manual validity controls. Access previews and named grant/profile/default-scope commands remain authoritative. |
 | Enrollment | Placement/progression history and completion/withdrawal/graduation/promotion/decision commands; sequence and audit actors remain server-managed. |
 | Attendance/scheduling | Daily/lesson/activity/assessment review anchors, reasons/notes and latest review/correction audit. Recurring/one-off schedules, explicit dates and all supported weekdays. |

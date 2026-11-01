@@ -2,9 +2,9 @@ import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-
 import { ApiError } from '@maya-invest/edaya-api-client'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithMinimalSchool } from '../support/minimal-route-test-context'
 
-describeWithLightSchool('upsert student health profile command', (getContext) => {
+describeWithMinimalSchool('upsert student health profile command', (getContext) => {
   it('creates and updates a health profile without client timestamps', async () => {
     const { app, authHeaders } = getContext()
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
@@ -88,4 +88,4 @@ describeWithLightSchool('upsert student health profile command', (getContext) =>
     const body = typeof apiError.body === 'string' ? apiError.body : JSON.stringify(apiError.body)
     expect(body).toMatch(/updatedAt must not be before createdAt/i)
   })
-}, { isolate: true })
+}, ['ci-s2', 'ci-s4'])

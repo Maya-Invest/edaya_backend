@@ -3,7 +3,7 @@ import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment,
 import { createAttachmentUpload } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listClassSubjectAssessmentResultsForPeriod, publishAcademicPeriod, resolveIncident, reviewAttendanceJustification, saveAnnouncement, saveAnnouncementTarget, saveAssessment, saveCalendarEvent, saveClassSubject, saveFee, saveGuardian, saveIncident, saveLessonSession, saveResourceAssignment, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, saveStudentHealthProfileForStudent, saveStudentNote, seedReportGradingPolicy, updateClassGroup, updateGuardian, updateGuardianStudentLink, updateSchool, updateStaffStatus, updateStudent, updateStudentNote, withFixtureDiscipline } from '../utils/core-service-helpers'
+import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, createFixtureSubjectCategory, listClassSubjectAssessmentResultsForPeriod, publishAcademicPeriod, resolveIncident, reviewAttendanceJustification, saveAnnouncement, saveAnnouncementTarget, saveAssessment, saveCalendarEvent, saveClassSubject, saveFee, saveGuardian, saveIncident, saveLessonSession, saveResourceAssignment, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, saveStudentHealthProfileForStudent, saveStudentNote, seedReportGradingPolicy, updateClassGroup, updateGuardian, updateGuardianStudentLink, updateSchool, updateStaffStatus, updateStudent, updateStudentNote, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('tenant boundary safeguards', () => {
@@ -98,7 +98,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ id: 'subject-a', gradeLevelId: 'level-a', academicYearId: 'year-a', schoolId: 'school-a', name: 'Local subject' })),
+      new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school-a')).id, id: 'subject-a', gradeLevelId: 'level-a', academicYearId: 'year-a', schoolId: 'school-a', name: 'Local subject' })),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-subject-a',
@@ -113,7 +113,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Grade 6 B',
     })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ id: 'subject-b', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Outside subject' })),
+      new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(schoolBApp, 'school-b')).id, id: 'subject-b', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Outside subject' })),
     )
     const classSubjectB = await saveClassSubject(schoolBApp, {
       id: 'class-subject-b',
@@ -351,7 +351,7 @@ describeIntegration('tenant boundary safeguards', () => {
       targetId: 'staff-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ id: 'subject-b-assessment', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Assessment subject' })),
+      new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(schoolBApp, 'school-b')).id, id: 'subject-b-assessment', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Assessment subject' })),
     )
     const classSubjectBForAssessment = await saveClassSubject(schoolBApp, {
       id: 'class-subject-b-assessment',

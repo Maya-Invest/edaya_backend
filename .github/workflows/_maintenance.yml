@@ -1,23 +1,18 @@
-name: Staging maintenance
+name: Maintenance
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       operation:
-        type: choice
-        options: [reset-reseed, recover]
-        default: reset-reseed
+        type: string
+        required: true
       dry_run:
         type: boolean
         default: true
       confirmation:
-        description: Type STAGING MAINTENANCE to apply changes
         type: string
         default: ''
 permissions:
   contents: read
-concurrency:
-  group: deploy-staging
-  cancel-in-progress: false
 jobs:
   maintenance:
     runs-on: ubuntu-24.04

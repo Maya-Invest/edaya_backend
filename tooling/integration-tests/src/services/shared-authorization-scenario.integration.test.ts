@@ -1,25 +1,27 @@
+import type { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import type { BaseRepositoryInterface } from '@edaya/core'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { AuthorizationError } from '@edaya/authorization'
 import { Guardian, noOpFileStorage, noOpNotificationGateway, StaffPermissionAssignment, Student } from '@edaya/core'
 import { createAuthorizationScenario } from '@edaya/fixtures'
 import { SchoolApplication } from '@edaya/service'
-import { PGlite } from '@electric-sql/pglite'
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { drizzle } from 'drizzle-orm/pglite'
+import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createDatabasePool } from '../../../../package/adaptor-postgres/tests/support/database-pool'
 
 describe('shared two-school authorization scenario', () => {
-  let db: PGlite
   let repositories: PostgresSchoolRepositories
   let application: SchoolApplication
   let scenario: ReturnType<typeof createAuthorizationScenario>
 
+  const pool = createDatabasePool()
+  afterAll(() => pool.close())
+  afterEach(() => pool.releaseAll())
+
   beforeEach(async () => {
     scenario = createAuthorizationScenario()
-    db = new PGlite()
-    const connection = drizzle(db)
-    repositories = new PostgresSchoolRepositories(connection)
-    await repositories.init({ driver: 'pglite' })
+    const fixture = await pool.acquire()
+    const { connection, repositories: pooledRepositories } = fixture
+    repositories = pooledRepositories
     // Trusted arrangement of an isolated database, not a public or CLI mutation seed.
     async function arrange<T>(repository: BaseRepositoryInterface<T>, records: T[]) {
       for (const record of records) await repository.save(record)
@@ -34,13 +36,14 @@ describe('shared two-school authorization scenario', () => {
     await arrange(repositories.guardians, scenario.guardians)
     await arrange(repositories.guardianLinks, scenario.guardianLinks)
     await arrange(repositories.teachers, scenario.teachers)
+    await arrange(repositories.subjectCategories, scenario.subjectCategories)
+    await arrange(repositories.academicDisciplines, scenario.academicDisciplines)
     await arrange(repositories.subjects, scenario.subjects)
     await arrange(repositories.classSubjects, scenario.classSubjects)
     await arrange(repositories.teacherAssignments, scenario.teacherAssignments)
     await arrange(repositories.staffPermissionAssignments, scenario.staffPermissionAssignments)
     application = new SchoolApplication({ repositories, atomicExecution: new PostgresAtomicExecution(connection), commandJournal: new PostgresCommandJournal(), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
   })
-  afterEach(async () => db?.close())
 
   test('all selected profiles retain their own school and child boundaries before count and pagination', async () => {
     const { ids, actors } = scenario

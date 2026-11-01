@@ -2,6 +2,8 @@
 
 Validated on 2026-10-20. Scope and field accounting are recorded in the [implementation tracker](../sprints/school-data-model-plan.md) and [coverage matrix](staff-field-coverage.md).
 
+> Historical validation record: the manual onboarding discipline mappings described below have been superseded by [versioned onboarding datasets](../../tooling/fixtures/README.md#versioned-onboarding-dataset). Current provisioning initializes dataset-owned disciplines and categories; existing-school migration remains outside onboarding. The dated results below do not qualify subsequent changes.
+
 ## Candidate and client identity
 
 Web and mobile clients were formally generated from the same clean, immutable local backend snapshot:

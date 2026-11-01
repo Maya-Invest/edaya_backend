@@ -2,17 +2,7 @@ import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
 
-export enum SubjectCategory {
-  Scientific = 'Scientifique',
-  Literary = 'Littéraire',
-  Languages = 'Langues',
-  Humanities = 'Sciences humaines',
-  Sport = 'Sport',
-  Arts = 'Arts',
-}
-
-export const DEFAULT_SUBJECT_CATEGORY_NAMES = Object.values(SubjectCategory)
-
+/** Stable IDs retained for explicit dataset initialization; does not create default categories. */
 export function defaultSubjectCategoryId(schoolId: string, name: string): string {
   const slug = name
     .normalize('NFD')

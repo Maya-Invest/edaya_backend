@@ -2377,6 +2377,20 @@ export const clientBindings = {
         "path": "onboarding/structure-templates",
         "responseSchemaName": "OnboardingListStructureTemplatesResponse"
       },
+      "listDatasets": {
+        "method": "GET",
+        "path": "onboarding/datasets",
+        "responseSchemaName": "OnboardingDatasetChoices"
+      },
+      "getDataset": {
+        "method": "GET",
+        "path": "onboarding/datasets/{id}/{version}",
+        "pathParams": [
+          "id",
+          "version"
+        ],
+        "responseSchemaName": "OnboardingDataset"
+      },
       "accountStatus": {
         "method": "GET",
         "path": "onboarding/account-status",

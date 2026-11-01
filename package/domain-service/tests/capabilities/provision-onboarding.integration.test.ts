@@ -1,40 +1,7 @@
-import type { StructureTemplateDefinition } from '../../src/capabilities/onboarding/structure-template-types'
 import { provisionOnboarding } from '@edaya/service'
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, spyOn, test } from 'bun:test'
 import { createTestApp } from '../support/create-test-app'
-
-const templateSnapshot: StructureTemplateDefinition = {
-  id: 'ci-college',
-  countryCode: 'CI',
-  label: 'Collège',
-  description: 'Test college',
-  cycle: 'college',
-  reportCardStructure: {
-    gradingScale: 20,
-    passingGrade: 10,
-    periods: [{ code: 'T1', name: 'Trimestre 1', weight: 1 }],
-    modules: [{ name: 'Matières', order: 1, weightingMode: 'subject_coefficients', subjectCodes: ['MATH'] }],
-  },
-  gradeLevels: [{
-    id: 'ci-college:4EME',
-    code: '4EME',
-    name: '4ème',
-    shortLabel: '4ème',
-    order: 1,
-  }],
-  subjects: [{
-    code: 'MATH',
-    shortName: 'Maths',
-    domain: 'Sciences',
-    defaultCoefficient: 1,
-  }],
-  curriculum: [{
-    levelCode: '4EME',
-    subjectCode: 'MATH',
-    coefficient: 1,
-    matters: ['Algèbre'],
-  }],
-}
+import { createOnboardingTestDataset } from '../support/onboarding-dataset'
 
 function typicalInput(schoolId: string, requestId: string) {
   return {
@@ -52,9 +19,8 @@ function typicalInput(schoolId: string, requestId: string) {
       periods: [{ label: 'Trimestre 1', start: '2026-09-01', end: '2026-12-19' }],
     },
     structure: {
-      disciplineMappings: [{ subjectCode: 'MATH', disciplineCode: 'TEST', disciplineName: 'Reviewed test discipline' }],
       templates: ['ci-college'],
-      templateSnapshots: [templateSnapshot],
+      dataset: createOnboardingTestDataset(),
       levels: [{
         gradeLevelId: 'ci-college:4EME',
         classCount: 1,
@@ -99,6 +65,12 @@ describe('provisionOnboarding journal', () => {
     expect(replay.schoolId).toBe(schoolId)
     expect(replay.replayed).toBe(true)
     expect(await fixture.schoolRepositories.schools.count()).toBe(2)
+    const changed = typicalInput(schoolId, requestId)
+    changed.structure.dataset.templates[0]!.gradeLevels[0]!.subjects[0]!.coefficient = 8
+    await expect(provisionOnboarding(fixture.application, session, changed, options)).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
+    const otherVersion = typicalInput(schoolId, requestId)
+    otherVersion.structure.dataset.version = '1.0.1'
+    await expect(provisionOnboarding(fixture.application, session, otherVersion, options)).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
 
     await expect(provisionOnboarding(
       fixture.application,
@@ -134,7 +106,7 @@ describe('provisionOnboarding journal', () => {
         ...typicalInput(schoolId, failedRequestId),
         structure: {
           templates: ['ci-unknown'],
-          templateSnapshots: [templateSnapshot],
+          dataset: createOnboardingTestDataset(),
           levels: typicalInput(schoolId, failedRequestId).structure.levels,
         },
       },
@@ -152,4 +124,24 @@ describe('provisionOnboarding journal', () => {
     expect(retry.schoolId).toBe(schoolId)
     expect(retry.replayed).toBeFalsy()
   })
+})
+
+test('a late provisioning failure rolls back the school and all dataset records', async () => {
+  const fixture = await createTestApp()
+  const schoolId = crypto.randomUUID()
+  const session = { user: { id: 'late-failure-owner', email: 'late-failure@school.edu', name: 'Owner', emailVerified: true } }
+  const write = spyOn(fixture.application.repositories.reportModules, 'forSchool').mockImplementation(() => {
+    throw new Error('late report failure')
+  })
+  try {
+    await expect(provisionOnboarding(fixture.application, session, typicalInput(schoolId, crypto.randomUUID()), { allowPublicSchoolRegistration: true })).rejects.toThrow('late report failure')
+  }
+  finally {
+    write.mockRestore()
+  }
+  expect(await fixture.schoolRepositories.schools.findById(schoolId)).toBeUndefined()
+  for (const key of ['subjectCategories', 'academicDisciplines', 'academicYears', 'academicPeriods', 'gradeLevels', 'subjects', 'classGroups', 'gradeScales', 'reportModules'] as const)
+    expect(await fixture.schoolRepositories[key].count({ schoolId })).toBe(0)
+  const retry = await provisionOnboarding(fixture.application, session, typicalInput(schoolId, crypto.randomUUID()), { allowPublicSchoolRegistration: true })
+  expect(retry.status.wizardCompleted).toBe(true)
 })

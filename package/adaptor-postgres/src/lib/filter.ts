@@ -21,6 +21,11 @@ function buildFieldConditions(column: PgColumn, fieldFilter: unknown): SQL[] {
   for (const op of Object.keys(fieldFilter)) {
     const val = (fieldFilter as Record<string, unknown>)[op]
     switch (op) {
+      case '$contains':
+        if (typeof val !== 'string' || column.dataType !== 'string')
+          throw new DomainValidationError('$contains requires a text field and value')
+        conditions.push(sql`strpos(lower(${column}), lower(${val})) > 0`)
+        break
       case '$normalizedCandidate':
         if (typeof val !== 'string' || column.dataType !== 'string')
           throw new DomainValidationError('$normalizedCandidate requires a text field and value')

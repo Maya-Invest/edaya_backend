@@ -21,23 +21,23 @@
       ]
     },
     "test": {
-      "dependsOn": [
-        "^check"
+      "cache": false
+    },
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/eslint.config.js",
+        "$TURBO_ROOT$/tooling/repo/eslint-imports.js"
       ]
     },
-    "lint": {},
     "lint:fix": {},
     "test:integration": {
-      "dependsOn": [
-        "^check"
-      ],
       "cache": false
     }
   },
   "globalDependencies": [
     "package/adaptor-postgres/tests/support/**",
     "package/domain-service/tests/support/**",
-    "tooling/test-support/**",
-    ".github/workflows/**"
+    "tooling/test-support/**"
   ]
 }

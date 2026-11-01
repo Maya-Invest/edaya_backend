@@ -47,8 +47,10 @@ export interface RunOptions {
   inheritInput?: boolean
   input?: string
   inheritEnv?: boolean
+  signal?: AbortSignal
 }
 export async function run(command: readonly string[], options: RunOptions = {}): Promise<string> {
+  options.signal?.throwIfAborted()
   const [executable, ...args] = command
   if (!executable)
     throw new Error('Empty command')
@@ -77,6 +79,10 @@ export async function run(command: readonly string[], options: RunOptions = {}):
       }
     }
     const timer = options.timeout === 0 ? undefined : setTimeout(kill, options.timeout ?? 30 * 60000, `timed out after ${options.timeout ?? 30 * 60000}ms`)
+    const abort = () => kill('owned service failed or was cancelled')
+    options.signal?.addEventListener('abort', abort, { once: true })
+    if (options.signal?.aborted)
+      abort()
     const interrupt = () => kill('interrupted by SIGINT')
     const terminate = () => kill('interrupted by SIGTERM')
     process.once('SIGINT', interrupt)
@@ -84,6 +90,7 @@ export async function run(command: readonly string[], options: RunOptions = {}):
     const cleanup = () => {
       if (timer)
         clearTimeout(timer)
+      options.signal?.removeEventListener('abort', abort)
       process.off('SIGINT', interrupt)
       process.off('SIGTERM', terminate)
     }
@@ -139,14 +146,17 @@ export async function waitForUrl(url: string, seconds = 120, assertActive: () =>
   const end = Date.now() + seconds * 1000
   while (Date.now() < end) {
     assertActive()
+    let ready = false
     try {
       const response = await fetch(url, { headers: { accept: 'text/html, application/json' }, signal: AbortSignal.timeout(2000) })
       await response.body?.cancel()
-      if (response.ok)
-        return
+      ready = response.ok
     }
     catch { /* still starting */
     }
+    assertActive()
+    if (ready)
+      return
     await Bun.sleep(500)
   }
   throw new Error('Service readiness timed out')

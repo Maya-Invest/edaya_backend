@@ -17,10 +17,13 @@ function leaf(path: string, description: string, extra: Partial<Command> = {}): 
 }
 const group = (description: string, children: Record<string, Command>): Command => ({ description, children })
 const checks = (names: Record<string, string>) => ({ ...leaf('check', 'Run all repository checks.'), children: Object.fromEntries(Object.entries(names).map(([name, description]) => [name, leaf(`check ${name}`, description)])) })
-const tests = group('Run test suites.', Object.fromEntries(Object.entries({ unit: 'Run workspace unit tests.', tooling: 'Run the complete tooling package test suite.', integration: 'Run supervised integration suites.' }).map(([name, description]) => [name, leaf(`test ${name}`, description)])))
+const tests = group('Run test suites.', Object.fromEntries(Object.entries({ unit: 'Run workspace unit tests.', tooling: 'Run the complete tooling package test suite.', integration: 'Run supervised integration suites.' }).map(([name, description]) => [name, leaf(`test ${name}`, description, name === 'integration' ? { options: { '--group': { value: 'group', description: 'Run one isolated integration group; default: all.', choices: ['services', 'adapters-http', 'seed-native'] } } } : {})])))
 const emergency = leaf('ops emergency-deploy', 'Build and deploy through the emergency qualification bypass; does not migrate or seed.', { arguments: [env], options: { '--yes': { ...yes, aliases: [] }, '--dry-run': dry }, validate: confirmed, examples: ['bun repo ops emergency-deploy staging --dry-run', 'bun repo ops emergency-deploy staging --yes'] })
 const ci: Record<string, Command> = {
   'verify': leaf('ci verify', 'Run repository checks, workflow lint, tooling tests, quality, builds and unit tests.'),
+  'quality': { ...leaf('ci quality', 'Run repository checks, workflow lint, lint and type checks.'), children: Object.fromEntries(Object.entries({ checks: 'Run repository and workflow checks.', lint: 'Run workspace ESLint checks.', types: 'Run complete incremental workspace type checks.', finalize: 'Join successful quality phases without rerunning checks.' }).map(([name, description]) => [name, leaf(`ci quality ${name}`, description)])) },
+  'build': leaf('ci build', 'Build workspace and release artifacts once.', { arguments: [env] }),
+  'finalize': leaf('ci finalize', 'Qualify the built artifacts from complete matching stage evidence.', { arguments: [env] }),
   'qualify': leaf('ci qualify', 'Verify, integrate, build and qualify a release.', { arguments: [env] }),
   'deploy': leaf('ci deploy', 'Deploy existing qualified release artifacts.', { arguments: [env], options: { '--dry-run': dry } }),
   'workflows': leaf('ci workflows', 'Validate workflow definitions.'),

@@ -86,7 +86,7 @@ describe('school intake profiles', () => {
   })
   test('subjects share the teacher catalogue and preserve unmapped legacy subjects', async () => {
     const { service, repositories } = await createStudentTransitionContext()
-    const input = { id: 'new-subject', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Test subject' }
+    const input = { categoryId: 'test-category', id: 'new-subject', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Test subject' }
     await expect(service.academicsWorkflow.configureSubject(input)).rejects.toMatchObject({ code: 'SUBJECT_DISCIPLINE_REQUIRED' })
     const discipline = await service.academicsWorkflow.configureAcademicDiscipline({ id: 'discipline', code: 'TEST', name: 'Reviewed discipline' })
     await service.academicsWorkflow.configureSubject({ ...input, disciplineId: discipline.id })

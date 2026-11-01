@@ -9,6 +9,9 @@ export function createInProcessCurriculumSeedPort(
   const service = createInProcessSeedService(application, 'dev-curriculum-seed')
 
   return {
+    saveSubjectCategory: record => withSeedPortError('curriculum.saveSubjectCategory', async () => {
+      await service.academicsWorkflow.configureSubjectCategory(record)
+    }),
     saveAcademicDiscipline: record => withSeedPortError('curriculum.saveAcademicDiscipline', async () => {
       await service.academicsWorkflow.configureAcademicDiscipline(record)
     }),

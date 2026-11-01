@@ -1,0 +1,48 @@
+name: Deployment
+on:
+  workflow_call:
+    inputs:
+      source_ref:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+jobs:
+  deployment:
+    runs-on: ubuntu-24.04
+    environment: ${{ inputs.target }}
+    timeout-minutes: 90
+    env:
+      CI_TARGET: ${{ inputs.target }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          source_sha: ${{ inputs.source_ref }}
+      - name: Restore exact qualified source and artifacts
+        run: bun tooling/repo/ops/restore.ts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: migration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci-evidence
+      - name: Deployment of qualified candidate
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: bun run repo ci deploy "$CI_TARGET"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: deployment-${{ inputs.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: .release/

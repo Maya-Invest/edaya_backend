@@ -2,15 +2,17 @@ import type { SchoolNotificationTemplatesData } from '@edaya/core'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
+import { seedSchoolNotificationTemplates } from '../../../../package/domain-service/src/capabilities/notifications/templates/seed-school-notification-templates'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithMinimalSchool } from '../support/minimal-route-test-context'
 
-describeWithLightSchool('school notification templates HTTP', (getContext) => {
+describeWithMinimalSchool('school notification templates HTTP', (getContext) => {
   it('gets flattened catalog, patches a dotted key, and resets that key', async () => {
-    const { app, authHeaders } = getContext()
+    const { application, app, authHeaders } = getContext()
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
     const client = createInProcessSchoolClient(app, { headers: { authorization } })
 
+    await seedSchoolNotificationTemplates(application.repositories, SEED_SCHOOL_ID)
     const before = await client.entities.schoolNotificationTemplates.get(SEED_SCHOOL_ID) as SchoolNotificationTemplatesData
 
     expect(before).toMatchObject({
@@ -80,4 +82,4 @@ describeWithLightSchool('school notification templates HTTP', (getContext) => {
     expect(reset.invitationSmsEnabled).toBe(true)
     expect(reset.incidentRecorded.rich_message.body).toContain('<p>')
   })
-}, { isolate: true })
+})

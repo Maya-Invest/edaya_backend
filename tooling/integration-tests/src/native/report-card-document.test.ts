@@ -5,21 +5,37 @@ import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorizat
 import { AcademicPeriod, AcademicYear, Attachment, AttachmentOwnerKind, AttachmentStatus, ClassGroup, ClassSubject, DocumentIssuanceStatus, GradeLevel, GradeScale, LessonSession, noOpFileStorage, noOpNotificationGateway, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
 import { dispatchDocumentRender, grantAttachmentDownload, renderReportCardDocument, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
+import { sql } from 'drizzle-orm'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
   throw new Error('Use the disposable native test runner')
 interface Executor { execute: (query: SQL) => Promise<unknown> }
-const handles = await Promise.all([createPostgresSchoolDatabase(url), createPostgresSchoolDatabase(url)])
-const stores = handles.map(handle => new PostgresSchoolRepositories(handle.db))
-const repositories = stores[0]!
+// Dispatch claims work across schools. Isolate this suite from retryable work
+// left by other native files; otherwise their render calls change the count.
+const control = await createPostgresSchoolDatabase(url, { max: 1 })
+const databaseName = `report_documents_${crypto.randomUUID().replaceAll('-', '')}`
+const databaseUrl = new URL(url)
+databaseUrl.pathname = `/${databaseName}`
+const handles: Awaited<ReturnType<typeof createPostgresSchoolDatabase>>[] = []
+const stores: PostgresSchoolRepositories[] = []
+let repositories: PostgresSchoolRepositories
+let databaseCreated = false
 const actor = createStaffActorMetadata({ schoolId: 'report-school', staffMemberId: 'report-staff', subjectId: 'report-owner', academicYearId: 'report-year', requestId: 'native-report', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified })
 const school = new School({ id: actor.schoolId, name: 'Report fixture', timeZone: 'UTC', ownerSubjectId: actor.subjectId })
 const bytes = new Uint8Array(4096)
 const rendered = { bytes, sha256: 'synthetic-digest', contentType: 'application/pdf', renderId: 'native-render' }
 
 beforeAll(async () => {
+  await (control.db as Executor).execute(sql`CREATE DATABASE ${sql.identifier(databaseName)}`)
+  databaseCreated = true
+  for (let index = 0; index < 2; index++) {
+    const handle = await createPostgresSchoolDatabase(databaseUrl.toString(), { max: 1 })
+    handles.push(handle)
+    stores.push(new PostgresSchoolRepositories(handle.db))
+  }
+  repositories = stores[0]!
   await repositories.init({ driver: 'node-postgres' })
   await repositories.schools.save(school)
   await repositories.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: school.id, firstName: 'Report', lastName: 'Owner', subjectId: actor.subjectId }))
@@ -28,13 +44,26 @@ beforeAll(async () => {
   await repositories.academicPeriods.save(new AcademicPeriod({ id: 'report-period', schoolId: school.id, academicYearId: 'report-year', name: 'Term', isPublished: true, ...dates }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'report-grade', schoolId: school.id, name: 'Grade', label: 'Grade', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'report-class', schoolId: school.id, academicYearId: 'report-year', gradeLevelId: 'report-grade', name: 'Class' }))
-  await repositories.subjects.save(new Subject({ gradeLevelId: 'report-grade', academicYearId: 'report-year', id: 'report-math', schoolId: school.id, name: 'Math' }))
+  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'report-grade', academicYearId: 'report-year', id: 'report-math', schoolId: school.id, name: 'Math' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'report-math-class', classGroupId: 'report-class', subjectId: 'report-math' }))
   await repositories.students.save(new Student({ id: 'report-student', schoolId: school.id, firstName: 'Synthetic', lastName: 'Student' }))
   await repositories.enrollments.save(new StudentClassEnrollment({ id: 'report-enrollment', studentId: 'report-student', classGroupId: 'report-class', academicYearId: 'report-year', enrollmentIndex: 1 }))
   await repositories.gradeScales.save(new GradeScale({ id: 'report-scale', schoolId: school.id, name: '20 points', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] }))
 }, 30000)
-afterAll(() => Promise.all(handles.map(handle => handle.dispose())))
+afterAll(async () => {
+  try {
+    await Promise.all(handles.map(handle => handle.dispose()))
+  }
+  finally {
+    try {
+      if (databaseCreated)
+        await (control.db as Executor).execute(sql`DROP DATABASE ${sql.identifier(databaseName)} WITH (FORCE)`)
+    }
+    finally {
+      await control.dispose()
+    }
+  }
+})
 
 async function result(id: string) {
   const studentId = `${id}-student`

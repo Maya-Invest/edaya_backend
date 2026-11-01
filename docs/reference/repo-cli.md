@@ -170,12 +170,14 @@ Options:
 Examples:
   bun repo test tooling
 
-Usage: bun repo test integration
+Usage: bun repo test integration [options]
 
 Run supervised integration suites.
 
 Options:
   -h, --help               Show help for this command.
+  --group <group>
+      Run one isolated integration group; default: all. Values: services, adapters-http, seed-native.
 
 Examples:
   bun repo test integration
@@ -718,6 +720,9 @@ Run CI verification, release and fixture operations.
 
 Commands:
   verify                   Run repository checks, workflow lint, tooling tests, quality, builds and unit tests.
+  quality                  Run repository checks, workflow lint, lint and type checks.
+  build                    Build workspace and release artifacts once.
+  finalize                 Qualify the built artifacts from complete matching stage evidence.
   qualify                  Verify, integrate, build and qualify a release.
   deploy                   Deploy existing qualified release artifacts.
   workflows                Validate workflow definitions.
@@ -743,6 +748,88 @@ Options:
 
 Examples:
   bun repo ci verify
+
+Usage: bun repo ci quality [command]
+
+Run repository checks, workflow lint, lint and type checks.
+
+Commands:
+  checks                   Run repository and workflow checks.
+  lint                     Run workspace ESLint checks.
+  types                    Run complete incremental workspace type checks.
+  finalize                 Join successful quality phases without rerunning checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality
+
+Usage: bun repo ci quality checks
+
+Run repository and workflow checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality checks
+
+Usage: bun repo ci quality lint
+
+Run workspace ESLint checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality lint
+
+Usage: bun repo ci quality types
+
+Run complete incremental workspace type checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality types
+
+Usage: bun repo ci quality finalize
+
+Join successful quality phases without rerunning checks.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci quality finalize
+
+Usage: bun repo ci build <staging|production>
+
+Build workspace and release artifacts once.
+
+Arguments:
+  environment              Values: staging, production.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci build staging
+
+Usage: bun repo ci finalize <staging|production>
+
+Qualify the built artifacts from complete matching stage evidence.
+
+Arguments:
+  environment              Values: staging, production.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ci finalize staging
 
 Usage: bun repo ci qualify <staging|production>
 

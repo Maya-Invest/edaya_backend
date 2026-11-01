@@ -3,14 +3,14 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardResult, ReportCardResultStatus, ReportModule, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardResult, ReportCardResultStatus, ReportModule, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectColor } from '@edaya/core'
 import { validateStudentChargeSave } from '@edaya/service'
 import {
   describe,
   expect,
   test,
 } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createAcademicTestApp } from './academic-test-app'
 
 describe('Entity config save gates', () => {
@@ -23,7 +23,7 @@ describe('Entity config save gates', () => {
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
     }))
-    await repositories.subjectRepository.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'French', category: SubjectCategory.Literary, color: SubjectColor.Warm }))
+    await repositories.subjectRepository.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'French', categoryId: 'test-category', color: SubjectColor.Warm }))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
