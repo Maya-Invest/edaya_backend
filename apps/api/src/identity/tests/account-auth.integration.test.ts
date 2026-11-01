@@ -213,8 +213,7 @@ test("a pre-release challenge requires confirmation and a concurrently provision
   const nowVerified = await repository.challenge(challenge.challenge);
   expect(nowVerified?.registration?.digest).not.toBe(offer.proof);
   expect(nowVerified?.expiresAt).toBe(challenge.expiresAt);
-  await repository.save({ id: crypto.randomUUID(), name: "", status: "disabled", securityVersion: 0, createdAt: now,
-    identifiers: [{ id: crypto.randomUUID(), kind: "email", value, verifiedAt: now, recoveryEligible: true }] });
+  await repository.save({ id: crypto.randomUUID(), name: "", status: "disabled", securityVersion: 0, createdAt: now, identifiers: [{ id: crypto.randomUUID(), kind: "email", value, verifiedAt: now, recoveryEligible: true }] });
   await expect(service.completeRegistration(offer)).rejects.toMatchObject({ code: "account_disabled" });
 });
 
