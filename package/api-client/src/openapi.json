@@ -204,6 +204,9 @@
       "AuthMethods": {
         "type": "object",
         "properties": {
+          "publicAccountRegistration": {
+            "type": "boolean"
+          },
           "methods": {
             "type": "array",
             "items": {
@@ -249,7 +252,38 @@
           }
         },
         "required": [
+          "publicAccountRegistration",
           "methods"
+        ]
+      },
+      "AuthRegistrationOffer": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "registration_required"
+            ]
+          },
+          "challenge": {
+            "type": "string"
+          },
+          "proof": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "number"
+          },
+          "eligible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "state",
+          "challenge",
+          "proof",
+          "expiresAt",
+          "eligible"
         ]
       },
       "AuthPrimaryStatus": {
@@ -414,6 +448,9 @@
       },
       "AuthOutcome": {
         "anyOf": [
+          {
+            "$ref": "#/components/schemas/AuthRegistrationOffer"
+          },
           {
             "$ref": "#/components/schemas/AuthPrimaryStatus"
           },
@@ -595,6 +632,11 @@
       "AuthStart": {
         "type": "object",
         "properties": {
+          "invitationToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
           "termsAcceptance": {
             "$ref": "#/components/schemas/AuthTermsAcceptance"
           },
@@ -792,6 +834,30 @@
           "identifierId"
         ],
         "additionalProperties": false
+      },
+      "AuthRegistrationInput": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AuthChallengeInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "proof": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "termsAcceptance": {
+                "$ref": "#/components/schemas/AuthTermsAcceptance"
+              }
+            },
+            "required": [
+              "proof"
+            ],
+            "additionalProperties": false
+          }
+        ]
       },
       "SchoolImportBatch": {
         "type": "object",
@@ -34054,6 +34120,77 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthPrimaryStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or challenge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body too large"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Authentication unavailable"
+          }
+        }
+      }
+    },
+    "/auth/edaya/registration/complete": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "operationId": "auth.completeRegistration",
+        "x-edaya-kind": "auth",
+        "x-edaya-client-key": "completeRegistration",
+        "x-edaya-client-path": "/auth/edaya/registration/complete",
+        "x-edaya-request-schema": "AuthRegistrationInput",
+        "x-edaya-response-schema": "AuthOutcome",
+        "x-edaya-base-path": "root",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRegistrationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account operation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthOutcome"
                 }
               }
             }

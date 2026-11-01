@@ -79,6 +79,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/edaya/registration/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.completeRegistration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/edaya/otp/verify": {
         parameters: {
             query?: never;
@@ -12971,6 +12987,7 @@ export interface components {
             serverNow?: number;
         };
         AuthMethods: {
+            publicAccountRegistration: boolean;
             methods: {
                 key: string;
                 /** @enum {string} */
@@ -12980,6 +12997,14 @@ export interface components {
                 countries?: string[];
                 prefixes?: string[];
             }[];
+        };
+        AuthRegistrationOffer: {
+            /** @enum {string} */
+            state: "registration_required";
+            challenge: string;
+            proof: string;
+            expiresAt: number;
+            eligible: boolean;
         };
         AuthPrimaryStatus: {
             /** @enum {string} */
@@ -13023,7 +13048,7 @@ export interface components {
             secret?: string;
             uri?: string;
         };
-        AuthOutcome: components["schemas"]["AuthPrimaryStatus"] | (components["schemas"]["AuthSnapshot"] & {
+        AuthOutcome: components["schemas"]["AuthRegistrationOffer"] | components["schemas"]["AuthPrimaryStatus"] | (components["schemas"]["AuthSnapshot"] & {
             /** @enum {string} */
             state: "complete";
             token?: string;
@@ -13063,6 +13088,7 @@ export interface components {
             accepted: true;
         };
         AuthStart: {
+            invitationToken?: string;
             termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
             /** @enum {string} */
             kind: "email" | "phone";
@@ -13114,6 +13140,10 @@ export interface components {
         };
         AuthUnlink: {
             identifierId: string;
+        };
+        AuthRegistrationInput: components["schemas"]["AuthChallengeInput"] & {
+            proof: string;
+            termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
         };
         SchoolImportBatch: {
             id: string;
@@ -20894,6 +20924,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthPrimaryStatus"];
+                };
+            };
+            /** @description Invalid input or challenge */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Origin or security policy rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "auth.completeRegistration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AuthRegistrationInput"];
+            };
+        };
+        responses: {
+            /** @description Account operation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthOutcome"];
                 };
             };
             /** @description Invalid input or challenge */

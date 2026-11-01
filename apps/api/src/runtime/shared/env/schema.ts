@@ -47,6 +47,7 @@ export const EnvSchema = z.object({
   FCM_SERVICE_ACCOUNT_JSON: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: envBooleanSchema.optional(),
+  ALLOW_PUBLIC_ACCOUNT_REGISTRATION: envBooleanSchema.optional(),
   /** Comma-separated identity emails that may bootstrap the first platform operators. */
   PLATFORM_BOOTSTRAP_EMAILS: z.string().default(""),
   /** Webapp origin used to build invitation accept links, e.g. http://localhost:5173 */

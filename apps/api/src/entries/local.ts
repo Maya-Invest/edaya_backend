@@ -7,6 +7,7 @@ import { createOtpDelivery } from "@/identity/otp-delivery";
 import { parseEnv } from "@/identity/env";
 import { attachIdentityRuntime } from "@/identity/runtime";
 import { getApiRuntime, resetApiRuntimesForTests } from "@/runtime/local/registry";
+import { invitedEmailPolicy } from "@/identity/registration-policy";
 import { accountRequiresPrivilegedTotp } from "@/lib/account-security-policy";
 import { serve } from "@hono/node-server";
 import { resolvePdfRenderer } from "@edaya/adaptor-docs";
@@ -37,6 +38,7 @@ async function main(): Promise<void> {
         delivery: createOtpDelivery(identityEnv),
         operationsScope: operations.scope,
         operationsRootId: operations.rootId,
+        invitedEmail: env.ACCOUNT_INVITATIONS_ENABLED === false ? undefined : invitedEmailPolicy(async () => (await getApiRuntime(env)).getSchoolApplication()),
         privilegedPolicy: { async requiresTotp(accountId) {
           return env.REQUIRE_PRIVILEGED_TOTP === true && accountRequiresPrivilegedTotp((await (await getApiRuntime(env)).getSchoolApplication()).repositories, accountId);
         } },

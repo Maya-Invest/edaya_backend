@@ -24,7 +24,7 @@ export function assertCaptureEnvironment(env: Environment) {
 }
 
 /** The only composition that captures plaintext codes or installs OTP test routes. */
-export async function createCapturedIdentity(env: Environment, options: Pick<CreateIdentityRuntimeOptions, "now" | "privilegedPolicy" | "smsRouter"> & {
+export async function createCapturedIdentity(env: Environment, options: Pick<CreateIdentityRuntimeOptions, "now" | "invitedEmail" | "privilegedPolicy" | "smsRouter"> & {
   mailbox?: string;
   operationsScope?: string;
   operationsRootId?: string;
