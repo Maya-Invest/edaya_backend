@@ -26,7 +26,7 @@ const provider = { generation: "test-terms", sendOtp: async () => {
 const phone = { mode: "whatsapp_first" as const, supports: () => true, delivery: { send: async () => {
   sends++;
 } } };
-const service = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy, async () => true);
+const service = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy, async () => ({ eligible: true }));
 const consent = (locale: "fr" | "en" = "en"): TermsAcceptanceInput => ({ version, locale, accepted: true });
 const start = (value: string, termsAcceptance = consent()) => service.begin({ kind: "email", value, ip: value, termsAcceptance });
 const receipts = async (accountId: string) => (await db.execute(sql`SELECT * FROM identity.terms_acceptance WHERE account_id=${accountId} ORDER BY version`)).rows;
@@ -114,7 +114,7 @@ test("phone resend and SMS fallback retain acceptance and reject conflicting ret
 
 test("enrollment, second factor and recovery preserve the pinned document", async () => {
   version = "mfa-v1";
-  const mfa = new AccountService(repository, provider, security, { requiresTotp: async () => true }, () => now, true, phone, policy, async () => true);
+  const mfa = new AccountService(repository, provider, security, { requiresTotp: async () => true }, () => now, true, phone, policy, async () => ({ eligible: true }));
   const initial = await mfa.begin({ kind: "email", value: "mfa@example.com", ip: "mfa", termsAcceptance: consent() });
   const pending = await verifyFixture(mfa, initial.challenge, "123456", consent());
   if (pending.state !== "enrollment_required")
@@ -149,7 +149,7 @@ test("enrollment, second factor and recovery preserve the pinned document", asyn
 test("acceptance and session writes roll back together on infrastructure failure", async () => {
   const failing = new AccountService({ ...repository, saveSession: async () => {
     throw new Error("database unavailable");
-  } }, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy, async () => true);
+  } }, provider, security, { requiresTotp: async () => false }, () => now, true, phone, policy, async () => ({ eligible: true }));
   const initial = await failing.begin({ kind: "email", value: "atomic@example.com", ip: "atomic", termsAcceptance: consent() });
   await expect(verifyFixture(failing, initial.challenge, "123456", consent())).rejects.toThrow("database unavailable");
   expect(await repository.find("email", "atomic@example.com")).toBeNull();
@@ -167,7 +167,7 @@ test("concurrent consent inserts preserve the original acceptance timestamp", as
 });
 
 test("authenticated linking and enrollment do not request or invent acceptance", async () => {
-  const off = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, undefined, undefined, async () => true);
+  const off = new AccountService(repository, provider, security, { requiresTotp: async () => false }, () => now, true, undefined, undefined, async () => ({ eligible: true }));
   const initial = await off.begin({ kind: "email", value: "existing@example.com", ip: "existing" });
   const result = await verifyFixture(off, initial.challenge, "123456", consent());
   if (result.state !== "complete")

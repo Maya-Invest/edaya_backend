@@ -1,12 +1,12 @@
 import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence, RegistrationOffer } from './model'
-import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
+import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, EmailRegistrationPolicy, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
 import type { AcceptedTerms, TermsAcceptanceInput, TermsLocale, TermsPolicyPort } from './terms'
 import { AuthError, normalizeIdentifier } from './model'
 
 const FIVE_MINUTES = 300000
 /** Owns Account policy. Provider sessions and identities never confer business access. */
 export class AccountService {
-  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort, private readonly registrationAllowed: (email: string, invitationHash?: string) => Promise<boolean> = async () => false) { }
+  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort, private readonly registrationPolicy: EmailRegistrationPolicy = async () => ({ eligible: false })) { }
   // Expected failures commit attempt counters; infrastructure failures roll back.
   private async atomic<T>(work: () => Promise<T>): Promise<T> {
     const result = await this.repository.transaction(async () => {
@@ -280,7 +280,9 @@ export class AccountService {
       if (!account && challenge.kind === 'email') {
         const proof = this.crypto.token()
         const expiresAt = this.now() + FIVE_MINUTES
-        const eligible = await this.registrationAllowed(challenge.value, challenge.invitationHash)
+        const { eligible, invitationHash } = await this.registrationPolicy(challenge.value, challenge.invitationHash)
+        if (invitationHash)
+          challenge.invitationHash = invitationHash
         challenge.registration = { digest: await this.crypto.digest(proof), expiresAt, evidence, consumed: false }
         await this.repository.saveChallenge(challenge)
         return { state: 'registration_required' as const, challenge: challenge.id, proof, expiresAt, eligible }
@@ -301,7 +303,7 @@ export class AccountService {
 
       const terms = await this.acceptedTerms(input.termsAcceptance)
       const account = await this.repository.find('email', challenge.value)
-      if (!account && !await this.registrationAllowed(challenge.value, challenge.invitationHash))
+      if (!account && !(await this.registrationPolicy(challenge.value, challenge.invitationHash)).eligible)
         throw new AuthError('registration_unavailable', 403)
 
       registration.consumed = true
