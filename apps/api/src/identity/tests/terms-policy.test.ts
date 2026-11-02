@@ -75,7 +75,7 @@ describe("live policy", () => {
     expect((await policy.current("fr")).document?.version).toBe(first.document?.version);
   });
   test("uses Worker-compatible manual redirects and rejects redirected agreements", async () => {
-    const redirects: (RequestRedirect | undefined)[] = [];
+    const redirects: RequestInit["redirect"][] = [];
     const policy = createTermsPolicy(live, { fetch: async (_url, init) => {
       redirects.push(init.redirect);
       return Response.redirect("https://example.org/other-agreement", 302);
