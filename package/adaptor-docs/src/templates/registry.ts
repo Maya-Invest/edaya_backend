@@ -45,9 +45,12 @@ function resolveImportedStyles(styles: string): string {
   }
 }
 
+// Share the compiler so its meta-schema is compiled once, not once per template.
+// Compilation stays at module initialization because Workers prohibit eval in handlers.
+const ajv = new Ajv({ allErrors: true, strict: false });
+
 function createTemplateDefinition(assets: TemplateAssets): TemplateDefinition {
   const resolved: TemplateAssets = { ...assets, styles: resolveImportedStyles(assets.styles) };
-  const ajv = new Ajv({ allErrors: true, strict: false });
   const validate = ajv.compile(resolved.schema);
 
   return {

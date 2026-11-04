@@ -1,7 +1,12 @@
 /// <reference types="@cloudflare/workers-types" />
 import { isPaused, maintenanceResponse } from "@/operational-controls";
+import { listTemplateDefinitions } from "@edaya/adaptor-docs";
 
 import type { CronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
+
+// AJV uses code generation, which Workers allow only during module initialization.
+// Keep document validators eager while deferring the rest of the application.
+listTemplateDefinitions();
 
 export default {
   async fetch(request: Request, bindings: Record<string, unknown>, executionCtx: ExecutionContext) {
