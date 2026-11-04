@@ -50,14 +50,15 @@ export function typecheckPlan(directory = root): { projects: string[], preparati
       if (!pkg.scripts?.check)
         continue
       for (const part of pkg.scripts.check.split('&&').map(value => value.trim())) {
-        if (dirname(path) === 'package/adaptor-docs' && part === 'bun scripts/precompile-templates.ts --check') {
-          preparations.push({ cwd: dirname(path), command: ['bun', 'scripts/precompile-templates.ts', '--check'] })
+        const packageDir = dirname(path).replaceAll('\\', '/')
+        if (packageDir === 'package/adaptor-docs' && part === 'bun scripts/precompile-templates.ts --check') {
+          preparations.push({ cwd: packageDir, command: ['bun', 'scripts/precompile-templates.ts', '--check'] })
           continue
         }
         const compiler = /^bun x --bun tsc --noEmit(?: -p (\S+))?$/.exec(part)
         if (!compiler)
           throw new Error(`Unrecognized check command in ${path}: ${part}`)
-        projects.push(relative(directory, resolve(directory, dirname(path), compiler[1] ?? 'tsconfig.json')))
+        projects.push(relative(directory, resolve(directory, dirname(path), compiler[1] ?? 'tsconfig.json')).replaceAll('\\', '/'))
       }
     }
   }

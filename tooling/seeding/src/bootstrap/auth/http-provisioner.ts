@@ -45,7 +45,7 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
       : undefined
     const send = await client.request('/auth/edaya/otp/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'email', value: email, channel: 'email', termsAcceptance }) })
     if (!send.ok)
-      throw new Error(`Seed OTP delivery failed (${send.status})`)
+      throw new Error(`Seed OTP delivery failed (${send.status}: ${(await send.text()).slice(0, 180)})`)
     const { challenge } = await send.json() as { challenge: string }
     let otp: string
     const mailbox = process.env['EDAYA_TEST_OTP_FILE']
