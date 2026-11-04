@@ -178,7 +178,7 @@ describe('buildReportCardV1Payload', () => {
           coefficient: 2,
           classSubjectId: 'cs-esp',
           rank: 2,
-              participantCount: 18,
+          participantCount: 18,
         }),
       ],
     })

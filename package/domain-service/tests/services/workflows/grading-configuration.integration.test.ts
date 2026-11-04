@@ -303,7 +303,6 @@ test('ranking a later draft never rewrites an already published ranking', async 
   expect(retained.sectionResults[0]?.participantCount).toBe(1)
 })
 
-
 test('section ranking changes invalidate review and stale section ranks are hidden', async () => {
   const f = await fixture()
   const { AssessmentResult, Student, StudentClassEnrollment, ReportCardResult } = await import('@edaya/core')
