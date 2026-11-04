@@ -248,8 +248,8 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
 
   const body = c.req.valid("json");
   const actor = c.get("actor");
-  // A platform operator has no school yet. Local seed signs in the demo owner, who is also PLATFORM_BOOTSTRAP_EMAILS, before register-school.
-  if (actor && actor.kind !== "platform") {
+  // Linked staff must own their selected school; the service checks this inside registration.
+  if (actor && actor.kind !== "platform" && actor.kind !== "staff") {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
       "This account is already linked to a school actor",
@@ -277,7 +277,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
       requestId,
       edayaSparkS2sKeyMode: resolveEdayaSparkS2sKeyMode(c.env.NODE_ENV),
-    });
+    }, actor?.kind === "staff" ? { schoolId: actor.schoolId, staffMemberId: actor.staffMemberId } : undefined);
 
     return c.json(
       serializeCommandResult(result.school) as z.infer<typeof schoolResponseSchema>,

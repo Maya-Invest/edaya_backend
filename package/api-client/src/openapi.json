@@ -859,6 +859,22 @@
           }
         ]
       },
+      "AuthTeacherCodeLogin": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "termsAcceptance": {
+            "$ref": "#/components/schemas/AuthTermsAcceptance"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": false
+      },
       "SchoolImportBatch": {
         "type": "object",
         "properties": {
@@ -1681,6 +1697,109 @@
         },
         "required": [
           "type"
+        ],
+        "additionalProperties": false
+      },
+      "TeacherQuickCodeOptions": {
+        "type": "object",
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "sms"
+                  ]
+                },
+                "hint": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "hint"
+              ]
+            }
+          },
+          "expiries": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "nullable": true
+            }
+          },
+          "active": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "channel": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "expiry": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "channel",
+              "hint",
+              "expiry"
+            ]
+          }
+        },
+        "required": [
+          "contacts",
+          "expiries",
+          "active"
+        ]
+      },
+      "TeacherQuickCodeDelivery": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "TeacherQuickCodeIssue": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "identifierId": {
+            "type": "string"
+          },
+          "expiry": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month",
+              "period",
+              "year",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "requestId",
+          "identifierId",
+          "expiry"
         ],
         "additionalProperties": false
       },
@@ -18396,8 +18515,402 @@
           "periodId"
         ]
       },
+      "ReportSubjectResult": {
+        "type": "object",
+        "properties": {
+          "sectionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sectionKind": {
+            "type": "string",
+            "enum": [
+              "module",
+              "subject"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "weightingMode": {
+            "type": "string",
+            "enum": [
+              "subject_coefficients",
+              "explicit"
+            ]
+          },
+          "explicitWeight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "contributingCoefficientSum": {
+            "type": "number",
+            "minimum": 0
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grading": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
+          "average": {
+            "type": "number",
+            "minimum": 0
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "parentSectionId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "participantCount": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "subResults": {
+            "type": "array",
+            "items": {
+              "nullable": true
+            },
+            "maxItems": 0,
+            "default": []
+          }
+        },
+        "required": [
+          "sectionId",
+          "sectionKind",
+          "name",
+          "weight"
+        ]
+      },
       "ReportCardResultSection": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "sectionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sectionKind": {
+            "type": "string",
+            "enum": [
+              "module",
+              "subject"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "weightingMode": {
+            "type": "string",
+            "enum": [
+              "subject_coefficients",
+              "explicit"
+            ]
+          },
+          "explicitWeight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "contributingCoefficientSum": {
+            "type": "number",
+            "minimum": 0
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grading": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
+          "average": {
+            "type": "number",
+            "minimum": 0
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "parentSectionId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "participantCount": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "subResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSubjectResult"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "sectionId",
+          "sectionKind",
+          "name",
+          "weight"
+        ]
       },
       "ReportCardSnapshot": {
         "type": "object",
@@ -34233,6 +34746,77 @@
         }
       }
     },
+    "/auth/edaya/teacher-code": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "operationId": "auth.teacherCode",
+        "x-edaya-kind": "auth",
+        "x-edaya-client-key": "teacherCode",
+        "x-edaya-client-path": "/auth/edaya/teacher-code",
+        "x-edaya-request-schema": "AuthTeacherCodeLogin",
+        "x-edaya-response-schema": "AuthOutcome",
+        "x-edaya-base-path": "root",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthTeacherCodeLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account operation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthOutcome"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or challenge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body too large"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Authentication unavailable"
+          }
+        }
+      }
+    },
     "/auth/edaya/otp/verify": {
       "post": {
         "tags": [
@@ -36810,6 +37394,91 @@
                   "example": {
                     "message": "Hello World"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/teachers/{teacherId}/quick-login-code": {
+      "get": {
+        "tags": [
+          "Teacher quick login"
+        ],
+        "operationId": "authorization.teacherQuickCodeOptions",
+        "x-edaya-kind": "authorization",
+        "x-edaya-client-key": "teacherQuickCodeOptions",
+        "x-edaya-client-path": "teachers/{teacherId}/quick-login-code",
+        "x-edaya-response-schema": "TeacherQuickCodeOptions",
+        "x-edaya-path-params": [
+          "teacherId"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "teacherId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quick login options",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherQuickCodeOptions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Teacher quick login"
+        ],
+        "operationId": "authorization.issueTeacherQuickCode",
+        "x-edaya-kind": "authorization",
+        "x-edaya-client-key": "issueTeacherQuickCode",
+        "x-edaya-client-path": "teachers/{teacherId}/quick-login-code",
+        "x-edaya-request-schema": "TeacherQuickCodeIssue",
+        "x-edaya-response-schema": "TeacherQuickCodeDelivery",
+        "x-edaya-path-params": [
+          "teacherId"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "teacherId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Issue a teacher code",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherQuickCodeIssue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delivery status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherQuickCodeDelivery"
                 }
               }
             }

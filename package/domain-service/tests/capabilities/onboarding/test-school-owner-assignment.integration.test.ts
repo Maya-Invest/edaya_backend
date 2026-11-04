@@ -30,8 +30,24 @@ describe('school registration with a central identity owner', () => {
     expect(s2s?.keyHash).toBe(encodeS2sApiKey(localEdayaSparkS2sApiKey(result.school.id)).hash)
   })
 
+  it('registers another school for its active owner without replacing an existing school or staff profile', async () => {
+    await registerSchoolWithOwner(application, session, input)
+    const selected = { schoolId: input.id, staffMemberId: input.ownerStaffId }
+    const next = { ...input, id: 'second-school', ownerStaffId: 'second-owner-staff' }
+    await expect(registerSchoolWithOwner(application, session, { ...next, id: 'school-b' }, selected)).rejects.toMatchObject({ code: 'ONBOARDING_ID_ALREADY_USED' })
+    await expect(registerSchoolWithOwner(application, session, { ...next, ownerStaffId: input.ownerStaffId }, selected)).rejects.toMatchObject({ code: 'ONBOARDING_ID_ALREADY_USED' })
+    await expect(registerSchoolWithOwner(application, session, next, { ...selected, staffMemberId: 'staff-b' })).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
+    await registerSchoolWithOwner(application, session, next, selected)
+    for (const school of [input, next]) {
+      expect((await fixture.repositories.schools.findById(school.id))?.ownerSubjectId).toBe(session.user.id)
+      expect((await fixture.repositories.staffMembers.findById(school.ownerStaffId))?.subjectId).toBe(session.user.id)
+    }
+  })
+
   it('rejects an identity already linked to a school profile', async () => {
-    await expect(registerSchoolWithOwner(application, { user: { ...session.user, id: 'person-a' } }, input)).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
+    const linked = { user: { ...session.user, id: 'person-a' } }
+    await expect(registerSchoolWithOwner(application, linked, input)).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
+    await expect(registerSchoolWithOwner(application, linked, input, { schoolId: 'school-a', staffMemberId: 'staff-a' })).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
     expect(await fixture.repositories.schools.findById('new-school')).toBeUndefined()
   })
 

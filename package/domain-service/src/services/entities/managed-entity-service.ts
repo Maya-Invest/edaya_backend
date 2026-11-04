@@ -2,7 +2,7 @@ import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, QueryOptions, ResourceAccessScope } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode, createAccessPolicies } from '@edaya/authorization'
-import { ReportCardResult } from '@edaya/core'
+import { ReportCardResult, ReportCardResultSection } from '@edaya/core'
 import { visibleReportRevision } from '../../capabilities/academics/report-comment-revisions'
 import { assertTeacherWorkflowWrite, recordTeacherWorkflowDecision } from '../../capabilities/academics/teacher-workflow-boundaries'
 
@@ -59,14 +59,19 @@ export class ManagedEntityService<T> {
     const result = row as CoreEntityMap['results']
     const state = await this.repositories.teacherCorrections.state(this.actor.schoolId, 'report_comments', result.id)
     let visible = visibleReportRevision(result, state)
+    const clearRanks = (sections: readonly ReportCardResultSection[]): ReportCardResultSection[] => sections.map(section => new ReportCardResultSection({ ...(section.data ?? section), rank: undefined, participantCount: undefined, subResults: clearRanks(section.subResults) }))
     if (visible.grading || visible.revisedDraft) {
       const group = await this.repositories.classGroups.findById(result.classGroupId)
       const level = group && await this.repositories.gradeLevels.findById(group.gradeLevelId)
       const policy = group && level?.gradingPolicyFor(group.academicYearId)
       const pending = group && level && policy && (policy.status !== 'completed' || await this.repositories.assessmentDependencies.pendingGradingClass({ schoolId: level.schoolId, gradeLevelId: level.id, academicYearId: group.academicYearId, policyRevision: policy.revision }))
       if (pending)
-        visible = new ReportCardResult({ ...visible.data, sectionResults: [...visible.sectionResults], rank: visible.status === 'published' ? visible.rank : undefined, revisedDraft: visible.revisedDraft ? { ...visible.revisedDraft, rank: undefined } : undefined })
+        visible = new ReportCardResult({ ...visible.data, sectionResults: visible.status === 'published' ? [...visible.sectionResults] : clearRanks(visible.sectionResults), rank: visible.status === 'published' ? visible.rank : undefined, revisedDraft: visible.revisedDraft ? { ...visible.revisedDraft, rank: undefined, sectionResults: clearRanks(visible.revisedDraft.sectionResults) } : undefined })
     }
+    if (visible.calculationStale && visible.status !== 'published')
+      visible = new ReportCardResult({ ...visible.data, sectionResults: clearRanks(visible.sectionResults), rank: undefined, classSize: undefined })
+    if (visible.revisedDraft?.calculationStale)
+      visible = new ReportCardResult({ ...visible.data, sectionResults: [...visible.sectionResults], revisedDraft: { ...visible.revisedDraft, rank: undefined, classSize: undefined, sectionResults: clearRanks(visible.revisedDraft.sectionResults) } })
     return (this.actor.kind === 'guardian' || this.actor.kind === 'student'
       ? new ReportCardResult({ ...visible.data, sectionResults: [...visible.sectionResults], revisedDraft: undefined, publicationHistory: [] })
       : visible) as T

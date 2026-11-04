@@ -4,7 +4,7 @@ import type { IdentitySigningKeys } from "./jwt-keys";
 import { AuthError } from "@edaya/account";
 import { hashInvitationToken } from "@edaya/service";
 import { z } from "zod";
-import { AuthUnlink, AuthEnrollmentInput as enrollmentSchema, RegistrationInput, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
+import { AuthUnlink, AuthEnrollmentInput as enrollmentSchema, RegistrationInput, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, TeacherCodeLogin, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
 import { resolveAllowlistedApiOrigin } from "./env";
 import { signIdentityAccessToken } from "./jwt-keys";
 import { phoneSmsPrefixes } from "./phone-config";
@@ -12,6 +12,7 @@ import { assertAuthRequest, authCookieName, authCredential } from "./request-pol
 import { createWhatsAppWebhook } from "./whatsapp-webhook";
 
 const authPostPaths = new Set([
+  "teacher-code",
   "otp/start",
   "identifiers/start",
   "otp/status",
@@ -87,6 +88,10 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
       const renewal = authCredential(request, env);
       const ip = env.RUNTIME === "worker" ? request.headers.get("cf-connecting-ip") ?? "unknown" : "local";
       switch (path) {
+        case "/auth/edaya/teacher-code": {
+          const input = TeacherCodeLogin.parse(body);
+          return outcome(await service.teacherSignIn(input.code, ip, input.termsAcceptance), request);
+        }
         case "/auth/edaya/otp/start": {
           const { invitationToken, ...input } = startSchema.parse(body);
           return json(await service.begin({ ...input, ip, invitationHash: invitationToken ? hashInvitationToken(invitationToken) : undefined }));
@@ -132,7 +137,7 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
             throw new AuthError("invalid_resource");
           const { account, session } = await service.getSession(renewal);
           const user = accountUser(account);
-          return json(await signIdentityAccessToken(keys, { sub: account.id, iss: env.BETTER_AUTH_URL, aud: audience, sid: session.id, ...(user.email ? { email: user.email, email_verified: true } : {}), ...(user.phone ? { phone: user.phone, phone_verified: true } : {}), auth_time: Math.floor(session.primaryAt / 1000), ...(session.secondAt ? { mfa_time: Math.floor(session.secondAt / 1000) } : {}), amr: [session.method === "email" ? "email_otp" : "phone_otp", ...(session.secondAt ? ["totp"] : [])] }));
+          return json(await signIdentityAccessToken(keys, { sub: account.id, iss: env.BETTER_AUTH_URL, aud: session.teacherScope ? `${audience}/teacher` : audience, teacherScope: session.teacherScope, sid: session.id, ...(user.email ? { email: user.email, email_verified: true } : {}), ...(user.phone ? { phone: user.phone, phone_verified: true } : {}), auth_time: Math.floor(session.primaryAt / 1000), ...(session.secondAt ? { mfa_time: Math.floor(session.secondAt / 1000) } : {}), amr: [session.teacherScope ? "teacher_code" : session.method === "email" ? "email_otp" : "phone_otp", ...(session.secondAt ? ["totp"] : [])] }));
         }
         case "/auth/edaya/sign-out":
         case "/auth/edaya/sign-out-all": {

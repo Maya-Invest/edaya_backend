@@ -26,7 +26,7 @@ export async function initializeFixtureSchoolOwner(base: BaseSchoolService, inpu
         denyResourceAccess()
       proposed = new School({ ...existing.data, ownerSubjectId: input.subjectId })
       scope = await base.access.identities.assertInitializeFixtureOwner(input.staffId, existing, proposed)
-      await validateSchoolOwnership(proposed, existing, base.repositories)
+      validateSchoolOwnership(proposed, existing)
     },
     execute: async () => {
       await base.repositories.schools.forAccess(scope).save(proposed)

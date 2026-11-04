@@ -12,7 +12,7 @@ export const schoolConfig: EntityConfigFactory<School> = input => ({
   ...schoolEntityConfig(input, input.repositories.schools),
   writeLockGroup: '0-finance-state',
   gates: { preSave: async (school, existing, repositories) => {
-    await validateSchoolOwnership(school, existing, repositories)
+    validateSchoolOwnership(school, existing)
     if (existing && existing.financeCurrency !== school.financeCurrency) {
       const counts = await Promise.all([
         repositories.catalogServices.count({ schoolId: school.id }),

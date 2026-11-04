@@ -8,12 +8,13 @@ import {
   resolveSeedPhaseLabels,
 } from '../support/resolve-seed-progress-plan'
 import { createSeedProgressReporter } from '../support/seed-progress'
-import { canUseSeedingServiceAccount, resolveServiceAccountApiKey } from './helpers'
+import { canUseSeedingServiceAccount, createEmptyHttpSeedResults, resolveServiceAccountApiKey } from './helpers'
 import { tryRunAllFreshBootstrap } from './scopes/all-fresh-bootstrap'
 import { runAuthScope } from './scopes/auth'
 import { runDoctorScope } from './scopes/doctor'
 import { runDomainSeedScope } from './scopes/domain-seed'
 import { runS2sClientsScope } from './scopes/s2s-clients'
+import { seedSchoolSwitching } from './scopes/school-switching'
 import { runServiceAccountScope } from './scopes/service-account'
 import { runSmokeScope } from './scopes/smoke'
 import { runValidateScope } from './scopes/validate'
@@ -83,11 +84,12 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions) {
       case 's2s-clients':
         return await runS2sClientsScope(ctx)
       case 'all': {
-        const freshBootstrap = await tryRunAllFreshBootstrap(ctx)
-        if (freshBootstrap) {
-          return freshBootstrap
-        }
-        return await runDomainSeedScope(ctx)
+        const results = await tryRunAllFreshBootstrap(ctx) ?? await runDomainSeedScope(ctx)
+        results.switchingCampus = await seedSchoolSwitching(ctx)
+        return results
+      }
+      case 'school-switching': {
+        return { ...createEmptyHttpSeedResults(), switchingCampus: await seedSchoolSwitching(ctx) }
       }
       default:
         return await runDomainSeedScope(ctx)

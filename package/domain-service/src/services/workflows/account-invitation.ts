@@ -13,7 +13,6 @@ import { renderInvitationContent } from '../../capabilities/notifications/templa
 import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
 
-import { validateSchoolOwnership } from '../entities/config/school/validate-school-ownership'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -324,7 +323,6 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       )
     }
 
-    await this.assertPendingOwnerAssignable(invitation, subjectId)
     await this.assertInvitationTargetLinkable(invitation, subjectId)
 
     const result = await linkSubjectToActor(
@@ -461,20 +459,6 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
         'The invitation target is already linked to a different account',
       )
     }
-  }
-
-  private async assertPendingOwnerAssignable(
-    invitation: AccountInvitation,
-    subjectId: string,
-  ): Promise<void> {
-    if (invitation.kind !== AccountInvitationKind.Staff) {
-      return
-    }
-    const school = await this.repositories.schools.findById(invitation.schoolId)
-    if (!school || school.pendingOwnerStaffId !== invitation.targetId) {
-      return
-    }
-    await validateSchoolOwnership(new SchoolEntity({ ...school.data, ownerSubjectId: subjectId }), school, this.repositories)
   }
 
   private async assignPendingOwnerIfNeeded(

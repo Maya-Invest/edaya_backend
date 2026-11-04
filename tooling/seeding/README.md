@@ -59,6 +59,8 @@ bun repo ops seed staging --clean       # prompts; add --yes for automation
 2. Seed: `bun repo ops seed`
 3. Log in at http://localhost:5173/login
 
+The full HTTP seed gives Aminata Koné (`a.kone@ecole-ci.edaya.dev`) ownership of both École Edaya — Cocody and EDAYA — Campus Central. Central has its own staff profile, published academic year, and grade level. To add or repair just this second campus after an existing Cocody seed, run `bun repo ops seed --scope school-switching`. Repeating this scope preserves existing school records. In the staff webapp, sign in as Aminata and select a school in the header.
+
 The checked-in local API configuration enforces published terms. For seeding, supply operator-authenticated sessions through `SEED_AUTH_SESSIONS_FILE`, or explicitly start an isolated local fixture API with `AUTH_TERMS_MODE=off`. The seeder does not accept published agreements automatically.
 
 After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).

@@ -6,6 +6,11 @@ import { logDevSeedResults } from '../orchestration/run-dev-seeds'
 export function logHttpDevSeedResults(results: RunHttpDevSeedsResults, log: LogDevSeedResultsOptions = {}): void {
   logDevSeedResults(results, log)
 
+  if (results.switchingCampus) {
+    // eslint-disable-next-line no-console
+    console.log(`School switching ready: the demo owner also owns ${results.switchingCampus}.`)
+  }
+
   if (results.smoke) {
     if (results.smoke.status === 'passed') {
       // eslint-disable-next-line no-console

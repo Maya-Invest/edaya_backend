@@ -1,7 +1,9 @@
 import type { AssessmentDependenciesPort } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
+import type { RankingInput } from './report-rankings'
 import { sql } from 'drizzle-orm'
 import { transactionContext } from '../lib/transaction'
+import { refreshReportRankings } from './report-rankings'
 
 interface ProjectionExecutor {
   execute: (query: SQL) => Promise<{ rows: Array<{ id?: unknown, payload?: unknown, total?: unknown }> }>
@@ -24,24 +26,36 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
   }
 
   async refreshGradingRankings(input: { schoolId: string, classGroupId: string, policyRevision: number }): Promise<void> {
-    // Include published results in comparisons, but retain their publication snapshot.
-    // Only drafts (including revised drafts) receive refreshed rankings.
+    // The workflow owns the academic lock. Published snapshots participate but never change.
+    const { rows } = await this.executor().execute(sql`
+      select r.id, jsonb_build_object(
+        'mutable', r.status='draft' or r.revised_draft is not null,
+        'revised', r.revised_draft is not null,
+        'snapshot', coalesce(r.revised_draft, jsonb_build_object(
+          'academicYearId', r.academic_year_id, 'periodId', r.period_id,
+          'reportConfigurationRevision', r.report_configuration_revision,
+          'overallAverage', r.overall_average, 'calculationStale', r.calculation_stale,
+          'rank', r.rank, 'classSize', r.class_size, 'version', r.version, 'sectionResults', r.section_results
+        ))) as payload
+      from report_card_results r join class_groups c on c.id=r.class_group_id
+      where c.school_id=${input.schoolId} and c.id=${input.classGroupId}
+        and coalesce((r.revised_draft->>'gradingPolicyRevision')::integer, r.grading_policy_revision)=${input.policyRevision}`)
+    const changes = refreshReportRankings(rows as RankingInput[])
+    if (!changes.length)
+      return
     await this.executor().execute(sql`
-      with candidates as (
-        select r.id, r.period_id, coalesce((r.revised_draft->>'reportConfigurationRevision')::integer, r.report_configuration_revision) as configuration_revision, r.revised_draft is not null as revised,
-          case when r.revised_draft is not null then (r.revised_draft->>'overallAverage')::numeric else r.overall_average end as average
-        from report_card_results r join class_groups c on c.id=r.class_group_id
-        where c.school_id=${input.schoolId} and c.id=${input.classGroupId}
-          and coalesce((r.revised_draft->>'gradingPolicyRevision')::integer, r.grading_policy_revision)=${input.policyRevision}
-          and not coalesce((r.revised_draft->>'calculationStale')::boolean, r.calculation_stale)
-      ), ranks as (
-        select id, revised, rank() over (partition by period_id, configuration_revision order by average desc) as rank,
-          count(*) over (partition by period_id, configuration_revision) as size from candidates where average is not null
-      ) update report_card_results r set
-        rank=case when ranks.revised or r.status='published' then r.rank else ranks.rank end,
-        class_size=case when ranks.revised or r.status='published' then r.class_size else ranks.size end,
-        revised_draft=case when ranks.revised then r.revised_draft || jsonb_build_object('rank', ranks.rank, 'classSize', ranks.size) else r.revised_draft end
-      from ranks where r.id=ranks.id`)
+      update report_card_results r set
+        rank=case when patch.revised then r.rank else patch.rank end,
+        class_size=case when patch.revised then r.class_size else patch.size end,
+        section_results=case when patch.revised then r.section_results else patch.sections end,
+        version=case when patch.revised then r.version else patch.version end,
+        revised_draft=case when patch.revised then r.revised_draft || jsonb_build_object(
+          'rank', patch.rank, 'classSize', patch.size, 'sectionResults', patch.sections, 'version', patch.version
+        ) else r.revised_draft end
+      from jsonb_to_recordset(${JSON.stringify(changes)}::jsonb)
+        as patch(id text, revised boolean, rank integer, size integer, sections jsonb, previous_version integer, version integer)
+      where r.id=patch.id and coalesce((r.revised_draft->>'version')::integer, r.version)=patch.previous_version
+        and (r.status='draft' or patch.revised)`)
   }
 
   async reportAssessmentIds(schoolId: string, studentId: string, periodIds: readonly string[]): Promise<string[]> {

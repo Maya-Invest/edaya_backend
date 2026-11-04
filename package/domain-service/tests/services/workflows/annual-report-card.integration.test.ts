@@ -48,6 +48,9 @@ describe('official annual report card workflow', () => {
   test('published weighted annual grades issue a landscape PDF available to the guardian', async () => {
     const f = await annualFixture()
     expect(f.draft.overallAverage).toBe(13)
+    expect(f.draft.sectionResults[0]?.rank).toBe(1)
+    expect(f.draft.sectionResults[0]?.participantCount).toBe(1)
+    expect(f.draft.sectionResults[0]?.subResults[0]?.participantCount).toBe(1)
     expect(f.annual.aggregation?.sourceReportVersions).toHaveLength(2)
     const source = (await f.repositories.results.findById('report-per1'))!
     expect(f.annual.aggregation?.sourceReportVersions?.find(row => row.periodId === 'per1')?.sourceVersion).toBe(await reportCardAcademicVersion(source))

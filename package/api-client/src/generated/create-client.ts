@@ -41,6 +41,7 @@ type AuthClients<TSchemas extends Record<string, unknown>> = {
   statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
   resendOtp: (payload: SchemaName<TSchemas, 'AuthResend'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
   completeRegistration: (payload: SchemaName<TSchemas, 'AuthRegistrationInput'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
+  teacherCode: (payload: SchemaName<TSchemas, 'AuthTeacherCodeLogin'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
   verifyOtp: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
   verifyTotp: (payload: SchemaName<TSchemas, 'AuthProof'>) => Promise<SchemaName<TSchemas, 'AuthOutcome'>>
   enroll: (payload: SchemaName<TSchemas, 'AuthEnrollmentInput'>) => Promise<SchemaName<TSchemas, 'AuthEnrollment'>>
@@ -57,6 +58,8 @@ type AuthClients<TSchemas extends Record<string, unknown>> = {
 }
 
 type AuthorizationClients<TSchemas extends Record<string, unknown>> = {
+  teacherQuickCodeOptions: (params: { teacherId: string }) => Promise<SchemaName<TSchemas, 'TeacherQuickCodeOptions'>>
+  issueTeacherQuickCode: (params: { teacherId: string }, payload: SchemaName<TSchemas, 'TeacherQuickCodeIssue'>) => Promise<SchemaName<TSchemas, 'TeacherQuickCodeDelivery'>>
   effectiveGrants: () => Promise<SchemaName<TSchemas, 'EffectiveGrantsResponse'>>
   profiles: () => Promise<SchemaName<TSchemas, 'AuthorizationProfilesResponse'>>
   permissionCatalog: () => Promise<SchemaName<TSchemas, 'PermissionCatalogResponse'>>
@@ -186,6 +189,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/status', {}, 'root'), { body: payload }),
     resendOtp: (payload: SchemaName<TSchemas, 'AuthResend'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/resend', {}, 'root'), { body: payload }),
     completeRegistration: (payload: SchemaName<TSchemas, 'AuthRegistrationInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/registration/complete', {}, 'root'), { body: payload }),
+    teacherCode: (payload: SchemaName<TSchemas, 'AuthTeacherCodeLogin'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/teacher-code', {}, 'root'), { body: payload }),
     verifyOtp: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/verify', {}, 'root'), { body: payload }),
     verifyTotp: (payload: SchemaName<TSchemas, 'AuthProof'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/verify', {}, 'root'), { body: payload }),
     enroll: (payload: SchemaName<TSchemas, 'AuthEnrollmentInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/totp/enroll', {}, 'root'), { body: payload }),
@@ -201,6 +205,8 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     signOutAll: (payload: SchemaName<TSchemas, 'AuthEmptyInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/sign-out-all', {}, 'root'), { body: payload }),
   } as AuthClients<TSchemas>,
     authorization: {
+    teacherQuickCodeOptions: (params: { teacherId: string }) => transport.request('GET', resolveClientRoutePath('teachers/{teacherId}/quick-login-code', params)),
+    issueTeacherQuickCode: (params: { teacherId: string }, payload: SchemaName<TSchemas, 'TeacherQuickCodeIssue'>) => transport.request('POST', resolveClientRoutePath('teachers/{teacherId}/quick-login-code', params), { body: payload }),
     effectiveGrants: () => transport.request('GET', resolveClientRoutePath('authorization/effective-grants')),
     profiles: () => transport.request('GET', resolveClientRoutePath('authorization/profiles')),
     permissionCatalog: () => transport.request('GET', resolveClientRoutePath('authorization/permission-catalog')),

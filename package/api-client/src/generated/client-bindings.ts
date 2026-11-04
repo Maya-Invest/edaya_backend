@@ -2177,6 +2177,13 @@ export const clientBindings = {
         "responseSchemaName": "AuthOutcome",
         "basePath": "root"
       },
+      "teacherCode": {
+        "method": "POST",
+        "path": "/auth/edaya/teacher-code",
+        "requestSchemaName": "AuthTeacherCodeLogin",
+        "responseSchemaName": "AuthOutcome",
+        "basePath": "root"
+      },
       "verifyOtp": {
         "method": "POST",
         "path": "/auth/edaya/otp/verify",
@@ -2344,6 +2351,23 @@ export const clientBindings = {
       }
     },
     "authorization": {
+      "teacherQuickCodeOptions": {
+        "method": "GET",
+        "path": "teachers/{teacherId}/quick-login-code",
+        "pathParams": [
+          "teacherId"
+        ],
+        "responseSchemaName": "TeacherQuickCodeOptions"
+      },
+      "issueTeacherQuickCode": {
+        "method": "POST",
+        "path": "teachers/{teacherId}/quick-login-code",
+        "pathParams": [
+          "teacherId"
+        ],
+        "requestSchemaName": "TeacherQuickCodeIssue",
+        "responseSchemaName": "TeacherQuickCodeDelivery"
+      },
       "effectiveGrants": {
         "method": "GET",
         "path": "authorization/effective-grants",

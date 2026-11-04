@@ -294,7 +294,35 @@ test('ranking a later draft never rewrites an already published ranking', async 
   const next = await f.service.assessmentsWorkflow.generateReportCardResult({ ...f.report, id: 'rc2', studentId: 'stu2' })
   expect(next.rank).toBe(1)
   expect(next.classSize).toBe(2)
+  expect(next.sectionResults[0]?.rank).toBe(1)
+  expect(next.sectionResults[0]?.participantCount).toBe(2)
+  expect(next.sectionResults[0]?.subResults[0]?.participantCount).toBe(2)
   const retained = (await f.repositories.results.findById('rc1'))!
   expect(retained.rank).toBe(published.rank)
   expect(retained.classSize).toBe(published.classSize)
+  expect(retained.sectionResults[0]?.participantCount).toBe(1)
+})
+
+
+test('section ranking changes invalidate review and stale section ranks are hidden', async () => {
+  const f = await fixture()
+  const { AssessmentResult, Student, StudentClassEnrollment, ReportCardResult } = await import('@edaya/core')
+  const first = (await f.results.findById('rc1'))!
+  const student = (await f.repositories.students.findById('stu1'))!
+  const enrollment = (await f.repositories.enrollments.findById('enr1'))!
+  const assessment = (await f.repositories.assessments.findById('ass1'))!
+  await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+  await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
+  await seedSubjectParticipation(f.repositories)
+  await f.repositories.assessments.save(new Assessment({ ...assessment.data, marksReview: { ...assessment.marksReview, rosterStudentIds: ['stu1', 'stu2'] } }))
+  await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu2', assessmentId: 'ass1', score: 90 }))
+  await f.service.assessmentsWorkflow.generateReportCardResult({ ...f.report, id: 'rc2', studentId: 'stu2' })
+  const updated = (await f.results.findById('rc1'))!
+  expect(updated.version).toBeGreaterThan(first.version)
+  expect(updated.sectionResults[0]?.rank).toBe(2)
+  await expect(f.service.assessmentsWorkflow.publishReportCardResult({ ...f.report, reviewedDraftVersion: first.version, reviewedGradingRevision: first.gradingPolicyRevision, reviewedReportConfigurationRevision: first.reportConfigurationRevision })).rejects.toMatchObject({ code: 'REPORT_REVIEW_REQUIRED' })
+  await f.results.save(new ReportCardResult({ ...updated.data, sectionResults: [...updated.sectionResults], calculationStale: true }))
+  const visible = (await f.service.baseService.entities.results.findById('rc1'))!
+  expect(visible.sectionResults[0]?.rank).toBeUndefined()
+  expect(visible.sectionResults[0]?.subResults[0]?.participantCount).toBeUndefined()
 })
