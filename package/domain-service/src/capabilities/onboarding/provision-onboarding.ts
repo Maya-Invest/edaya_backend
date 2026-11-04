@@ -18,6 +18,14 @@ import { onboardingDatasetSchema } from './onboarding-dataset'
 import { registerSchoolWithOwner } from './register-school-with-owner'
 import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
 
+interface ProvisionOnboardingSession extends RegisterSchoolOwnerSession {
+  session?: {
+    assuranceLevel: ActorAssuranceLevel
+    createdAt?: Date
+    id?: string
+  }
+}
+
 export interface ProvisionOnboardingSchoolInput {
   name: string
   timeZone: string
@@ -200,7 +208,7 @@ function storedToResult(stored: StoredProvisionResult, replayed: boolean): Provi
 
 async function resolveOwnerActorAfterRegister(
   application: OnboardingSchoolApplication,
-  session: RegisterSchoolOwnerSession,
+  session: ProvisionOnboardingSession,
   schoolId: string,
   requestId: string,
 ): Promise<ActorMetadata> {
@@ -219,8 +227,10 @@ async function resolveOwnerActorAfterRegister(
     requestId,
     staffMemberId: staff.id,
     subjectId: session.user.id,
-    authenticatedAt: new Date(),
-    assuranceLevel: session.user.emailVerified ? ActorAssuranceLevel.Verified : ActorAssuranceLevel.Standard,
+    authenticatedAt: session.session?.createdAt ?? new Date(),
+    sessionId: session.session?.id,
+    assuranceLevel: session.session?.assuranceLevel
+      ?? (session.user.emailVerified ? ActorAssuranceLevel.Verified : ActorAssuranceLevel.Standard),
   })
 }
 
@@ -250,7 +260,7 @@ async function assertProvisionCallerAvailable(
 
 async function executeProvision(
   application: OnboardingSchoolApplication,
-  session: RegisterSchoolOwnerSession,
+  session: ProvisionOnboardingSession,
   input: ProvisionOnboardingInput,
   options: {
     existingActor?: ActorMetadata
@@ -359,7 +369,7 @@ async function executeProvision(
 
 export async function provisionOnboarding(
   application: OnboardingSchoolApplication,
-  session: RegisterSchoolOwnerSession,
+  session: ProvisionOnboardingSession,
   input: ProvisionOnboardingInput,
   options: {
     requestId?: string

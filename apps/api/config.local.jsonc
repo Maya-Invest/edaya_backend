@@ -26,10 +26,6 @@
   // "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
   // "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID",
   // WhatsApp requires sms_only prerequisites as fallback; then use whatsapp_first.
-  // "WHATSAPP_PHONE_NUMBER_ID": "1234567890",
-  // "WHATSAPP_BUSINESS_ACCOUNT_ID": "1234567890",
-  // "WHATSAPP_API_VERSION": "vXX.X", // replace with a supported pinned version
-  // "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"edaya_auth_fr\",\"language\":\"fr\"},\"en\":{\"name\":\"edaya_auth_en\",\"language\":\"en_US\"}}",
   // Optional rendering: GOTENBERG_URL, DOCS_RENDER_ON_PUBLISH.
   // See docs/reference/api-configuration.md and phone-verification.md.
   "RUNTIME": "local",
@@ -44,7 +40,11 @@
   "TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:4173,http://localhost:5175,http://127.0.0.1:5175",
   "PLATFORM_BOOTSTRAP_EMAILS": "a.kone@ecole-ci.edaya.dev",
   "AUTH_DATABASE_URL": "pglite:.data/identity",
-  "PHONE_AUTH_MODE": "disabled",
+  "PHONE_AUTH_MODE": "whatsapp_first",
+  "WHATSAPP_PHONE_NUMBER_ID": "1351844414684255",
+  "WHATSAPP_BUSINESS_ACCOUNT_ID": "1418705638002811",
+  "WHATSAPP_API_VERSION": "v26.0",
+  "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"authentification_edaya\",\"language\":\"fr\"},\"en\":{\"name\":\"authentification_edaya_en\",\"language\":\"en\"}}",
   "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
   "AFRICAS_TALKING_USERNAME": "sandbox",
   "AFRICAS_TALKING_SANDBOX": "true",

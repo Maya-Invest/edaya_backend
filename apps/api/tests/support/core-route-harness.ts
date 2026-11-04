@@ -387,6 +387,16 @@ export async function signInWithBearerThroughApp(
   });
 }
 
+export async function signInPhoneWithBearerForTests(phone: string): Promise<string> {
+  return signTestIdentityToken(await loadTestIdentityKeys(), {
+    sub: `phone:${phone}`,
+    phone,
+    phone_verified: true,
+    iss: pgliteEnv.API_ORIGIN,
+    aud: pgliteEnv.API_ORIGIN,
+  });
+}
+
 export async function signUpAuthUser(
   _runtime: ApiRuntime,
   input: { email: string; password?: string; name: string },

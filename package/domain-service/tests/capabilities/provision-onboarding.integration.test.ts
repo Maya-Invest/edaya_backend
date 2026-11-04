@@ -1,3 +1,4 @@
+import { ActorAssuranceLevel } from '@edaya/authorization'
 import { provisionOnboarding } from '@edaya/service'
 import { describe, expect, spyOn, test } from 'bun:test'
 import { createTestApp } from '../support/create-test-app'
@@ -32,6 +33,38 @@ function typicalInput(schoolId: string, requestId: string) {
 }
 
 describe('provisionOnboarding journal', () => {
+  test('does not elevate an unverified or explicitly standard owner session', async () => {
+    const fixture = await createTestApp()
+    for (const session of [
+      { user: { id: 'unverified-owner', emailVerified: false } },
+      { user: { id: 'standard-owner', emailVerified: true }, session: { assuranceLevel: ActorAssuranceLevel.Standard } },
+    ]) {
+      const schoolId = crypto.randomUUID()
+      await expect(provisionOnboarding(fixture.application, session, typicalInput(schoolId, crypto.randomUUID()), {
+        allowPublicSchoolRegistration: true,
+      })).rejects.toMatchObject({ code: 'forbidden' })
+      expect(await fixture.schoolRepositories.schools.findById(schoolId)).toBeUndefined()
+      expect(await fixture.schoolRepositories.staffMembers.findOne({ subjectId: session.user.id })).toBeUndefined()
+    }
+  })
+
+  test('preserves verified phone-session assurance when provisioning an owner without email', async () => {
+    const fixture = await createTestApp()
+    const schoolId = crypto.randomUUID()
+    const session = {
+      user: { id: 'phone-provision-owner', emailVerified: false },
+      session: { assuranceLevel: ActorAssuranceLevel.Verified },
+    }
+    const result = await provisionOnboarding(
+      fixture.application,
+      session,
+      typicalInput(schoolId, crypto.randomUUID()),
+      { allowPublicSchoolRegistration: true },
+    )
+    expect(result.status.wizardCompleted).toBe(true)
+    expect((await fixture.schoolRepositories.staffMembers.findOne({ subjectId: session.user.id }))?.schoolId).toBe(schoolId)
+  })
+
   test('replays an identical committed request and rejects a changed payload', async () => {
     const fixture = await createTestApp()
     const schoolId = crypto.randomUUID()
