@@ -6,19 +6,6 @@ import process from 'node:process'
 
 const sessions = new WeakMap<HttpSeedClient, Map<string, { cookie: string, subjectId: string }>>()
 
-async function localTermsAcceptance(client: HttpSeedClient): Promise<{ version: string, locale: 'fr' | 'en', accepted: true } | undefined> {
-  const terms = await client.request('/auth/edaya/terms?locale=fr')
-  if (!terms.ok)
-    throw new Error(`Seed terms lookup failed (${terms.status})`)
-  const body = await terms.json() as { enforced?: boolean, document?: { version?: string, locale?: string } | null }
-  if (!body.enforced)
-    return undefined
-  const locale = body.document?.locale
-  if (!body.document?.version || (locale !== 'fr' && locale !== 'en'))
-    throw new Error('Seed terms are enforced without a usable document')
-  return { version: body.document.version, locale, accepted: true }
-}
-
 /** Local fixtures exercise OTP. Remote seeding requires operator-authenticated sessions, including MFA. */
 export async function signInSeedAccount(client: HttpSeedClient, email: string): Promise<{ subjectId: string }> {
   const cache = sessions.get(client) ?? new Map<string, { cookie: string, subjectId: string }>()

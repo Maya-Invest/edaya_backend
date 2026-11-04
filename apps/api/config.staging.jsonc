@@ -25,7 +25,7 @@
   "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
   "AFRICAS_TALKING_USERNAME": "atoumbre",
   "AFRICAS_TALKING_SANDBOX": "false",
-  "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
+  "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com,https://staging.app.spark.edayaplus.com",
   "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
   "REQUIRE_EMAIL_VERIFICATION": "true",
   "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
