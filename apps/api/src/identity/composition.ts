@@ -5,6 +5,7 @@ import { parseEnv } from "./env";
 import { attachedIdentityRuntime, createIdentityRuntime } from "./runtime";
 import { createAccountDirectory } from "./directory";
 import { verifyIdentityToken } from "./server";
+import { invitedEmailPolicy } from "@/identity/registration-policy";
 import { accountRequiresPrivilegedTotp } from "@/lib/account-security-policy";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 
@@ -19,6 +20,11 @@ export function composeIdentity(env: ApiEnvironment, school: () => Promise<ApiSc
     BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET ?? (env.NODE_ENV === "production" ? undefined : "local-account-secret-at-least-32-characters"),
   }, env.RUNTIME === "worker" ? "worker" : "local"), {
     ...options,
+    teacherEligible: async (scope, id) => {
+      const teacher = await (await school()).repositories.teachers.findById(scope.teacherId);
+      return !!teacher?.isActive && teacher.schoolId === scope.schoolId && teacher.subjectId === id;
+    },
+    invitedEmail: env.ACCOUNT_INVITATIONS_ENABLED === false ? undefined : invitedEmailPolicy(school),
     privilegedPolicy: { async requiresTotp(accountId) {
       return env.REQUIRE_PRIVILEGED_TOTP === true && accountRequiresPrivilegedTotp((await school()).repositories, accountId);
     } },

@@ -79,6 +79,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/edaya/registration/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.completeRegistration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/edaya/teacher-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.teacherCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/edaya/otp/verify": {
         parameters: {
             query?: never;
@@ -570,6 +602,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["imports.template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/teachers/{teacherId}/quick-login-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["authorization.teacherQuickCodeOptions"];
+        put?: never;
+        post: operations["authorization.issueTeacherQuickCode"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12971,6 +13019,7 @@ export interface components {
             serverNow?: number;
         };
         AuthMethods: {
+            publicAccountRegistration: boolean;
             methods: {
                 key: string;
                 /** @enum {string} */
@@ -12980,6 +13029,14 @@ export interface components {
                 countries?: string[];
                 prefixes?: string[];
             }[];
+        };
+        AuthRegistrationOffer: {
+            /** @enum {string} */
+            state: "registration_required";
+            challenge: string;
+            proof: string;
+            expiresAt: number;
+            eligible: boolean;
         };
         AuthPrimaryStatus: {
             /** @enum {string} */
@@ -13023,7 +13080,7 @@ export interface components {
             secret?: string;
             uri?: string;
         };
-        AuthOutcome: components["schemas"]["AuthPrimaryStatus"] | (components["schemas"]["AuthSnapshot"] & {
+        AuthOutcome: components["schemas"]["AuthRegistrationOffer"] | components["schemas"]["AuthPrimaryStatus"] | (components["schemas"]["AuthSnapshot"] & {
             /** @enum {string} */
             state: "complete";
             token?: string;
@@ -13063,6 +13120,7 @@ export interface components {
             accepted: true;
         };
         AuthStart: {
+            invitationToken?: string;
             termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
             /** @enum {string} */
             kind: "email" | "phone";
@@ -13114,6 +13172,14 @@ export interface components {
         };
         AuthUnlink: {
             identifierId: string;
+        };
+        AuthRegistrationInput: components["schemas"]["AuthChallengeInput"] & {
+            proof: string;
+            termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
+        };
+        AuthTeacherCodeLogin: {
+            code: string;
+            termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
         };
         SchoolImportBatch: {
             id: string;
@@ -13305,6 +13371,32 @@ export interface components {
              * @enum {string}
              */
             format: "csv" | "xlsx";
+        };
+        TeacherQuickCodeOptions: {
+            contacts: {
+                id: string;
+                /** @enum {string} */
+                channel: "email" | "sms";
+                hint: string;
+            }[];
+            expiries: {
+                [key: string]: number | null;
+            };
+            active: {
+                channel: string;
+                hint: string;
+                expiry: number | null;
+            } | null;
+        };
+        TeacherQuickCodeDelivery: {
+            status: string;
+        };
+        TeacherQuickCodeIssue: {
+            /** Format: uuid */
+            requestId: string;
+            identifierId: string;
+            /** @enum {string} */
+            expiry: "week" | "month" | "period" | "year" | "none";
         };
         EffectiveGrantsResponse: {
             /** @enum {string} */
@@ -16862,7 +16954,106 @@ export interface components {
             classSubjectId: string;
             periodId: string;
         };
-        ReportCardResultSection: Record<string, never>;
+        ReportSubjectResult: {
+            sectionId: string;
+            /** @enum {string} */
+            sectionKind: "module" | "subject";
+            subjectId?: string;
+            moduleId?: string;
+            coefficient?: number;
+            /** @enum {string} */
+            weightingMode?: "subject_coefficients" | "explicit";
+            explicitWeight?: number;
+            contributingCoefficientSum?: number;
+            /** @default 0 */
+            order: number;
+            name: string;
+            grading?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
+            average?: number;
+            weight: number;
+            parentSectionId?: string | null;
+            classSubjectId?: string | null;
+            comment?: string | null;
+            participantCount?: number | null;
+            rank?: number | null;
+            /** @default [] */
+            subResults: unknown[];
+        };
+        ReportCardResultSection: {
+            sectionId: string;
+            /** @enum {string} */
+            sectionKind: "module" | "subject";
+            subjectId?: string;
+            moduleId?: string;
+            coefficient?: number;
+            /** @enum {string} */
+            weightingMode?: "subject_coefficients" | "explicit";
+            explicitWeight?: number;
+            contributingCoefficientSum?: number;
+            /** @default 0 */
+            order: number;
+            name: string;
+            grading?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
+            average?: number;
+            weight: number;
+            parentSectionId?: string | null;
+            classSubjectId?: string | null;
+            comment?: string | null;
+            participantCount?: number | null;
+            rank?: number | null;
+            /** @default [] */
+            subResults: components["schemas"]["ReportSubjectResult"][];
+        };
         ReportCardSnapshot: {
             id: string;
             /** @default 0 */
@@ -20951,6 +21142,160 @@ export interface operations {
             };
         };
     };
+    "auth.completeRegistration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AuthRegistrationInput"];
+            };
+        };
+        responses: {
+            /** @description Account operation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthOutcome"];
+                };
+            };
+            /** @description Invalid input or challenge */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Origin or security policy rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "auth.teacherCode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AuthTeacherCodeLogin"];
+            };
+        };
+        responses: {
+            /** @description Account operation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthOutcome"];
+                };
+            };
+            /** @description Invalid input or challenge */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Origin or security policy rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "auth.verifyOtp": {
         parameters: {
             query?: never;
@@ -22884,6 +23229,55 @@ export interface operations {
                     "application/json": {
                         message: string;
                     };
+                };
+            };
+        };
+    };
+    "authorization.teacherQuickCodeOptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teacherId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quick login options */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherQuickCodeOptions"];
+                };
+            };
+        };
+    };
+    "authorization.issueTeacherQuickCode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teacherId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Issue a teacher code */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TeacherQuickCodeIssue"];
+            };
+        };
+        responses: {
+            /** @description Delivery status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherQuickCodeDelivery"];
                 };
             };
         };

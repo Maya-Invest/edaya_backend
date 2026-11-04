@@ -46,7 +46,9 @@ export interface PrimaryEvidence {
   kind: IdentifierKind
   value: string
 }
+export interface TeacherScope { teacherId: string, schoolId: string }
 export interface AuthSession {
+  teacherScope?: TeacherScope
   id: string
   accountId: string
   digest: string
@@ -55,9 +57,18 @@ export interface AuthSession {
   expiresAt: number
   securityVersion: number
   generation: string
-  method: IdentifierKind
+  method: IdentifierKind | 'teacher_code'
+}
+export interface RegistrationOffer {
+  state: 'registration_required'
+  challenge: string
+  proof: string
+  expiresAt: number
+  eligible: boolean
 }
 export interface AuthChallenge {
+  invitationHash?: string
+  registration?: { digest: string, expiresAt: number, evidence: PrimaryEvidence, consumed: boolean }
   terms?: AcceptedTerms
   id: string
   kind: IdentifierKind
@@ -78,11 +89,12 @@ export interface AuthChallenge {
   messageId?: string
 }
 export interface PendingAuth {
+  teacherScope?: TeacherScope
   terms?: AcceptedTerms
   digest: string
   accountId: string
   primaryAt: number
-  method: IdentifierKind
+  method: IdentifierKind | 'teacher_code'
   expiresAt: number
   attempts: number
   generation: string

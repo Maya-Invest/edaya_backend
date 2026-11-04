@@ -370,8 +370,8 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect((await schools.findById('sch1'))?.pendingOwnerStaffId).toBeUndefined()
   })
 
-  test('acceptAccountInvitation rejects pending owner who already owns another school', async () => {
-    const { service } = await createInvitationContext({
+  test('acceptAccountInvitation accepts a pending owner who already owns another school', async () => {
+    const { service, schools } = await createInvitationContext({
       pendingOwnerStaffId: 'st9',
       extraSchools: [
         new School({
@@ -389,11 +389,13 @@ describe('AccountInvitationServiceWorkflow', () => {
       inviteBaseUrl: 'https://app.edaya.test/invite',
     })
 
-    await expect(invitationAcceptanceService(service).accountInvitationWorkflow.acceptAccountInvitation({
+    await invitationAcceptanceService(service).accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'owner-subject-1',
       contactValue: 'p.martin@school.edu',
-    })).rejects.toMatchObject({ code: 'OWNER_SUBJECT_ALREADY_ASSIGNED' })
+    })
+    for (const id of ['sch1', 'sch-other'])
+      expect((await schools.findById(id))?.ownerSubjectId).toBe('owner-subject-1')
   })
 
   test('acceptAccountInvitationById links a guardian without a token', async () => {

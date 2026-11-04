@@ -96,8 +96,17 @@ describe("onboarding register-school route", () => {
         timeZone: "UTC",
       }),
     }));
-    expect(secondRegister.status).toBe(409);
-    expect(await secondRegister.json()).toMatchObject({ code: "SUBJECT_ALREADY_LINKED" });
+    expect(secondRegister.status).toBe(200);
+    const second = await secondRegister.json() as { id: string; ownerSubjectId: string };
+    expect(second.id).not.toBe(school.id);
+    expect(second.ownerSubjectId).toBe(subjectId);
+    for (const schoolId of [school.id, second.id]) {
+      const scoped = await app.request(createAppRequest("/core/authorization/effective-grants", {
+        headers: { "authorization": `Bearer ${accessToken}`, "x-actor-kind": "staff", "x-school-id": schoolId },
+      }));
+      expect(scoped.status).toBe(200);
+      expect(await scoped.json()).toMatchObject({ schoolId, grants: expect.arrayContaining([expect.objectContaining({ source: "owner" })]) });
+    }
   });
 
   it("lets the platform bootstrap owner register the first school", async () => {

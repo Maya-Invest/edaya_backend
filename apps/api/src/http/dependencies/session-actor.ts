@@ -26,6 +26,7 @@ export interface AuthSession {
 }
 
 export interface AuthenticatedSession {
+  teacherScope?: IdentityClaims["teacherScope"];
   user: {
     id: string;
     email?: string;
@@ -127,6 +128,7 @@ export function normalizeAuthSession(input: AuthSession | null | undefined): Aut
 export async function resolveAuthenticatedSession(
   headers: Headers,
   identityClient: IdentityClient,
+  allowTeacherScope = false,
 ): Promise<AuthenticatedSession | null> {
   const authorization = headers.get("authorization");
   const apiKey = parseBearerApiKey(authorization ?? undefined);
@@ -137,6 +139,7 @@ export async function resolveAuthenticatedSession(
   }
   try {
     const claims = await identityClient.verifyAccessToken(token);
+    if (claims.teacherScope && !allowTeacherScope) return null;
     return sessionFromIdentityClaims(claims);
   }
   catch {
@@ -151,6 +154,7 @@ function resolveBearerToken(authorization: string | null): string | undefined {
 
 function sessionFromIdentityClaims(claims: IdentityClaims): AuthenticatedSession {
   return {
+    teacherScope: claims.teacherScope,
     user: {
       id: claims.sub,
       emailVerified: claims.email_verified === true,
@@ -323,7 +327,7 @@ export function createSessionActorDependency(
       const identityClient = resolveIdentityClient
         ? await resolveIdentityClient(c)
         : c.var.identityClient;
-      const session = await resolveAuthenticatedSession(c.req.raw.headers, identityClient);
+      const session = await resolveAuthenticatedSession(c.req.raw.headers, identityClient, true);
 
       const requestId = resolveRequestId(c.req.header("x-request-id"));
       const academicYearId = resolveAcademicYearId(c.req.header("x-academic-year-id"));
@@ -354,6 +358,17 @@ export function createSessionActorDependency(
         };
         const bootstrapEmails = platformBootstrapEmails(c.env);
 
+        if (session.teacherScope) {
+          const { schoolId, teacherId } = session.teacherScope;
+          const teacher = await repos.teachers.findById(teacherId);
+          if (!teacher?.isActive || teacher.schoolId !== schoolId || teacher.subjectId !== user.id
+            || (actorKind && actorKind !== "teacher") || (c.req.header("x-school-id") && c.req.header("x-school-id") !== schoolId)
+            || (c.req.header("x-actor-id") && c.req.header("x-actor-id") !== teacherId)
+            || (academicYearId && (await repos.academicYears.findById(academicYearId))?.schoolId !== schoolId))
+            throw new HTTPException(403);
+          c.set("actor", createTeacherActorMetadata({ ...interactiveContext, teacherId, schoolId }));
+          return;
+        }
         if (actorKind === "platform") {
           c.set("actor", await resolvePlatformActorMetadata(repos, user, interactiveContext, bootstrapEmails));
           return;

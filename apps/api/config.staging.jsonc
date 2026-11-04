@@ -32,6 +32,7 @@
   "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
   "EMAIL_TRANSPORT": "cloudflare",
   "API_ORIGIN": "https://staging.api.edayaplus.com",
+  "ALLOW_PUBLIC_ACCOUNT_REGISTRATION": "true",
   "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
   "ACCOUNT_INVITATIONS_ENABLED": "true",
   "PROFILE_PHOTO_MAX_BYTES": "1048576",

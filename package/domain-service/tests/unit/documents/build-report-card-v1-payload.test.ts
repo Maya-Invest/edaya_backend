@@ -81,6 +81,7 @@ describe('buildReportCardV1Payload', () => {
               coefficient: 3,
               classSubjectId: 'cs-math',
               rank: 2,
+              participantCount: 18,
               comment: 'Très bien',
             }),
             new ReportCardResultSection({
@@ -92,6 +93,7 @@ describe('buildReportCardV1Payload', () => {
               coefficient: 2,
               classSubjectId: 'cs-pc',
               rank: 8,
+              participantCount: 18,
             }),
           ],
         }),
@@ -133,12 +135,12 @@ describe('buildReportCardV1Payload', () => {
       average: '15,00',
       coefficient: '3',
       total: '45,00',
-      rank: '2è / 30',
+      rank: '2è / 18',
       appreciation: 'Très bien',
     })
     expect(payload.subjects[1]).toMatchObject({
       average: '11,00',
-      rank: '8è / 30',
+      rank: '8è / 18',
     })
     expect(payload.subjects.at(-1)).toMatchObject({
       kind: 'totals',
@@ -176,6 +178,7 @@ describe('buildReportCardV1Payload', () => {
           coefficient: 2,
           classSubjectId: 'cs-esp',
           rank: 2,
+              participantCount: 18,
         }),
       ],
     })
@@ -193,7 +196,7 @@ describe('buildReportCardV1Payload', () => {
     expect(payload.classLabel).toBe('10th A 1')
     expect(payload.semesterRank).toBe('3 / 30 students')
     expect(payload.subjects[0]?.name).toBe('Spanish')
-    expect(payload.subjects[0]?.rank).toBe('2 / 30')
+    expect(payload.subjects[0]?.rank).toBe('2 / 18')
   })
 
   test('throws when there are no renderable section rows', () => {

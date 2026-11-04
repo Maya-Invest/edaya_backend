@@ -3,6 +3,7 @@ import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../..
 import type { HttpSeedClient } from '../../transport/http/client'
 import { readFileSync } from 'node:fs'
 import process from 'node:process'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 
 const sessions = new WeakMap<HttpSeedClient, Map<string, { cookie: string, subjectId: string }>>()
 
@@ -10,10 +11,15 @@ const sessions = new WeakMap<HttpSeedClient, Map<string, { cookie: string, subje
 export async function signInSeedAccount(client: HttpSeedClient, email: string): Promise<{ subjectId: string }> {
   const cache = sessions.get(client) ?? new Map<string, { cookie: string, subjectId: string }>()
   sessions.set(client, cache)
+  const context = resolveDevSeedContext()
+  const account = context.staffAccounts.find(entry => entry.email === email)
+  const staffScope = account ? { schoolId: context.schoolId, actorId: account.staffId } : undefined
+  client.selectStaffScope(undefined)
   const existing = cache.get(email)
   if (existing) {
     client.clearCookies()
     for (const pair of existing.cookie.split('; ')) client.absorbCookies(new Response(null, { headers: { 'set-cookie': pair } }))
+    client.selectStaffScope(staffScope)
     return { subjectId: existing.subjectId }
   }
   const identityUrl = new URL(client.identityOrigin)
@@ -63,12 +69,21 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
       otp = (await peek.json() as { otp: string }).otp
     }
     response = await client.request('/auth/edaya/otp/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, code: otp }) })
+    if (response.ok) {
+      const offer = await response.clone().json() as { state?: string, proof?: string, eligible?: boolean }
+      if (offer.state === 'registration_required') {
+        if (!offer.eligible || !offer.proof)
+          throw new Error('Local fixture registration is disabled')
+        response = await client.request('/auth/edaya/registration/complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, proof: offer.proof, termsAcceptance }) })
+      }
+    }
   }
   if (!response.ok)
     throw new Error(`Seed authentication failed (${response.status})`)
   const body = await response.json() as { user?: { id: string } }
   if (!body.user?.id)
     throw new Error('Seed authentication requires completed MFA')
+  client.selectStaffScope(staffScope)
   cache.set(email, { subjectId: body.user.id, cookie: client.cookieHeader() ?? '' })
   return { subjectId: body.user.id }
 }

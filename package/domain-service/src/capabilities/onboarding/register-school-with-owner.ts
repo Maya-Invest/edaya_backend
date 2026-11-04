@@ -35,10 +35,21 @@ export interface RegisterSchoolWithOwnerResult {
   school: School
 }
 
-export async function assertSubjectUnlinked(
+interface SelectedStaffProfile { schoolId: string, staffMemberId: string }
+
+async function assertMayRegisterSchool(
   repositories: SchoolRepositories,
   subjectId: string,
+  source?: SelectedStaffProfile,
 ): Promise<void> {
+  if (source) {
+    const [school, staff] = await Promise.all([
+      repositories.schools.findById(source.schoolId),
+      repositories.staffMembers.findById(source.staffMemberId),
+    ])
+    if (school?.ownerSubjectId === subjectId && staff?.schoolId === source.schoolId && staff.isActive && staff.accountKind === 'human' && staff.subjectId === subjectId)
+      return
+  }
   const [staff, guardian, student, teacher] = await Promise.all([
     repositories.staffMembers.findOne({ subjectId }),
     repositories.guardians.findOne({ subjectId }),
@@ -75,6 +86,7 @@ export async function registerSchoolWithOwner(
   application: OnboardingSchoolApplication,
   session: RegisterSchoolOwnerSession,
   input: RegisterSchoolWithOwnerInput,
+  source?: SelectedStaffProfile,
 ): Promise<RegisterSchoolWithOwnerResult> {
   const subjectId = session.user.id
 
@@ -95,7 +107,9 @@ export async function registerSchoolWithOwner(
   const service = application.forActor(actor)
 
   return service.baseService.atomicExecution.execute(async () => {
-    await assertSubjectUnlinked(application.repositories, subjectId)
+    await assertMayRegisterSchool(application.repositories, subjectId, source)
+    if (await application.repositories.schools.findById(schoolId) || await application.repositories.staffMembers.findById(callerStaffId))
+      throw new BusinessRuleViolationError('ONBOARDING_ID_ALREADY_USED', 'School registration requires a new school and staff profile')
     const school = await service.setupWorkflow.registerSchool({
       id: schoolId,
       name: input.name,
@@ -133,7 +147,7 @@ export async function registerSchoolWithOwner(
     })
 
     return { school: persistedSchool ?? school }
-  }, { lockKeys: [`school-owner:${subjectId}`] })
+  }, { lockKeys: [`school-owner:${subjectId}`, `register-school:${schoolId}`, `register-staff:${callerStaffId}`] })
 }
 
 function parseDisplayName(name: string | undefined): { firstName?: string, lastName?: string } {

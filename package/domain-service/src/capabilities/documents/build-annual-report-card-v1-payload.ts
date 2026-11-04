@@ -55,7 +55,7 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
     average: `${format(section.average)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
     coefficient: kind === 'subject' ? (section.coefficient === undefined ? '—' : String(section.coefficient)) : String(section.weight),
     total: format(section.average === undefined ? undefined : (section.grading?.value ?? section.average) * section.weight),
-    rank: section.rank === undefined ? undefined : `${section.rank} / ${input.result.classSize ?? '—'}`,
+    rank: section.rank === undefined ? undefined : `${section.rank} / ${section.participantCount ?? '—'}`,
     appreciation: section.comment,
     teacherName: kind === 'subject' ? input.teacherNameByClassSubjectId?.get(section.classSubjectId!) : undefined,
     teachers: kind === 'subject' ? input.teachersByClassSubjectId?.get(section.classSubjectId!) : undefined,

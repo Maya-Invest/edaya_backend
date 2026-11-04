@@ -122,6 +122,7 @@ const RawEnvSchema = z.object({
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173,http://localhost:5174,http://localhost:5175,http://127.0.0.1:5175"),
   WEBAPP_ORIGIN: z.string().url().optional(),
   REQUIRE_PRIVILEGED_TOTP: envBoolean.optional(),
+  ALLOW_PUBLIC_ACCOUNT_REGISTRATION: envBoolean.optional(),
   AUTH_TERMS_MODE: termsModeSchema.optional(),
   AUTH_TERMS_VERSION: z.string().optional(),
   AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),

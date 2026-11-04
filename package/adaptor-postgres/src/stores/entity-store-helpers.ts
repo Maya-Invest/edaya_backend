@@ -6,6 +6,7 @@ export interface StoredReportCardResultSection {
   sectionKind: ReportCardResultSectionKind
   name: string
   grading?: import('@edaya/core').CalculatedGrade
+  participantCount?: number
   rank?: number
   average: number
   weight: number

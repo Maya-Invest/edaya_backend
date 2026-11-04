@@ -75,3 +75,5 @@ export interface AccountSecurityPort {
 export interface PrivilegedAccountPolicyPort {
   requiresTotp: (accountId: string) => Promise<boolean>
 }
+
+export type EmailRegistrationPolicy = (email: string, invitationHash?: string) => Promise<{ eligible: boolean, invitationHash?: string }>

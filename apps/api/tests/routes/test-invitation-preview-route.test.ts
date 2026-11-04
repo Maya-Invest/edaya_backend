@@ -75,7 +75,7 @@ describe("invitation preview route", () => {
     expect(body.inviteeName).toBe("Camille Moreau");
     expect(body.schoolName).toBe("Demo School");
     expect(body.contactEmail).toBe("staff@school.edu");
-    expect(body.authAccountExists).toBe(true);
+    expect(body).not.toHaveProperty("authAccountExists");
   });
 
   it("returns 404 when the invitation token is unknown", async () => {

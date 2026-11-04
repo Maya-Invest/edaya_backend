@@ -49,7 +49,7 @@ describe('admitted fixture owner initialization', () => {
     expect((await fixture.db.query('SELECT id FROM command_receipts')).rows).toEqual([])
   })
 
-  test('cannot transfer ownership, replace a pending invitation, or assign an identity owning another school', async () => {
+  test('protects current and pending owners but permits ownership of another school', async () => {
     const before = (await fixture.repositories.schools.findById(input.schoolId))!
     for (const changes of [{ ownerSubjectId: 'current-owner' }, { pendingOwnerStaffId: input.staffId }]) {
       await fixture.repositories.schools.save(new School({ ...before.data, ...changes }))
@@ -59,8 +59,9 @@ describe('admitted fixture owner initialization', () => {
     await fixture.repositories.schools.save(before)
     const foreign = (await fixture.repositories.schools.findById('school-b'))!
     await fixture.repositories.schools.save(new School({ ...foreign.data, ownerSubjectId: input.subjectId }))
-    await expect(run()).rejects.toMatchObject({ code: 'OWNER_SUBJECT_ALREADY_ASSIGNED' })
-    expect((await fixture.repositories.schools.findById(input.schoolId))?.ownerSubjectId).toBeUndefined()
+    await run()
+    for (const id of [input.schoolId, foreign.id])
+      expect((await fixture.repositories.schools.findById(id))?.ownerSubjectId).toBe(input.subjectId)
   })
 
   test('audit failure rolls ownership, receipt and audit back together', async () => {

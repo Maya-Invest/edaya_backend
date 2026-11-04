@@ -4,6 +4,7 @@ import type { SeedHttpTarget } from './resolve-seed-env'
 export const SEED_CLI_SCOPES = [
   'all',
   'school',
+  'school-switching',
   'auth',
   'auth:link',
   'access',

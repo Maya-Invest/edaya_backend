@@ -121,6 +121,30 @@ describe('HttpSeedClient.request', () => {
     expect(client.cookieHeader()).toContain('original')
   })
 
+  it('restores the primary staff scope after a secondary campus and respects explicit profiles', async () => {
+    const scopes: Array<(string | null)[]> = []
+    const client = new HttpSeedClient({
+      baseUrl: 'http://localhost:9999',
+      fetch: async (input, init) => {
+        if (String(input).endsWith('/auth/edaya/access-token'))
+          return Response.json({ accessToken: TEST_IDENTITY_JWT, expiresAt: new Date(Date.now() + 300000).toISOString() })
+        const headers = new Headers(init?.headers)
+        scopes.push(['x-actor-kind', 'x-school-id', 'x-actor-id'].map(key => headers.get(key)))
+        return new Response(null)
+      },
+    })
+    client.absorbCookies(new Response(null, { headers: { 'set-cookie': 'edaya_session=fixture' } }))
+    client.selectStaffScope({ schoolId: 'primary', actorId: 'staff-a' })
+    const grants = '/core/authorization/effective-grants'
+    await client.withCookieSnapshot(async () => {
+      client.selectStaffScope({ schoolId: 'secondary', actorId: 'staff-b' })
+      await client.request(grants)
+    })
+    await client.request(grants)
+    await client.request(grants, { headers: { 'x-actor-kind': 'platform' } })
+    expect(scopes).toEqual([['staff', 'secondary', 'staff-b'], ['staff', 'primary', 'staff-a'], ['platform', null, null]])
+  })
+
   it('retries identity POST 429 using Retry-After without replaying school writes', async () => {
     let identityCalls = 0
     const client = new HttpSeedClient({

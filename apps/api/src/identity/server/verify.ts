@@ -40,7 +40,7 @@ export async function verifyIdentityToken(
     const verified = await jwtVerify(token, createLocalJWKSet(options.jwks), {
       algorithms: ["ES256"],
       issuer: options.issuer,
-      audience: options.audience,
+      audience: [options.audience, `${options.audience}/teacher`],
       clockTolerance: options.clockTolerance ?? 0,
     });
     payload = verified.payload;
@@ -77,7 +77,17 @@ export async function verifyIdentityToken(
     throw new IdentityTokenError("claims", "Invalid authentication evidence");
   }
 
+  const scope = payload["teacherScope"] as IdentityClaims["teacherScope"];
+  const scopedAudience = payload.aud === `${options.audience}/teacher`;
+  if (scopedAudience) {
+    if (!scope || typeof scope.schoolId !== "string" || !scope.schoolId || typeof scope.teacherId !== "string" || !scope.teacherId || !methods.includes("teacher_code"))
+      throw new IdentityTokenError("claims", "Invalid teacher scope");
+  }
+  else if (scope || methods.includes("teacher_code")) {
+    throw new IdentityTokenError("claims", "Teacher credentials require the scoped audience");
+  }
   return {
+    teacherScope: scope,
     sub,
     auth_time: authTime,
     amr: methods,

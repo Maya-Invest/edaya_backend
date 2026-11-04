@@ -37,10 +37,7 @@ test('competing fixture initialization across one-connection pools commits one r
   expect((await query(sql`SELECT count(*)::int AS total FROM command_audit WHERE school_id = 'fixture-owner-school'`)).rows).toEqual([{ total: 1 }])
 })
 
-test('a shared subject cannot concurrently become owner of two fixture schools', async () => {
-  const results = await Promise.allSettled([initialize(0, 'fixture-owner-race-a', 'fixture-native-shared-owner'), initialize(1, 'fixture-owner-race-b', 'fixture-native-shared-owner')])
-  expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1)
-  const rejected = results.find(result => result.status === 'rejected')
-  expect(rejected?.status === 'rejected' && rejected.reason.code).toBe('OWNER_SUBJECT_ALREADY_ASSIGNED')
-  expect((await query(sql`SELECT count(*)::int AS total FROM schools WHERE owner_subject_id = 'fixture-native-shared-owner'`)).rows).toEqual([{ total: 1 }])
+test('a shared subject can concurrently become owner of two fixture schools', async () => {
+  await Promise.all([initialize(0, 'fixture-owner-race-a', 'fixture-native-shared-owner'), initialize(1, 'fixture-owner-race-b', 'fixture-native-shared-owner')])
+  expect((await query(sql`SELECT count(*)::int AS total FROM schools WHERE owner_subject_id = 'fixture-native-shared-owner'`)).rows).toEqual([{ total: 2 }])
 })

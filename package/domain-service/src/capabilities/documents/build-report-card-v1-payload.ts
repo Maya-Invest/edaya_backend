@@ -135,7 +135,7 @@ function mapSubjectRow(
   section: ReportCardResultSection,
   kind: ReportCardV1SubjectRow['kind'],
   locale: string,
-  classSize?: number,
+  _classSize?: number,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
   teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
@@ -150,8 +150,8 @@ function mapSubjectRow(
     average: `${formatNumber(section.average, locale, section.grading?.decimalPlaces)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
     coefficient: kind === 'subject' ? (section.coefficient === undefined ? '—' : String(section.coefficient)) : String(section.weight),
     total: formatNumber(total, locale),
-    ...(section.rank !== undefined && classSize !== undefined
-      ? { rank: formatRank(section.rank, classSize, locale) }
+    ...(section.rank !== undefined
+      ? { rank: section.participantCount ? formatRank(section.rank, section.participantCount, locale) : `${section.rank} / —` }
       : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
     ...(teacherName ? { teacherName } : {}),

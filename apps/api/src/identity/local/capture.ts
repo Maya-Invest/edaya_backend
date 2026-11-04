@@ -24,7 +24,8 @@ export function assertCaptureEnvironment(env: Environment) {
 }
 
 /** The only composition that captures plaintext codes or installs OTP test routes. */
-export async function createCapturedIdentity(env: Environment, options: Pick<CreateIdentityRuntimeOptions, "now" | "privilegedPolicy" | "smsRouter"> & {
+export async function createCapturedIdentity(env: Environment, options: Pick<CreateIdentityRuntimeOptions, "teacherEligible" | "now" | "invitedEmail" | "privilegedPolicy" | "smsRouter"> & {
+  teacherReveal?: boolean;
   mailbox?: string;
   operationsScope?: string;
   operationsRootId?: string;
@@ -76,7 +77,7 @@ export async function createCapturedIdentity(env: Environment, options: Pick<Cre
     testApp.get("/auth/edaya/testing/capabilities", (c) => {
       try {
         assertAuthRequest(c.req.raw, env, false);
-        return json({ otpAccess: true, ...(options.operationsScope ? { operationsScope: options.operationsScope, operationsRootId: options.operationsRootId } : {}) });
+        return json({ otpAccess: true, ...(options.teacherReveal ? { teacherQuickCodeReveal: true } : {}), ...(options.operationsScope ? { operationsScope: options.operationsScope, operationsRootId: options.operationsRootId } : {}) });
       }
       catch (error) {
         return json({ code: error instanceof AuthError ? error.code : "testing_unavailable" }, error instanceof AuthError ? error.status : 503);

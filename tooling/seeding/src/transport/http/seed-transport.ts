@@ -5,13 +5,13 @@ import { ApiError } from '@maya-invest/edaya-api-client'
 export interface SeedTransportOptions {
   serviceAccountApiKey?: string
   requestId?: string
-  actor?: { schoolId: string, actorId: string, academicYearId: string }
+  actor?: { schoolId: string, actorId: string, academicYearId?: string }
 }
 
 function seedHeaders(options: SeedTransportOptions): Record<string, string> {
   return {
     'content-type': 'application/json',
-    ...(options.actor ? { 'x-school-id': options.actor.schoolId, 'x-actor-kind': 'staff', 'x-actor-id': options.actor.actorId, 'x-academic-year-id': options.actor.academicYearId } : {}),
+    ...(options.actor ? { 'x-school-id': options.actor.schoolId, 'x-actor-kind': 'staff', 'x-actor-id': options.actor.actorId, ...(options.actor.academicYearId ? { 'x-academic-year-id': options.actor.academicYearId } : {}) } : {}),
     ...(options.serviceAccountApiKey ? { authorization: `Bearer ${options.serviceAccountApiKey}` } : {}),
     ...(options.requestId ? { 'x-request-id': options.requestId } : {}),
   }

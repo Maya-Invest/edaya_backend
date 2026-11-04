@@ -5,6 +5,7 @@ export function parseTestingEnv(source: Record<string, string | undefined>, emai
   const port = Number(source.EDAYA_TEST_PORT ?? 9999);
   const origin = `http://127.0.0.1:${port}`;
   return parseEnv({
+    ALLOW_PUBLIC_ACCOUNT_REGISTRATION: source.ALLOW_PUBLIC_ACCOUNT_REGISTRATION ?? true,
     NODE_ENV: "test",
     RUNTIME: "test",
     PORT: port,

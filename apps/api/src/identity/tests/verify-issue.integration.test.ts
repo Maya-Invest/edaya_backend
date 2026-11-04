@@ -1,14 +1,14 @@
-import { afterAll, expect, test } from "bun:test";
-import { verifyIdentityToken } from "../server/index";
 import { totpCode } from "@edaya/adaptor-account";
+import { afterAll, expect, test } from "bun:test";
 import { createIdentityApp } from "../app";
 import { parseEnv } from "../env";
 import { attachIdentityRuntime, createIdentityRuntime } from "../runtime";
+import { verifyIdentityToken } from "../server/index";
 
 const issuer = "http://localhost:9999";
 const origin = "http://localhost:5173";
 const audience = "http://localhost:9999";
-const env = parseEnv({ NODE_ENV: "test", LOG_LEVEL: "silent", AUTH_DATABASE_URL: "pglite:memory", BETTER_AUTH_SECRET: "test-secret-placeholder-key-32chars", BETTER_AUTH_URL: issuer, FIRST_PARTY_API_ORIGINS: audience, TRUSTED_ORIGINS: origin }, "test");
+const env = parseEnv({ ALLOW_PUBLIC_ACCOUNT_REGISTRATION: true, NODE_ENV: "test", LOG_LEVEL: "silent", AUTH_DATABASE_URL: "pglite:memory", BETTER_AUTH_SECRET: "test-secret-placeholder-key-32chars", BETTER_AUTH_URL: issuer, FIRST_PARTY_API_ORIGINS: audience, TRUSTED_ORIGINS: origin }, "test");
 const delivered = new Map<string, string>();
 const runtimePromise = createIdentityRuntime(env, { delivery: { async send(message) {
   delivered.set(message.destination, message.code);
@@ -29,7 +29,12 @@ async function login(native = false) {
   const { challenge } = await started.json() as {
     challenge: string;
   };
-  return request("/auth/edaya/otp/verify", { challenge, code: delivered.get(email) }, native ? { "x-edaya-client": "native" } : {});
+  const verified = await request("/auth/edaya/otp/verify", { challenge, code: delivered.get(email) }, native ? { "x-edaya-client": "native" } : {});
+  expect(verified.headers.get("set-cookie")).toBeNull();
+  const offer = await verified.json() as { state: string; proof: string; eligible: boolean };
+  expect(offer.state).toBe("registration_required");
+  expect(offer.eligible).toBe(true);
+  return request("/auth/edaya/registration/complete", { challenge, proof: offer.proof }, native ? { "x-edaya-client": "native" } : {});
 }
 test("browser cookies and native opaque credentials have the same Account contract", async () => {
   const browser = await login();

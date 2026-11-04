@@ -5,7 +5,7 @@ import { buildAnnualReportCardV1Payload } from '../../src/capabilities/documents
 import { buildSubjectAverageFromPriorReportCards } from '../../src/services/workflows/report-card-aggregation'
 
 const period = (id: string, month: string) => new AcademicPeriod({ id, schoolId: 'school', academicYearId: 'year', name: id, startDate: new Date(`2026-${month}-01`), endDate: new Date(`2026-${month}-28`), isPublished: true })
-const leaf = (id: string, classSubjectId: string, average?: number) => new ReportCardResultSection({ sectionId: id, sectionKind: ReportCardResultSectionKind.Subject, name: 'A very long subject name with a changed class subject record', classSubjectId, average, coefficient: 3, weight: average === undefined ? 0 : 3, rank: 2, comment: 'Annual feedback', subResults: [] })
+const leaf = (id: string, classSubjectId: string, average?: number) => new ReportCardResultSection({ sectionId: id, sectionKind: ReportCardResultSectionKind.Subject, name: 'A very long subject name with a changed class subject record', classSubjectId, average, coefficient: 3, weight: average === undefined ? 0 : 3, rank: 2, participantCount: 18, comment: 'Annual feedback', subResults: [] })
 const group = (id: string, children: ReportCardResultSection[]) => new ReportCardResultSection({ sectionId: id, sectionKind: ReportCardResultSectionKind.Module, moduleId: 'science', weightingMode: 'explicit', explicitWeight: 1, name: 'BILAN SCIENCES', average: children[0]?.average, weight: 1, subResults: children })
 const report = (id: string, periodId: string, section: ReportCardResultSection, average?: number) => new ReportCardResult({ id, periodId, studentId: 'student', classGroupId: 'class', gradeLevelId: 'grade1', academicYearId: 'ay1', reportConfigurationRevision: 0, status: ReportCardResultStatus.Published, publishedAt: new Date('2026-07-01'), generatedAt: new Date('2026-06-30'), overallAverage: average, rank: 2, classSize: 30, sectionResults: [section], attendanceSummary: { presentCount: 40, absenceCount: 2, excusedAbsenceCount: 1, lateCount: 1 }, assessmentResultCount: 0 })
 
@@ -43,7 +43,7 @@ describe('annual report card academic payload and provenance', () => {
       const decimal = locale.startsWith('fr') ? ',' : '.'
       expect(payload.periods.map(entry => entry.id)).toEqual(['S1', 'S2'])
       expect(payload.periods.map(entry => entry.weight)).toEqual(['1', '3'])
-      expect(payload.subjects[0]).toMatchObject({ periodAverages: [`0${decimal}00`, '—'], average: `9${decimal}00`, coefficient: '3', total: `27${decimal}00`, teacherName: 'Annual teacher', rank: '2 / 30', appreciation: 'Annual feedback' })
+      expect(payload.subjects[0]).toMatchObject({ periodAverages: [`0${decimal}00`, '—'], average: `9${decimal}00`, coefficient: '3', total: `27${decimal}00`, teacherName: 'Annual teacher', rank: '2 / 18', appreciation: 'Annual feedback' })
       expect(payload.subjects.filter(row => row.kind === 'bilan')).toHaveLength(1)
       expect(payload.subjects.at(-1)?.total).toBe(`9${decimal}00`)
       expect(payload.attendance?.absenceHoursTotal).toBe('2')

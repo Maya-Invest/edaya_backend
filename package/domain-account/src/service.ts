@@ -1,12 +1,12 @@
-import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth } from './model'
-import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
+import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence, RegistrationOffer, TeacherScope } from './model'
+import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, EmailRegistrationPolicy, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
 import type { AcceptedTerms, TermsAcceptanceInput, TermsLocale, TermsPolicyPort } from './terms'
 import { AuthError, normalizeIdentifier } from './model'
 
 const FIVE_MINUTES = 300000
 /** Owns Account policy. Provider sessions and identities never confer business access. */
 export class AccountService {
-  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort) { }
+  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort, private readonly registrationPolicy: EmailRegistrationPolicy = async () => ({ eligible: false }), private readonly teacherCodes?: { lookup: (code: string) => Promise<(TeacherScope & { accountId: string }) | undefined>, eligible: (scope: TeacherScope, accountId: string) => Promise<boolean> }) { }
   // Expected failures commit attempt counters; infrastructure failures roll back.
   private async atomic<T>(work: () => Promise<T>): Promise<T> {
     const result = await this.repository.transaction(async () => {
@@ -42,6 +42,7 @@ export class AccountService {
   }
 
   async begin(input: {
+    invitationHash?: string
     termsAcceptance?: TermsAcceptanceInput
     kind: IdentifierKind
     value: string
@@ -79,7 +80,7 @@ export class AccountService {
       if (attempts >= 5)
         throw new AuthError('attempts_exhausted', 429)
       const id = this.crypto.token()
-      const challenge = { terms, id, kind: input.kind, value, channel: 'email' as const, purpose: session ? 'link' as const : 'login' as const, ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: input.recoveryEligible === true }
+      const challenge = { terms, invitationHash: input.invitationHash, id, kind: input.kind, value, channel: 'email' as const, purpose: session ? 'link' as const : 'login' as const, ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: input.recoveryEligible === true }
       await this.repository.saveChallenge(challenge)
       try {
         await this.provider.sendOtp({ kind: input.kind, value, channel: 'email', attemptId: id })
@@ -87,7 +88,7 @@ export class AccountService {
       catch {
         challenge.consumed = true
         await this.repository.saveChallenge(challenge)
-        throw new AuthError('delivery_unavailable', 503)
+        throw new AuthError('delivery_unavailable', 503, { serverNow: this.now(), nextResendAt: now + 60000 })
       }
       return { ...this.primaryStatus(challenge), resendAfter: 60 }
     })
@@ -131,7 +132,7 @@ export class AccountService {
     await this.authorizeChallenge(previous, input.credential)
     if (input.action !== 'resend' || previous.consumed || previous.attempts >= 5 || this.now() >= previous.expiresAt + 3600000)
       throw new AuthError('challenge_expired')
-    return this.beginAccepted({ kind: 'email', value: previous.value, channel: 'email', ip: input.ip, credential: previous.purpose === 'link' ? input.credential : undefined, recoveryEligible: previous.recoveryEligible }, previous.terms)
+    return this.beginAccepted({ invitationHash: previous.invitationHash, kind: 'email', value: previous.value, channel: 'email', ip: input.ip, credential: previous.purpose === 'link' ? input.credential : undefined, recoveryEligible: previous.recoveryEligible }, previous.terms)
   }
 
   private async requestPhone(input: { terms?: AcceptedTerms, value?: string, challenge?: string, action?: 'resend' | 'sms', ip: string, requestId?: string, credential?: string, recoveryEligible?: boolean, locale?: 'fr' | 'en' }) {
@@ -232,7 +233,7 @@ export class AccountService {
     })
   }
 
-  async verify(challengeId: string, code: string, credential?: string): Promise<AuthOutcome | {
+  async verify(challengeId: string, code: string, credential?: string): Promise<AuthOutcome | RegistrationOffer | {
     state: 'linked'
     account: Account
   }> {
@@ -262,7 +263,6 @@ export class AccountService {
       challenge.consumed = true
       await this.repository.saveChallenge(challenge)
       let account = await this.repository.find(challenge.kind, challenge.value)
-      const existingMapping = await this.repository.mappedAccount(evidence)
       if (linkingSession) {
         if (account && account.id !== linkingSession.accountId)
           throw new AuthError('identifier_unavailable', 409)
@@ -277,30 +277,92 @@ export class AccountService {
         await this.repository.audit(account.id, 'identifier_linked', this.now())
         return { state: 'linked' as const, account }
       }
-      if (!account) {
-        account = { id: this.crypto.token(), status: 'active', name: '', securityVersion: 0, createdAt: this.now(), identifiers: [{ id: this.crypto.token(), kind: challenge.kind, value: challenge.value, verifiedAt: this.now(), recoveryEligible: true }] }
-        await this.repository.save(account)
-        await this.repository.audit(account.id, 'account_created', this.now())
+      if (!account && challenge.kind === 'email') {
+        const proof = this.crypto.token()
+        const expiresAt = this.now() + FIVE_MINUTES
+        const { eligible, invitationHash } = await this.registrationPolicy(challenge.value, challenge.invitationHash)
+        if (invitationHash)
+          challenge.invitationHash = invitationHash
+        challenge.registration = { digest: await this.crypto.digest(proof), expiresAt, evidence, consumed: false }
+        await this.repository.saveChallenge(challenge)
+        return { state: 'registration_required' as const, challenge: challenge.id, proof, expiresAt, eligible }
       }
-      if (account.status !== 'active')
-        throw new AuthError('account_disabled', 403)
-      const identifier = account.identifiers.find(i => i.kind === challenge.kind && i.value === challenge.value)!
-      if ((existingMapping && existingMapping !== account.id) || (!existingMapping && !identifier.recoveryEligible))
-        throw new AuthError('continuity_proof_required', 403)
-      await this.repository.linkProvider(evidence, account.id)
-      const security = await this.repository.security(account.id)
-      if (security.secret || await this.policy.requiresTotp(account.id)) {
-        const token = this.crypto.token()
-        await this.repository.savePending({ digest: await this.crypto.digest(token), accountId: account.id, primaryAt: this.now(), method: challenge.kind, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: account.securityVersion, recoveryEligible: identifier.recoveryEligible, terms: challenge.terms })
-        return { state: security.secret ? 'totp_required' as const : 'enrollment_required' as const, challenge: token }
-      }
-      return this.complete(account, this.now(), challenge.kind, undefined, challenge.terms)
+      return this.finishPrimary(challenge, evidence, account)
     })
   }
 
-  private async complete(account: Account, primaryAt: number, method: IdentifierKind, secondAt?: number, terms?: AcceptedTerms): Promise<AuthOutcome> {
+  async completeRegistration(input: { challenge: string, proof: string, termsAcceptance?: TermsAcceptanceInput }): Promise<AuthOutcome> {
+    return this.atomic(async () => {
+      const challenge = await this.repository.challenge(input.challenge)
+      const registration = challenge?.registration
+      if (!challenge || challenge.kind !== 'email' || challenge.purpose !== 'login' || challenge.superseded
+        || !registration || registration.consumed || registration.expiresAt <= this.now()
+        || registration.evidence.provider !== this.provider.generation || registration.digest !== await this.crypto.digest(input.proof)) {
+        throw new AuthError('registration_expired', 401)
+      }
+
+      const terms = await this.acceptedTerms(input.termsAcceptance)
+      const account = await this.repository.find('email', challenge.value)
+      if (!account && !(await this.registrationPolicy(challenge.value, challenge.invitationHash)).eligible)
+        throw new AuthError('registration_unavailable', 403)
+
+      registration.consumed = true
+      challenge.terms = terms
+      await this.repository.saveChallenge(challenge)
+      return this.finishPrimary(challenge, registration.evidence, account)
+    })
+  }
+
+  async teacherSignIn(code: string, ip: string, acceptance?: TermsAcceptanceInput): Promise<AuthOutcome> {
+    return this.atomic(async () => {
+      if (!await this.repository.quota(`teacher-code:ip:${ip}`, 20, 600, this.now()))
+        throw new AuthError('rate_limited', 429)
+      const target = await this.teacherCodes?.lookup(code)
+      if (!target || !await this.teacherCodes!.eligible(target, target.accountId))
+        throw new AuthError('invalid_code', 401)
+      const account = await this.repository.get(target.accountId)
+      if (account?.status !== 'active')
+        throw new AuthError('invalid_code', 401)
+      const terms = await this.acceptedTerms(acceptance)
+      const teacherScope = { schoolId: target.schoolId, teacherId: target.teacherId }
+      if ((await this.repository.security(account.id)).secret) {
+        const token = this.crypto.token()
+        await this.repository.savePending({ digest: await this.crypto.digest(token), accountId: account.id, primaryAt: this.now(), method: 'teacher_code', teacherScope, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: account.securityVersion, recoveryEligible: false, terms })
+        return { state: 'totp_required', challenge: token }
+      }
+      if (await this.policy.requiresTotp(account.id))
+        throw new AuthError('use_standard_login_for_enrollment', 403)
+      return this.complete(account, this.now(), 'teacher_code', undefined, terms, teacherScope)
+    })
+  }
+
+  private async finishPrimary(challenge: AuthChallenge, evidence: PrimaryEvidence, account: Account | null): Promise<AuthOutcome> {
+    const existingMapping = await this.repository.mappedAccount(evidence)
+    if (!account && existingMapping)
+      throw new AuthError('continuity_proof_required', 403)
+    if (!account) {
+      account = { id: this.crypto.token(), status: 'active', name: '', securityVersion: 0, createdAt: this.now(), identifiers: [{ id: this.crypto.token(), kind: challenge.kind, value: challenge.value, verifiedAt: this.now(), recoveryEligible: true }] }
+      await this.repository.save(account)
+      await this.repository.audit(account.id, 'account_created', this.now())
+    }
+    if (account.status !== 'active')
+      throw new AuthError('account_disabled', 403)
+    const identifier = account.identifiers.find(i => i.kind === challenge.kind && i.value === challenge.value)!
+    if ((existingMapping && existingMapping !== account.id) || (!existingMapping && !identifier.recoveryEligible))
+      throw new AuthError('continuity_proof_required', 403)
+    await this.repository.linkProvider(evidence, account.id)
+    const security = await this.repository.security(account.id)
+    if (security.secret || await this.policy.requiresTotp(account.id)) {
+      const token = this.crypto.token()
+      await this.repository.savePending({ digest: await this.crypto.digest(token), accountId: account.id, primaryAt: this.now(), method: challenge.kind, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: account.securityVersion, recoveryEligible: identifier.recoveryEligible, terms: challenge.terms })
+      return { state: security.secret ? 'totp_required' as const : 'enrollment_required' as const, challenge: token }
+    }
+    return this.complete(account, this.now(), challenge.kind, undefined, challenge.terms)
+  }
+
+  private async complete(account: Account, primaryAt: number, method: AuthSession['method'], secondAt?: number, terms?: AcceptedTerms, teacherScope?: TeacherScope): Promise<AuthOutcome> {
     const credential = this.crypto.token()
-    const session: AuthSession = { id: this.crypto.token(), accountId: account.id, digest: await this.crypto.digest(credential), primaryAt, ...(secondAt === undefined ? {} : { secondAt }), method, expiresAt: this.now() + 7 * 86400000, securityVersion: account.securityVersion, generation: this.provider.generation }
+    const session: AuthSession = { id: this.crypto.token(), accountId: account.id, digest: await this.crypto.digest(credential), primaryAt, teacherScope, ...(secondAt === undefined ? {} : { secondAt }), method, expiresAt: this.now() + 7 * 86400000, securityVersion: account.securityVersion, generation: this.provider.generation }
     if (terms)
       await this.repository.saveTermsAcceptance({ ...terms, accountId: account.id, acceptedAt: this.now() })
     await this.repository.saveSession(session)
@@ -317,6 +379,8 @@ export class AccountService {
       throw new AuthError('challenge_expired', 401)
     const account = await this.repository.get(pending.accountId)
     if (!account || account.status !== 'active' || account.securityVersion !== pending.securityVersion)
+      throw new AuthError('reauthentication_required', 401)
+    if (pending.teacherScope && !await this.teacherCodes?.eligible(pending.teacherScope, account.id))
       throw new AuthError('reauthentication_required', 401)
     if (pending.attempts >= 5)
       throw new AuthError('attempts_exhausted', 429)
@@ -337,7 +401,7 @@ export class AccountService {
       security.lastStep = step
       await this.repository.saveSecurity(account.id, security)
       await this.repository.deletePending(pending.digest)
-      return this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms)
+      return this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms, pending.teacherScope)
     })
   }
 
@@ -356,6 +420,8 @@ export class AccountService {
         token = this.crypto.token()
         pending = { digest: await this.crypto.digest(token), accountId: session.accountId, primaryAt: session.primaryAt, method: session.method, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: session.securityVersion, recoveryEligible: false }
       }
+      if (pending.teacherScope)
+        throw new AuthError('use_standard_login_for_enrollment', 403)
       if ((await this.repository.security(pending.accountId)).secret && !pending.replacing)
         throw new AuthError('totp_already_enabled', 409)
       if (!pending.enrollmentSecret)
@@ -386,7 +452,7 @@ export class AccountService {
       await this.repository.revoke(account.id)
       await this.repository.deletePending(pending.digest)
       await this.repository.audit(account.id, 'totp_enrolled', this.now())
-      return { ...await this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms), recoveryCodes }
+      return { ...await this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms, pending.teacherScope), recoveryCodes }
     })
   }
 
@@ -424,6 +490,8 @@ export class AccountService {
     const account = await this.repository.get(session.accountId)
     if (!account || account.status !== 'active' || account.securityVersion !== session.securityVersion)
       throw new AuthError('reauthentication_required', 401)
+    if (session.teacherScope && !await this.teacherCodes?.eligible(session.teacherScope, account.id))
+      throw new AuthError('reauthentication_required', 401)
     if (!session.secondAt && ((await this.repository.security(account.id)).secret || await this.policy.requiresTotp(account.id)))
       throw new AuthError('reauthentication_required', 401)
     return { account, session }
@@ -431,7 +499,7 @@ export class AccountService {
 
   private async requireRecent(credential: string) {
     const { session } = await this.getSession(credential)
-    if (this.now() - session.primaryAt > FIVE_MINUTES || (session.secondAt && this.now() - session.secondAt > FIVE_MINUTES))
+    if (session.teacherScope || this.now() - session.primaryAt > FIVE_MINUTES || (session.secondAt && this.now() - session.secondAt > FIVE_MINUTES))
       throw new AuthError('reauthentication_required', 401)
     return session
   }

@@ -7,7 +7,7 @@ export interface CoreHttpRequestOptions {
   client: HttpSeedClient
   serviceAccountApiKey?: string
   requestId?: string
-  actor?: { schoolId: string, actorId: string, academicYearId: string }
+  actor?: { schoolId: string, actorId: string, academicYearId?: string }
 }
 
 function serializeValue(value: unknown): unknown {
