@@ -68,11 +68,11 @@ export const reportModuleResponseSchema = responseSchema<ReportModuleInput>("Rep
 const reportSubjectResultSchema = z.object({
   ...reportCardResultSectionBaseSchema.shape,
   subResults: z.array(z.unknown()).max(0).default([]),
-}).openapi('ReportSubjectResult')
+}).openapi("ReportSubjectResult");
 export const reportCardResultSectionSchema = z.object({
   ...reportCardResultSectionBaseSchema.shape,
   subResults: z.array(reportSubjectResultSchema).default([]),
-}).openapi('ReportCardResultSection')
+}).openapi("ReportCardResultSection");
 export const reportCardSnapshotResponseSchema = z.object({
   ...objectFromSchema(reportCardSnapshotSchema).shape,
   sectionResults: z.array(reportCardResultSectionSchema),

@@ -139,7 +139,8 @@ export async function resolveAuthenticatedSession(
   }
   try {
     const claims = await identityClient.verifyAccessToken(token);
-    if (claims.teacherScope && !allowTeacherScope) return null;
+    if (claims.teacherScope && !allowTeacherScope)
+      return null;
     return sessionFromIdentityClaims(claims);
   }
   catch {
@@ -364,8 +365,9 @@ export function createSessionActorDependency(
           if (!teacher?.isActive || teacher.schoolId !== schoolId || teacher.subjectId !== user.id
             || (actorKind && actorKind !== "teacher") || (c.req.header("x-school-id") && c.req.header("x-school-id") !== schoolId)
             || (c.req.header("x-actor-id") && c.req.header("x-actor-id") !== teacherId)
-            || (academicYearId && (await repos.academicYears.findById(academicYearId))?.schoolId !== schoolId))
+            || (academicYearId && (await repos.academicYears.findById(academicYearId))?.schoolId !== schoolId)) {
             throw new HTTPException(403);
+          }
           c.set("actor", createTeacherActorMetadata({ ...interactiveContext, teacherId, schoolId }));
           return;
         }

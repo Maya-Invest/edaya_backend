@@ -166,7 +166,8 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger, o
   return {
     canDeliverEmail: !!binding,
     async sendTeacherCode(to: string, message: string) {
-      if (!binding) throw new Error("Email unavailable");
+      if (!binding)
+        throw new Error("Email unavailable");
       await sendCloudflareEmail(env, binding, to, { subject: "EDAYA · Code enseignant / Teacher code", html: `<p>${escapeHtml(message)}</p>`, text: message });
     },
     sendAuthVerificationOtp,
