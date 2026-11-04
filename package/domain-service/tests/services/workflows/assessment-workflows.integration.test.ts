@@ -78,7 +78,7 @@ describe('SchoolService assessment workflows', () => {
   test('writeHomeroomReportComment updates only the teacher comment on draft cards', async () => {
     const { results, service } = await createReportCardContext()
 
-    await service.assessmentsWorkflow.generateReportCardResult({
+    const generated = await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
@@ -87,7 +87,7 @@ describe('SchoolService assessment workflows', () => {
 
     const result = await service.assessmentsWorkflow.writeHomeroomReportComment({
       requestId: 'homeroom-comment',
-      expectedVersion: 1,
+      expectedVersion: generated.version,
       id: 'rc1',
       teacherComment: 'Bon début d\'année.',
     })
@@ -109,7 +109,7 @@ describe('SchoolService assessment workflows', () => {
 
     const updated = await service.assessmentsWorkflow.writeReportCardSectionComments({
       requestId: 'section-comment',
-      expectedVersion: 1,
+      expectedVersion: generated.version,
       id: generated.id,
       sections: [{ sectionId: math!.sectionId, comment: 'Solide en calcul.' }],
     })

@@ -23,11 +23,22 @@ describe('school ownership policies and invariants', () => {
   })
   afterEach(async () => releaseDatabase(fixture.db))
 
-  test.each([null, 'person-b'])('commands and direct saves reject invalid owner %s', async (ownerSubjectId) => {
+  test('commands and direct saves reject removing the owner', async () => {
+    const ownerSubjectId = null
     const before = (await fixture.repositories.schools.findById('school-a'))!
     await expect(service.setupWorkflow.updateSchoolConfiguration({ schoolId: before.id, ownerSubjectId })).rejects.toBeInstanceOf(BusinessRuleViolationError)
     await expect(service.baseService.entities.schools.save(new School({ ...before.data, ownerSubjectId }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
     expect((await fixture.repositories.schools.findById(before.id))?.data).toEqual(before.data)
+  })
+
+  test.each(['command', 'save'])('current owner may transfer to an account owning another school through %s', async (operation) => {
+    const before = (await fixture.repositories.schools.findById('school-a'))!
+    if (operation === 'command')
+      await service.setupWorkflow.updateSchoolConfiguration({ schoolId: before.id, ownerSubjectId: 'person-b' })
+    else
+      await service.baseService.entities.schools.save(new School({ ...before.data, ownerSubjectId: 'person-b' }))
+    expect((await fixture.repositories.schools.findById('school-a'))?.ownerSubjectId).toBe('person-b')
+    expect((await fixture.repositories.schools.findById('school-b'))?.ownerSubjectId).toBe('person-b')
   })
 
   test('current owner may transfer, and loses owner authority immediately', async () => {
