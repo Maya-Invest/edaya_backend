@@ -933,6 +933,11 @@ export const clientBindings = {
         "requestSchemaName": "UpdateClassGroupConfigurationCommand",
         "responseSchemaName": "ClassGroup"
       },
+      "correctHumanIdentifier": {
+        "publicName": "correct-human-identifier",
+        "requestSchemaName": "CorrectHumanIdentifierCommand",
+        "responseSchemaName": "CorrectedHumanIdentifier"
+      },
       "registerStaffMember": {
         "publicName": "register-staff-member",
         "requestSchemaName": "RegisterStaffMemberCommand",
@@ -2277,6 +2282,24 @@ export const clientBindings = {
       }
     },
     "imports": {
+      "candidates": {
+        "method": "POST",
+        "path": "imports/candidates",
+        "requestSchemaName": "SchoolImportCandidatesRequest",
+        "responseSchemaName": "SchoolImportCandidates"
+      },
+      "resolve": {
+        "method": "POST",
+        "path": "imports/resolve",
+        "requestSchemaName": "ResolveSchoolImportRequest",
+        "responseSchemaName": "SchoolImportDetail"
+      },
+      "export": {
+        "method": "POST",
+        "path": "imports/export",
+        "requestSchemaName": "ExportSchoolImportRequest",
+        "responseSchemaName": "SchoolImportExport"
+      },
       "create": {
         "method": "POST",
         "path": "imports/create",

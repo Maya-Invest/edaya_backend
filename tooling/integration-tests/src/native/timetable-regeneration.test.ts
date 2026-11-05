@@ -1,4 +1,4 @@
-import { ClassSubject, DayOfWeek, PeriodDefinition, TimetableGenerationMode } from '@edaya/core'
+import { ClassSubject, DayOfWeek, PeriodDefinition, TimetableGenerationMode, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
@@ -11,7 +11,7 @@ for (const mode of [TimetableGenerationMode.Weekly, TimetableGenerationMode.Free
       const subject = (await f.r.classSubjects.findById(f.id('subject')))!
       await f.r.classSubjects.save(new ClassSubject({ ...subject.data, periodsPerWeek: 2 }))
       for (const day of [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday]) {
-        await f.r.periodDefinitions.save(new PeriodDefinition({ id: f.id(`period-${day}`), schoolId: f.id('school'), academicYearId: f.id('year'), dayOfWeek: day, order: 1, label: 'Lesson', startTime: '08:00', endTime: '09:00' }))
+        await f.r.periodDefinitions.save(new PeriodDefinition(withShortName({ id: f.id(`period-${day}`), schoolId: f.id('school'), academicYearId: f.id('year'), dayOfWeek: day, order: 1, name: 'Lesson', startTime: '08:00', endTime: '09:00' })))
       }
       const input = { classGroupId: f.id('class'), academicYearId: f.id('year'), startDate: new Date('2026-09-07'), endDate: new Date('2026-09-11'), options: { generationMode: mode, allowUnassignedTeacherPlacements: true } }
       const generated = await f.editor.timetableGenerationWorkflow.generateClassGroupTimetable(input)

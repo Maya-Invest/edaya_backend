@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum AttendanceMode {
   Daily = 'daily',
@@ -13,6 +14,7 @@ export const classGroupSchema = z.object({
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   gradeLevelId: z.string().trim().min(1, 'gradeLevelId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   capacity: z.number().int('capacity must be a strictly positive integer').positive('capacity must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
   attendanceMode: z.nativeEnum(AttendanceMode).default(AttendanceMode.Session),
   homeroomStaffId: z.string().trim().min(1, 'homeroomStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -42,6 +44,7 @@ export class ClassGroup {
   get academicYearId() { return this.data.academicYearId }
   get gradeLevelId() { return this.data.gradeLevelId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get capacity() { return this.data.capacity }
   get attendanceMode() { return this.data.attendanceMode }
   get homeroomStaffId() { return this.data.homeroomStaffId }

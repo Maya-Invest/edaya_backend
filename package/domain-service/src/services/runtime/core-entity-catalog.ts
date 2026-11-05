@@ -8,6 +8,7 @@ import { academicDisciplineConfig, placementStatusConfig, studentAcademicYearPro
 import { studentSubjectEnrollmentConfig } from '../entities/config/students/student-subject-enrollment'
 import { ManagedEntityService } from '../entities/managed-entity-service'
 import { CORE_ENTITY_KEYS } from './core-entity-map'
+import { withVisibleIdentification } from './visible-identification-guards'
 
 export type CoreEntityConfigFactoryMap = {
   readonly [Key in CoreEntityKey]: EntityConfigFactory<CoreEntityMap[Key]>
@@ -109,7 +110,7 @@ function createManagedEntityService<Key extends CoreEntityKey>(
   input: EntityConfigFactoryInput,
 ): ManagedEntityService<CoreEntityMap[Key]> {
   const templateService = args.templateService ?? new NotificationTemplateService(args.repositories)
-  const baseConfig = CORE_ENTITY_CONFIG_FACTORIES[key](input)
+  const baseConfig = withVisibleIdentification(key, CORE_ENTITY_CONFIG_FACTORIES[key](input))
   if (['staffMembers', 'staffPermissionProfiles', 'staffPermissionAssignments', 'staffPermissionProfileBindings', 'staffManualPermissionAssignments', 'staffPermissionScopeDefaults'].includes(key))
     baseConfig.writeLockGroup = 'permission-state'
   if (['students', 'teachers', 'guardians', 'guardianLinks', 'subjects', 'subjectMatters', 'academicDisciplines', 'placementStatuses', 'studentAcademicYearProfiles', 'teacherAcademicYearProfiles', 'gradeLevels', 'academicYears', 'assessments', 'assessmentResults', 'results', 'enrollments', 'subjectEnrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'reportModules', 'lessonSessions', 'attendance', 'classSubjectProgress', 'incidents', 'resourceAssignments', 'staffAssignments', 'teacherAssignments', 'teacherUnavailabilities', 'activitySessions', 'calendarEvents', 'periodDefinitions'].includes(key))

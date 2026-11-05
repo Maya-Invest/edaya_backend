@@ -1,30 +1,31 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicDiscipline, AcademicYear, ClassGroup, Guardian, Permission, StaffMember, StaffPermissionAssignment, Student, Subject, Teacher } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, ClassGroup, Guardian, Permission, StaffMember, StaffPermissionAssignment, Student, Subject, Teacher, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createStudentTransitionContext } from './student-workflow-context'
 
 describe('school intake profiles', () => {
-  test('keeps school/national identifiers and the original name through unrelated edits and graduation', async () => {
+  test('keeps school and global identifiers and the original name through unrelated edits and graduation', async () => {
     const { service, repositories } = await createStudentTransitionContext()
-    await service.studentWorkflow.updateStudentProfile({ studentId: 'stu1', nationalMatricule: '001 234-A', sourceFullName: '  ADA  LOVELACE  ' })
+    await service.setupWorkflow.correctHumanIdentifier({ group: 'students', entityId: 'stu1', expectedIdentifier: null, identifier: '00127', requestId: 'assign-school-id' })
+    await service.studentWorkflow.updateStudentProfile({ studentId: 'stu1', globalIdentifier: '001 234-A', sourceFullName: '  ADA  LOVELACE  ' })
     await service.studentWorkflow.updateStudentProfile({ studentId: 'stu1', nationality: 'IV' })
     const student = await repositories.students.findById('stu1')
-    expect(student?.nationalMatricule).toBe('001 234-A')
+    expect(student?.globalIdentifier).toBe('001 234-A')
     expect(student?.sourceFullName).toBe('  ADA  LOVELACE  ')
-    expect(student?.matricule).toBeUndefined()
+    expect(student?.identifier).toBe('00127')
     await service.studentWorkflow.graduateStudent({ enrollmentId: 'enr1', effectiveAt: new Date('2026-06-30') })
-    expect((await repositories.students.findById('stu1'))?.nationalMatricule).toBe('001 234-A')
+    expect((await repositories.students.findById('stu1'))?.globalIdentifier).toBe('001 234-A')
   })
 
-  test('catalogue codes are school-unique and immutable; inactive and used statuses are guarded', async () => {
+  test('catalogue short names allow duplicates and edits; inactive and used statuses remain guarded', async () => {
     const { service } = await createStudentTransitionContext()
-    const status = await service.academicsWorkflow.configurePlacementStatus({ id: 'aff', code: ' aff ', label: 'AFF' })
-    expect(status.code).toBe('AFF')
-    await expect(service.academicsWorkflow.configurePlacementStatus({ id: 'duplicate', code: 'Aff', label: 'Duplicate' })).rejects.toMatchObject({ code: 'CATALOGUE_CODE_TAKEN' })
-    await expect(service.academicsWorkflow.configurePlacementStatus({ id: status.id, code: 'NEW', label: 'Changed' })).rejects.toMatchObject({ code: 'CATALOGUE_CODE_IMMUTABLE' })
+    const status = await service.academicsWorkflow.configurePlacementStatus({ id: 'aff', shortName: ' aff ', name: 'AFF' })
+    expect(status.shortName).toBe('aff')
+    await service.academicsWorkflow.configurePlacementStatus({ id: 'duplicate', shortName: 'aff', name: 'Duplicate' })
+    expect((await service.academicsWorkflow.configurePlacementStatus({ id: status.id, shortName: 'NEW', name: 'Changed' })).shortName).toBe('NEW')
     await service.academicsWorkflow.upsertStudentAcademicYearProfile({ studentId: 'stu1', academicYearId: 'ay1', placementStatusId: status.id, isRepeating: false })
     await expect(service.baseService.entities.placementStatuses.delete(status.id)).rejects.toMatchObject({ code: 'PLACEMENT_STATUS_IN_USE' })
-    await service.academicsWorkflow.configurePlacementStatus({ id: status.id, code: status.code, label: 'Renamed', isActive: false })
+    await service.academicsWorkflow.configurePlacementStatus({ id: status.id, shortName: status.shortName, name: 'Renamed', isActive: false })
     await service.academicsWorkflow.upsertStudentAcademicYearProfile({ studentId: 'stu1', academicYearId: 'ay1', isRepeating: true })
     await expect(service.academicsWorkflow.upsertStudentAcademicYearProfile({ studentId: 'stu1', academicYearId: 'ay2', placementStatusId: status.id })).rejects.toMatchObject({ code: 'PLACEMENT_STATUS_INACTIVE' })
   })
@@ -48,7 +49,7 @@ describe('school intake profiles', () => {
   test('teacher declarations retain zero/unknown hours and catalogue references without assignments', async () => {
     const { service, repositories } = await createStudentTransitionContext()
     await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Marie', lastName: 'Curie' }))
-    const discipline = await service.academicsWorkflow.configureAcademicDiscipline({ id: 'science', code: 'SCI', name: 'Science' })
+    const discipline = await service.academicsWorkflow.configureAcademicDiscipline({ id: 'science', shortName: 'SCI', name: 'Science' })
     const value = await service.academicsWorkflow.upsertTeacherAcademicYearProfile({ teacherId: 'teacher', academicYearId: 'ay1', disciplineIds: [discipline.id], declaredHours: 0 })
     expect(value.disciplineIds).toEqual([discipline.id])
     await expect(service.academicsWorkflow.upsertTeacherAcademicYearProfile({ teacherId: 'teacher', academicYearId: 'ay1', disciplineIds: [discipline.id, discipline.id] })).rejects.toBeDefined()
@@ -65,11 +66,11 @@ describe('school intake profiles', () => {
   test('rejects foreign person, year and discipline references', async () => {
     const { service, repositories } = await createStudentTransitionContext()
     await repositories.students.save(new Student({ id: 'foreign', schoolId: 'other', firstName: 'Test', lastName: 'Person' }))
-    await repositories.academicYears.save(new AcademicYear({ id: 'foreign-year', schoolId: 'other', name: 'Foreign', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'foreign-year', schoolId: 'other', name: 'Foreign', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })))
     await expect(service.academicsWorkflow.upsertStudentAcademicYearProfile({ studentId: 'foreign', academicYearId: 'ay1' })).rejects.toBeDefined()
     await expect(service.academicsWorkflow.upsertStudentAcademicYearProfile({ studentId: 'stu1', academicYearId: 'foreign-year' })).rejects.toBeDefined()
     await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Test', lastName: 'Teacher' }))
-    await repositories.academicDisciplines.save(new AcademicDiscipline({ id: 'foreign-discipline', schoolId: 'other', code: 'F', name: 'Foreign' }))
+    await repositories.academicDisciplines.save(new AcademicDiscipline(withShortName({ id: 'foreign-discipline', schoolId: 'other', shortName: 'F', name: 'Foreign' })))
     await expect(service.academicsWorkflow.upsertTeacherAcademicYearProfile({ teacherId: 'teacher', academicYearId: 'ay1', disciplineIds: ['foreign-discipline'] })).rejects.toBeDefined()
   })
 
@@ -88,7 +89,7 @@ describe('school intake profiles', () => {
     const { service, repositories } = await createStudentTransitionContext()
     const input = { categoryId: 'test-category', id: 'new-subject', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Test subject' }
     await expect(service.academicsWorkflow.configureSubject(input)).rejects.toMatchObject({ code: 'SUBJECT_DISCIPLINE_REQUIRED' })
-    const discipline = await service.academicsWorkflow.configureAcademicDiscipline({ id: 'discipline', code: 'TEST', name: 'Reviewed discipline' })
+    const discipline = await service.academicsWorkflow.configureAcademicDiscipline({ id: 'discipline', shortName: 'TEST', name: 'Reviewed discipline' })
     await service.academicsWorkflow.configureSubject({ ...input, disciplineId: discipline.id })
     await expect(service.academicsWorkflow.updateSubject({ subjectId: input.id, disciplineId: null })).rejects.toMatchObject({ code: 'SUBJECT_DISCIPLINE_REQUIRED' })
     await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Test', lastName: 'Teacher' }))
@@ -98,7 +99,7 @@ describe('school intake profiles', () => {
     await service.academicsWorkflow.upsertTeacherAcademicYearProfile({ teacherId: 'teacher', academicYearId: 'ay1', declaredHours: 0.5 })
     await expect(service.academicsWorkflow.configureSubject({ ...input, id: 'another', disciplineId: discipline.id })).rejects.toMatchObject({ code: 'DISCIPLINE_INACTIVE' })
     await expect(service.baseService.entities.academicDisciplines.delete(discipline.id)).rejects.toMatchObject({ code: 'DISCIPLINE_IN_USE' })
-    await repositories.subjects.save(new Subject({ ...input, id: 'legacy' }))
+    await repositories.subjects.save(new Subject(withShortName({ ...input, id: 'legacy' })))
     await service.academicsWorkflow.updateSubject({ subjectId: 'legacy', name: 'Unrelated edit' })
     expect((await repositories.subjects.findById('legacy'))?.disciplineId).toBeUndefined()
   })
@@ -108,7 +109,7 @@ describe('school intake profiles', () => {
     const profiles = await Promise.all([true, false, true].map(isRepeating => service.academicsWorkflow.upsertStudentAcademicYearProfile({ studentId: 'stu1', academicYearId: 'ay1', isRepeating })))
     expect(new Set(profiles.map(row => row.id)).size).toBe(1)
     expect(await repositories.studentAcademicYearProfiles.count()).toBe(1)
-    await repositories.classGroups.save(new ClassGroup({ id: 'transfer-class', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Transfer class' }))
+    await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'transfer-class', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Transfer class' })))
     await service.studentWorkflow.transferStudent({ enrollmentId: 'enr1', nextEnrollmentId: 'transferred', nextClassGroupId: 'transfer-class', effectiveAt: new Date('2026-01-15') })
     expect((await repositories.studentAcademicYearProfiles.findById(profiles[0]!.id))?.isRepeating).toBe(true)
     expect(await repositories.studentAcademicYearProfiles.count({ academicYearId: 'ay2' })).toBe(0)

@@ -1,7 +1,7 @@
 import type { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import type { PGlite } from '@electric-sql/pglite'
 import { PostgresAtomicExecution, PostgresCommandJournal } from '@edaya/adaptor-postgres'
-import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { noOpFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { bootstrapSeedDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { seedMinimalSchool } from '@edaya/seeding'
@@ -37,7 +37,7 @@ describe('seed mutation admission', () => {
     expect(await repositories.guardians.count()).toBe(0)
     repositories.guardians.save = save
     // A different existing school cannot suppress installation of the selected fixture.
-    await repositories.schools.save(new School({ id: 'other-school', name: 'Other', timeZone: 'UTC' }))
+    await repositories.schools.save(new School(withShortName({ id: 'other-school', name: 'Other', timeZone: 'UTC' })))
     await seedMinimalSchool(application)
     await seedMinimalSchool(application)
     expect(await repositories.schools.count()).toBe(2)
@@ -50,18 +50,18 @@ describe('seed mutation admission', () => {
 
   test('auth-link adapter initializes only its selected linked owner and preserves school settings', async () => {
     const context = resolveDevSeedContext()
-    const before = new School({ id: context.schoolId, name: 'Selected fixture', timeZone: 'UTC', enforceScheduleConflicts: true, timetableEnforceWorkloadFulfillment: true })
+    const before = new School(withShortName({ id: context.schoolId, name: 'Selected fixture', timeZone: 'UTC', enforceScheduleConflicts: true, timetableEnforceWorkloadFulfillment: true }))
     await repositories.schools.save(before)
-    await repositories.staffMembers.save(new StaffMember({ id: context.ownerStaffId, schoolId: context.schoolId, firstName: 'Owner', lastName: 'Fixture', subjectId: 'fixture-subject' }))
-    await repositories.schools.save(new School({ id: 'foreign-school', name: 'Foreign', timeZone: 'UTC' }))
-    await repositories.staffMembers.save(new StaffMember({ id: 'foreign-staff', schoolId: 'foreign-school', firstName: 'Foreign', lastName: 'Fixture', subjectId: 'foreign-subject' }))
+    await repositories.staffMembers.save(new StaffMember({ id: context.ownerStaffId, identifier: 'OWNER', schoolId: context.schoolId, firstName: 'Owner', lastName: 'Fixture', subjectId: 'fixture-subject' }))
+    await repositories.schools.save(new School(withShortName({ id: 'foreign-school', name: 'Foreign', timeZone: 'UTC' })))
+    await repositories.staffMembers.save(new StaffMember({ id: 'foreign-staff', identifier: 'FOREIGN-STAFF', schoolId: 'foreign-school', firstName: 'Foreign', lastName: 'Fixture', subjectId: 'foreign-subject' }))
     const port = createInProcessAuthLinkSeedPort(application)
     expect(await port.findSchoolById('foreign-school')).toBeUndefined()
     expect(await port.findStaffById('foreign-staff')).toBeUndefined()
     await expect(port.setSchoolOwnerSubjectId('foreign-school', 'fixture-subject')).rejects.toThrow()
     await port.setSchoolOwnerSubjectId(context.schoolId, 'fixture-subject')
     await port.setSchoolOwnerSubjectId(context.schoolId, 'fixture-subject')
-    expect((await repositories.schools.findById(context.schoolId))?.data).toEqual(new School({ ...before.data, ownerSubjectId: 'fixture-subject' }).data)
+    expect((await repositories.schools.findById(context.schoolId))?.data).toEqual(new School(withShortName({ ...before.data, ownerSubjectId: 'fixture-subject' })).data)
     await expect(port.setSchoolOwnerSubjectId(context.schoolId, 'replacement-subject')).rejects.toThrow()
     expect((await repositories.schools.findById(context.schoolId))?.ownerSubjectId).toBe('fixture-subject')
     expect((await db.query('SELECT event FROM command_audit')).rows).toEqual([{ event: 'school.fixture_owner_initialized' }])

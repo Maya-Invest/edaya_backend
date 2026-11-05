@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createStaffActorMetadata, createSystemActorMetadata } from '@edaya/authorization'
-import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { noOpFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
@@ -25,11 +25,11 @@ describe('admitted fixture owner initialization', () => {
 
   test('initializes once, preserves settings, and replays only the same currently linked owner', async () => {
     const school = (await fixture.repositories.schools.findById(input.schoolId))!
-    const before = new School({ ...school.data, enforceScheduleConflicts: true, timetableEnforceWorkloadFulfillment: true })
+    const before = new School(withShortName({ ...school.data, enforceScheduleConflicts: true, timetableEnforceWorkloadFulfillment: true }))
     await fixture.repositories.schools.save(before)
     await run()
     await run()
-    expect((await fixture.repositories.schools.findById(input.schoolId))?.data).toEqual(new School({ ...before.data, ownerSubjectId: input.subjectId }).data)
+    expect((await fixture.repositories.schools.findById(input.schoolId))?.data).toEqual(new School(withShortName({ ...before.data, ownerSubjectId: input.subjectId })).data)
     const receipts = await fixture.db.query('SELECT result FROM command_receipts')
     expect(receipts.rows).toEqual([{ result: { schoolId: input.schoolId, staffId: input.staffId } }])
     expect((await fixture.db.query('SELECT event FROM command_audit')).rows).toEqual([{ event: 'school.fixture_owner_initialized' }])
@@ -52,13 +52,13 @@ describe('admitted fixture owner initialization', () => {
   test('protects current and pending owners but permits ownership of another school', async () => {
     const before = (await fixture.repositories.schools.findById(input.schoolId))!
     for (const changes of [{ ownerSubjectId: 'current-owner' }, { pendingOwnerStaffId: input.staffId }]) {
-      await fixture.repositories.schools.save(new School({ ...before.data, ...changes }))
+      await fixture.repositories.schools.save(new School(withShortName({ ...before.data, ...changes })))
       await expect(run()).rejects.toThrow()
-      expect((await fixture.repositories.schools.findById(input.schoolId))?.data).toEqual(new School({ ...before.data, ...changes }).data)
+      expect((await fixture.repositories.schools.findById(input.schoolId))?.data).toEqual(new School(withShortName({ ...before.data, ...changes })).data)
     }
     await fixture.repositories.schools.save(before)
     const foreign = (await fixture.repositories.schools.findById('school-b'))!
-    await fixture.repositories.schools.save(new School({ ...foreign.data, ownerSubjectId: input.subjectId }))
+    await fixture.repositories.schools.save(new School(withShortName({ ...foreign.data, ownerSubjectId: input.subjectId })))
     await run()
     for (const id of [input.schoolId, foreign.id])
       expect((await fixture.repositories.schools.findById(id))?.ownerSubjectId).toBe(input.subjectId)

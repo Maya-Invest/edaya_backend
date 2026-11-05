@@ -9,7 +9,7 @@ describeWithMinimalSchool('teacher unavailability routes', (getContext) => {
   it('saves, lists, gets, and deletes a weekly rule through the generated client', async () => {
     const { application, app, authHeaders } = getContext()
     const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
-    await application.repositories.teachers.save(new Teacher({ id: 't1', schoolId: school.id, firstName: 'Route', lastName: 'Teacher' }))
+    await application.repositories.teachers.save(new Teacher({ id: 't1', identifier: 'TCH-1', schoolId: school.id, firstName: 'Route', lastName: 'Teacher' }))
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
     const client = createInProcessSchoolClient(app, { headers: { authorization } })
     const input = {

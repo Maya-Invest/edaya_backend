@@ -23,14 +23,12 @@ describe('Subject entity', () => {
       academicYearId: 'year1',
       name: 'Math — Grade 6',
       shortName: 'Math',
-      code: 'MATH101',
       coefficient: 2,
     })
 
     const updated = subject.copyWith({
       name: 'Advanced Math — Grade 10',
       shortName: 'Advanced Math',
-      code: 'MATH201',
       coefficient: 3,
     })
 
@@ -39,7 +37,6 @@ describe('Subject entity', () => {
     expect(updated.name).toBe('Advanced Math — Grade 10')
     expect(updated.shortName).toBe('Advanced Math')
     expect(updated.displayShortName).toBe('Advanced Math')
-    expect(updated.code).toBe('MATH201')
     expect(updated.coefficient).toBe(3)
     expect(updated.createdAt).toEqual(subject.createdAt)
   })
@@ -52,14 +49,13 @@ describe('Subject entity', () => {
       gradeLevelId: 'grade1',
       academicYearId: 'year1',
       name: 'Math',
-      code: 'MATH101',
       coefficient: 2,
     })
 
     const updated = subject.copyWith({})
 
     expect(updated.name).toBe('Math')
-    expect(updated.code).toBe('MATH101')
+    expect(updated.shortName).toBe('Math')
     expect(updated.coefficient).toBe(2)
   })
 
@@ -71,16 +67,15 @@ describe('Subject entity', () => {
       gradeLevelId: 'grade1',
       academicYearId: 'year1',
       name: 'Math',
-      code: 'MATH101',
       coefficient: 2,
     })
 
     const updated = subject.copyWith({
-      code: undefined,
+      shortName: undefined,
       coefficient: undefined,
     })
 
-    expect(updated.code).toBe('MATH101')
+    expect(updated.shortName).toBe('Math')
     expect(updated.coefficient).toBe(2)
   })
 })

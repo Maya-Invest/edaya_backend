@@ -1,5 +1,5 @@
 import { createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicDiscipline, AcademicYear, ActivitySession, CalendarEvent, CalendarEventScopeKind, ClassGroup, ClassSubject, GradeLevel, LessonSession, PeriodDefinition, School, Subject, Teacher, TeacherAssignment, TimetableGenerationMode } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, ActivitySession, CalendarEvent, CalendarEventScopeKind, ClassGroup, ClassSubject, GradeLevel, LessonSession, PeriodDefinition, School, Subject, Teacher, TeacherAssignment, TimetableGenerationMode, withShortName } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -11,16 +11,16 @@ describeIntegration('demo school timetable generation', () => {
     const { entities, extensions } = demoCiDataset
     const actor = createStaffActorMetadata({ subjectId: 'admin-user', staffMemberId: 'admin', schoolId: entities.school.id, requestId: 'timetable-demo', authenticatedAt: new Date() })
     const { app, schoolRepositories: repos } = await createTestApp(actor)
-    await repos.schools.save(new School({ ...entities.school, ownerSubjectId: actor.subjectId }))
-    await repos.academicYears.save(new AcademicYear(entities.academicYear))
-    await repos.gradeLevels.batchSave(entities.gradeLevels.map(row => new GradeLevel(row)))
-    await repos.classGroups.batchSave(entities.classGroups.map(row => new ClassGroup(row)))
-    await repos.academicDisciplines.batchSave((entities.academicDisciplines ?? []).map(row => new AcademicDiscipline(row)))
-    await repos.subjects.batchSave(entities.subjects.map(row => new Subject(row)))
+    await repos.schools.save(new School(withShortName({ ...entities.school, ownerSubjectId: actor.subjectId })))
+    await repos.academicYears.save(new AcademicYear(withShortName(entities.academicYear)))
+    await repos.gradeLevels.batchSave(entities.gradeLevels.map(row => new GradeLevel(withShortName(row))))
+    await repos.classGroups.batchSave(entities.classGroups.map(row => new ClassGroup(withShortName(row))))
+    await repos.academicDisciplines.batchSave((entities.academicDisciplines ?? []).map(row => new AcademicDiscipline(withShortName(row))))
+    await repos.subjects.batchSave(entities.subjects.map(row => new Subject(withShortName(row))))
     await repos.classSubjects.batchSave(entities.classSubjects.map(row => new ClassSubject(row)))
-    await repos.teachers.batchSave(entities.teachers.map(row => new Teacher(row)))
+    await repos.teachers.batchSave(entities.teachers.map(row => new Teacher({ ...row, identifier: row.id.toUpperCase() })))
     await repos.teacherAssignments.batchSave(entities.teacherAssignments.map(row => new TeacherAssignment(row)))
-    await repos.periodDefinitions.batchSave(entities.periodDefinitions.map(row => new PeriodDefinition(row)))
+    await repos.periodDefinitions.batchSave(entities.periodDefinitions.map(row => new PeriodDefinition(withShortName(row))))
     const events = extensions.calendarEvents.flatMap((event) => {
       const scopes = event.scope === 'school' ? [undefined] : event.scope
       return scopes.map(scopeId => new CalendarEvent({ ...event, id: `${event.id}:${scopeId ?? 'school'}`, schoolId: entities.school.id, academicYearId: entities.academicYear.id, scopeKind: scopeId ? CalendarEventScopeKind.ClassGroup : CalendarEventScopeKind.School, scopeId }))

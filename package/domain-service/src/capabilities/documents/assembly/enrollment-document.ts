@@ -43,7 +43,7 @@ export async function assembleEnrollmentDocument(
     : [{ text: locale.startsWith('en')
         ? `${student.fullName} is enrolled at ${school.issuingName ?? school.name} for ${year.name}.`
         : `${student.fullName} est scolarisé(e) à ${school.issuingName ?? school.name} pour ${year.name}.` }]
-  const sourceVersion = `${enrollment.status}:${enrollment.endReason ?? ''}:${enrollment.endedAt?.toISOString() ?? ''}:${enrollment.enrolledAt?.toISOString() ?? ''}:${student.fullName}`
+  const sourceVersion = `${enrollment.status}:${enrollment.endReason ?? ''}:${enrollment.endedAt?.toISOString() ?? ''}:${enrollment.enrolledAt?.toISOString() ?? ''}:${student.fullName}:${student.identifier}`
   return {
     academicYearId: enrollment.academicYearId,
     sourceType: DocumentSourceType.Enrollment,
@@ -60,7 +60,8 @@ export async function assembleEnrollmentDocument(
         studentName: student.fullName,
         classLabel: classGroup.name,
         schoolYear: year.name,
-        matricule: student.matricule,
+        // Immutable v1 renderer contract; the live domain uses identifier.
+        matricule: student.identifier,
         date: formatDocumentDate(new Date(), locale, timeZone),
         schoolCity: school.city,
         schoolAddress: school.postalAddress,

@@ -77,11 +77,13 @@ export interface GraduateStudentInput {
 }
 
 export type RegisterStudentInput = Omit<StudentInput, 'id'> & {
+  requestId?: string
   id?: string
   sendAccountInvitation?: boolean
   inviteEmail?: string
 }
 export type RegisterGuardianInput = Omit<GuardianInput, 'id'> & {
+  requestId?: string
   id?: string
   sendAccountInvitation?: boolean
 }
@@ -151,7 +153,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStudent(input: RegisterStudentInput): Promise<Student> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.createHuman('students', input, async (input) => {
       const { sendAccountInvitation, inviteEmail, ...entityInput } = input
       const autoInviteEnabled = sendAccountInvitation !== false
         && this.baseService.accountInvitationsEnabled !== false
@@ -186,7 +188,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.createHuman('guardians', input, async (input) => {
       const { sendAccountInvitation, ...entityInput } = input
       const id = await this.allocateNewEntityId(
         candidate => this.baseService.repositories.guardians.findById(candidate),
@@ -410,7 +412,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         birthDate: student.birthDate,
         placeOfBirth: student.placeOfBirth,
         nationality: student.nationality,
-        matricule: student.matricule,
+        identifier: student.identifier,
         photoUrl: student.photoUrl,
         subjectId: student.subjectId,
         status: StudentStatus.Graduated,
@@ -525,7 +527,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       const guardian = new Guardian({
         ...existing.data,
         ...Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined)),
-        code: Object.hasOwn(changes, 'code') ? changes.code : existing.code,
+        identifier: Object.hasOwn(changes, 'identifier') ? changes.identifier : existing.identifier,
         occupation: Object.hasOwn(changes, 'occupation') ? changes.occupation : existing.occupation,
         sourceFullName: Object.hasOwn(changes, 'sourceFullName') ? changes.sourceFullName : existing.sourceFullName,
         photoUrl: Object.hasOwn(changes, 'photoUrl') ? changes.photoUrl : existing.photoUrl,

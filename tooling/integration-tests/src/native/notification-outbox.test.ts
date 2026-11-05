@@ -1,11 +1,13 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import { createNotifyInvitationDeliveryPort, createNotifyNotificationGateway, createNotifyRuntimeFromDrizzle, drainPendingSchoolNotifications } from '@edaya/adaptor-notify'
-import { PostgresAtomicExecution, PostgresSchoolRepositories, runMigrations, transactionContext } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, runMigrations, transactionContext } from '@edaya/adaptor-postgres'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, MessageDeliveryRecipientKind, noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, MessageDeliveryRecipientKind, noOpFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { resolveInvitationDispatchRecipient, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { PostgresCommandJournal } from '../../../../package/adaptor-postgres/src/stores/command-journal-store'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -97,14 +99,9 @@ test('independent workers preserve identical delivery IDs and device registratio
 })
 
 test('invitation intent rolls back with business state and dispatches only after commit with current expiry', async () => {
-  const repositories = handles.map(handle => new PostgresSchoolRepositories(handle.db))
+  const repositories = handles.map(handle => createFixtureRepositories(handle.db))
   const atomic = new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb)
-  const apps = handles.map((handle, index) => new SchoolApplication({
-    repositories: repositories[index]!,
-    atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb),
-    fileStorage: noOpFileStorage,
-    notificationGateway: noOpNotificationGateway,
-  }))
+  const apps = handles.map((handle, index) => new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: repositories[index]!, atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway }))
   let sends = 0
   for (const [index, item] of runtimes.entries()) {
     item.resolveInvitationRecipient = request => resolveInvitationDispatchRecipient(apps[index]!.forActor(createSystemActorMetadata({
@@ -121,7 +118,7 @@ test('invitation intent rolls back with business state and dispatches only after
     } }
   }
   const repo = repositories[0]!
-  await repo.schools.save(new School({ id: 'invitation-school', name: 'Invitations', timeZone: 'UTC' }))
+  await repo.schools.save(new School(withShortName({ id: 'invitation-school', name: 'Invitations', timeZone: 'UTC' })))
   await repo.staffMembers.save(new StaffMember({ id: 'invitation-creator', schoolId: 'invitation-school', firstName: 'Fixture', lastName: 'Staff' }))
   const port = createNotifyInvitationDeliveryPort(runtime)
   const enqueue = async (id: string) => {

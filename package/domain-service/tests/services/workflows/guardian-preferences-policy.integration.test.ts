@@ -1,6 +1,8 @@
 import { AuthorizationError, createGuardianActorMetadata } from '@edaya/authorization'
 import { Guardian, GuardianStudentLink, noOpNotificationGateway } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -15,13 +17,7 @@ describe('guardian preference policies through persisted workflows and entities'
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec(`UPDATE schools SET owner_subject_id = 'person-a' WHERE id = 'school-a'`)
-    service = new SchoolService({
-      actor: createGuardianActorMetadata({ guardianId: 'guardian-a', subjectId: 'person-a', schoolId: 'school-a', requestId: 'preferences', authenticatedAt: new Date() }),
-      repositories: fixture.repositories,
-      atomicExecution: fixture.atomic,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createGuardianActorMetadata({ guardianId: 'guardian-a', subjectId: 'person-a', schoolId: 'school-a', requestId: 'preferences', authenticatedAt: new Date() }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
   afterEach(async () => releaseDatabase(fixture.db))
 
@@ -62,7 +58,7 @@ describe('guardian preference policies through persisted workflows and entities'
     for (const changes of [{ subjectId: 'new-login' }, { firstName: 'Changed' }, { schoolId: 'school-b' }, { id: 'new-guardian' }]) {
       await expect(service.baseService.entities.guardians.save(new Guardian({ ...before.data, ...changes }))).rejects.toBeInstanceOf(AuthorizationError)
     }
-    await fixture.repositories.guardians.save(new Guardian({ id: 'unrelated', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian', subjectId: 'person-unrelated' }))
+    await saveHumanFixture(fixture.repositories.guardians, new Guardian({ id: 'unrelated', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian', subjectId: 'person-unrelated' }))
     await expect(service.studentWorkflow.updateGuardianProfile({ guardianId: 'unrelated', email: 'other@example.test', emailNotificationsEnabled: true })).rejects.toBeInstanceOf(AuthorizationError)
   })
 

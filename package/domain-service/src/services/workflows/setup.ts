@@ -1,8 +1,8 @@
-import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole, Teacher, TeacherInput } from '@edaya/core'
+import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, HumanIdentifierGroup, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole, Teacher, TeacherInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity, withShortName } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
@@ -11,6 +11,7 @@ import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/p
 import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
+import { schoolCommandScope } from '../commands/school-command-scope'
 
 import { requireSchool } from '../require-school'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -21,6 +22,7 @@ export interface CreateAcademicYearInput {
   id: string
   schoolId: string
   name: string
+  shortName?: string
   startDate: Date
   endDate: Date
   createdAt?: Date
@@ -53,11 +55,13 @@ export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupIn
 }
 
 export type RegisterStaffMemberInput = Omit<StaffMemberInput, 'id'> & {
+  requestId?: string
   id?: string
   sendAccountInvitation?: boolean
 }
 
 export type RegisterTeacherInput = Omit<TeacherInput, 'id'> & {
+  requestId?: string
   id?: string
 }
 
@@ -78,7 +82,7 @@ export interface UpdateStaffMemberProfileInput {
   staffId: string
   firstName?: string
   lastName?: string
-  code?: string | null
+  identifier?: string | null
   email?: string | null
   photoUrl?: string | null
   profileRole?: StaffProfileRole | null
@@ -120,11 +124,32 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     this.repositories = pickWorkflowRepositories('setup', base.repositories)
   }
 
+  async correctHumanIdentifier(input: { group: HumanIdentifierGroup, entityId: string, expectedIdentifier: string | null, identifier: string | null, requestId: string }): Promise<{
+    id: string
+    identifier: string | null
+  }> {
+    const base = this.baseService
+    const key = { students: 'students', teachers: 'teachers', guardians: 'guardians', staff: 'staffMembers' }[input.group] as 'students' | 'teachers' | 'guardians' | 'staffMembers'
+    const scope = await schoolCommandScope(base.actor, 'correctHumanIdentifier', input.requestId)
+    return base.commandExecution.execute({ scope, input, resultMode: 'ordinary', authorize: async () => {
+      await base.access.identities.assertCorrectIdentifier()
+    }, execute: () => base.atomicExecution.execute(async () => {
+      const current = await base.entities[key].findById(input.entityId)
+      if (!current || (current.identifier ?? null) !== input.expectedIdentifier)
+        throw new BusinessRuleViolationError('IDENTIFIER_REVIEW_STALE', 'The current identifier changed')
+      if ('accountKind' in current && current.accountKind === 'service')
+        throw new BusinessRuleViolationError('SERVICE_ACCOUNT_IDENTIFIER_FORBIDDEN', 'Service accounts use name and short name')
+      const updated = current.copyWith({ identifier: input.identifier })
+      await base.entities[key].save(updated as never, true)
+      return { id: current.id, identifier: updated.identifier ?? null }
+    }, { lockKeys: [`human-profile:${key}:${input.entityId}`] }), persistResult: result => result, replay: async result => result, audit: result => [{ event: 'human-identifier-corrected', resourceType: key, resourceId: result.id, details: { previousIdentifier: input.expectedIdentifier, identifier: result.identifier } }] })
+  }
+
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
     return this.baseService.atomicExecution.execute(async () => {
       await this.baseService.access.school.assertRegister()
       const { consortiumId: _ignoredConsortiumId, ...schoolInput } = input
-      const school = new SchoolEntity(schoolInput)
+      const school = new SchoolEntity(withShortName(schoolInput))
       await this.baseService.entities.schools.save(school)
       await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
       await ensureSchoolPermissionProfiles(this.baseService.repositories, school.id)
@@ -137,7 +162,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       const existing = await this.requireEntity(this.baseService.entities.schools, schoolId)
       await this.baseService.access.school.assertManageLifecycle()
       const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
-      const school = new SchoolEntity({
+      const school = new SchoolEntity(withShortName({
         id: existing.id,
         name: changes.name ?? existing.name,
         timeZone: changes.timeZone ?? existing.timeZone,
@@ -174,7 +199,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
           ? existing.publicBrandingPurposes
           : changes.publicBrandingPurposes,
         createdAt: existing.createdAt,
-      })
+      }))
       await this.baseService.entities.schools.save(school)
       return school
     })
@@ -184,6 +209,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     id,
     schoolId,
     name,
+    shortName,
     startDate,
     endDate,
     createdAt,
@@ -194,15 +220,16 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       await requireSchool(this.repositories.schools, schoolId)
 
       return this.baseService.atomicExecution.execute(async () => {
-        const academicYear = new AcademicYearEntity({
+        const academicYear = new AcademicYearEntity(withShortName({
           id,
           schoolId,
           name,
+          shortName,
           startDate,
           endDate,
           status: 'draft',
           createdAt,
-        })
+        }))
         await this.baseService.entities.academicYears.save(academicYear)
         return academicYear
       })
@@ -237,15 +264,16 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
           )
         }
 
-        const published = new AcademicYearEntity({
+        const published = new AcademicYearEntity(withShortName({
           id: academicYear.id,
           schoolId: academicYear.schoolId,
           name: academicYear.name,
+          shortName: academicYear.shortName,
           startDate: academicYear.startDate,
           endDate: academicYear.endDate,
           status: 'published',
           createdAt: academicYear.createdAt,
-        })
+        }))
         await this.baseService.entities.academicYears.save(published)
         return published
       })
@@ -269,15 +297,16 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       }
 
       return this.baseService.atomicExecution.execute(async () => {
-        const archived = new AcademicYearEntity({
+        const archived = new AcademicYearEntity(withShortName({
           id: academicYear.id,
           schoolId: academicYear.schoolId,
           name: academicYear.name,
+          shortName: academicYear.shortName,
           startDate: academicYear.startDate,
           endDate: academicYear.endDate,
           status: 'archived',
           createdAt: academicYear.createdAt,
-        })
+        }))
         await this.baseService.entities.academicYears.save(archived)
         return archived
       })
@@ -286,7 +315,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async createAcademicPeriod(input: CreateAcademicPeriodInput): Promise<AcademicPeriod> {
     return this.baseService.atomicExecution.execute(async () => {
-      const period = new AcademicPeriodEntity(input)
+      const period = new AcademicPeriodEntity(withShortName(input))
       await this.baseService.entities.academicPeriods.save(period)
       return period
     })
@@ -296,27 +325,28 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.academicPeriods, academicPeriodId)
       await this.baseService.access.school.assertManageLifecycle()
-      const period = new AcademicPeriodEntity({
+      const period = new AcademicPeriodEntity(withShortName({
         id: existing.id,
         schoolId: existing.schoolId,
         academicYearId: existing.academicYearId,
         name: existing.name,
+        shortName: existing.shortName,
         type: existing.type,
         startDate: existing.startDate,
         endDate: existing.endDate,
         isPublished: true,
         createdAt: existing.createdAt,
-      })
+      }))
       await this.baseService.entities.academicPeriods.save(period)
       return period
     })
   }
 
-  async createClassGroup(input: CreateClassGroupInput): Promise<ClassGroup> {
+  async createClassGroup(input: CreateClassGroupInput, mirroredOfferingIds: Record<string, string> = {}): Promise<ClassGroup> {
     return this.baseService.atomicExecution.execute(async () => {
-      const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
+      const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(await this.namedInput('classGroups', input)))
       await this.baseService.atomicExecution.execute(async () => {
-        await syncSubjectsToClassGroup(this.baseService, classGroup)
+        await syncSubjectsToClassGroup(this.baseService, classGroup, Object.fromEntries(Object.entries(mirroredOfferingIds).map(([subjectId, classSubjectId]) => [subjectId, { classSubjectId }])))
       })
       return classGroup
     })
@@ -332,7 +362,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.createHuman('staff', staffMemberInput, async (staffMemberInput) => {
       const { sendAccountInvitation, ...entityInput } = staffMemberInput
       const id = await this.allocateNewEntityId(
         candidate => this.baseService.repositories.staffMembers.findById(candidate),
@@ -359,7 +389,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerTeacher(teacherInput: RegisterTeacherInput): Promise<Teacher> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.createHuman('teachers', teacherInput, async (teacherInput) => {
       const id = await this.allocateNewEntityId(
         candidate => this.baseService.repositories.teachers.findById(candidate),
         teacherInput.id,
@@ -399,7 +429,9 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         schoolId: existing.schoolId,
         firstName: existing.firstName,
         lastName: existing.lastName,
-        code: existing.code,
+        identifier: existing.identifier,
+        name: existing.data.name,
+        shortName: existing.data.shortName,
         email: existing.email,
         phone: existing.phone,
         photoUrl: existing.photoUrl,
@@ -429,7 +461,9 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         schoolId: existing.schoolId,
         firstName: changes.firstName ?? existing.firstName,
         lastName: changes.lastName ?? existing.lastName,
-        code: changes.code === undefined ? existing.code : (changes.code ?? undefined),
+        name: existing.data.name,
+        shortName: existing.data.shortName,
+        identifier: changes.identifier === undefined ? existing.identifier : (changes.identifier ?? undefined),
         email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
         phone: changes.phone === undefined ? existing.phone : (changes.phone ?? undefined),
         photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
@@ -455,7 +489,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       this.checkActorSchool(input.schoolId)
       const scope = await this.baseService.access.entity('gradeLevels').readScope()
       const existing = await this.repositories.gradeLevels.forAccess(scope).findById(input.id)
-      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity({ ...input, gradingPolicies: existing?.gradingPolicies ?? [] }))
+      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity(await this.namedInput('gradeLevels', { ...input, gradingPolicies: existing?.gradingPolicies ?? [] })))
     }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
@@ -465,7 +499,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       this.checkActorSchool(schoolId)
       return this.saveConstructed(
         this.baseService.entities.periodDefinitions,
-        new PeriodDefinitionEntity({ ...input, schoolId }),
+        new PeriodDefinitionEntity(await this.namedInput('periodDefinitions', { ...input, schoolId })),
       )
     })
   }
@@ -476,7 +510,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       this.checkActorSchool(schoolId)
       return this.saveConstructed(
         this.baseService.entities.resources,
-        new ResourceEntity({ ...input, schoolId }),
+        new ResourceEntity(await this.namedInput('resources', { ...input, schoolId })),
       )
     })
   }
@@ -487,7 +521,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       this.checkActorSchool(schoolId)
       return this.saveConstructed(
         this.baseService.entities.activities,
-        new ActivityEntity({ ...input, schoolId }),
+        new ActivityEntity(await this.namedInput('activities', { ...input, schoolId })),
       )
     })
   }

@@ -33,7 +33,7 @@ export const schoolImportIdentities = pgTable('school_import_identities', {
   type: text('type').notNull(),
   sourceKey: text('source_key').notNull(),
   targetId: text('target_id').notNull(),
-  generatedCode: text('generated_code'),
+  generatedIdentifier: text('generated_code'),
   bound: boolean('bound').notNull().default(false),
 }, table => [primaryKey({ columns: [table.schoolId, table.type, table.sourceKey] })])
 export const schoolImportOutcomes = pgTable('school_import_outcomes', {

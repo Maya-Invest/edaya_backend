@@ -146,7 +146,7 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
-  code: field.string(),
+  identifier: field.string(),
   isActive: field.boolean(),
 });
 
@@ -155,7 +155,7 @@ export const teacherQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
-  code: field.string(),
+  identifier: field.string(),
   email: field.string(),
   isActive: field.boolean(),
 });
@@ -382,7 +382,7 @@ export const subjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
-  code: field.string(),
+  shortName: field.string(),
   categoryId: field.id(),
 });
 
@@ -490,7 +490,7 @@ export const studentQuerySchema = createQueryOptionsSchema({
   firstName: field.string(),
   lastName: field.string(),
   status: field.string(),
-  matricule: field.string(),
+  identifier: field.string(),
 });
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
@@ -506,7 +506,7 @@ export const guardianQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
-  code: field.string(),
+  identifier: field.string(),
   email: field.string(),
 });
 
@@ -585,10 +585,10 @@ export const staffManualPermissionAssignmentResponseSchema = responseSchema<Staf
 export const staffManualPermissionAssignmentQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id(), permission: field.string(), status: field.string() });
 
 export const academicDisciplineResponseSchema = responseSchema<AcademicDisciplineInput>("AcademicDiscipline", unwrapShape(academicDisciplineSchema));
-export const academicDisciplineQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), code: field.id(), isActive: field.boolean() });
+export const academicDisciplineQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), shortName: field.string(), name: field.string(), isActive: field.boolean() });
 
 export const placementStatusResponseSchema = responseSchema<PlacementStatusInput>("PlacementStatus", unwrapShape(placementStatusSchema));
-export const placementStatusQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), code: field.id(), isActive: field.boolean() });
+export const placementStatusQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), shortName: field.string(), name: field.string(), isActive: field.boolean() });
 
 export const studentAcademicYearProfileResponseSchema = responseSchema<StudentAcademicYearProfileInput>("StudentAcademicYearProfile", unwrapShape(studentAcademicYearProfileSchema));
 export const studentAcademicYearProfileQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), academicYearId: field.id(), studentId: field.id() });

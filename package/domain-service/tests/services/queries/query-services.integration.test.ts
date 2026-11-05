@@ -1,7 +1,9 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, DayOfWeek, LessonSession, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentCharge, StudentServiceEnrollment, Teacher } from '@edaya/core'
+import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, DayOfWeek, LessonSession, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentCharge, StudentServiceEnrollment, Teacher, withShortName } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { testFileStorage } from '../../support/test-file-storage'
@@ -15,14 +17,14 @@ describe('SchoolService aggregate and timetable queries', () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec('UPDATE schools SET finance_currency = \'XOF\' WHERE id = \'school-a\'')
-    service = new SchoolService({ actor: createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'query', authenticatedAt: new Date() }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'query', authenticatedAt: new Date() }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
   afterEach(async () => {
     await releaseDatabase(fixture.db)
   })
 
   test('fee aggregate uses the same student scope as lists and single records, with live revocation', async () => {
-    await fixture.repositories.catalogServices.save(new CatalogService({
+    await fixture.repositories.catalogServices.save(new CatalogService(withShortName({
       id: 'fee',
       schoolId: 'school-a',
       academicYearId: 'year-a',
@@ -31,7 +33,7 @@ describe('SchoolService aggregate and timetable queries', () => {
       defaultPrice: 100,
       billingTerms: { kind: 'one_time', installments: [] },
       status: CatalogServiceStatus.Active,
-    }))
+    })))
     for (const id of ['student-a', 'student-other']) {
       await fixture.repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
         id: `enr-${id}`,
@@ -156,19 +158,19 @@ describe('SchoolService aggregate and timetable queries', () => {
     const input = { teacherId: 'teacher-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-01') }
     expect((await service.getTeacherTimetable(input)).events.map(event => event.id)).toEqual(['math-session'])
     await expect(service.getTeacherTimetable({ ...input, teacherId: 'missing' })).rejects.toBeInstanceOf(AuthorizationError)
-    await fixture.repositories.teachers.save(new Teacher({ id: 'teacher-b', schoolId: 'school-a', firstName: 'B', lastName: 'Teacher' }))
+    await saveHumanFixture(fixture.repositories.teachers, new Teacher({ id: 'teacher-b', schoolId: 'school-a', firstName: 'B', lastName: 'Teacher' }))
 
     const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'teacher-timetable', authenticatedAt: new Date() }
-    const teacherService = new SchoolService({ actor: createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    const teacherService = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     expect((await teacherService.getTeacherTimetable(input)).events.map(event => event.id)).toEqual(['math-session'])
     await expect(teacherService.getTeacherTimetable({ ...input, teacherId: 'teacher-b' })).rejects.toBeInstanceOf(AuthorizationError)
 
-    const guardianService = new SchoolService({ actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    const guardianService = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await expect(guardianService.getTeacherTimetable(input)).rejects.toBeInstanceOf(AuthorizationError)
     const classInput = { classGroupId: 'class-a', startDate: input.startDate, endDate: input.endDate }
     expect((await guardianService.getClassGroupTimetable(classInput)).events.map(event => event.id)).toEqual(['math-session'])
     await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
-    const studentService = new SchoolService({ actor: createStudentActorMetadata({ ...identity, studentId: 'student-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    const studentService = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createStudentActorMetadata({ ...identity, studentId: 'student-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     expect((await studentService.getClassGroupTimetable(classInput)).events.map(event => event.id)).toEqual(['math-session'])
     await expect(guardianService.getClassGroupTimetable({ ...classInput, classGroupId: 'class-other' })).rejects.toBeInstanceOf(AuthorizationError)
   })
@@ -184,8 +186,8 @@ describe('SchoolService aggregate and timetable queries', () => {
         : kind === 'student'
           ? createStudentActorMetadata({ ...identity, studentId: 'student-a' })
           : createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
-    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    await fixture.repositories.periodDefinitions.save(new PeriodDefinition({ id: 'monday', schoolId: 'school-a', academicYearId: 'year-a', label: 'Monday', dayOfWeek: DayOfWeek.Monday, order: 1, startTime: '08:00', endTime: '09:00' }))
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    await fixture.repositories.periodDefinitions.save(new PeriodDefinition(withShortName({ id: 'monday', schoolId: 'school-a', academicYearId: 'year-a', name: 'Monday', dayOfWeek: DayOfWeek.Monday, order: 1, startTime: '08:00', endTime: '09:00' })))
     for (const [id, scopeKind, scopeId, date] of [
       ['other-class', CalendarEventScopeKind.ClassGroup, 'class-other', '2026-05-04'],
       ['school-day', CalendarEventScopeKind.School, undefined, '2026-05-11'],

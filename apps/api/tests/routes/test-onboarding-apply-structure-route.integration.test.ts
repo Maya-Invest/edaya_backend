@@ -1,3 +1,4 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -71,7 +72,7 @@ describe("onboarding apply-structure-template route", () => {
     });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -144,7 +145,7 @@ describe("onboarding apply-structure-template route", () => {
     expect(gradeScales[0]?.ranges.map(row => row.letter)).toEqual(["TF", "F", "TI", "I", "P", "AB", "B", "TB", "EX"]);
     const disciplines = await application.repositories.academicDisciplines.list({ schoolId: school.id });
     expect(disciplines).toHaveLength(15);
-    expect(disciplines.some(row => row.code === "STALE")).toBe(false);
+    expect(disciplines.some(row => row.shortName === "STALE")).toBe(false);
 
     const academicPeriods = (await application.repositories.academicPeriods.list()).filter(entry => entry.schoolId === schoolId);
     expect(academicPeriods).toHaveLength(3);
@@ -158,9 +159,10 @@ describe("onboarding apply-structure-template route", () => {
       classGroups.some(group => group.id === entry.classGroupId));
 
     expect(gradeLevels).toHaveLength(2);
-    expect(gradeLevels.map(level => level.id).sort()).toEqual(["gl-3", "gl-4"]);
+    expect(new Set(gradeLevels.map(level => level.id)).size).toBe(2);
+    for (const level of gradeLevels) expect(level.id).toMatch(/^[a-f0-9-]{36}$/);
     expect(gradeLevels.map(level => level.name).sort()).toEqual(["Quatrième", "Troisième"]);
-    expect(gradeLevels.map(level => level.label).sort()).toEqual(["3ème", "4ème"]);
+    expect(gradeLevels.map(level => level.shortName).sort()).toEqual(["3ème", "4ème"]);
     expect(classGroups).toHaveLength(3);
     expect(subjects).toHaveLength(28);
     expect(classSubjects).toHaveLength(42);
@@ -182,7 +184,7 @@ describe("onboarding apply-structure-template route", () => {
     });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -245,7 +247,7 @@ describe("onboarding apply-structure-template route", () => {
     expect(gradeScales[0]?.ranges.map(row => row.letter)).toEqual(["TF", "F", "TI", "I", "P", "AB", "B", "TB", "EX"]);
     const disciplines = await application.repositories.academicDisciplines.list({ schoolId: school.id });
     expect(disciplines).toHaveLength(15);
-    expect(disciplines.some(row => row.code === "STALE")).toBe(false);
+    expect(disciplines.some(row => row.shortName === "STALE")).toBe(false);
     expect(subjects.some(subject => subject.name.includes("Français"))).toBe(true);
     expect(subjects.some(subject => subject.name.includes("Mathématiques"))).toBe(true);
   });

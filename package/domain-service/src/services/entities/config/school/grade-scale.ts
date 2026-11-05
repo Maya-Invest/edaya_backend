@@ -1,8 +1,8 @@
 import type { GradeScale } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
+import { BusinessRuleViolationError, GradeScale as Scale, withShortName } from '@edaya/core'
 
-import { BusinessRuleViolationError, GradeScale as Scale } from '@edaya/core'
 import { requireSchool } from '../../../require-school'
 import { config } from '../../entity-config'
 
@@ -16,7 +16,7 @@ export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories
     writeLockGroup: 'academic-state',
     hooks: { postSave: async (scale, existing, repos) => {
       if (existing)
-        await repos.gradeScales.forSchool!(scale.schoolId).save(new Scale({ ...scale.data, ranges: [...scale.ranges], revision: existing.revision + 1 }))
+        await repos.gradeScales.forSchool!(scale.schoolId).save(new Scale(withShortName({ ...scale.data, ranges: [...scale.ranges], revision: existing.revision + 1 })))
     } },
 
     gates: {

@@ -1,10 +1,10 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
 import { AuthorizationError } from '@edaya/authorization'
-import { ClassGroup } from '@edaya/core'
+import { ClassGroup, withShortName } from '@edaya/core'
 import { validateClassGroupDelete, validateClassGroupSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 
-const classGroup = new ClassGroup({
+const classGroup = new ClassGroup(withShortName({
   id: 'class-1',
   schoolId: 'school-1',
   academicYearId: 'year-1',
@@ -12,7 +12,7 @@ const classGroup = new ClassGroup({
   name: '10A',
   capacity: 30,
   homeroomStaffId: 'staff-1',
-})
+}))
 
 function repositories(overrides: Record<string, unknown> = {}) {
   return {
@@ -72,14 +72,14 @@ describe('validateClassGroupSave', () => {
   })
 
   test('rejects capacity reductions below the active enrollment count', async () => {
-    const existing = new ClassGroup({
+    const existing = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'gl-1',
       name: '10A',
       capacity: 30,
-    })
+    }))
 
     await expect(validateClassGroupSave(existing.copyWith({ capacity: 1 }), existing, repositories({
       enrollments: {

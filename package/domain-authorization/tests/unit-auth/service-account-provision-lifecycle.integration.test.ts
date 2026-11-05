@@ -28,7 +28,7 @@ describe('service accounts with live grants and transactions', () => {
   })
   const create = (elevated = false) => createServiceAccount(fixture.repositories, actor, {
     serviceId: 'reports',
-    displayName: 'Report Integration',
+    name: 'Report Integration',
     elevated,
     ...(elevated ? {} : { permissionAssignments: [scopedGrant] }),
   }, fixture.atomic)
@@ -45,11 +45,11 @@ describe('service accounts with live grants and transactions', () => {
   })
 
   test('requires grants for delegated accounts and enforces the single elevated-account limit', async () => {
-    await expect(createServiceAccount(fixture.repositories, actor, { serviceId: 'empty', displayName: 'Empty' }, fixture.atomic))
+    await expect(createServiceAccount(fixture.repositories, actor, { serviceId: 'empty', name: 'Empty' }, fixture.atomic))
       .rejects
       .toMatchObject({ code: 'SERVICE_ACCOUNT_GRANTS_REQUIRED' })
     await create(true)
-    await expect(createServiceAccount(fixture.repositories, actor, { serviceId: 'second', displayName: 'Second', elevated: true }, fixture.atomic))
+    await expect(createServiceAccount(fixture.repositories, actor, { serviceId: 'second', name: 'Second', elevated: true }, fixture.atomic))
       .rejects
       .toMatchObject({ code: 'OWNER_SERVICE_ACCOUNT_LIMIT' })
   })
@@ -65,7 +65,7 @@ describe('service accounts with live grants and transactions', () => {
     const { staffMember } = await create()
     const next = { ...scopedGrant, permission: Permission.GRADE_READ }
     const updated = await updateServiceAccount(fixture.repositories, actor, staffMember.id, {
-      displayName: 'New Name',
+      name: 'New Name',
       permissionAssignments: [next],
     }, fixture.atomic)
     expect(updated.fullName).toBe('New Name')
@@ -104,14 +104,14 @@ describe('service accounts with live grants and transactions', () => {
   test('owner service accounts cannot manage other service accounts', async () => {
     const created = await create(true)
     const machine = createServiceStaffActorMetadata({ subjectId: 'service-person', staffMemberId: created.staffMember.id, schoolId: 'school-a', requestId: 'machine', authenticatedAt: new Date() })
-    await expect(createServiceAccount(fixture.repositories, machine, { serviceId: 'child', displayName: 'Child', elevated: true }, fixture.atomic))
+    await expect(createServiceAccount(fixture.repositories, machine, { serviceId: 'child', name: 'Child', elevated: true }, fixture.atomic))
       .rejects
       .toBeInstanceOf(AuthorizationError)
   })
 
   test('an administrator cannot rotate into broader grants or manage elevated accounts', async () => {
     const delegated = await create()
-    const elevated = await createServiceAccount(fixture.repositories, actor, { serviceId: 'owner', displayName: 'Owner', elevated: true }, fixture.atomic)
+    const elevated = await createServiceAccount(fixture.repositories, actor, { serviceId: 'owner', name: 'Owner', elevated: true }, fixture.atomic)
     await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
     for (const permission of [Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE]) {
       await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
@@ -125,7 +125,7 @@ describe('service accounts with live grants and transactions', () => {
     }
     await expect(rotateServiceAccountKey(fixture.repositories, actor, delegated.staffMember.id, {}, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
     await expect(rotateServiceAccountKey(fixture.repositories, actor, elevated.staffMember.id, {}, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(updateServiceAccount(fixture.repositories, actor, elevated.staffMember.id, { displayName: 'Changed' }, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(updateServiceAccount(fixture.repositories, actor, elevated.staffMember.id, { name: 'Changed' }, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
     await expect(revokeServiceAccount(fixture.repositories, actor, elevated.staffMember.id, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
       id: 'delegation',

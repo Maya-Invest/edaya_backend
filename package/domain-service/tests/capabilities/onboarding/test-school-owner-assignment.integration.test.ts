@@ -1,9 +1,9 @@
 import { EDAYA_SPARK_S2S_CLIENT_ID, encodeS2sApiKey, localEdayaSparkS2sApiKey } from '@edaya/authorization'
 import { noOpFileStorage, noOpNotificationGateway } from '@edaya/core'
-import { SchoolApplication } from '@edaya/service'
+import { registerSchoolWithOwner, SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
-import { registerSchoolWithOwner } from '../../../src/capabilities/onboarding/register-school-with-owner'
 
 const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
@@ -14,7 +14,7 @@ describe('school registration with a central identity owner', () => {
   const input = { id: 'new-school', name: 'New school', timeZone: 'UTC', ownerStaffId: 'new-staff', requestId: 'onboarding' }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
-    application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage, accountInvitationsEnabled: false })
+    application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage, accountInvitationsEnabled: false })
   })
   afterEach(async () => {
     await releaseDatabase(fixture.db)

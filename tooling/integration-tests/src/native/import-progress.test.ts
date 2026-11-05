@@ -1,6 +1,6 @@
 import type { ImportFormatPort } from '@edaya/core'
 import { PostgresCommandJournal, PostgresImportStore } from '@edaya/adaptor-postgres'
-import { createInMemoryFileStorage, Guardian, Student } from '@edaya/core'
+import { createInMemoryFileStorage, Student } from '@edaya/core'
 import { dispatchSchoolImports, SchoolApplication } from '@edaya/service'
 import { expect, test } from 'bun:test'
 import { fixture } from './support/marks-fixture'
@@ -15,7 +15,7 @@ test('native import batches preserve progress across concurrent dispatch, replay
   const application = new SchoolApplication({ repositories: f.r, notificationGateway: f.gateway, atomicExecution: f.application.atomicExecution, commandJournal: new PostgresCommandJournal(), durableWork: f.application.durableWork, importPersistence: new PostgresImportStore(), importFormat: format, fileStorage: createInMemoryFileStorage() })
   const imports = application.forActor(f.editor.baseService.actor).imports
   const batch = await imports.create({ academicYearId: f.id('year'), enrollmentEffectiveDate: '2026-01-01' })
-  await imports.submit({ batchId: batch.id, type: 'students', fileName: 'students.csv', bytes: new TextEncoder().encode(JSON.stringify({ headers: ['matricule', 'first_name', 'last_name', 'class'], rows: Array.from({ length: 22 }, (_, i) => ({ row: i + 2, cells: [`import-${i}`, 'Student', String(i), f.id('class')] })) })) })
+  await imports.submit({ batchId: batch.id, type: 'students', fileName: 'students.csv', bytes: new TextEncoder().encode(JSON.stringify({ headers: ['identifier', 'first_name', 'last_name', 'class_id'], rows: Array.from({ length: 22 }, (_, i) => ({ row: i + 2, cells: [`import-${i}`, 'Student', String(i), f.id('class')] })) })) })
   const preview = await imports.validate({ batchId: batch.id })
   const confirmation = { batchId: batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! }
   await imports.confirm(confirmation)
@@ -36,34 +36,26 @@ test('native import batches preserve progress across concurrent dispatch, replay
   expect(await imports.status(batch.id)).toEqual(status)
 }, 30000)
 
-test('native normalized import predicates preserve Unicode case and compatibility matching', async () => {
-  const f = await fixture('import-unicode')
-  await f.r.students.save(new Student({ id: f.id('unicode'), schoolId: f.id('school'), matricule: '\u00A0ＭＡＴ-É\u00A0', firstName: 'First', lastName: 'Last' }))
-  await f.r.students.save(new Student({ id: f.id('other-unicode'), schoolId: f.id('school'), matricule: 'ÉCOLE', firstName: 'Other', lastName: 'Student' }))
-  await f.r.students.save(new Student({ id: f.id('ascii'), schoolId: f.id('school'), matricule: '\t tutor \n', firstName: 'First', lastName: 'Last' }))
+test('native import targets normalize human identifiers while preserving leading zeros', async () => {
+  const f = await fixture('import-normalized')
+  await f.r.students.save(new Student({ id: f.id('leading'), schoolId: f.id('school'), identifier: '００１-a', firstName: 'First', lastName: 'Last' }))
+  await f.r.students.save(new Student({ id: f.id('ascii'), schoolId: f.id('school'), identifier: ' tutor ', firstName: 'First', lastName: 'Last' }))
   const application = new SchoolApplication({ repositories: f.r, notificationGateway: f.gateway, atomicExecution: f.application.atomicExecution, commandJournal: new PostgresCommandJournal(), durableWork: f.application.durableWork, importPersistence: new PostgresImportStore(), importFormat: format, fileStorage: createInMemoryFileStorage() })
   const imports = application.forActor(f.editor.baseService.actor).imports
   const batch = await imports.create({ academicYearId: f.id('year') })
-  await imports.submit({ batchId: batch.id, type: 'students', fileName: 'unicode.csv', bytes: new TextEncoder().encode(JSON.stringify({ headers: ['matricule', 'first_name', 'last_name'], rows: [{ row: 2, cells: ['mat-é', 'Updated', 'Name'] }, { row: 3, cells: ['tutor', 'Updated', 'Name'] }] })) })
+  await imports.submit({ batchId: batch.id, type: 'students', fileName: 'people.csv', bytes: new TextEncoder().encode(JSON.stringify({ headers: ['identifier', 'first_name', 'last_name'], rows: [{ row: 2, cells: ['001-a', 'Updated', 'Name'] }, { row: 3, cells: ['tutor', 'Updated', 'Name'] }] })) })
   const preview = await imports.validate({ batchId: batch.id })
-  expect(preview.rows.map(row => row.targetId)).toEqual(expect.arrayContaining([f.id('unicode'), f.id('ascii')]))
+  expect(preview.rows.map(row => row.targetId)).toEqual(expect.arrayContaining([f.id('leading'), f.id('ascii')]))
   expect(preview.rows.every(row => row.outcome === 'pending')).toBe(true)
 }, 30000)
 
-test('native guardian uniqueness narrows candidates but retains Unicode rules and concurrent database conflicts', async () => {
-  const f = await fixture('import-person-code')
-  const guardian = (id: string, code: string) => new Guardian({ id: f.id(id), schoolId: f.id('school'), code, firstName: 'First', lastName: 'Parent' })
-  const save = (id: string, code: string) => f.editor.baseService.entities.guardians.save(guardian(id, code))
-  await save('unicode', 'ÉCOLE')
-  await expect(save('unicode-duplicate', '\u00A0école\u00A0')).rejects.toMatchObject({ code: 'GUARDIAN_CODE_ALREADY_EXISTS' })
-  await save('ascii', 'CODE')
-  await expect(save('ascii-duplicate', '\t code \n')).rejects.toMatchObject({ code: 'GUARDIAN_CODE_ALREADY_EXISTS' })
-  await save('compatibility', 'ＣＯＤＥ')
-  await save('ascii', 'code')
-  const attempts = await Promise.allSettled([
-    save('race-one', 'RACE'),
-    f.other.baseService.entities.guardians.save(guardian('race-two', 'RACE')),
-  ])
-  expect(attempts.filter(result => result.status === 'fulfilled')).toHaveLength(1)
-  expect(await f.r.guardians.count({ schoolId: f.id('school'), code: 'RACE' })).toBe(1)
+test('native identifier allocation serializes competing instances and replays a stable attempt', async () => {
+  const f = await fixture('import-identifiers')
+  const input = { schoolId: f.id('school'), firstName: 'Family', lastName: 'Member', identifier: '001-a', sendAccountInvitation: false }
+  const requests = await Promise.allSettled([f.editor, f.other].map((service, index) =>
+    service.studentWorkflow.registerGuardian({ ...input, requestId: String(index) })))
+  expect(requests.filter(result => result.status === 'fulfilled')).toHaveLength(1)
+  const empty = await Promise.all([f.editor, f.other].map((service, index) =>
+    service.studentWorkflow.registerGuardian({ ...input, identifier: null, requestId: `blank-${index}` })))
+  expect(empty[0]!.id).not.toBe(empty[1]!.id)
 }, 30000)

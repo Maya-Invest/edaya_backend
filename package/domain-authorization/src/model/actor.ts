@@ -49,6 +49,7 @@ export interface TeacherActorMetadata extends InteractiveActorBase {
 }
 
 export interface SystemActorMetadata {
+  readonly onBehalfOfSubjectId?: string
   readonly kind: 'system'
   readonly systemId: string
   readonly schoolId: string
@@ -124,6 +125,7 @@ export interface TeacherActorMetadataInput extends InteractiveActorBaseInput {
 }
 
 export interface SystemActorMetadataInput {
+  onBehalfOfSubjectId?: string
   systemId: string
   schoolId: string
   requestId: string
@@ -212,6 +214,7 @@ export function createTeacherActorMetadata(input: TeacherActorMetadataInput): Te
 export function createSystemActorMetadata(input: SystemActorMetadataInput): SystemActorMetadata {
   return Object.freeze({
     kind: 'system',
+    ...(input.onBehalfOfSubjectId ? { onBehalfOfSubjectId: requireNonBlank(input.onBehalfOfSubjectId, 'onBehalfOfSubjectId') } : {}),
     systemId: requireNonBlank(input.systemId, 'systemId'),
     schoolId: requireNonBlank(input.schoolId, 'schoolId'),
     requestId: requireNonBlank(input.requestId, 'requestId'),

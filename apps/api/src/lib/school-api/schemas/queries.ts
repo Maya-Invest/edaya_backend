@@ -630,7 +630,7 @@ export const assessmentEditorContextResponseSchema = z.object({ assessmentsRaw: 
 
 export const getActivityRosterQuerySchema = z.object({ activityId: z.string().min(1) }).openapi("GetActivityRosterQuery");
 export const activityRosterResponseSchema = z.object({
-  students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), matricule: z.string().optional(), classGroupId: z.string().optional() })),
+  students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), identifier: z.string().optional(), classGroupId: z.string().optional() })),
   eligibleStudentIds: z.array(z.string()),
   classes: z.array(z.object({ id: z.string(), name: z.string() })),
 }).openapi("ActivityRosterResponse");

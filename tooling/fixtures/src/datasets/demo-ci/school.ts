@@ -1,5 +1,5 @@
 import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
-import { AttendanceMode, DayOfWeek, defaultSubjectCategoryId, SubjectColor } from '@edaya/core'
+import { AttendanceMode, DayOfWeek, SubjectColor } from '@edaya/core'
 import { IVORY_COAST_ONBOARDING_DATASET } from '../../onboarding/ivory-coast/parse-ivory-coast-templates'
 import { classNameFromLabel } from '../../onboarding/registry'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
@@ -57,24 +57,24 @@ export const demoCiAcademicPeriods = [
 
 /** Niveaux du cycle collège (programme ivoirien). Les libellés sont ceux du template ci-college. */
 export const demoCiGradeLevels = [
-  { id: 'ci-gl-6', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sixième', label: '6ème', cycle: 'Collège', order: 1 },
-  { id: 'ci-gl-5', schoolId: DEMO_CI_SCHOOL_ID, name: 'Cinquième', label: '5ème', cycle: 'Collège', order: 2 },
-  { id: 'ci-gl-4', schoolId: DEMO_CI_SCHOOL_ID, name: 'Quatrième', label: '4ème', cycle: 'Collège', order: 3 },
-  { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: 'Troisième', label: '3ème', cycle: 'Collège', order: 4 },
+  { id: 'ci-gl-6', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sixième', shortName: '6ème', cycle: 'Collège', order: 1 },
+  { id: 'ci-gl-5', schoolId: DEMO_CI_SCHOOL_ID, name: 'Cinquième', shortName: '5ème', cycle: 'Collège', order: 2 },
+  { id: 'ci-gl-4', schoolId: DEMO_CI_SCHOOL_ID, name: 'Quatrième', shortName: '4ème', cycle: 'Collège', order: 3 },
+  { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: 'Troisième', shortName: '3ème', cycle: 'Collège', order: 4 },
 ] as const satisfies readonly GradeLevelInput[]
 
 const demoCiDailyPeriodDefinitions = [
-  { id: 'ci-pd-1', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 1', order: 1, startTime: '07:30', endTime: '08:15', isBreak: false },
-  { id: 'ci-pd-2', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 2', order: 2, startTime: '08:15', endTime: '09:00', isBreak: false },
-  { id: 'ci-pd-break-am', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Récréation', order: 3, startTime: '09:00', endTime: '09:15', isBreak: true },
-  { id: 'ci-pd-3', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 3', order: 4, startTime: '09:15', endTime: '10:00', isBreak: false },
-  { id: 'ci-pd-4', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 4', order: 5, startTime: '10:00', endTime: '10:45', isBreak: false },
-  { id: 'ci-pd-5', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 5', order: 6, startTime: '10:45', endTime: '11:30', isBreak: false },
-  { id: 'ci-pd-lunch', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Pause déjeuner', order: 7, startTime: '11:30', endTime: '13:00', isBreak: true },
-  { id: 'ci-pd-6', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 6', order: 8, startTime: '13:00', endTime: '13:45', isBreak: false },
-  { id: 'ci-pd-7', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 7', order: 9, startTime: '13:45', endTime: '14:30', isBreak: false },
-  { id: 'ci-pd-break-pm', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Récréation', order: 10, startTime: '14:30', endTime: '14:45', isBreak: true },
-  { id: 'ci-pd-8', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 8', order: 11, startTime: '14:45', endTime: '15:30', isBreak: false },
+  { id: 'ci-pd-1', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 1', order: 1, startTime: '07:30', endTime: '08:15', isBreak: false },
+  { id: 'ci-pd-2', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 2', order: 2, startTime: '08:15', endTime: '09:00', isBreak: false },
+  { id: 'ci-pd-break-am', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Récréation', order: 3, startTime: '09:00', endTime: '09:15', isBreak: true },
+  { id: 'ci-pd-3', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 3', order: 4, startTime: '09:15', endTime: '10:00', isBreak: false },
+  { id: 'ci-pd-4', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 4', order: 5, startTime: '10:00', endTime: '10:45', isBreak: false },
+  { id: 'ci-pd-5', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 5', order: 6, startTime: '10:45', endTime: '11:30', isBreak: false },
+  { id: 'ci-pd-lunch', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Pause déjeuner', order: 7, startTime: '11:30', endTime: '13:00', isBreak: true },
+  { id: 'ci-pd-6', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 6', order: 8, startTime: '13:00', endTime: '13:45', isBreak: false },
+  { id: 'ci-pd-7', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 7', order: 9, startTime: '13:45', endTime: '14:30', isBreak: false },
+  { id: 'ci-pd-break-pm', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Récréation', order: 10, startTime: '14:30', endTime: '14:45', isBreak: true },
+  { id: 'ci-pd-8', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, name: 'Période 8', order: 11, startTime: '14:45', endTime: '15:30', isBreak: false },
 ] as const
 
 const demoCiWeekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday] as const
@@ -88,7 +88,7 @@ export const demoCiPeriodDefinitions = demoCiWeekdays.flatMap(dayOfWeek =>
   }))) satisfies readonly PeriodDefinitionInput[]
 
 const demoCiLabelByGradeLevelId = new Map<string, string>(
-  demoCiGradeLevels.map(level => [level.id, level.label]),
+  demoCiGradeLevels.map(level => [level.id, level.shortName]),
 )
 
 /** Aligne le seed sur l'onboarding : même racine (le libellé du niveau) et même mode par défaut. */
@@ -112,7 +112,7 @@ function demoCiCategoryId(code: string): string {
   const category = IVORY_COAST_ONBOARDING_DATASET.subjectCategories.find(row => row.code === code)
   if (!category)
     throw new Error(`Unknown demo category: ${code}`)
-  return defaultSubjectCategoryId(DEMO_CI_SCHOOL_ID, category.name)
+  return `${DEMO_CI_SCHOOL_ID}:subject-category:${category.code}`
 }
 
 /** Matières du collège ivoirien (cf. template ci-college). */

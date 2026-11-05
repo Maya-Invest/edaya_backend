@@ -1,16 +1,16 @@
 import { AccessPolicies, ActorAssuranceLevel, createStaffActorMetadata, describeActionGrants, Permission } from '@edaya/authorization'
-import { AcademicYear, ClassGroup, GradeLevel, StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { AcademicYear, ClassGroup, GradeLevel, StaffAssignment, StaffMember, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import { createTestApp } from '../utils/test-adapter'
 
 async function fixture() {
   const { schoolRepositories: repos } = await createTestApp()
-  await repos.academicYears.save(new AcademicYear({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-  await repos.gradeLevels.save(new GradeLevel({ id: 'level', schoolId: 'school', name: 'Level', label: 'Level', order: 1 }))
+  await repos.academicYears.save(new AcademicYear(withShortName({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+  await repos.gradeLevels.save(new GradeLevel(withShortName({ id: 'level', schoolId: 'school', name: 'Level', shortName: 'Level', order: 1 })))
   for (const id of ['class', 'other'])
-    await repos.classGroups.save(new ClassGroup({ id, schoolId: 'school', academicYearId: 'year', gradeLevelId: 'level', name: id }))
-  await repos.staffMembers.save(new StaffMember({ id: 'staff', schoolId: 'school', firstName: 'Marie', lastName: 'Dupont', subjectId: 'person' }))
+    await repos.classGroups.save(new ClassGroup(withShortName({ id, schoolId: 'school', academicYearId: 'year', gradeLevelId: 'level', name: id })))
+  await repos.staffMembers.save(new StaffMember({ identifier: 'STAFF', id: 'staff', schoolId: 'school', firstName: 'Marie', lastName: 'Dupont', subjectId: 'person' }))
   const actor = createStaffActorMetadata({ staffMemberId: 'staff', subjectId: 'person', schoolId: 'school', academicYearId: 'year', requestId: 'persistence-test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong })
   return { repos, actor, access: () => new AccessPolicies(actor, repos) }
 }

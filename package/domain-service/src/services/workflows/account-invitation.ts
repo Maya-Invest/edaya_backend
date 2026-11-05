@@ -4,7 +4,7 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity, withShortName } from '@edaya/core'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import { invitationLifecycleLockKey } from '../../capabilities/invitations/invitation-lifecycle'
 import { buildInvitationUrl, generateInvitationToken, hashInvitationToken } from '../../capabilities/invitations/invitation-token'
@@ -472,11 +472,11 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     if (!school || school.pendingOwnerStaffId !== invitation.targetId) {
       return
     }
-    const updated = new SchoolEntity({
+    const updated = new SchoolEntity(withShortName({
       ...school.data,
       ownerSubjectId: subjectId,
       pendingOwnerStaffId: null,
-    })
+    }))
     const scope = await this.baseService.access.identities.assertClaimOwner(invitation, school, updated)
     await this.repositories.schools.forAccess(scope).save(updated)
   }

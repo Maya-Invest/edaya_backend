@@ -172,6 +172,7 @@ export const coreCommands = [
   command("enroll-student-in-activity", "enrollStudentInActivity", commandSchemas.activityEnrollmentConfigCommandSchema),
   command("create-class-group", "createClassGroup", commandSchemas.createClassGroupCommandSchema),
   command("update-class-group-configuration", "updateClassGroupConfiguration", commandSchemas.updateClassGroupConfigurationCommandSchema),
+  command("correct-human-identifier", "correctHumanIdentifier", commandSchemas.correctHumanIdentifierCommandSchema),
   command("register-staff-member", "registerStaffMember", commandSchemas.registerStaffMemberCommandSchema),
   command("register-teacher", "registerTeacher", commandSchemas.registerTeacherCommandSchema),
   command("update-staff-member-status", "updateStaffMemberStatus", commandSchemas.updateStaffMemberStatusCommandSchema),

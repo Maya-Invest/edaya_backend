@@ -4,6 +4,7 @@ import { createSystemActorMetadata } from '@edaya/authorization'
 import { noOpNotificationGateway } from '@edaya/core'
 import { SchoolApplication, SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { testFileStorage } from '../../support/test-file-storage'
 
 describe('SchoolApplication', () => {
@@ -20,12 +21,7 @@ describe('SchoolApplication', () => {
   }
 
   test('creates actor-scoped SchoolService instances', () => {
-    const application = new SchoolApplication({
-      repositories,
-      atomicExecution,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories, atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
 
     const service = application.forActor(actor)
 
@@ -40,12 +36,7 @@ describe('SchoolApplication', () => {
   })
 
   test('does not expose legacy grouped services', () => {
-    const application = new SchoolApplication({
-      repositories,
-      atomicExecution,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories, atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
 
     const serviceProperties = application.forActor(actor) as unknown as {
       setup?: unknown
@@ -63,28 +54,17 @@ describe('SchoolApplication', () => {
   })
 
   test('delegates auth account lookup to the configured resolver', async () => {
-    const application = new SchoolApplication({
-      repositories,
-      atomicExecution,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-      authContactResolver: {
-        resolveBySubjectId: async () => undefined,
-        hasAccountForEmail: async email => email === 'known@school.test',
-      },
-    })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories, atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, authContactResolver: {
+      resolveBySubjectId: async () => undefined,
+      hasAccountForEmail: async email => email === 'known@school.test',
+    } })
 
     await expect(application.hasAuthAccountForEmail('known@school.test')).resolves.toBe(true)
     await expect(application.hasAuthAccountForEmail('unknown@school.test')).resolves.toBe(false)
   })
 
   test('returns false when no auth contact resolver is configured', async () => {
-    const application = new SchoolApplication({
-      repositories,
-      atomicExecution,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories, atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
 
     await expect(application.hasAuthAccountForEmail('anyone@school.test')).resolves.toBe(false)
   })

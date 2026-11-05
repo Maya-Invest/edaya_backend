@@ -1,20 +1,21 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SqlExecutor } from '../../../repo/db/school/lib/reset-finance-tables'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, Attachment, AttachmentOwnerKind, CatalogServiceStatus, Guardian, noOpFileStorage, noOpNotificationGateway, PaymentMethod, School, StaffMember, Student } from '@edaya/core'
+import { AcademicYear, Attachment, AttachmentOwnerKind, CatalogServiceStatus, Guardian, noOpFileStorage, noOpNotificationGateway, PaymentMethod, School, StaffMember, Student, withShortName } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
 import { assertLoopbackNativeFinanceResetUrl } from '../../../repo/db/school/lib/assert-finance-reset-target'
 import { captureFinancePreservationDigest, FINANCE_RESET_TABLES, resetFinanceTables } from '../../../repo/db/school/lib/reset-finance-tables'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = assertLoopbackNativeFinanceResetUrl(process.env.EDAYA_NATIVE_TEST_URL ?? '')
 
 const handle = await createPostgresSchoolDatabase(url, { max: 2 })
 const db = handle.db as SqlExecutor & PostgresTransactionalDb
-const repos = new PostgresSchoolRepositories(handle.db)
+const repos = createFixtureRepositories(handle.db)
 const actor = createStaffActorMetadata({
   schoolId: 'finance-reset-school',
   staffMemberId: 'finance-reset-owner',
@@ -23,13 +24,7 @@ const actor = createStaffActorMetadata({
   authenticatedAt: new Date(),
   assuranceLevel: ActorAssuranceLevel.Strong,
 })
-const app = new SchoolApplication({
-  repositories: repos,
-  atomicExecution: new PostgresAtomicExecution(db),
-  commandJournal: new PostgresCommandJournal(),
-  notificationGateway: noOpNotificationGateway,
-  fileStorage: noOpFileStorage,
-}).forActor(actor)
+const app = new SchoolApplication({ repositories: repos, atomicExecution: new PostgresAtomicExecution(db), commandJournal: new PostgresCommandJournal(), notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage }).forActor(actor)
 async function query(statement: string) {
   const result = await db.execute(sql.raw(statement))
   if (Array.isArray(result))
@@ -48,7 +43,7 @@ afterAll(async () => {
 })
 
 test('finance-only reset preserves identity, school, academic and journal rows', async () => {
-  await repos.schools.save(new School({ financeCurrency: 'USD', id: actor.schoolId, name: 'Reset school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+  await repos.schools.save(new School(withShortName({ financeCurrency: 'USD', id: actor.schoolId, name: 'Reset school', timeZone: 'UTC', ownerSubjectId: actor.subjectId })))
   await repos.staffMembers.save(new StaffMember({
     id: actor.staffMemberId,
     schoolId: actor.schoolId,
@@ -56,13 +51,13 @@ test('finance-only reset preserves identity, school, academic and journal rows',
     firstName: 'Reset',
     lastName: 'Owner',
   }))
-  await repos.academicYears.save(new AcademicYear({
+  await repos.academicYears.save(new AcademicYear(withShortName({
     id: 'reset-year',
     schoolId: actor.schoolId,
     name: '2026',
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-12-31'),
-  }))
+  })))
   await repos.students.save(new Student({
     id: 'reset-student',
     schoolId: actor.schoolId,

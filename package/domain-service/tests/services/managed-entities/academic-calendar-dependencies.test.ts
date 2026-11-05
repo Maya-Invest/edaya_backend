@@ -1,5 +1,5 @@
 import type { SchoolRepositories } from '../../../src/ports/school-repositories'
-import { AcademicPeriod, AcademicYear, CORE_ENTITY_KEYS } from '@edaya/core'
+import { AcademicPeriod, AcademicYear, CORE_ENTITY_KEYS, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { assertAcademicPeriodUnused, validateAcademicYearDelete } from '../../../src/services/entities/config/school/academic-calendar-dependencies'
 
@@ -10,8 +10,8 @@ function repositories(overrides: Record<string, unknown> = {}): SchoolRepositori
   ]) as unknown as SchoolRepositories
 }
 
-const year = new AcademicYear({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })
-const period = new AcademicPeriod({ id: 'period', schoolId: 'school', academicYearId: year.id, name: 'Term', startDate: year.startDate, endDate: year.endDate })
+const year = new AcademicYear(withShortName({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
+const period = new AcademicPeriod(withShortName({ id: 'period', schoolId: 'school', academicYearId: year.id, name: 'Term', startDate: year.startDate, endDate: year.endDate }))
 
 describe('calendar deletion reference protection', () => {
   test.each(['studentCharges', 'payments', 'documentIssuances', 'documentNumberSeries', 'staffManualPermissionAssignments', 'familyFeedbackCampaigns'])('rejects a year used by %s without cascading', async (resource) => {

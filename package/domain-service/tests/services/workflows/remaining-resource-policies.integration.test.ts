@@ -1,8 +1,10 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { GrantScope } from '@edaya/core'
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, corePermissionDefinition, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, corePermissionDefinition, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -25,7 +27,7 @@ describe('remaining resource policies against native SQL and transactions', () =
   })
   afterEach(async () => releaseDatabase(fixture.db))
   function service(actor: SchoolScopedActorMetadata = staff) {
-    return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    return new SchoolService({ commandJournal: new PostgresCommandJournal(), actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   }
   async function grant(permission: Permission, scopes?: GrantScope[]) {
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: scopes ?? (corePermissionDefinition(permission).scopePolicy.mode === 'resources' ? [{ kind: 'all', grain: 'class_group' }] : [{ kind: 'school' }]) }))
@@ -36,15 +38,15 @@ describe('remaining resource policies against native SQL and transactions', () =
   }
   async function activities() {
     for (const id of ['club', 'other-club', 'foreign-club'])
-      await fixture.repositories.activities.save(new Activity({ id, schoolId: id === 'foreign-club' ? 'school-b' : 'school-a', name: id, category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: id, startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
+      await fixture.repositories.activities.save(new Activity(withShortName({ id, schoolId: id === 'foreign-club' ? 'school-b' : 'school-a', name: id, category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: id, startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })))
   }
   async function health() {
     for (const [id, studentId, schoolId] of [['health-a', 'student-a', 'school-a'], ['health-other', 'student-other', 'school-a'], ['health-b', 'student-b', 'school-b']])
       await fixture.repositories.studentHealthProfiles.save(new StudentHealthProfile({ id: id!, studentId: studentId!, schoolId: schoolId!, clinicalNotes: 'Private' }))
   }
   async function availability() {
-    await fixture.repositories.teachers.save(new Teacher({ id: 'teacher-other', schoolId: 'school-a', firstName: 'Other', lastName: 'Teacher' }))
-    await fixture.repositories.teachers.save(new Teacher({ id: 'teacher-b', schoolId: 'school-b', firstName: 'Foreign', lastName: 'Teacher' }))
+    await saveHumanFixture(fixture.repositories.teachers, new Teacher({ id: 'teacher-other', schoolId: 'school-a', firstName: 'Other', lastName: 'Teacher' }))
+    await saveHumanFixture(fixture.repositories.teachers, new Teacher({ id: 'teacher-b', schoolId: 'school-b', firstName: 'Foreign', lastName: 'Teacher' }))
     for (const [id, teacherId, academicYearId] of [['own', 'teacher-a', 'year-a'], ['other', 'teacher-other', 'year-a'], ['old', 'teacher-a', 'year-old'], ['foreign', 'teacher-b', 'year-b']])
       await fixture.repositories.teacherUnavailabilities.save(new TeacherUnavailability({ id: id!, teacherId: teacherId!, academicYearId: academicYearId!, recurrence: TeacherUnavailabilityRecurrence.OneOff, startsAt: new Date(academicYearId === 'year-old' ? '2025-05-01T08:00Z' : '2026-05-01T08:00Z'), endsAt: new Date(academicYearId === 'year-old' ? '2025-05-01T09:00Z' : '2026-05-01T09:00Z') }))
   }
@@ -92,7 +94,7 @@ describe('remaining resource policies against native SQL and transactions', () =
   })
 
   test('staff without directory grants can read their selected profile but not colleagues', async () => {
-    await fixture.db.exec(`INSERT INTO staff_members (id, school_id, first_name, last_name, is_active, created_at) VALUES ('staff-other', 'school-a', 'Other', 'Staff', true, now())`)
+    await fixture.db.exec(`INSERT INTO staff_members (id, identifier, school_id, first_name, last_name, is_active, created_at) VALUES ('staff-other', 'STAFF-OTHER', 'school-a', 'Other', 'Staff', true, now())`)
     const entities = service().baseService.entities.staffMembers
     expect((await entities.findById('staff-a'))?.id).toBe('staff-a')
     expect(await entities.findById('staff-other')).toBeUndefined()
@@ -167,7 +169,7 @@ describe('remaining resource policies against native SQL and transactions', () =
     const roster = await service().getActivityRoster({ activityId: 'club' })
     expect(roster.eligibleStudentIds).toEqual(['student-a'])
     expect(roster.classes.map(row => row.id)).toEqual(['class-a'])
-    expect(roster.students).toEqual([{ id: 'student-a', firstName: expect.any(String), lastName: expect.any(String), matricule: undefined, classGroupId: 'class-a' }])
+    expect(roster.students).toEqual([{ id: 'student-a', firstName: expect.any(String), lastName: expect.any(String), identifier: 'STUDENT-A', classGroupId: 'class-a' }])
     await expect(service().baseService.entities.students.findById('student-a')).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service().getActivityRoster({ activityId: 'foreign-club' })).rejects.toBeInstanceOf(AuthorizationError)
     await expire(Permission.ACTIVITY_ENROLLMENT_MANAGE)
@@ -217,8 +219,8 @@ describe('remaining resource policies against native SQL and transactions', () =
   test('homeroom and family class activity reads differ from subject-only teaching and revoke immediately', async () => {
     await activities()
     const activity = (await fixture.repositories.activities.findById('club'))!
-    await fixture.repositories.activities.save(new Activity({ ...activity.data, id: 'private-club' }))
-    await fixture.repositories.activities.save(new Activity({ ...activity.data, id: 'old-club' }))
+    await fixture.repositories.activities.save(new Activity(withShortName({ ...activity.data, id: 'private-club' })))
+    await fixture.repositories.activities.save(new Activity(withShortName({ ...activity.data, id: 'old-club' })))
     await fixture.repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id: 'old', classGroupId: 'class-old', activityId: 'old-club' }))
     for (const [id, classGroupId] of [['own', 'class-a'], ['other', 'class-other']] as const)
       await fixture.repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id, classGroupId, activityId: id === 'own' ? 'club' : 'private-club' }))
@@ -248,12 +250,12 @@ describe('remaining resource policies against native SQL and transactions', () =
 
   async function curriculum() {
     for (const [id, subjectId] of [['matter', 'math'], ['other-matter', 'math'], ['foreign-matter', 'foreign-math']] as const)
-      await fixture.repositories.subjectMatters.save(new SubjectMatter({ id, subjectId, name: id, sequenceOrder: 1 }))
+      await fixture.repositories.subjectMatters.save(new SubjectMatter(withShortName({ id, subjectId, name: id, sequenceOrder: 1 })))
   }
 
   test('subject scopes work before classes and isolate subject, grade, year and school', async () => {
-    await fixture.db.exec('INSERT INTO grade_levels (id, school_id, name, label, order_val, created_at) VALUES (\'empty-grade\', \'school-a\', \'Empty\', \'Empty\', 2, now())')
-    await fixture.db.exec('INSERT INTO academic_disciplines (id, school_id, code, name, created_at, updated_at) VALUES (\'test-discipline\', \'school-a\', \'TEST\', \'Test discipline\', now(), now())')
+    await fixture.db.exec('INSERT INTO grade_levels (id, school_id, name, short_name, order_val, created_at) VALUES (\'empty-grade\', \'school-a\', \'Empty\', \'Empty\', 2, now())')
+    await fixture.db.exec('INSERT INTO academic_disciplines (id, school_id, short_name, name, created_at, updated_at) VALUES (\'test-discipline\', \'school-a\', \'TEST\', \'Test discipline\', now(), now())')
     const input = { disciplineId: 'test-discipline', id: 'empty-math', schoolId: 'school-a', gradeLevelId: 'empty-grade', academicYearId: 'year-a', name: 'Math', categoryId: 'category-school-a-scientific' }
     const existing = (await fixture.repositories.subjects.findById('math'))!
     input.categoryId = existing.categoryId
@@ -263,7 +265,7 @@ describe('remaining resource policies against native SQL and transactions', () =
     await service().academicsWorkflow.configureSubject({ ...input, id: 'empty-math-2' })
     expect(await fixture.repositories.classSubjects.count({ subjectId: input.id })).toBe(0)
     expect((await service().baseService.entities.subjects.list()).map(row => row.id).sort()).toEqual(['empty-math', 'empty-math-2'])
-    await fixture.repositories.subjects.save(new Subject({ ...input, id: 'old-math', academicYearId: 'year-old' }))
+    await fixture.repositories.subjects.save(new Subject(withShortName({ ...input, id: 'old-math', academicYearId: 'year-old' })))
     expect(await service().baseService.entities.subjects.count()).toBe(2)
     for (const permission of [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_MANAGE])
       await grant(permission, [{ kind: 'subject', gradeLevelId: 'empty-grade', subjectId: input.id }])
@@ -299,7 +301,7 @@ describe('remaining resource policies against native SQL and transactions', () =
     await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'class_group', classGroupId: 'class-other' }])
     const entities = service().baseService.entities.subjectMatters
     const own = (await fixture.repositories.subjectMatters.findById('matter'))!
-    const changed = new SubjectMatter({ ...own.data, name: 'Changed' })
+    const changed = new SubjectMatter(withShortName({ ...own.data, name: 'Changed' }))
     await expect(entities.save(changed)).rejects.toBeInstanceOf(AuthorizationError)
     expect((await fixture.repositories.subjectMatters.findById('matter'))?.name).toBe('matter')
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }, { kind: 'class_group', classGroupId: 'class-other' }])
@@ -315,8 +317,8 @@ describe('remaining resource policies against native SQL and transactions', () =
     const subject = (await fixture.repositories.subjects.findById('math'))!
     const matter = (await fixture.repositories.subjectMatters.findById('matter'))!
     const change = {
-      subjects: () => entities.subjects.save(new Subject({ ...subject.data, name: 'Changed' })),
-      subjectMatters: () => entities.subjectMatters.save(new SubjectMatter({ ...matter.data, name: 'Changed' })),
+      subjects: () => entities.subjects.save(new Subject(withShortName({ ...subject.data, name: 'Changed' }))),
+      subjectMatters: () => entities.subjectMatters.save(new SubjectMatter(withShortName({ ...matter.data, name: 'Changed' }))),
     }[resource]
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }])
     await expect(change()).rejects.toBeInstanceOf(AuthorizationError)
@@ -330,11 +332,11 @@ describe('remaining resource policies against native SQL and transactions', () =
   test('grade curriculum management covers creation and deletion and rolls back mixed foreign batches', async () => {
     await curriculum()
     const entities = service().baseService.entities.subjectMatters
-    const proposal = new SubjectMatter({ id: 'new', subjectId: 'math', name: 'New', sequenceOrder: 2 })
+    const proposal = new SubjectMatter(withShortName({ id: 'new', subjectId: 'math', name: 'New', sequenceOrder: 2 }))
     await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'all', grain: 'class_group' }])
     await expect(entities.save(proposal)).rejects.toBeInstanceOf(AuthorizationError)
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE)
-    await expect(entities.batchSave([proposal, new SubjectMatter({ id: 'bad', subjectId: 'foreign-math', name: 'Bad', sequenceOrder: 2 })])).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(entities.batchSave([proposal, new SubjectMatter(withShortName({ id: 'bad', subjectId: 'foreign-math', name: 'Bad', sequenceOrder: 2 }))])).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.subjectMatters.findById('new')).toBeUndefined()
     await entities.save(proposal)
     await expect(entities.batchDelete(['new', 'foreign-matter'])).rejects.toBeInstanceOf(AuthorizationError)
@@ -347,7 +349,7 @@ describe('remaining resource policies against native SQL and transactions', () =
     await health()
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
     const before = (await fixture.repositories.staffMembers.findById('staff-a'))!
-    await fixture.repositories.staffMembers.save(new StaffMember({ ...before.data, accountKind: 'service', subjectId: undefined, serviceId: 'health-integration' }))
+    await fixture.repositories.staffMembers.save(new StaffMember({ ...before.data, accountKind: 'service', identifier: undefined, name: 'Health integration', shortName: 'Health', subjectId: undefined, serviceId: 'health-integration' }))
     const entities = service(createServiceStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })).baseService.entities.studentHealthProfiles
     await expect(entities.list()).rejects.toBeInstanceOf(AuthorizationError)
     await grant(Permission.STUDENT_HEALTH_READ)

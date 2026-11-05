@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResultStatus, School } from '@edaya/core'
+import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResultStatus, School, withShortName } from '@edaya/core'
 import {
   describe,
   expect,
@@ -317,7 +317,7 @@ describe('SchoolService assessment workflows', () => {
     })
 
     const school = (await repositories.schools.findById('sch1'))!
-    await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
+    await repositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: undefined })))
     await expect(service.assessmentsWorkflow.writeHomeroomReportComment({
       requestId: 'homeroom-comment',
       expectedVersion: 1,

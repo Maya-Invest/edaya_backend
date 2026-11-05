@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { optionalHumanIdentifierSchema } from '../shared/visible-identification'
 
 export enum StudentStatus {
   Active = 'active',
@@ -12,7 +13,7 @@ export enum StudentStatus {
 export const studentSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
-  nationalMatricule: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  globalIdentifier: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
   sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
@@ -20,7 +21,7 @@ export const studentSchema = z.object({
   birthDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   placeOfBirth: z.string().trim().min(1, 'placeOfBirth must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   nationality: z.string().trim().min(1, 'nationality must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  matricule: z.string().trim().min(1, 'matricule must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  identifier: optionalHumanIdentifierSchema,
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   photoAttachmentId: z.string().trim().min(1, 'photoAttachmentId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -49,7 +50,7 @@ export class Student {
 
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
-  get nationalMatricule() { return this.data.nationalMatricule }
+  get globalIdentifier() { return this.data.globalIdentifier }
   get sourceFullName() { return this.data.sourceFullName }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
@@ -57,7 +58,7 @@ export class Student {
   get birthDate() { return this.data.birthDate }
   get placeOfBirth() { return this.data.placeOfBirth }
   get nationality() { return this.data.nationality }
-  get matricule() { return this.data.matricule }
+  get identifier() { return this.data.identifier }
   get photoUrl() { return this.data.photoUrl }
   get photoAttachmentId() { return this.data.photoAttachmentId }
   get subjectId() { return this.data.subjectId }
@@ -73,7 +74,7 @@ export class Student {
     return new Student({
       id: this.id,
       schoolId: this.schoolId,
-      nationalMatricule: this.nationalMatricule,
+      globalIdentifier: this.globalIdentifier,
       sourceFullName: this.sourceFullName,
       firstName: this.firstName,
       lastName: this.lastName,
@@ -81,7 +82,7 @@ export class Student {
       birthDate: this.birthDate,
       placeOfBirth: this.placeOfBirth,
       nationality: this.nationality,
-      matricule: this.matricule,
+      identifier: this.identifier,
       photoUrl: this.photoUrl,
       photoAttachmentId: this.photoAttachmentId,
       subjectId: this.subjectId,

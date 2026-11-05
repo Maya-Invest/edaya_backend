@@ -98,7 +98,7 @@ describe('communications and calendar scope boundaries', () => {
   })
 
   test('a visible announcement does not disclose its other direct recipients', async () => {
-    await fixture.repositories.guardians.save(new Guardian({ id: 'other-guardian', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian' }))
+    await fixture.repositories.guardians.save(new Guardian({ id: 'other-guardian', identifier: 'OTHER-GUARDIAN', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian' }))
     await announcement('mixed', Target.Guardian, 'guardian-a')
     await fixture.repositories.announcementTargets.save(new AnnouncementTarget({ id: 'private-target', announcementId: 'mixed', targetKind: Target.Guardian, targetId: 'other-guardian' }))
     const access = new AccessPolicies(actors[0], fixture.repositories)

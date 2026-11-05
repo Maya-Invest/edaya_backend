@@ -1,4 +1,4 @@
-import { GradeLevel, GradeScale, ReportCardResultStatus, School, StaffMember } from '@edaya/core'
+import { GradeLevel, GradeScale, ReportCardResultStatus, School, StaffMember, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestStaffActor } from '../../support/test-actor'
 import { createReportCardContext } from './report-card-workflow-context'
@@ -42,9 +42,9 @@ describe('configuration editors', () => {
   test('requires explicit legacy conversion and keeps legacy policies and results untouched', async () => {
     const f = await createReportCardContext()
     const original = (await f.repositories.gradeScales.findById('grade-scale'))!
-    await f.repositories.gradeScales.save(new GradeScale({ ...original.data, intervalConvention: 'legacy-closed', ranges: [...original.ranges] }))
+    await f.repositories.gradeScales.save(new GradeScale(withShortName({ ...original.data, intervalConvention: 'legacy-closed', ranges: [...original.ranges] })))
     await expect(f.service.assessmentsWorkflow.configureGradeScale({ id: original.id, requestId: 'legacy-write', expectedRevision: 0, action: 'interval', interval })).rejects.toMatchObject({ code: 'GRADE_SCALE_CONVERSION_REQUIRED' })
-    const legacy = new GradeScale({ ...original.data, intervalConvention: 'legacy-closed', ranges: [{ letter: 'F', minScore: 0, maxScore: 9.99 }, { letter: 'A', minScore: 10, maxScore: 20 }] })
+    const legacy = new GradeScale(withShortName({ ...original.data, intervalConvention: 'legacy-closed', ranges: [{ letter: 'F', minScore: 0, maxScore: 9.99 }, { letter: 'A', minScore: 10, maxScore: 20 }] }))
     await f.repositories.gradeScales.save(legacy)
     const scale = await f.service.assessmentsWorkflow.configureGradeScale({ id: legacy.id, requestId: 'convert', expectedRevision: 0, action: 'convert' })
     expect(scale.intervalConvention).toBe('continuous')
@@ -95,7 +95,7 @@ describe('configuration editors', () => {
   test('school section updates preserve short name and unrelated settings', async () => {
     const f = await createReportCardContext()
     const original = (await f.repositories.schools.findById('sch1'))!
-    await f.repositories.schools.save(new School({ ...original.data, shortName: 'Saved', phone: '123', city: 'Toronto', timetableMinDayGapSameSubject: 3 }))
+    await f.repositories.schools.save(new School(withShortName({ ...original.data, shortName: 'Saved', phone: '123', city: 'Toronto', timetableMinDayGapSameSubject: 3 })))
     const school = await f.service.setupWorkflow.updateSchoolConfiguration({ schoolId: 'sch1', name: 'A new full name' })
     expect(school.shortName).toBe('Saved')
     expect(school.phone).toBe('123')
@@ -125,10 +125,10 @@ describe('configuration editors', () => {
 
   test('a referenced scale cannot lose its last interval', async () => {
     const f = await createReportCardContext()
-    const scale = new GradeScale({ id: 'used', schoolId: 'sch1', ...metadata, intervalConvention: 'continuous', ranges: [{ ...interval, maxScore: 4 }] })
+    const scale = new GradeScale(withShortName({ id: 'used', schoolId: 'sch1', ...metadata, intervalConvention: 'continuous', ranges: [{ ...interval, maxScore: 4 }] }))
     await f.repositories.gradeScales.save(scale)
     const level = (await f.repositories.gradeLevels.findById('grade1'))!
-    await f.repositories.gradeLevels.save(new GradeLevel({ ...level.data, gradingPolicies: level.gradingPolicies.map(policy => ({ ...policy, scale: { ...scale.data, ranges: [...scale.ranges] } })) }))
+    await f.repositories.gradeLevels.save(new GradeLevel(withShortName({ ...level.data, gradingPolicies: level.gradingPolicies.map(policy => ({ ...policy, scale: { ...scale.data, ranges: [...scale.ranges] } })) })))
     await expect(f.service.assessmentsWorkflow.configureGradeScale({ id: scale.id, expectedRevision: 0, requestId: 'used-last', action: 'remove-interval', intervalId: interval.id })).rejects.toMatchObject({ code: 'GRADE_SCALE_INCOMPLETE' })
     expect((await f.repositories.gradeScales.findById(scale.id))?.ranges).toHaveLength(1)
   })

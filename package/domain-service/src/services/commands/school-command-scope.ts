@@ -7,7 +7,7 @@ export async function schoolCommandScope(actor: SchoolScopedActorMetadata, comma
   return {
     schoolId: actor.schoolId,
     command,
-    callerId: await digestCommandRequest([actor.kind, actor.kind === 'system' ? actor.systemId : actor.actorId, 'subjectId' in actor ? actor.subjectId ?? null : null]),
+    callerId: await digestCommandRequest([actor.kind, actor.kind === 'system' ? actor.systemId : actor.actorId, actor.kind === 'system' ? actor.onBehalfOfSubjectId ?? null : 'subjectId' in actor ? actor.subjectId ?? null : null]),
     requestId: await digestCommandRequest(logicalRequestId),
   }
 }

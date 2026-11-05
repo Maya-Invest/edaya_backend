@@ -24,16 +24,6 @@ async function validateSubjectCategorySave(
   repositories: SchoolRepositories,
 ): Promise<void> {
   await requireSchool(repositories.schools, category.schoolId)
-  const duplicate = await repositories.subjectCategories.findOne({
-    schoolId: category.schoolId,
-    name: category.name,
-  })
-  if (duplicate && duplicate.id !== category.id) {
-    throw new BusinessRuleViolationError(
-      'SUBJECT_CATEGORY_NAME_TAKEN',
-      `School ${category.schoolId} already has a subject category named ${category.name}`,
-    )
-  }
 }
 
 async function validateSubjectCategoryDelete(

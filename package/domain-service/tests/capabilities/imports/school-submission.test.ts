@@ -10,7 +10,7 @@ test('de-identified intake reconciles every supplied value without counting pend
   const students = fixture.students.map(row => normalizeImportValues('students', row))
   expect(students.filter(row => row['isRepeating'] === true)).toHaveLength(231)
   expect(students.filter(row => row['isRepeating'] === false)).toHaveLength(913)
-  expect(students[0]!['matricule']).toBe('000001')
+  expect(students[0]!['identifier']).toBe('000001')
   expect(fixture.teachers).toHaveLength(34)
   const teachers = fixture.teachers.map(row => normalizeImportValues('teachers', row))
   expect(teachers.filter(row => typeof row['declaredHours'] === 'number')).toHaveLength(32)

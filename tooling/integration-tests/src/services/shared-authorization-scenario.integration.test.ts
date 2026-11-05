@@ -7,6 +7,7 @@ import { createAuthorizationScenario } from '@edaya/fixtures'
 import { SchoolApplication } from '@edaya/service'
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createDatabasePool } from '../../../../package/adaptor-postgres/tests/support/database-pool'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 describe('shared two-school authorization scenario', () => {
   let repositories: PostgresSchoolRepositories
@@ -20,8 +21,8 @@ describe('shared two-school authorization scenario', () => {
   beforeEach(async () => {
     scenario = createAuthorizationScenario()
     const fixture = await pool.acquire()
-    const { connection, repositories: pooledRepositories } = fixture
-    repositories = pooledRepositories
+    const { connection, repositories: _pooledRepositories } = fixture
+    repositories = createFixtureRepositories(connection)
     // Trusted arrangement of an isolated database, not a public or CLI mutation seed.
     async function arrange<T>(repository: BaseRepositoryInterface<T>, records: T[]) {
       for (const record of records) await repository.save(record)
@@ -81,7 +82,7 @@ describe('shared two-school authorization scenario', () => {
     await owner.guardianLinks.delete(`${ids.guardian}-${ids.child}`)
     expect((await guardian.list()).map(student => student.id)).toEqual([ids.sibling])
     expect((await coGuardian.list()).map(student => student.id)).toEqual([ids.child])
-    const original = scenario.guardians[0]!
+    const original = (await repositories.guardians.findById(scenario.guardians[0]!.id))!
     await owner.guardians.save(new Guardian({ ...original.data, hasAccess: false }))
     await expect(guardian.list()).rejects.toBeInstanceOf(AuthorizationError)
     expect(await owner.students.count()).toBe(3)

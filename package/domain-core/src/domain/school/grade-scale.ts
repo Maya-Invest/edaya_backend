@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export const gradeScaleRangeSchema = z.object({
   id: z.string().trim().min(1).optional(),
@@ -17,6 +18,7 @@ export const gradeScaleBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   minScore: z.number().finite().nonnegative('minScore must be a finite, non-negative number'),
   maxScore: z.number().finite().nonnegative('maxScore must be a finite, non-negative number'),
   decimalPlaces: z.number().int().min(0, 'decimalPlaces must be between 0 and 3').max(3, 'decimalPlaces must be between 0 and 3').default(1),
@@ -116,6 +118,8 @@ export class GradeScale {
   readonly data: GradeScaleData
   readonly ranges: readonly GradeScaleRange[]
 
+  copyWith(changes: Partial<GradeScaleInput>): GradeScale { return new GradeScale({ ...this.data, ...changes, ranges: changes.ranges ?? [...this.data.ranges] }) }
+
   constructor(args: GradeScaleInput) {
     this.data = parseDomain(gradeScaleSchema, args)
     this.ranges = this.data.ranges
@@ -124,6 +128,7 @@ export class GradeScale {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get minScore() { return this.data.minScore }
   get maxScore() { return this.data.maxScore }
   get isDefault() { return this.data.isDefault }

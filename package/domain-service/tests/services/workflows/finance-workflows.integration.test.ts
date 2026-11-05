@@ -1,4 +1,4 @@
-import { AcademicYear, CatalogServiceStatus, PaymentKind, PaymentMethod, PaymentStatus, School, Student } from '@edaya/core'
+import { AcademicYear, CatalogServiceStatus, PaymentKind, PaymentMethod, PaymentStatus, School, Student, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -6,14 +6,14 @@ import { createTestStaffActor } from '../../support/test-actor'
 async function createFinanceContext() {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true })
   const repositories = fixture.schoolRepositories
-  await repositories.academicYears.save(new AcademicYear({
+  await repositories.academicYears.save(new AcademicYear(withShortName({
     id: 'ay1',
     schoolId: 'sch1',
     name: 'Year',
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-12-31'),
     status: 'published',
-  }))
+  })))
   await repositories.students.save(new Student({ id: 'stu1', schoolId: 'sch1', firstName: 'Ada', lastName: 'Lovelace' }))
   await fixture.app.financeWorkflow.createCatalogService({
     id: 'cat1',
@@ -170,7 +170,7 @@ describe('SchoolService finance workflows', () => {
   test('an unset school currency cannot be initialized after financial records exist', async () => {
     const { repositories, service } = await createFinanceContext()
     const school = await repositories.schools.findById('sch1')
-    await repositories.schools.save(new School({ ...school!.data, financeCurrency: undefined }))
+    await repositories.schools.save(new School(withShortName({ ...school!.data, financeCurrency: undefined })))
     expect((await repositories.schools.findById('sch1'))?.financeCurrency).toBeUndefined()
     await expect(service.setupWorkflow.updateSchoolConfiguration({ schoolId: 'sch1', financeCurrency: 'EUR' })).rejects.toMatchObject({ code: 'SCHOOL_CURRENCY_LOCKED' })
   })

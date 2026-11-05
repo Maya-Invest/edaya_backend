@@ -1,12 +1,13 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { AtomicExecutionPort } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, runMigrations, transactionContext } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, runMigrations, transactionContext } from '@edaya/adaptor-postgres'
 import { noOpFileStorage, noOpNotificationGateway } from '@edaya/core'
 import { executeCronOccurrence, SchoolApplication, tickCronSchedules } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -30,17 +31,10 @@ const applications = handles.map((handle) => {
       return result
     }, options),
   }
-  const repositories = new PostgresSchoolRepositories(handle.db)
+  const repositories = createFixtureRepositories(handle.db)
   const listSchools = repositories.schools.list.bind(repositories.schools)
   repositories.schools.list = async () => (await listSchools()).filter(school => school.id.startsWith('cron-native-'))
-  return new SchoolApplication({
-    repositories,
-    atomicExecution: probedAtomic,
-    commandJournal: new PostgresCommandJournal(),
-    durableWork: new PostgresDurableWork(handle.db as SqlExecutor),
-    fileStorage: noOpFileStorage,
-    notificationGateway: noOpNotificationGateway,
-  })
+  return new SchoolApplication({ repositories, atomicExecution: probedAtomic, commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handle.db as SqlExecutor), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
 })
 const messages: { jobId: string }[] = []
 function tick(index: number, dispatch = async (message: { jobId: string }) => {

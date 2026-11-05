@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, Assessment, GradeScale, Permission, ReportCardResultStatus, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { AcademicYear, Assessment, GradeScale, Permission, ReportCardResultStatus, StaffMember, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { dispatchGradingRecalculation } from '../../../src/capabilities/academics/durable-grading'
 import { applyReportCommentRevision } from '../../../src/capabilities/academics/report-comment-revisions'
@@ -9,12 +9,12 @@ import { createReportCardContext } from './report-card-workflow-context'
 async function fixture(published = false) {
   const f = await createReportCardContext()
   const year = (await f.repositories.academicYears.findById('ay1'))!
-  await f.repositories.academicYears.save(new AcademicYear({ ...year.data, startDate: new Date('2020-01-01'), endDate: new Date('2099-12-31') }))
-  const scale = new GradeScale({ id: 'points', schoolId: 'sch1', name: 'Points', minScore: 0, maxScore: 4, intervalConvention: 'continuous', decimalPlaces: 2, ranges: [
+  await f.repositories.academicYears.save(new AcademicYear(withShortName({ ...year.data, startDate: new Date('2020-01-01'), endDate: new Date('2099-12-31') })))
+  const scale = new GradeScale(withShortName({ id: 'points', schoolId: 'sch1', name: 'Points', minScore: 0, maxScore: 4, intervalConvention: 'continuous', decimalPlaces: 2, ranges: [
     { id: 'f', letter: 'F', interpretation: 'Fail', minScore: 0, maxScore: 2, gpaValue: 0 },
     { id: 'b', letter: 'B', interpretation: 'Good', minScore: 2, maxScore: 3.5, gpaValue: 3 },
     { id: 'a', letter: 'A', interpretation: 'Excellent', minScore: 3.5, maxScore: 4, gpaValue: 4 },
-  ] })
+  ] }))
   await f.repositories.gradeScales.save(scale)
   const report = { id: 'rc1', studentId: 'stu1', periodId: 'per1' }
   const draft = await f.service.assessmentsWorkflow.generateReportCardResult(report)
@@ -215,7 +215,7 @@ test('mark recalculation is bounded and keeps precise teacher entries', async ()
   const student = (await f.repositories.students.findById('stu1'))!
   for (let index = 0; index < 55; index++) {
     const id = `batch-${String(index).padStart(3, '0')}`
-    await f.repositories.students.save(new Student({ ...student.data, id, subjectId: undefined, matricule: undefined }))
+    await f.repositories.students.save(new Student({ ...student.data, id, subjectId: undefined, identifier: undefined }))
     await f.repositories.assessmentResults.save(new AssessmentResult({ id, studentId: id, assessmentId: 'ass1', score: 73.123, originalEntry: { kind: 'numeric', value: 73.123, maximum: 100 } }))
   }
   await f.service.assessmentsWorkflow.configureGrading(f.input)
@@ -250,7 +250,7 @@ test('changing scale identity creates a revision and rejects a stale scale edito
   const f = await fixture()
   await f.service.assessmentsWorkflow.configureGrading(f.input)
   const scale = (await f.repositories.gradeScales.findById('points'))!
-  await f.repositories.gradeScales.save(new GradeScale({ ...scale.data, id: 'alternate', ranges: [...scale.ranges] }))
+  await f.repositories.gradeScales.save(new GradeScale(withShortName({ ...scale.data, id: 'alternate', ranges: [...scale.ranges] })))
   await expect(f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'stale-scale', expectedRevision: 2, expectedScaleRevision: 5 })).rejects.toMatchObject({ code: 'GRADING_REVISION_CONFLICT' })
   await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'alternate', expectedRevision: 2, scaleId: 'alternate', expectedScaleRevision: 0 })
   await f.drain()
@@ -269,7 +269,7 @@ test('staff correction details resolve mention identifiers using the reviewed gr
   await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
   const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: 'mention-correction', assessmentId: 'ass1', expectedRevision: 2, expectedGradingRevision: 2, reason: 'Checked original work', changes: [{ resultId: 'ar1', proposed: { mentionId: 'a', score: null, designation: 'scored', notes: null } }] })
   const scale = (await f.repositories.gradeScales.findById('points'))!
-  await f.repositories.gradeScales.save(new GradeScale({ ...scale.data, ranges: scale.ranges.map(range => ({ ...range, letter: `New ${range.letter}` })) }))
+  await f.repositories.gradeScales.save(new GradeScale(withShortName({ ...scale.data, ranges: scale.ranges.map(range => ({ ...range, letter: `New ${range.letter}` })) })))
   await f.service.assessmentsWorkflow.configureGrading({ ...f.input, requestId: 'new-labels', expectedRevision: 2, mode: 'mention-first' })
   const detail = await f.service.teacherCorrectionsWorkflow.detail({ correctionId: correction.id })
   expect(detail.original).toMatchObject({ mentionLabels: { b: 'B · Good', a: 'A · Excellent' } })
@@ -281,7 +281,7 @@ test('ranking a later draft never rewrites an already published ranking', async 
   const student = (await f.repositories.students.findById('stu1'))!
   const enrollment = (await f.repositories.enrollments.findById('enr1'))!
   const assessment = (await f.repositories.assessments.findById('ass1'))!
-  await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+  await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', identifier: undefined, subjectId: undefined }))
   await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
   await seedSubjectParticipation(f.repositories)
   await f.repositories.assessments.save(new Assessment({ ...assessment.data, marksReview: { ...assessment.marksReview, rosterStudentIds: ['stu1', 'stu2'] } }))
@@ -310,7 +310,7 @@ test('section ranking changes invalidate review and stale section ranks are hidd
   const student = (await f.repositories.students.findById('stu1'))!
   const enrollment = (await f.repositories.enrollments.findById('enr1'))!
   const assessment = (await f.repositories.assessments.findById('ass1'))!
-  await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+  await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', identifier: undefined, subjectId: undefined }))
   await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
   await seedSubjectParticipation(f.repositories)
   await f.repositories.assessments.save(new Assessment({ ...assessment.data, marksReview: { ...assessment.marksReview, rosterStudentIds: ['stu1', 'stu2'] } }))

@@ -1,4 +1,4 @@
-import { Activity, ActivityCategory } from '@edaya/core'
+import { Activity, ActivityCategory, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import {
   ACTIVITY_REMINDER_EVENT_KEY,
@@ -11,7 +11,7 @@ const reminderStartDate = new Date('2026-06-20T00:00:00.000Z')
 const reminderEndDate = new Date('2026-06-30T00:00:00.000Z')
 
 function schoolActivity(overrides: Partial<ConstructorParameters<typeof Activity>[0]> = {}) {
-  return new Activity({
+  return new Activity(withShortName({
     id: 'act1',
     schoolId: 'school-1',
     name: 'Basketball club',
@@ -24,7 +24,7 @@ function schoolActivity(overrides: Partial<ConstructorParameters<typeof Activity
     startDate: reminderStartDate,
     endDate: reminderEndDate,
     ...overrides,
-  })
+  }))
 }
 
 describe('scanActivityReminders', () => {

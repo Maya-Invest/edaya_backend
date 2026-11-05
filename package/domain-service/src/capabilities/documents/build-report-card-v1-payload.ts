@@ -257,7 +257,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     ...(input.schoolYear ? { schoolYear: input.schoolYear } : {}),
     ...(input.classLabel ? { classLabel: catalogClassName(input.classLabel, lang) } : {}),
     ...(input.result.classSize !== undefined ? { classSize: String(input.result.classSize) } : {}),
-    ...(input.student.matricule ? { matricule: input.student.matricule } : {}),
+    ...(input.student.identifier ? { matricule: input.student.identifier } : {}),
     ...(input.student.birthDate ? { birthDate: formatDate(input.student.birthDate, locale) } : {}),
     ...(input.student.placeOfBirth ? { birthPlace: input.student.placeOfBirth } : {}),
     ...(input.student.nationality ? { nationality: input.student.nationality } : {}),

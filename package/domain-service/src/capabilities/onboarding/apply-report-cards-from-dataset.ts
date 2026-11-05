@@ -3,7 +3,8 @@ import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingDataset, OnboardingDatasetGradeLevel } from './onboarding-dataset'
 import { randomUUID } from 'node:crypto'
 import { requireActorSchoolId } from '@edaya/authorization'
-import { BusinessRuleViolationError, GradeLevel, ReportModule } from '@edaya/core'
+import { BusinessRuleViolationError, GradeLevel, ReportModule, withShortName } from '@edaya/core'
+import { datasetEntityId } from './dataset-bindings'
 
 export interface AppliedDatasetLevel {
   definition: OnboardingDatasetGradeLevel
@@ -35,7 +36,7 @@ export async function applyReportCardsFromDataset(application: OnboardingSchoolA
       const spec = input.dataset.gradeScales.find(row => row.code === policy.gradeScaleCode)
       if (!spec)
         throw new BusinessRuleViolationError('STRUCTURE_GRADE_SCALE_REQUIRED', 'Dataset grade scale is missing')
-      scaleId = randomUUID()
+      scaleId = await datasetEntityId(application, input.schoolId, input.dataset.id, 'gradeScales', [spec.code])
       await service.assessmentsWorkflow.createGradeScale({
         id: scaleId,
         schoolId: input.schoolId,
@@ -56,7 +57,7 @@ export async function applyReportCardsFromDataset(application: OnboardingSchoolA
     if (!scale || !grade || grade.schoolId !== input.schoolId)
       throw new BusinessRuleViolationError('REPORT_CONFIGURATION_SCOPE_INVALID', 'Invalid onboarding report scope')
     const settings = grade.reportSettingsFor(input.academicYearId)
-    await application.repositories.gradeLevels.forSchool!(input.schoolId).save(new GradeLevel({
+    await application.repositories.gradeLevels.forSchool!(input.schoolId).save(new GradeLevel(withShortName({
       ...grade.data,
       reportSettings: [...grade.reportSettings.filter(row => row.academicYearId !== input.academicYearId), { ...settings, revision: settings.revision + 1, passThreshold: policy.passThreshold }],
       gradingPolicies: [...grade.gradingPolicies.filter(row => row.academicYearId !== input.academicYearId), {
@@ -68,10 +69,10 @@ export async function applyReportCardsFromDataset(application: OnboardingSchoolA
         status: 'completed',
         numericEquivalents: {},
       }],
-    }))
+    })))
     const moduleIds = new Map<string, string>()
     for (const spec of [...level.definition.reportModules].sort((a, b) => a.order - b.order)) {
-      const module = new ReportModule({ id: randomUUID(), schoolId: input.schoolId, gradeLevelId: grade.id, academicYearId: input.academicYearId, name: spec.name, order: spec.order, weightingMode: spec.weightingMode, explicitWeight: spec.explicitWeight })
+      const module = new ReportModule(withShortName({ id: await datasetEntityId(application, input.schoolId, input.dataset.id, 'reportModules', [input.academicYearId, grade.id, spec.code]), schoolId: input.schoolId, gradeLevelId: grade.id, academicYearId: input.academicYearId, name: spec.name, order: spec.order, weightingMode: spec.weightingMode, explicitWeight: spec.explicitWeight }))
       await application.repositories.reportModules.forSchool!(input.schoolId).save(module)
       moduleIds.set(spec.code, module.id)
       reportModuleCount += 1

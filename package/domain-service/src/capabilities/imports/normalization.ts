@@ -20,8 +20,8 @@ export function normalizeImportTable(type: ImportType, table: ParsedImportTable)
       const value = row.cells[index] ?? null
       raw[table.headers[index]!] = value
       if (!supported.has(key)) {
-        if (!isBlankImportValue(value))
-          issues.push({ code: 'IMPORT_COLUMN_UNSUPPORTED', column: table.headers[index], severity: 'error' })
+        if (!isBlankImportValue(value) || obsoleteIdentificationColumns(type, key))
+          issues.push({ code: 'IMPORT_COLUMN_UNSUPPORTED', column: table.headers[index], severity: 'error', ...(obsoleteIdentificationColumns(type, key) ? { replacementColumns: obsoleteIdentificationColumns(type, key) } : {}) })
       }
       else {
         values[key] = value
@@ -98,4 +98,25 @@ export function importJson(value: unknown): ImportRecord {
 
 function normalizeImportPhone(value: string): string {
   return value.trim().replace(/^#/, '+')
+}
+
+/** Correction guidance is template-specific; obsolete fields are never accepted as aliases. */
+function obsoleteIdentificationColumns(type: ImportType, key: string): string[] | undefined {
+  if (key === 'code')
+    return [['students', 'teachers', 'guardians', 'staff'].includes(type) ? 'identifier' : 'short_name']
+  if (key === 'matricule')
+    return ['identifier']
+  if (['national_matricule', 'matricule_national', 'nationalmatricule', 'matriculenational'].includes(key))
+    return ['global_identifier']
+  if (key === 'title' && type === 'chapters')
+    return ['name']
+  if (key === 'label' && type === 'placement_statuses')
+    return ['name']
+  if (key === 'students')
+    return ['student_ids', 'student_identifiers']
+  if (key === 'discipline_codes')
+    return ['discipline_ids', 'discipline_names', 'discipline_short_names']
+  const prefix = key.replace(/_code$/, '')
+  const columns = IMPORT_TEMPLATES[type].columns.filter(column => [`${prefix}_id`, `${prefix}_identifier`, `${prefix}_name`, `${prefix}_short_name`].includes(column.key)).map(column => column.key)
+  return columns.length ? columns : undefined
 }

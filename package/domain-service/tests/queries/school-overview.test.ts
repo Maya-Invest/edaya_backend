@@ -1,5 +1,5 @@
 import type { SchoolRepositories } from '@edaya/service'
-import { AcademicPeriod, AcademicPeriodType, Activity, ActivityCategory, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, CalendarEvent, CalendarEventKind, ChargeStatus, ClassGroup, Incident, IncidentKind, IncidentStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, ReportCardResult, ReportCardResultStatus, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentStatus, studentYearAccountId } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Activity, ActivityCategory, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, CalendarEvent, CalendarEventKind, ChargeStatus, ClassGroup, Incident, IncidentKind, IncidentStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, ReportCardResult, ReportCardResultStatus, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentStatus, studentYearAccountId, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { buildSchoolOverview } from '../support/overview-reference'
 
@@ -191,7 +191,7 @@ describe('buildSchoolOverview', () => {
       status: StudentClassEnrollmentStatus.Active,
       enrolledAt: new Date('2025-09-01'),
     })
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
@@ -199,7 +199,7 @@ describe('buildSchoolOverview', () => {
       name: 'Grade 7A',
       attendanceMode: AttendanceMode.Session,
       homeroomStaffId: 'staff-1',
-    })
+    }))
     const overdueFee = new StudentCharge({
       id: 'fee-1',
       schoolId: 'school-1',
@@ -245,7 +245,7 @@ describe('buildSchoolOverview', () => {
       kind: CalendarEventKind.Holiday,
       isNonSchoolDay: true,
     })
-    const academicPeriod = new AcademicPeriod({
+    const academicPeriod = new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
@@ -253,7 +253,7 @@ describe('buildSchoolOverview', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-03-01'),
       endDate: new Date('2026-06-20T00:00:00.000Z'),
-    })
+    }))
     const assessment = new Assessment({
       id: 'assessment-1',
       classGroupId: 'class-1',
@@ -310,7 +310,7 @@ describe('buildSchoolOverview', () => {
       method: PaymentMethod.Cash,
       status: PaymentStatus.Recorded,
     })
-    const activity = new Activity({
+    const activity = new Activity(withShortName({
       id: 'activity-1',
       schoolId: 'school-1',
       name: 'Chess club',
@@ -322,7 +322,7 @@ describe('buildSchoolOverview', () => {
       description: 'Chess club',
       startDate: new Date('2026-06-01'),
       endDate: new Date('2026-06-30'),
-    })
+    }))
     const discipline = new StudentDisciplinaryAction({
       id: 'discipline-1',
       schoolId: 'school-1',
@@ -406,14 +406,14 @@ describe('buildSchoolOverview', () => {
       status: StudentClassEnrollmentStatus.Active,
       enrolledAt: new Date('2025-09-01'),
     })
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 7B',
       attendanceMode: AttendanceMode.Session,
-    })
+    }))
     const incident = new Incident({
       id: 'incident-1',
       schoolId: 'school-1',

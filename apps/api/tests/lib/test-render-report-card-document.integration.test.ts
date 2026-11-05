@@ -1,8 +1,8 @@
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, GradeScale, noOpFileStorage, noOpNotificationGateway, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffPermissionAssignment, Student, withShortName } from "@edaya/core";
 import type { SchoolScopedActorMetadata } from "@edaya/authorization";
 import type { DocumentRendererPort, StaffPermissionAssignmentInput } from "@edaya/core";
 import { transactionContext } from "@edaya/adaptor-postgres";
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from "@edaya/authorization";
-import { Attachment, AttachmentOwnerKind, AttachmentStatus, GradeScale, noOpFileStorage, noOpNotificationGateway, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffPermissionAssignment, Student } from "@edaya/core";
 import { SchoolService } from "@edaya/service";
 import { describe, expect, mock, onTestFinished, test } from "bun:test";
 import { renderReportCardDocument } from "@/lib/documents/render-report-card-document";
@@ -19,7 +19,7 @@ async function fixture(actor: SchoolScopedActorMetadata = staff) {
   onTestFinished(() => releaseDatabase(db));
   await seedAuthorizationRelationships(db);
   await db.exec("UPDATE academic_periods SET is_published = true WHERE id = 'period-a'");
-  await repositories.gradeScales.save(new GradeScale({ id: "scale", schoolId: "school-a", name: "20 points", minScore: 0, maxScore: 20, ranges: [{ letter: "A", minScore: 0, maxScore: 20 }] }));
+  await repositories.gradeScales.save(new GradeScale(withShortName({ id: "scale", schoolId: "school-a", name: "20 points", minScore: 0, maxScore: 20, ranges: [{ letter: "A", minScore: 0, maxScore: 20 }] })));
   const result = new ReportCardResult({
     id: "report",
     gradeLevelId: "level-a",
@@ -241,7 +241,7 @@ describe("report document export policy", () => {
     const f = await fixture();
     await f.grant();
     await f.repositories.results.save(new ReportCardResult({ ...f.result.data, sectionResults: [...f.result.sectionResults], id: "peer", studentId: "student-other", overallAverage: 18 }));
-    await f.repositories.students.save(new Student({ ...(await f.repositories.students.findById("student-a"))!.data, id: "student-draft" }));
+    await f.repositories.students.save(new Student({ ...(await f.repositories.students.findById("student-a"))!.data, id: "student-draft", identifier: "DRAFT-STUDENT" }));
     await f.repositories.results.save(new ReportCardResult({ ...f.result.data, sectionResults: [...f.result.sectionResults], id: "draft", studentId: "student-draft", status: ReportCardResultStatus.Draft, publishedAt: undefined, overallAverage: 0 }));
     await f.generate();
     expect(f.render.mock.calls[0]![0].payload).toMatchObject({ classResults: { classAverage: "15.00 / 20", lowestAverage: "12.00 / 20", highestAverage: "18.00 / 20" } });

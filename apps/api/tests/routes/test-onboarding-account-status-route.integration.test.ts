@@ -1,3 +1,4 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -16,7 +17,7 @@ describe("onboarding account status route", () => {
     });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",

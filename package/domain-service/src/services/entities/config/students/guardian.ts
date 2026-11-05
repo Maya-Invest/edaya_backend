@@ -5,7 +5,7 @@ import type { EntityConfigFactory } from '../../entity-config'
 import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
-import { assertUniquePersonCode } from '../person-code-uniqueness'
+import { assertUniqueHumanIdentifier } from '../human-identifier-uniqueness'
 
 // Extracted from domain/students/guardian.ts (PR3)
 export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, atomicExecution }) => {
@@ -29,13 +29,13 @@ async function validateGuardianSave(
   _existing: Guardian | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
-  await assertUniquePersonCode({
-    code: guardian.code,
+  await assertUniqueHumanIdentifier({
+    identifier: guardian.identifier,
     schoolId: guardian.schoolId,
     entityId: guardian.id,
-    errorCode: 'GUARDIAN_CODE_ALREADY_EXISTS',
+    errorCode: 'IDENTIFIER_UNAVAILABLE',
     entityLabel: 'Guardian',
-    findCandidates: code => repositories.guardians.list({ schoolId: guardian.schoolId, code: { $normalizedCandidate: code } }),
+    findCandidates: identifier => repositories.guardians.list({ schoolId: guardian.schoolId, identifier: { $normalizedCandidate: identifier } }),
   })
 }
 

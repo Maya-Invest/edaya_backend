@@ -1,13 +1,9 @@
 import type { StaffPermissionAssignmentInput } from '@edaya/core'
-import { readdirSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
 import { Permission, StaffPermissionAssignment } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { drizzle } from 'drizzle-orm/pglite'
-import { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
-import { installSchemaBeforeTypedGrants, migrationDirectory, typedGrantsMigration } from './support/authorization-database'
+import { createAuthorizationDatabase, installSchemaBeforeTypedGrants, seedAuthorizationRelationships, typedGrantsMigration } from './support/authorization-database'
 
 import { seedPre0009AuthorizationPlacement, seedPre0009AuthorizationRelationships } from './support/pre-0009-authorization-fixture'
 
@@ -63,39 +59,17 @@ describe('typed staff grants coordinated migration', () => {
     await grant('grades', 'GRADE_READ', '*')
     await grant('exams', 'EXAM_CONFIG_READ', 'class-a:math-a,class-other:*')
     await migrate()
-    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0010' && name < '0037').sort())
-      await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
-    // Current repositories require the clean-cutover schema. Recreate these explicit
-    // fixture grants after clearing the old permission rows; no legacy source migrates.
     const converted = await db.query<StaffPermissionAssignmentInput>(`SELECT id, staff_id AS "staffId", school_id AS "schoolId", academic_year_id AS "academicYearId", permission, scopes FROM staff_permission_assignments`)
-    await db.exec('DELETE FROM staff_permission_assignments')
-    await db.exec(readFileSync(resolve(migrationDirectory, '0037_permission_scope_defaults.sql'), 'utf8'))
-    const marksBefore = await db.query('SELECT id, score FROM assessment_results ORDER BY id')
-    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0038' && name < '0044').sort())
-      await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
-    // The subject cutover requires empty curriculum tables. Recreate this frozen
-    // fixture explicitly, preserving the identifiers used by the policy assertions.
-    await db.exec(`
-      CREATE TEMP TABLE fixture_subjects AS SELECT to_jsonb(subjects) AS data FROM subjects;
-      CREATE TEMP TABLE fixture_offerings AS SELECT to_jsonb(class_subjects) AS data FROM class_subjects;
-      DELETE FROM class_subjects;
-      DELETE FROM subjects;
-    `)
-    // This staff-grant fixture does not use family records. The guardian schema
-    // cutover intentionally requires an empty table, tested separately.
-    await db.exec('DELETE FROM guardian_student_links; DELETE FROM guardians')
-    // Current repository policies require the complete current schema after the historical conversion.
-    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0044').sort())
-      await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
-    await db.exec(`
-      INSERT INTO subjects SELECT (jsonb_populate_record(NULL::subjects, data || jsonb_build_object(
-        'grade_level_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'level-a' ELSE 'level-b' END,
-        'academic_year_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'year-a' ELSE 'year-b' END,
-        'is_optional', false, 'report_order', 0))).* FROM fixture_subjects;
-      INSERT INTO class_subjects SELECT (jsonb_populate_record(NULL::class_subjects, jsonb_build_object('participation_revision', 0) || data)).* FROM fixture_offerings;
-    `)
-    expect((await db.query('SELECT id, score FROM assessment_results ORDER BY id')).rows).toEqual(marksBefore.rows)
-    const repositories = new PostgresSchoolRepositories(drizzle(db))
+    const marksBefore = await db.query('SELECT id, score::text AS score FROM assessment_results ORDER BY id')
+    // Historical conversion is tested above. The coordinated identifier cutover
+    // deliberately rejects this populated schema: rebuild the explicit fixture
+    // in a fresh current database before testing current policy interpretation.
+    await db.close()
+    const fixture = await createAuthorizationDatabase()
+    db = fixture.db
+    await seedAuthorizationRelationships(db)
+    const repositories = fixture.repositories
+    expect((await db.query('SELECT id, score::text AS score FROM assessment_results ORDER BY id')).rows).toEqual(marksBefore.rows)
     // Historical migrations keep their original identifiers. Explicitly translate
     // this fixture when re-creating grants under the current catalog.
     for (const row of converted.rows) {

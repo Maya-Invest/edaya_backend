@@ -1,7 +1,7 @@
-/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { AttendanceRecord, DocumentRendererPort } from '@edaya/core'
+/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import { ActorAssuranceLevel, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, ClassGroup, ClassSubjectMatter, ClassSubjectMatterStatus, DocumentIssuanceStatus, EnrollmentEndReason, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentIncidentInvolvement, StudentSubjectEnrollment, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { AcademicYear, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, ClassGroup, ClassSubjectMatter, ClassSubjectMatterStatus, DocumentIssuanceStatus, EnrollmentEndReason, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentIncidentInvolvement, StudentSubjectEnrollment, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { dispatchDocumentRender } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { createReportCardContext } from './report-card-workflow-context'
@@ -23,7 +23,7 @@ describe('teacher corrections across workflows', () => {
     const now = new Date()
     const year = (await f.repositories.academicYears.findById('ay1'))!
     const endedAt = new Date(now.getTime() + 86400000)
-    await f.repositories.academicYears.save(new AcademicYear({ ...year.data, endDate: endedAt }))
+    await f.repositories.academicYears.save(new AcademicYear(withShortName({ ...year.data, endDate: endedAt })))
     for (const row of await f.repositories.subjectEnrollments.list({ studentClassEnrollmentId: 'enr1' }))
       await f.repositories.subjectEnrollments.save(new StudentSubjectEnrollment({ ...row.data, endedAt }))
     await f.repositories.lessonSessions.save(new LessonSession({ id: 'new-call', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Math', startsAt: new Date(now.getTime() - 60000), endsAt: new Date(now.getTime() + 3600000) }))
@@ -70,7 +70,7 @@ describe('teacher corrections across workflows', () => {
 
   test('logbook validation is explicit; approval updates content and progress atomically', async () => {
     const f = await fixture()
-    await f.repositories.subjectMatters.save(new SubjectMatter({ id: 'sm1', subjectId: 'subject-math', name: 'Numbers', sequenceOrder: 1 }))
+    await f.repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'sm1', subjectId: 'subject-math', name: 'Numbers', sequenceOrder: 1 })))
     await f.repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'matter1', classSubjectId: 'cs1', subjectMatterId: 'sm1', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
     const proposal = { workflow: 'logbook' as const, targetId: 'session-0', sessionNote: 'Introduction', progress: [{ matterId: 'matter1', completedPercentage: 80 }] }
     const state = await f.teacher.teacherCorrectionsWorkflow.saveLogbook({ requestId: 'save', expectedVersion: 0, proposal })
@@ -121,7 +121,7 @@ describe('teacher corrections across workflows', () => {
   test('an incomplete daily call cannot publish; a transferred student remains on the submitted roster', async () => {
     const f = await fixture()
     const group = (await f.repositories.classGroups.findById('cg1'))!
-    await f.repositories.classGroups.save(new ClassGroup({ ...group.data, attendanceMode: AttendanceMode.Daily }))
+    await f.repositories.classGroups.save(new ClassGroup(withShortName({ ...group.data, attendanceMode: AttendanceMode.Daily })))
     await f.repositories.students.save(new Student({ id: 'stu2', schoolId: 'sch1', firstName: 'Second', lastName: 'Student' }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ id: 'enr2', studentId: 'stu2', classGroupId: 'cg1', academicYearId: 'ay1', enrollmentIndex: 1, enrolledAt: new Date('2025-09-01') }))
     const anchor = { kind: 'daily' as const, classGroupId: 'cg1', date: new Date('2026-02-05') }

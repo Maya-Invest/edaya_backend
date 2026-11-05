@@ -2,7 +2,7 @@ import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import type { AppRouteHandler } from "@/http/types";
 import { randomUUID } from "node:crypto";
 import { ActorAssuranceLevel, resolveEdayaSparkS2sKeyMode } from "@edaya/authorization";
-import { BusinessRuleViolationError } from "@edaya/core";
+import { BusinessRuleViolationError, shortNameSchema } from "@edaya/core";
 import { listOnboardingDatasets, listStructureTemplatesForCountry, resolveOnboardingDataset, resolveOnboardingDatasetInput } from "@edaya/fixtures/onboarding";
 import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, onboardingDatasetSchema, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
@@ -28,6 +28,7 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   country: z.string().trim().min(1).nullable().optional(),
   city: z.string().trim().min(1).nullable().optional(),
   id: z.string().trim().min(1).optional(),
+  ownerIdentifier: z.string().nullish(),
   ownerStaffId: z.string().trim().min(1).optional(),
   ownerFirstName: z.string().trim().min(1).optional(),
   ownerLastName: z.string().trim().min(1).optional(),
@@ -143,6 +144,7 @@ const onboardingApplyStructureTemplateResponseSchema = z.object({
 
 const onboardingStaffInviteRequestSchema = z.object({
   invites: z.array(z.object({
+    identifier: z.string().nullish(),
     email: z.string().trim().email(),
     role: z.string().trim().min(1).refine(isOnboardingStaffInviteRoleKey, "Invalid staff invite role"),
   })),
@@ -165,10 +167,12 @@ const onboardingCompleteWizardRequestSchema = z.object({
 }).openapi("OnboardingCompleteWizardRequest");
 
 const onboardingProvisionRequestSchema = z.object({
+  ownerIdentifier: z.string().nullish(),
   schoolId: z.string().uuid(),
   requestId: z.string().uuid(),
   school: z.object({
     name: z.string().trim().min(1),
+    shortName: shortNameSchema.optional(),
     timeZone: z.string().trim().min(1),
     financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
     city: z.string().trim().min(1),
@@ -189,6 +193,7 @@ const onboardingProvisionRequestSchema = z.object({
     levels: z.array(onboardingStructureLevelSchema).min(1),
   }).refine(exclusiveDatasetSelection, "Supply a dataset reference or snapshot, not both")),
   invites: z.array(z.object({
+    identifier: z.string().nullish(),
     email: z.string().trim().email(),
     role: z.string().trim().min(1).refine(isOnboardingStaffInviteRoleKey, "Invalid staff invite role"),
   })).optional(),
@@ -264,6 +269,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
 
   try {
     const result = await registerSchoolWithOwner(c.get("schoolApp"), toOwnerSession(session), {
+      ownerIdentifier: body.ownerIdentifier,
       name: body.name,
       shortName: body.shortName,
       timeZone: body.timeZone,
@@ -515,6 +521,7 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
       c.get("schoolApp"),
       session,
       {
+        ownerIdentifier: body.ownerIdentifier,
         schoolId: body.schoolId,
         requestId: body.requestId,
         school: body.school,

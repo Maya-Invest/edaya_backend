@@ -88,7 +88,7 @@ async function createSeedingServiceAccountHttp(
     },
     body: JSON.stringify({
       serviceId: SEEDING_SERVICE_ID,
-      displayName: 'Seeding Integration',
+      name: 'Seeding Integration',
       elevated: true,
       apiKey,
     }),

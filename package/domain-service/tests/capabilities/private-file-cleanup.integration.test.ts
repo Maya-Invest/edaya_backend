@@ -1,7 +1,8 @@
 import { createStaffActorMetadata, createSystemActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { dispatchPrivateFileCleanup, preparePrivateFileCleanup, SchoolApplication } from '@edaya/service'
 import { expect, onTestFinished, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../tooling/test-support/human-fixtures'
 import { transactionContext } from '../../../adaptor-postgres/src/lib/transaction'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { PostgresDurableWork } from '../../../adaptor-postgres/src/stores/durable-work-store'
@@ -14,9 +15,8 @@ async function fixture() {
   onTestFinished(() => releaseDatabase(f.db))
   const storage = createInMemoryFileStorage()
   const actor = createStaffActorMetadata({ schoolId: 'file-school', subjectId: 'file-owner', staffMemberId: 'file-staff', requestId: 'file-test', authenticatedAt: new Date() })
-  await f.repositories.schools.save(new School({ id: actor.schoolId, name: 'Files', ownerSubjectId: actor.subjectId, timeZone: 'UTC' }))
-  const staff = new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, firstName: 'File', lastName: 'Owner', subjectId: actor.subjectId })
-  await f.repositories.staffMembers.save(staff)
+  await f.repositories.schools.save(new School(withShortName({ id: actor.schoolId, name: 'Files', ownerSubjectId: actor.subjectId, timeZone: 'UTC' })))
+  const staff = await saveHumanFixture(f.repositories.staffMembers, new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, firstName: 'File', lastName: 'Owner', subjectId: actor.subjectId }))
   const deleted: string[] = []
   let failDelete = false
   const journal = new PostgresCommandJournal()

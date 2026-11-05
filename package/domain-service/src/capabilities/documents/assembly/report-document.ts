@@ -31,7 +31,7 @@ export async function assembleReportDocument(
   if (revision?.payload['snapshot'])
     context.result = applyReportCommentRevision(context.result, revision.payload['snapshot'])
   const catalogLang = catalogLangFromLocale(locale)
-  const subjectNameByClassSubjectId = new Map(context.subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.code)]))
+  const subjectNameByClassSubjectId = new Map(context.subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.shortName)]))
   const peerAverages = gradingPeerAverages(context.result, context.peerResults)
   const formatAverage = (value: number) => formatReportAverage(value, context.result.grading, locale)
   const payload = buildReportCardV1Payload({

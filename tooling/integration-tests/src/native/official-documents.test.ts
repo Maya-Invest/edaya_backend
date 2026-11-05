@@ -1,27 +1,12 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SQL } from 'drizzle-orm'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import {
-  AcademicYear,
-  ClassGroup,
-  createInMemoryFileStorage,
-  DOCUMENT_FAILURES,
-  DocumentIssuanceStatus,
-  EnrollmentEndReason,
-  GradeLevel,
-  Guardian,
-  GuardianStudentLink,
-  noOpNotificationGateway,
-  School,
-  StaffMember,
-  Student,
-  StudentClassEnrollment,
-  Teacher,
-} from '@edaya/core'
+import { AcademicYear, ClassGroup, createInMemoryFileStorage, DOCUMENT_FAILURES, DocumentIssuanceStatus, EnrollmentEndReason, GradeLevel, Guardian, GuardianStudentLink, noOpNotificationGateway, School, StaffMember, Student, StudentClassEnrollment, Teacher, withShortName } from '@edaya/core'
 import { dispatchDocumentRender, grantAttachmentDownload, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -31,7 +16,7 @@ const handles = await Promise.all([
   createPostgresSchoolDatabase(url, { max: 1 }),
   createPostgresSchoolDatabase(url, { max: 1 }),
 ])
-const stores = handles.map(handle => new PostgresSchoolRepositories(handle.db))
+const stores = handles.map(handle => createFixtureRepositories(handle.db))
 const repositories = stores[0]!
 interface Executor { execute: (query: SQL) => Promise<unknown> }
 const actor = createStaffActorMetadata({
@@ -43,41 +28,33 @@ const actor = createStaffActorMetadata({
   authenticatedAt: new Date(),
   assuranceLevel: ActorAssuranceLevel.Verified,
 })
-const school = new School({ id: actor.schoolId, name: 'Documents fixture', timeZone: 'UTC', ownerSubjectId: actor.subjectId })
+const school = new School(withShortName({ id: actor.schoolId, name: 'Documents fixture', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
 const pdf = new TextEncoder().encode('%PDF-1.4 native-official')
 const storage = createInMemoryFileStorage()
 
 function application(index: number) {
   const handle = handles[index]!
-  return new SchoolApplication({
-    repositories: stores[index]!,
-    atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb),
-    commandJournal: new PostgresCommandJournal(),
-    durableWork: new PostgresDurableWork(handle.db as Executor),
-    documentRenderer: {
-      async render() {
-        return { bytes: pdf, contentType: 'application/pdf', sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', renderId: 'native-docs' }
-      },
+  return new SchoolApplication({ repositories: stores[index]!, atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb), commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handle.db as Executor), documentRenderer: {
+    async render() {
+      return { bytes: pdf, contentType: 'application/pdf', sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', renderId: 'native-docs' }
     },
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: storage,
-  })
+  }, notificationGateway: noOpNotificationGateway, fileStorage: storage })
 }
 
 beforeAll(async () => {
   await repositories.init({ driver: 'node-postgres' })
   await repositories.schools.save(school)
   await repositories.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: school.id, firstName: 'Docs', lastName: 'Owner', subjectId: actor.subjectId }))
-  await repositories.academicYears.save(new AcademicYear({
+  await repositories.academicYears.save(new AcademicYear(withShortName({
     id: 'docs-year',
     schoolId: school.id,
     name: '2026',
     status: 'published',
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-12-31'),
-  }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'docs-grade', schoolId: school.id, name: 'Grade', label: 'G', order: 1 }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'docs-class', schoolId: school.id, academicYearId: 'docs-year', gradeLevelId: 'docs-grade', name: 'Class' }))
+  })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'docs-grade', schoolId: school.id, name: 'Grade', shortName: 'G', order: 1 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'docs-class', schoolId: school.id, academicYearId: 'docs-year', gradeLevelId: 'docs-grade', name: 'Class' })))
   await repositories.students.save(new Student({ id: 'docs-student', schoolId: school.id, firstName: 'Ada', lastName: 'Lovelace' }))
   await repositories.enrollments.save(new StudentClassEnrollment({
     id: 'docs-enrollment',
@@ -211,19 +188,11 @@ test('mixed-audience batches omit unauthorized items without leaking artifacts',
 }, 30000)
 
 test('renderer outage marks failed work and retry restores a ready artifact', async () => {
-  const failingApp = new SchoolApplication({
-    repositories,
-    atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb),
-    commandJournal: new PostgresCommandJournal(),
-    durableWork: new PostgresDurableWork(handles[0]!.db as Executor),
-    documentRenderer: {
-      async render() {
-        throw new Error('gotenberg down')
-      },
+  const failingApp = new SchoolApplication({ repositories, atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb), commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handles[0]!.db as Executor), documentRenderer: {
+    async render() {
+      throw new Error('gotenberg down')
     },
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: storage,
-  })
+  }, notificationGateway: noOpNotificationGateway, fileStorage: storage })
   const staff = failingApp.forActor(actor)
   const issuance = await staff.documentsWorkflow.requestDocumentIssuance({
     requestId: 'native-render-fail',
@@ -275,19 +244,11 @@ test('storage outage marks failed work; retry after storage recovers becomes rea
       return storage.putObject(input)
     },
   }
-  const failingApp = new SchoolApplication({
-    repositories,
-    atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb),
-    commandJournal: new PostgresCommandJournal(),
-    durableWork: new PostgresDurableWork(handles[0]!.db as Executor),
-    documentRenderer: {
-      async render() {
-        return { bytes: pdf, contentType: 'application/pdf', sha256: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', renderId: 'native-storage' }
-      },
+  const failingApp = new SchoolApplication({ repositories, atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb), commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handles[0]!.db as Executor), documentRenderer: {
+    async render() {
+      return { bytes: pdf, contentType: 'application/pdf', sha256: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', renderId: 'native-storage' }
     },
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: failingStorage,
-  })
+  }, notificationGateway: noOpNotificationGateway, fileStorage: failingStorage })
   const staff = failingApp.forActor(actor)
   const issuance = await staff.documentsWorkflow.requestDocumentIssuance({
     requestId: 'native-storage-fail',
@@ -368,19 +329,11 @@ test('a crash after putObject and before bind leaves the issuance failed and not
       return result
     },
   }
-  const crashApp = new SchoolApplication({
-    repositories,
-    atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb),
-    commandJournal: new PostgresCommandJournal(),
-    durableWork: new PostgresDurableWork(handles[0]!.db as Executor),
-    documentRenderer: {
-      async render() {
-        return { bytes: pdf, contentType: 'application/pdf', sha256: 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', renderId: 'native-crash' }
-      },
+  const crashApp = new SchoolApplication({ repositories, atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb), commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handles[0]!.db as Executor), documentRenderer: {
+    async render() {
+      return { bytes: pdf, contentType: 'application/pdf', sha256: 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', renderId: 'native-crash' }
     },
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: wrappingStorage,
-  })
+  }, notificationGateway: noOpNotificationGateway, fileStorage: wrappingStorage })
   const staff = crashApp.forActor(actor)
   const issuance = await staff.documentsWorkflow.requestDocumentIssuance({
     requestId: 'native-crash-bind',

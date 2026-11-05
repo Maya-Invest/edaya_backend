@@ -26,7 +26,7 @@ export async function assembleLogbook(
     classSubjectId: input.classSubjectId,
   })
   const catalogLang = catalogLangFromLocale(locale)
-  const subjectNameById = new Map(context.subjects.map(entry => [entry.id, catalogSubjectName(entry.name, catalogLang, entry.code)]))
+  const subjectNameById = new Map(context.subjects.map(entry => [entry.id, catalogSubjectName(entry.name, catalogLang, entry.shortName)]))
   const chapterNameByMatterLinkId = new Map(
     context.classSubjectMatters.map((link) => {
       const matter = context.subjectMatters.find(entry => entry.id === link.subjectMatterId)

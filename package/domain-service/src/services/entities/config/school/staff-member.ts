@@ -5,7 +5,7 @@ import type { EntityConfigFactory } from '../../entity-config'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
-import { assertUniquePersonCode } from '../person-code-uniqueness'
+import { assertUniqueHumanIdentifier } from '../human-identifier-uniqueness'
 
 // Extracted from domain/school/staff-member.ts (PR3)
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
@@ -36,13 +36,13 @@ export async function validateStaffMemberSave(
     throw new BusinessRuleViolationError('SCHOOL_OWNER_DEACTIVATION_BLOCKED', 'Transfer school ownership before deactivating the owner')
   }
 
-  await assertUniquePersonCode({
-    code: staffMember.code,
+  await assertUniqueHumanIdentifier({
+    identifier: staffMember.identifier,
     schoolId: staffMember.schoolId,
     entityId: staffMember.id,
-    errorCode: 'STAFF_MEMBER_CODE_ALREADY_EXISTS',
+    errorCode: 'IDENTIFIER_UNAVAILABLE',
     entityLabel: 'Staff member',
-    findCandidates: code => repositories.staffMembers.list({ schoolId: staffMember.schoolId, code: { $normalizedCandidate: code } }),
+    findCandidates: identifier => repositories.staffMembers.list({ schoolId: staffMember.schoolId, identifier: { $normalizedCandidate: identifier } }),
   })
 }
 

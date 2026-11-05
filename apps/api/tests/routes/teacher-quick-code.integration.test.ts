@@ -21,7 +21,7 @@ afterAll(async () => {
 
 test("staff issuance, restricted teacher sign-in and local reveal use the same active credential", async () => {
   const { school, repositories, db } = await fixture();
-  await db.exec("INSERT INTO teachers (id, school_id, first_name, last_name, subject_id, is_active, created_at) VALUES ('teacher-a','school-a','A','Teacher','person-a',true,now())");
+  await db.exec("INSERT INTO teachers (id, identifier, school_id, first_name, last_name, subject_id, is_active, created_at) VALUES ('teacher-a','TEACHER-A','school-a','A','Teacher','person-a',true,now())");
   const actor = createStaffActorMetadata({ schoolId: "school-a", staffMemberId: "staff-a", subjectId: "person-a", academicYearId: "year-a", requestId: "test", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong });
   const env = schoolEnv({ RUNTIME: "local", NODE_ENV: "development", LOG_LEVEL: "silent", DATABASE_URL: "pglite:memory" });
   let deliveredSms = "";
@@ -65,7 +65,7 @@ test("staff issuance, restricted teacher sign-in and local reveal use the same a
   expect((await issue()).status).toBe(403);
   expect((await app.request(dev, post(), env)).status).toBe(403);
   await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: "manage", staffId: "staff-a", schoolId: "school-a", academicYearId: "year-a", permission: Permission.ACCESS_CONTROL_MANAGE, scopes: [{ kind: "school" }] }));
-  await db.exec("INSERT INTO teachers (id, school_id, first_name, last_name, subject_id, is_active, created_at) VALUES ('teacher-other','school-b','B','Teacher','other',true,now())");
+  await db.exec("INSERT INTO teachers (id, identifier, school_id, first_name, last_name, subject_id, is_active, created_at) VALUES ('teacher-other','TEACHER-B','school-b','B','Teacher','other',true,now())");
   expect((await app.request("/core/dev/teachers/teacher-other/quick-login-code/reveal", post(), env)).status).toBe(404);
   const id = crypto.randomUUID();
   expect(await (await issue(id)).json() as unknown).toEqual({ status: "active" });

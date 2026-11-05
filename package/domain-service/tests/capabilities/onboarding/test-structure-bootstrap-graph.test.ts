@@ -13,8 +13,8 @@ describe('canonical structure graph', () => {
     subject.isOptional = true
     subject.chapters = [{ code: 'B', title: 'Repeated title', order: 9 }, { code: 'A', title: 'Repeated title', order: 2 }]
     const levels = resolveDatasetStructure({ dataset, templates: [template.id], levels: [{ gradeLevelId: level.id, classCount: 2, capacity: 30, classNamingMode: 'alphabetical' }] })
-    const application = { repositories: { gradeLevels: { findById: async () => undefined }, classGroups: { findById: async () => undefined } } }
-    const graph = await buildStructureBootstrapGraph(application as never, 'school', 'year', levels, new Map([['MATH', 'math-id']]), new Map([['SCI', 'science-id']]))
+    const application = { commandExecution: { execute: async (input: { execute: () => Promise<string> }) => input.execute() }, repositories: { gradeLevels: { findById: async () => undefined }, classGroups: { findById: async () => undefined } } }
+    const graph = await buildStructureBootstrapGraph(application as never, 'school', 'year', levels, new Map([['MATH', 'math-id']]), new Map([['SCI', 'science-id']]), dataset.id)
     expect(graph.subjects[0]!.disciplineId).toBe('math-id')
     expect(graph.subjects[0]!.categoryId).toBe('science-id')
     expect(graph.subjects[0]!.coefficient).toBe(4)

@@ -13,7 +13,7 @@ export async function getActivityRoster(base: BaseSchoolService, input: { activi
   const eligibleStudentIds = [...new Set(enrollments.map(row => row.studentId))]
   const students = await context.students.findByIds([...new Set([...participants.map(row => row.studentId), ...eligibleStudentIds])])
   return {
-    students: students.map(row => ({ id: row.id, firstName: row.firstName, lastName: row.lastName, matricule: row.matricule, classGroupId: enrollments.find(enrollment => enrollment.studentId === row.id)?.classGroupId })),
+    students: students.map(row => ({ id: row.id, firstName: row.firstName, lastName: row.lastName, identifier: row.identifier, classGroupId: enrollments.find(enrollment => enrollment.studentId === row.id)?.classGroupId })),
     eligibleStudentIds,
     classes: classes.map(row => ({ id: row.id, name: row.name })),
   }

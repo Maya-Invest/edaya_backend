@@ -71,8 +71,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiSchool.name).toBe('École Edaya — Cocody')
   })
 
-  it('names classes exactly like onboarding does from the level label', () => {
-    const labelByGradeLevelId = new Map(demoCiGradeLevels.map(level => [level.id, level.label]))
+  it('names classes exactly like onboarding does from the level short name', () => {
+    const labelByGradeLevelId = new Map(demoCiGradeLevels.map(level => [level.id, level.shortName]))
     const indexByGradeLevelId = new Map<string, number>()
 
     for (const classGroup of demoCiClassGroups) {

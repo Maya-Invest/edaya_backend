@@ -1,10 +1,10 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
 import { AuthorizationError } from '@edaya/authorization'
-import { CatalogService, CatalogServiceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, studentYearAccountId } from '@edaya/core'
+import { CatalogService, CatalogServiceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, studentYearAccountId, withShortName } from '@edaya/core'
 import { validateCatalogServiceDelete, validateCatalogServiceSave, validatePaymentDelete, validatePaymentSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 
-const catalog = new CatalogService({
+const catalog = new CatalogService(withShortName({
   id: 'cat-1',
   schoolId: 'school-1',
   academicYearId: 'year-1',
@@ -13,7 +13,7 @@ const catalog = new CatalogService({
   currency: 'XAF',
   billingTerms: { kind: 'one_time', installments: [] },
   status: CatalogServiceStatus.Draft,
-})
+}))
 
 const accountId = studentYearAccountId('school-1', 'student-1', 'year-1', 'XAF')
 const payment = new Payment({

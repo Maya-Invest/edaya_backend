@@ -1,4 +1,4 @@
-import { gradeScaleSchema } from '@edaya/core'
+import { gradeScaleSchema, shortNameSchema } from '@edaya/core'
 import { z } from 'zod'
 
 const text = z.string().trim().min(1)
@@ -7,7 +7,7 @@ const catalogEntry = z.object({ code: text, name: text }).strict()
 const subject = z.object({
   code: text,
   name: text,
-  shortName: text,
+  shortName: shortNameSchema,
   disciplineCode: text,
   categoryCode: text,
   coefficient: z.number().finite().positive(),

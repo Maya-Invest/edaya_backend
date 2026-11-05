@@ -1,5 +1,5 @@
 import { AccessPolicies, createGuardianActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, AttendanceSummary, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, GradeScale, Payment, PaymentKind, PaymentMethod, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StudentCharge, StudentServiceEnrollment, StudentYearAccount, studentYearAccountId, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, AttendanceSummary, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, GradeScale, Payment, PaymentKind, PaymentMethod, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StudentCharge, StudentServiceEnrollment, StudentYearAccount, studentYearAccountId, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
@@ -23,7 +23,7 @@ describe('portal actions use current relationships and publication', () => {
 
   async function finance() {
     for (const [id, studentId] of [['linked', 'student-a'], ['unlinked', 'student-other'], ['unused', undefined]] as const) {
-      await fixture.repositories.catalogServices.save(new CatalogService({
+      await fixture.repositories.catalogServices.save(new CatalogService(withShortName({
         id,
         schoolId: 'school-a',
         academicYearId: 'year-a',
@@ -32,7 +32,7 @@ describe('portal actions use current relationships and publication', () => {
         currency: 'XOF',
         billingTerms: { kind: 'one_time', installments: [] },
         status: CatalogServiceStatus.Active,
-      }))
+      })))
       if (studentId) {
         const accountId = studentYearAccountId('school-a', studentId, 'year-a', 'XOF')
         await fixture.repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
@@ -114,7 +114,7 @@ describe('portal actions use current relationships and publication', () => {
   })
 
   async function reportCards() {
-    await fixture.repositories.gradeScales.save(new GradeScale({ id: 'scale', schoolId: 'school-a', name: 'Scale', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] }))
+    await fixture.repositories.gradeScales.save(new GradeScale(withShortName({ id: 'scale', schoolId: 'school-a', name: 'Scale', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] })))
     for (const [id, studentId, classGroupId] of [['card', 'student-a', 'class-a'], ['unrelated-card', 'student-other', 'class-other']] as const) {
       await fixture.repositories.results.save(new ReportCardResult({ id, gradeLevelId: 'level-a', academicYearId: 'year-a', reportConfigurationRevision: 0, studentId, classGroupId, periodId: 'period-a', sectionResults: sections(), attendanceSummary: new AttendanceSummary({ presentCount: 1, absenceCount: 0, lateCount: 0 }), assessmentResultCount: 2, overallAverage: 11 }))
     }

@@ -1,5 +1,5 @@
 import type { SchoolRepositories } from '@edaya/service'
-import { Activity, ActivityCategory, ActivitySession, Assessment, AssessmentKind, LessonSession, OccurrenceStatus, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { Activity, ActivityCategory, ActivitySession, Assessment, AssessmentKind, LessonSession, OccurrenceStatus, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherAssignmentStatus, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { buildClassGroupTimetable } from '../../src/services/queries/timetable'
 
@@ -221,7 +221,7 @@ describe('buildClassGroupTimetable', () => {
         })],
       },
       activities: {
-        findByIds: async () => [new Activity({
+        findByIds: async () => [new Activity(withShortName({
           id: 'act-chess',
           schoolId: 'school-1',
           name: 'Chess Club',
@@ -233,7 +233,7 @@ describe('buildClassGroupTimetable', () => {
           description: 'Chess',
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           endDate: new Date('2026-12-31T00:00:00.000Z'),
-        })],
+        }))],
       },
     } as unknown as SchoolRepositories
 

@@ -1,5 +1,5 @@
 import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationErrorCode, COORDINATOR_PERMISSIONS, createStaffActorMetadata, Permission } from '@edaya/authorization'
-import { AcademicPeriodType, AttendanceStatus, GradeLevel, School, StaffMember, Subject } from '@edaya/core'
+import { AcademicPeriodType, AttendanceStatus, GradeLevel, School, StaffMember, Subject, withShortName } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import { createAcademicPeriod, createClassGroup, createFixtureSubjectCategory, publishAcademicPeriod, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, updateSchool, withFixtureDiscipline } from '../utils/core-service-helpers'
@@ -26,7 +26,7 @@ async function setupBaselineFixture() {
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
   await app.baseService.entities.gradeLevels.save(
-    new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', label: 'G7', order: 7 }),
+    new GradeLevel(withShortName({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', shortName: 'G7', order: 7 })),
   )
   await createClassGroup(app, {
     id: 'class-7a',
@@ -83,7 +83,7 @@ async function setupBaselineFixture() {
 
   // Academics setup
   await app.baseService.entities.subjects.save(
-    new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school')).id, gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' })),
+    new Subject(withShortName(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school')).id, gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' }))),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-subject-english',
@@ -271,6 +271,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     // Create strong-admin staff member in the staff repository
     await repositories.staffMemberRepository.save(new StaffMember({
       id: 'strong-admin',
+      identifier: 'STRONG-ADMIN',
       schoolId: 'strong-school',
       firstName: 'Strong',
       lastName: 'Admin',
@@ -338,8 +339,8 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     const checkYear = await repositories.academicYearRepository.findById('illegal-year')
     expect(checkYear).toBeUndefined()
 
-    await schoolRepositories.schools.save(new School({ id: 'foreign-school', name: 'Foreign', timeZone: 'UTC', ownerSubjectId: 'foreign-admin-user' }))
-    await schoolRepositories.staffMembers.save(new StaffMember({ id: 'foreign-admin', schoolId: 'foreign-school', subjectId: 'foreign-admin-user', firstName: 'Foreign', lastName: 'Owner' }))
+    await schoolRepositories.schools.save(new School(withShortName({ id: 'foreign-school', name: 'Foreign', timeZone: 'UTC', ownerSubjectId: 'foreign-admin-user' })))
+    await schoolRepositories.staffMembers.save(new StaffMember({ identifier: 'FOREIGN-ADMIN', id: 'foreign-admin', schoolId: 'foreign-school', subjectId: 'foreign-admin-user', firstName: 'Foreign', lastName: 'Owner' }))
 
     // 2. Strict Tenant boundary check
     const foreignAdminApp = forActor(createStaffActorMetadata({

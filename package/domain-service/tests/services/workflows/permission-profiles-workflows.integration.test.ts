@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, ClassGroup, GradeLevel, Permission, StaffMember } from '@edaya/core'
+import { AcademicYear, ClassGroup, GradeLevel, Permission, StaffMember, withShortName } from '@edaya/core'
 import { describe, expect, spyOn, test } from 'bun:test'
 import { resolveStaffProfileGrants } from '../../../src/capabilities/access-control/resolve-staff-profile-grants'
 import { ensureSchoolPermissionProfiles } from '../../../src/capabilities/access-control/seed-staff-permission-profiles'
@@ -10,14 +10,14 @@ import { createTestStaffActor } from '../../support/test-actor'
 async function createProfileContext() {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'staff-admin'), { owner: true })
   const repositories = fixture.schoolRepositories
-  await repositories.academicYears.save(new AcademicYear({
+  await repositories.academicYears.save(new AcademicYear(withShortName({
     id: 'ay1',
     schoolId: 'sch1',
     name: 'Year',
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-12-31'),
     status: 'published',
-  }))
+  })))
   await repositories.staffMembers.save(new StaffMember({
     id: 'st1',
     schoolId: 'sch1',
@@ -25,20 +25,20 @@ async function createProfileContext() {
     lastName: 'Lovelace',
     email: 'ada@school.edu',
   }))
-  await repositories.gradeLevels.save(new GradeLevel({
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({
     id: 'grade-1',
     schoolId: 'sch1',
     name: 'Grade 7',
-    label: 'G7',
+    shortName: 'G7',
     order: 7,
-  }))
-  await repositories.classGroups.save(new ClassGroup({
+  })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({
     id: 'class-a',
     schoolId: 'sch1',
     academicYearId: 'ay1',
     gradeLevelId: 'grade-1',
     name: '7A',
-  }))
+  })))
   return { repositories, service: fixture.app, fixture }
 }
 
@@ -144,7 +144,7 @@ describe('permission profile workflows', () => {
     const { repositories, service, fixture } = await createProfileContext()
     const member = (await repositories.staffMembers.findById('st1'))!
     await repositories.staffMembers.save(new StaffMember({ ...member.data, subjectId: 'subject-ada' }))
-    await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' }))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' })))
     const actor = createStaffActorMetadata({ subjectId: 'subject-ada', staffMemberId: 'st1', schoolId: 'sch1', academicYearId: 'ay1', requestId: 'proof', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong })
     const access = fixture.forActor(actor).baseService.access
     const input = { id: 'audit', schoolId: 'sch1', staffId: 'st1', academicYearId: 'ay1', permission: Permission.ACCESS_CONTROL_READ }
@@ -273,7 +273,7 @@ describe('permission profile workflows', () => {
 
   test('default changes are additive and preserve custom profile and manual selections', async () => {
     const { repositories, service } = await createProfileContext()
-    for (const id of ['class-b', 'class-c']) await repositories.classGroups.save(new ClassGroup({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade-1', name: id }))
+    for (const id of ['class-b', 'class-c']) await repositories.classGroups.save(new ClassGroup(withShortName({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade-1', name: id })))
     await service.accessControlWorkflow.configurePermissionProfile({ id: 'p', name: 'Grades', permissions: [Permission.GRADE_MANAGE] })
     await service.accessControlWorkflow.configureStaffPermissionScopeDefaults({ staffId: 'st1', academicYearId: 'ay1', scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] })
     const binding = await service.accessControlWorkflow.applyStaffPermissionProfile({ staffId: 'st1', profileId: 'p', academicYearId: 'ay1', customScopes: [{ kind: 'class_group', classGroupId: 'class-b' }], useDefaultScopes: true })
@@ -332,7 +332,7 @@ describe('permission profile workflows', () => {
 
   test('the same profile can be assigned in separate years and default updates are isolated', async () => {
     const { repositories, service } = await createProfileContext()
-    await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' }))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' })))
     await service.accessControlWorkflow.configurePermissionProfile({ id: 'p', name: 'Read', permissions: [Permission.GRADE_READ] })
     for (const year of ['ay1', 'ay2']) {
       await service.accessControlWorkflow.configureStaffPermissionScopeDefaults({ staffId: 'st1', academicYearId: year, scopes: [{ kind: 'all', grain: 'class_group' }] })
@@ -357,7 +357,7 @@ describe('permission profile workflows', () => {
 
   test('catalog deletion preserves unique access independently in each year', async () => {
     const { repositories, service } = await createProfileContext()
-    await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' }))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' })))
     for (const id of ['p', 'next']) await service.accessControlWorkflow.configurePermissionProfile({ id, name: id, permissions: [Permission.STAFF_READ] })
     await service.accessControlWorkflow.applyStaffPermissionProfile({ staffId: 'st1', profileId: 'p', academicYearId: 'ay1', customScopes: [], useDefaultScopes: false })
     await service.accessControlWorkflow.applyStaffPermissionProfile({ staffId: 'st1', profileId: 'next', academicYearId: 'ay2', customScopes: [], useDefaultScopes: false })
@@ -380,7 +380,7 @@ describe('permission profile workflows', () => {
 
   test('new selections reject class targets from a different academic year', async () => {
     const { repositories, service } = await createProfileContext()
-    await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' }))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' })))
     await expect(service.accessControlWorkflow.configureStaffPermissionScopeDefaults({ staffId: 'st1', academicYearId: 'ay2', scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] })).rejects.toThrow('Scope target')
     expect(await repositories.staffPermissionScopeDefaults.list({ staffId: 'st1' })).toHaveLength(0)
   })

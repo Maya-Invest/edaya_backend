@@ -2,6 +2,8 @@ import { AuthorizationError, createSystemActorMetadata } from '@edaya/authorizat
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, noOpNotificationGateway, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { expireAccountInvitations } from '../../src/capabilities/scheduling-jobs/jobs/expire-account-invitations'
 import { testFileStorage } from '../support/test-file-storage'
@@ -15,7 +17,7 @@ describe('invitation expiry uses tenant-bound job policies', () => {
   })
   test('expires only pending invitations for this school and cannot run under a notification principal', async () => {
     fixture = await createAuthorizationDatabase()
-    await fixture.repositories.staffMembers.save(new StaffMember({
+    await saveHumanFixture(fixture.repositories.staffMembers, new StaffMember({
       id: 'staff-a-active',
       schoolId: 'school-a',
       firstName: 'Active',
@@ -23,7 +25,7 @@ describe('invitation expiry uses tenant-bound job policies', () => {
       isActive: true,
     }))
     const revoke = mock(async (_id: string) => {})
-    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, invitationDelivery: { deliver: async () => {}, revoke } })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, invitationDelivery: { deliver: async () => {}, revoke } })
     for (const [id, schoolSuffix, targetId, expiresAt] of [
       ['expired', 'a', 'staff-a', '2026-01-01'],
       ['active', 'a', 'staff-a-active', '2026-01-03'],

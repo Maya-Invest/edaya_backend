@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { humanFixture } from '../../../../../tooling/test-support/human-fixtures'
 import { createTestApp } from '../../support/create-test-app'
 import { createPlatformRegisterTestActor } from '../../support/test-actor'
 
@@ -26,12 +27,12 @@ describe('Setup owner workflow', () => {
       timeZone: 'UTC',
     })
 
-    await app.setupWorkflow.registerStaffMember({
+    await humanFixture({
       id: 'owner',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Owner',
-    })
+    }).then(prepared => app.setupWorkflow.registerStaffMember(prepared))
 
     expect((await repositories.schoolRepository.findById('school'))?.ownerSubjectId).toBeUndefined()
   })

@@ -32,7 +32,7 @@ function readyDocument(context: DocumentContext) {
 function documentSource(context: DocumentContext, locale: string, captured?: DocumentIssuanceSnapshot['teacherSignatures']) {
   const { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, homeroomTeacherName } = context
   const catalogLang = catalogLangFromLocale(locale)
-  const subjectNameByClassSubjectId = new Map(subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.code)]))
+  const subjectNameByClassSubjectId = new Map(subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.shortName)]))
   // Repository order must not affect floating-point accumulation or source comparisons.
   const peerAverages = gradingPeerAverages(context.result, context.peerResults)
   const formatAverage = (value: number) => formatReportAverage(value, context.result.grading, locale)

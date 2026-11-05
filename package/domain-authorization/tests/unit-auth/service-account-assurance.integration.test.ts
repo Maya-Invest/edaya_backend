@@ -40,7 +40,7 @@ describe('assurance and account kind in complete policies', () => {
 
   test.each([false, true])('service account elevated=%s never manages service credentials', async (elevated) => {
     const existing = (await fixture.repositories.staffMembers.findById('staff-a'))!
-    await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, accountKind: 'service', serviceId: 'integration', serviceElevated: elevated }))
+    await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, identifier: undefined, name: 'Integration', shortName: 'Integration', accountKind: 'service', serviceId: 'integration', serviceElevated: elevated }))
     const access = new AccessPolicies(createServiceStaffActorMetadata(identity), fixture.repositories)
     for (const permission of [Permission.SERVICE_ACCOUNT_READ, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE]) {
       await grant(permission)
@@ -52,7 +52,7 @@ describe('assurance and account kind in complete policies', () => {
     if (elevated)
       await access.assertSchool(Permission.ACCESS_CONTROL_MANAGE)
     else await expect(access.assertSchool(Permission.ACCESS_CONTROL_MANAGE)).rejects.toThrow()
-    await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, accountKind: 'service', serviceId: 'integration', serviceElevated: elevated, isActive: false }))
+    await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, identifier: undefined, name: 'Integration', shortName: 'Integration', accountKind: 'service', serviceId: 'integration', serviceElevated: elevated, isActive: false }))
     await expect(access.scope(Permission.PAYMENT_RECORD, 'students', 'write')).rejects.toThrow()
   })
 })

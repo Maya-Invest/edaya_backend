@@ -1,6 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import { BusinessRuleViolationError, StaffMember } from '@edaya/core'
+import { BusinessRuleViolationError } from '@edaya/core'
 
 export type OnboardingStepNumber = 1 | 2 | 3 | 4
 
@@ -111,23 +111,7 @@ export async function recordOnboardingAccountProgress(
     ? staffMember.onboardingMaxReachedStep
     : Math.max(staffMember.onboardingMaxReachedStep ?? 1, progress.maxReachedStep)
 
-  await repositories.staffMembers.save(new StaffMember({
-    id: staffMember.id,
-    schoolId: staffMember.schoolId,
-    firstName: staffMember.firstName,
-    lastName: staffMember.lastName,
-    photoUrl: staffMember.photoUrl,
-    email: staffMember.email,
-    notificationEmail: staffMember.notificationEmail,
-    notificationPhone: staffMember.notificationPhone,
-    subjectId: staffMember.subjectId,
-    accountKind: staffMember.accountKind,
-    serviceId: staffMember.serviceId,
-    createdBySubjectId: staffMember.createdBySubjectId,
-    serviceElevated: staffMember.serviceElevated,
-    isActive: staffMember.isActive,
-    profileRole: staffMember.profileRole,
-    createdAt: staffMember.createdAt,
+  await repositories.staffMembers.save(staffMember.copyWith({
     onboardingMaxReachedStep: nextMaxReachedStep,
     onboardingWizardCompletedAt: progress.wizardCompleted
       ? (staffMember.onboardingWizardCompletedAt ?? new Date())

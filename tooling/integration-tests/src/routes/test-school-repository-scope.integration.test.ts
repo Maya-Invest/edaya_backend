@@ -1,5 +1,5 @@
 import type { BaseRepositoryInterface } from '@edaya/core'
-import { Subject, SubjectCategoryEntity, SubjectMatter } from '@edaya/core'
+import { Subject, SubjectCategoryEntity, SubjectMatter, withShortName } from '@edaya/core'
 import { CORE_ENTITY_KEYS } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
@@ -23,12 +23,12 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     const school = (await repos.schools.list({ $limit: 1 }))[0]!
     const classGroup = (await repos.classGroups.list({ schoolId: school.id, $limit: 1 }))[0]!
     const placement = { gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId }
-    await repos.subjectCategories.save(new SubjectCategoryEntity({ id: 'scope-foreign-category', schoolId: 'other-school', name: 'Foreign' }))
-    await repos.subjectCategories.save(new SubjectCategoryEntity({ id: 'scope-local-category', schoolId: school.id, name: 'Local' }))
-    await repos.subjects.save(new Subject({ ...placement, id: 'scope-foreign-subject', categoryId: 'scope-foreign-category', schoolId: 'other-school', name: 'Foreign' }))
-    await repos.subjects.save(new Subject({ ...placement, id: 'scope-local-subject', categoryId: 'scope-local-category', schoolId: school.id, name: 'Local' }))
+    await repos.subjectCategories.save(new SubjectCategoryEntity(withShortName({ id: 'scope-foreign-category', schoolId: 'other-school', name: 'Foreign' })))
+    await repos.subjectCategories.save(new SubjectCategoryEntity(withShortName({ id: 'scope-local-category', schoolId: school.id, name: 'Local' })))
+    await repos.subjects.save(new Subject(withShortName({ ...placement, id: 'scope-foreign-subject', categoryId: 'scope-foreign-category', schoolId: 'other-school', name: 'Foreign' })))
+    await repos.subjects.save(new Subject(withShortName({ ...placement, id: 'scope-local-subject', categoryId: 'scope-local-category', schoolId: school.id, name: 'Local' })))
     for (const [id, subjectId] of [['0-foreign-matter', 'scope-foreign-subject'], ['1-local-matter', 'scope-local-subject'], ['2-local-matter', 'scope-local-subject']]) {
-      await repos.subjectMatters.save(new SubjectMatter({ id: id!, subjectId: subjectId!, name: 'Scope test', sequenceOrder: 1 }))
+      await repos.subjectMatters.save(new SubjectMatter(withShortName({ id: id!, subjectId: subjectId!, name: 'Scope test', sequenceOrder: 1 })))
     }
     const headers = await authHeaders()
     const request = (action: string, body: unknown) => app.request(`/core/entities/subject-matters/${action}`, { method: 'POST', headers, body: JSON.stringify(body) })
@@ -52,7 +52,7 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     const repos = application.repositories
     const subject = (await repos.subjects.findById('scope-local-subject'))!
     const scoped = repos.subjectMatters.forSchool!(subject.schoolId)
-    const matter = (id: string, subjectId: string) => new SubjectMatter({ id, subjectId, name: 'Attempted write', sequenceOrder: 1 })
+    const matter = (id: string, subjectId: string) => new SubjectMatter(withShortName({ id, subjectId, name: 'Attempted write', sequenceOrder: 1 }))
     await expect(scoped.save(matter('scope-invalid-insert', 'scope-foreign-subject'))).rejects.toThrow()
     await expect(scoped.save(matter('0-foreign-matter', 'scope-local-subject'))).rejects.toThrow()
     await expect(scoped.batchSave([matter('scope-rolled-back', 'scope-local-subject'), matter('0-foreign-matter', 'scope-local-subject')])).rejects.toThrow()
@@ -72,7 +72,7 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     const headers = await authHeaders()
     const request = (action: string, body: unknown) => app.request(`/core/entities/subject-matters/${action}`, { method: 'POST', headers, body: JSON.stringify(body) })
     const command = (action: string, body: unknown) => app.request(`/core/commands/${action}`, { method: 'POST', headers, body: JSON.stringify(body) })
-    const proposed = (id: string) => new SubjectMatter({ id, subjectId: 'scope-local-subject', name: 'HTTP mutation', sequenceOrder: 1 }).data
+    const proposed = (id: string) => new SubjectMatter(withShortName({ id, subjectId: 'scope-local-subject', name: 'HTTP mutation', sequenceOrder: 1 })).data
     expect((await request('save', proposed('0-foreign-matter'))).status).toBe(404)
     expect((await request('batch-save', { entities: [proposed('http-rolled-back'), proposed('0-foreign-matter')] })).status).toBe(404)
     expect((await request('batch-delete', { ids: ['1-local-matter', '0-foreign-matter'] })).status).toBe(404)

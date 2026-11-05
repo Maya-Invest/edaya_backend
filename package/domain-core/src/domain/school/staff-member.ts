@@ -4,6 +4,7 @@ import type { StaffProfileRole } from './staff-profile-role'
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { optionalHumanIdentifierSchema, shortNameSchema } from '../shared/visible-identification'
 
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'
 import { STAFF_PROFILE_ROLES } from './staff-profile-role'
@@ -56,7 +57,9 @@ export const staffMemberBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
-  code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  identifier: optionalHumanIdentifierSchema,
+  name: z.string().trim().min(1).optional(),
+  shortName: shortNameSchema.optional(),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -88,6 +91,8 @@ export const staffMemberUpdateSchema = staffMemberBaseSchema.partial().required(
 export class StaffMember {
   readonly data: StaffMemberData
 
+  copyWith(changes: Partial<StaffMemberInput>): StaffMember { return new StaffMember({ ...this.data, ...changes }) }
+
   constructor(args: StaffMemberInput) {
     this.data = parseDomain(staffMemberSchema, args)
   }
@@ -96,7 +101,9 @@ export class StaffMember {
   get schoolId() { return this.data.schoolId }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
-  get code() { return this.data.code }
+  get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.data.name }
+  get identifier() { return this.data.identifier }
   get photoUrl() { return this.data.photoUrl }
   get email() { return this.data.email }
   get phone() { return this.data.phone }

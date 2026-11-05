@@ -1,7 +1,7 @@
 import type { ResourceAccessScope } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, School } from '@edaya/core'
+import { BusinessRuleViolationError, School, withShortName } from '@edaya/core'
 import { schoolCommandScope } from '../../services/commands/school-command-scope'
 import { validateSchoolOwnership } from '../../services/entities/config/school/validate-school-ownership'
 
@@ -24,7 +24,7 @@ export async function initializeFixtureSchoolOwner(base: BaseSchoolService, inpu
       const existing = await base.repositories.schools.forSchool!(base.actor.schoolId).findById(input.schoolId)
       if (!existing)
         denyResourceAccess()
-      proposed = new School({ ...existing.data, ownerSubjectId: input.subjectId })
+      proposed = new School(withShortName({ ...existing.data, ownerSubjectId: input.subjectId }))
       scope = await base.access.identities.assertInitializeFixtureOwner(input.staffId, existing, proposed)
       validateSchoolOwnership(proposed, existing)
     },

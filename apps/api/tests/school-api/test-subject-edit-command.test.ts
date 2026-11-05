@@ -26,12 +26,14 @@ describe("subject edit command", () => {
     }
   });
 
-  it("preserves every explicit clear in update and configure commands", () => {
-    const clears = { shortName: null, code: null, coefficient: null, periodsPerWeek: null, minPeriodSpan: null, maxPeriodSpan: null };
+  it("preserves optional workload clears while keeping short names required", () => {
+    const clears = { coefficient: null, periodsPerWeek: null, minPeriodSpan: null, maxPeriodSpan: null };
     expect(updateSubjectCommandSchema.parse({ subjectId: "math-6", ...clears })).toEqual({ subjectId: "math-6", ...clears });
     const configured = subjectConfigCommandSchema.parse({ id: "math-6", gradeLevelId: "grade-6", academicYearId: "year", name: "Math", categoryId: "science", ...clears });
     expect(configured).toMatchObject(clears);
     expect(configured).not.toHaveProperty("color");
     expect(configured).not.toHaveProperty("isOptional");
+    expect(updateSubjectCommandSchema.safeParse({ subjectId: "math-6", shortName: null }).success).toBe(false);
+    expect(updateSubjectCommandSchema.safeParse({ subjectId: "math-6", shortName: "" }).success).toBe(false);
   });
 });

@@ -1,8 +1,10 @@
 import type { Student, Teacher } from '@edaya/core'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, Permission, RecordingInvitationDeliveryPort, RecordingNotificationGateway, School, SchoolNotificationTemplates, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { AcademicYear, AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, Permission, RecordingInvitationDeliveryPort, RecordingNotificationGateway, School, SchoolNotificationTemplates, StaffMember, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { resolveInvitationDispatchRecipient, SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
+import { humanFixture } from '../../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { hashInvitationToken } from '../../../src/capabilities/invitations/invitation-token'
 import { buildDefaultNotificationTemplateDocument } from '../../../src/capabilities/notifications/templates/defaults/manifest'
 import { createTestApp } from '../../support/create-test-app'
@@ -10,7 +12,7 @@ import { createTestStaffActor } from '../../support/test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
 function invitationAcceptanceService(service: SchoolService) {
-  return new SchoolService({ ...service.baseService, actor: createSystemActorMetadata({ schoolId: service.baseService.actor.schoolId, systemId: 'account-invitation-public', requestId: 'accept-invitation', reason: 'Accept through verified invitation contact' }) })
+  return new SchoolService({ ...service.baseService, commandJournal: new PostgresCommandJournal(), actor: createSystemActorMetadata({ schoolId: service.baseService.actor.schoolId, systemId: 'account-invitation-public', requestId: 'accept-invitation', reason: 'Accept through verified invitation contact' }) })
 }
 
 async function createInvitationContext(options: { guardians?: Guardian[], teachers?: Teacher[], students?: Student[], pendingOwnerStaffId?: string, ownerSubjectId?: string, extraSchools?: School[] } = {}) {
@@ -18,15 +20,15 @@ async function createInvitationContext(options: { guardians?: Guardian[], teache
   const fixture = await createTestApp(actor)
   const repositories = fixture.schoolRepositories
   const invitationDelivery = new RecordingInvitationDeliveryPort()
-  await repositories.schools.save(new School({ id: 'sch1', name: 'Edaya School', timeZone: 'Europe/Paris', pendingOwnerStaffId: options.pendingOwnerStaffId, ownerSubjectId: options.ownerSubjectId }))
+  await repositories.schools.save(new School(withShortName({ id: 'sch1', name: 'Edaya School', timeZone: 'Europe/Paris', pendingOwnerStaffId: options.pendingOwnerStaffId, ownerSubjectId: options.ownerSubjectId })))
   for (const school of options.extraSchools ?? []) await repositories.schools.save(school)
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
   await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'assign', schoolId: 'sch1', academicYearId: 'ay1', staffId: actor.staffMemberId, permission: Permission.ACCESS_CONTROL_MANAGE, scopes: [{ kind: 'school' }] }))
   await repositories.staffMembers.save(new StaffMember({ id: 'st9', schoolId: 'sch1', firstName: 'Paul', lastName: 'Martin', email: 'p.martin@school.edu', isActive: true }))
   for (const guardian of options.guardians ?? []) await repositories.guardians.save(guardian)
   for (const teacher of options.teachers ?? []) await repositories.teachers.save(teacher)
   for (const student of options.students ?? []) await repositories.students.save(student)
-  const service = new SchoolService({ repositories, actor, atomicExecution: fixture.atomicExecution, notificationGateway: new RecordingNotificationGateway(), fileStorage: testFileStorage, invitationDelivery })
+  const service = new SchoolService({ commandJournal: new PostgresCommandJournal(), repositories, actor, atomicExecution: fixture.atomicExecution, notificationGateway: new RecordingNotificationGateway(), fileStorage: testFileStorage, invitationDelivery })
   return { invitationDelivery, repositories, accountInvitations: repositories.accountInvitations, staffMembers: repositories.staffMembers, schools: repositories.schools, service }
 }
 
@@ -37,21 +39,21 @@ describe('AccountInvitationServiceWorkflow', () => {
     const actor = service.baseService.actor
     if (actor.kind !== 'staff')
       throw new Error('Staff fixture required')
-    await repositories.schools.save(new School({ ...school.data, ownerSubjectId: actor.subjectId }))
-    const registering = new SchoolService({ ...service.baseService, inviteBaseUrl: 'https://example.test/invite', invitationDelivery: {
+    await repositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: actor.subjectId })))
+    const registering = new SchoolService({ ...service.baseService, commandJournal: new PostgresCommandJournal(), inviteBaseUrl: 'https://example.test/invite', invitationDelivery: {
       deliver: async () => { throw new Error('Invitation enqueue failed') },
       revoke: async () => {},
     } })
-    await expect(registering.setupWorkflow.registerStaffMember({ id: 'enqueue-failure-staff', schoolId: 'sch1', firstName: 'Fixture', lastName: 'Staff', email: 'fixture@example.test' })).rejects.toThrow('Invitation enqueue failed')
+    await expect(humanFixture({ id: 'enqueue-failure-staff', schoolId: 'sch1', firstName: 'Fixture', lastName: 'Staff', email: 'fixture@example.test' }).then(prepared => registering.setupWorkflow.registerStaffMember(prepared))).rejects.toThrow('Invitation enqueue failed')
     expect(await repositories.staffMembers.findById('enqueue-failure-staff')).toBeUndefined()
     expect(await repositories.accountInvitations.list({ targetId: 'enqueue-failure-staff' })).toHaveLength(0)
-    expect(await registering.setupWorkflow.registerStaffMember({ id: 'no-contact-staff', schoolId: 'sch1', firstName: 'Fixture', lastName: 'No email' })).toMatchObject({ id: 'no-contact-staff' })
+    expect(await humanFixture({ id: 'no-contact-staff', schoolId: 'sch1', firstName: 'Fixture', lastName: 'No email' }).then(prepared => registering.setupWorkflow.registerStaffMember(prepared))).toMatchObject({ id: 'no-contact-staff' })
   })
 
   test('resolves queued invitation delivery only from current school-scoped pending state', async () => {
     const { service, repositories } = await createInvitationContext()
     const sent = await service.accountInvitationWorkflow.sendAccountInvitation({ kind: AccountInvitationKind.Staff, targetId: 'st9', inviteBaseUrl: 'https://example.test/invite' })
-    const dispatch = new SchoolService({ ...service.baseService, actor: createSystemActorMetadata({ schoolId: 'sch1', systemId: 'invitation-dispatch', requestId: 'dispatch', reason: 'Test' }) })
+    const dispatch = new SchoolService({ ...service.baseService, commandJournal: new PostgresCommandJournal(), actor: createSystemActorMetadata({ schoolId: 'sch1', systemId: 'invitation-dispatch', requestId: 'dispatch', reason: 'Test' }) })
     const request = { schoolId: 'sch1', invitationId: sent.invitation.id }
     expect(await resolveInvitationDispatchRecipient(dispatch.baseService, request)).toEqual({
       ...request,
@@ -374,12 +376,12 @@ describe('AccountInvitationServiceWorkflow', () => {
     const { service, schools } = await createInvitationContext({
       pendingOwnerStaffId: 'st9',
       extraSchools: [
-        new School({
+        new School(withShortName({
           id: 'sch-other',
           name: 'Other School',
           timeZone: 'Europe/Paris',
           ownerSubjectId: 'owner-subject-1',
-        }),
+        })),
       ],
     })
 

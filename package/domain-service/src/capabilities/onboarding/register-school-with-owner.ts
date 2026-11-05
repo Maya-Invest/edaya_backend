@@ -25,6 +25,7 @@ export interface RegisterSchoolWithOwnerInput {
   requestId: string
   id?: string
   ownerStaffId?: string
+  ownerIdentifier?: string | null
   ownerFirstName?: string
   ownerLastName?: string
   ownerEmail?: string
@@ -101,6 +102,7 @@ export async function registerSchoolWithOwner(
 
   const callerStaffId = input.ownerStaffId ?? randomUUID()
   const actor = createSchoolBootstrapActor({
+    onBehalfOfSubjectId: subjectId,
     schoolId,
     requestId: input.requestId,
   })
@@ -123,6 +125,7 @@ export async function registerSchoolWithOwner(
 
     await service.setupWorkflow.registerStaffMember({
       id: callerStaffId,
+      identifier: input.ownerIdentifier,
       schoolId,
       firstName: owner.firstName,
       lastName: owner.lastName,

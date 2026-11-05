@@ -1,5 +1,5 @@
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
-import { GradeScale, Permission, StaffPermissionAssignment } from '@edaya/core'
+import { GradeScale, Permission, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
@@ -14,7 +14,7 @@ describe('grading configuration catalog access', () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
     for (const schoolId of ['school-a', 'school-b']) {
-      await fixture.repositories.gradeScales.save(new GradeScale({ id: `scale-${schoolId}`, schoolId, name: 'Sur 20', minScore: 0, maxScore: 20, intervalConvention: 'continuous', ranges: [{ id: `range-${schoolId}`, letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] }))
+      await fixture.repositories.gradeScales.save(new GradeScale(withShortName({ id: `scale-${schoolId}`, schoolId, name: 'Sur 20', minScore: 0, maxScore: 20, intervalConvention: 'continuous', ranges: [{ id: `range-${schoolId}`, letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] })))
     }
   })
   afterEach(async () => {

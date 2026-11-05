@@ -1,39 +1,21 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { createStaffActorMetadata, createSystemActorMetadata } from '@edaya/authorization'
-import {
-  AcademicYear,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  noOpFileStorage,
-  noOpNotificationGateway,
-  Permission,
-  RecordingInvitationDeliveryPort,
-  School,
-  StaffMember,
-  StaffPermissionAssignment,
-} from '@edaya/core'
+import { AcademicYear, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, noOpFileStorage, noOpNotificationGateway, Permission, RecordingInvitationDeliveryPort, School, StaffMember, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { resolveOnboardingDataset } from '@edaya/fixtures/onboarding'
 import { provisionOnboarding, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
   throw new Error('Use the disposable native test runner')
 
 const handles = await Promise.all([createPostgresSchoolDatabase(url), createPostgresSchoolDatabase(url)])
-const repositories = handles.map(handle => new PostgresSchoolRepositories(handle.db))
+const repositories = handles.map(handle => createFixtureRepositories(handle.db))
 const invitationDelivery = new RecordingInvitationDeliveryPort()
-const applications = handles.map((handle, index) => new SchoolApplication({
-  repositories: repositories[index]!,
-  atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb),
-  commandJournal: new PostgresCommandJournal(),
-  fileStorage: noOpFileStorage,
-  notificationGateway: noOpNotificationGateway,
-  invitationDelivery,
-}))
+const applications = handles.map((handle, index) => new SchoolApplication({ repositories: repositories[index]!, atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb), commandJournal: new PostgresCommandJournal(), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway, invitationDelivery }))
 
 const inviteSchoolId = 'invite-integrity-school'
 const staffId = 'invite-integrity-staff'
@@ -75,15 +57,15 @@ function typicalProvisionInput(schoolId: string, requestId: string) {
 
 beforeAll(async () => {
   await repositories[0]!.init({ driver: 'node-postgres' })
-  await repositories[0]!.schools.save(new School({ id: inviteSchoolId, name: 'Invite School', timeZone: 'UTC', ownerSubjectId: adminSubject }))
-  await repositories[0]!.academicYears.save(new AcademicYear({
+  await repositories[0]!.schools.save(new School(withShortName({ id: inviteSchoolId, name: 'Invite School', timeZone: 'UTC', ownerSubjectId: adminSubject })))
+  await repositories[0]!.academicYears.save(new AcademicYear(withShortName({
     id: 'invite-year',
     schoolId: inviteSchoolId,
     name: 'Year',
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-12-31'),
     status: 'published',
-  }))
+  })))
   await repositories[0]!.staffMembers.save(new StaffMember({
     id: staffId,
     schoolId: inviteSchoolId,

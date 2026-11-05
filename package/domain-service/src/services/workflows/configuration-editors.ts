@@ -1,7 +1,7 @@
 import type { GradeScaleInput, GradeScaleRange } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, GradeScale, rangesFromThresholds } from '@edaya/core'
+import { BusinessRuleViolationError, GradeScale, rangesFromThresholds, withShortName } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { schoolCommandScope } from '../commands/school-command-scope'
 
@@ -10,7 +10,7 @@ export interface ConfigureGradeScaleInput {
   id: string
   expectedRevision: number
   action: 'metadata' | 'interval' | 'remove-interval' | 'convert' | 'delete'
-  metadata?: Pick<GradeScaleInput, 'name' | 'minScore' | 'maxScore' | 'decimalPlaces' | 'roundingMode' | 'description'>
+  metadata?: Pick<GradeScaleInput, 'name' | 'shortName' | 'minScore' | 'maxScore' | 'decimalPlaces' | 'roundingMode' | 'description'>
   interval?: Omit<GradeScaleRange, 'maxScore'> & { id: string }
   intervalId?: string
 }
@@ -76,11 +76,11 @@ export class ConfigurationEditorsWorkflow {
           throw new BusinessRuleViolationError('INVALID_SCALE_BOUNDS', 'Scale minimum must be less than its maximum')
         if (data.intervalConvention === 'continuous')
           data.ranges = rangesFromThresholds(data.ranges.map(row => ({ ...row, gpaValue: row.gpaValue ?? undefined, interpretation: row.interpretation ?? undefined })), data.maxScore)
-        await this.base.entities.gradeScales.save(new GradeScale(data))
+        await this.base.entities.gradeScales.save(new GradeScale(withShortName(data)))
         return (await this.base.repositories.gradeScales.findById(input.id))!
       },
       persistResult: result => ({ id: result.id, deleted: input.action === 'delete' ? JSON.stringify(result.data) : null }),
-      replay: async stored => stored.deleted ? new GradeScale(JSON.parse(stored.deleted)) : (await this.base.entities.gradeScales.findById(stored.id))!,
+      replay: async stored => stored.deleted ? new GradeScale(withShortName(JSON.parse(stored.deleted))) : (await this.base.entities.gradeScales.findById(stored.id))!,
       audit: result => [{ event: 'configureGradeScale', resourceType: 'gradeScales', resourceId: result.id }],
     })
   }

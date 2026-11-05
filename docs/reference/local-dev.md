@@ -139,6 +139,22 @@ Opens automatically at `http://127.0.0.1:8192`.
 |---------|-----|
 | School browser fails to open PGlite | Stop `bun run repo dev` first — the API holds the lock on `.data/school` |
 
+## Identifier and import-reference local cutover
+
+Migration `0054_visible_identification.sql` requires all affected school tables to be empty. It rejects existing records before changing their schema. Do not edit historical migrations or apply this cutover to populated production data.
+
+After backend, client and integration verification, stop the local API and back up the configured school store (normally `.data/school`). Retain the separate identity store (`.data/identity`) and record its existing account IDs before the reset. Use the school-only reset owned by the seed command; do not remove the whole `.data` directory.
+
+For the documented local fixture authentication mode, run:
+
+```sh
+AUTH_TERMS_MODE=off bun repo ops seed local --clean --yes
+```
+
+The command refuses an already running local API, resets only the school database, starts a temporary matching API with OTP capture, seeds through HTTP and stops its owned services. The identity database is retained. `AUTH_TERMS_MODE=off` is restricted to this local fixture run; ordinary development uses the configured terms mode. Alternatively use explicitly authenticated fixture sessions as described in the seeding README.
+
+Restart the matching API and clients. Verify people directories, creation with omitted and supplied identifiers, onboarding, ambiguous import selection and export/re-import. Run the seed again without `--clean` and compare entity/source bindings to confirm replay preserves internal identities. Keep the backup until the cutover smoke checks pass.
+
 ## Dev database seed
 
 Seeding targets both local deployments: the unified API at `http://localhost:9999`. Each service owns its database. After starting the API, run `bun repo ops seed` in another terminal to load demo data.
@@ -234,7 +250,7 @@ Before opening a pull request, run `bun run verify`. For integration coverage (p
 
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
-| `bun repo ops seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun run repo dev`, `rm -rf .data`, restart, `bun repo ops seed` |
+| `bun repo ops seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop the local API, back up the school store, then use the school-only reset procedure above; retain `.data/identity` |
 | `POST /auth/edaya/otp/start` fails | Identity database empty or identity service unavailable | Start the unified API on port 9999, then run the full seed |
 | Sign-in succeeds but app shows “Session API indisponible” | Identity subject exists but the school actor is not linked | Run the full seed against identity and school |
 | `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun run repo dev` |

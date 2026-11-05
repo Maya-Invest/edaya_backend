@@ -1,7 +1,7 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { FileStoragePort, Filter, NotificationGatewayPort, QueryOptions } from '@edaya/core'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { PostgresDurableWork } from '../../../adaptor-postgres/src/stores/durable-work-store'
@@ -159,13 +159,15 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     assuranceLevel: ActorAssuranceLevel.Strong,
   })
   if (defaultActor.kind === 'staff') {
-    await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', financeCurrency: 'USD', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
-    await nativeRepositories.staffMembers.save(new StaffMember({ id: defaultActor.staffMemberId, schoolId: defaultActor.schoolId, firstName: 'Fixture', lastName: 'Staff', accountKind: defaultActor.accountKind, ...(defaultActor.accountKind === 'human' ? { subjectId: defaultActor.subjectId } : { serviceId: 'fixture-service' }) }))
+    await nativeRepositories.schools.save(new School(withShortName({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', financeCurrency: 'USD', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) })))
+    const owner = { id: defaultActor.staffMemberId, schoolId: defaultActor.schoolId, firstName: 'Fixture', lastName: 'Staff', accountKind: defaultActor.accountKind, ...(defaultActor.accountKind === 'human' ? { subjectId: defaultActor.subjectId } : { serviceId: 'fixture-service', name: 'Fixture service', shortName: 'Fixture' }) }
+    await nativeRepositories.staffMembers.save(new StaffMember(owner))
   }
   const durableWork = new PostgresDurableWork(connection)
   const application = new SchoolApplication({
     atomicExecution,
     commandJournal: new PostgresCommandJournal(),
+
     durableWork,
     documentRenderer: options.documentRenderer,
     notificationGateway: options.notificationGateway ?? noOpNotificationGateway,
@@ -255,8 +257,8 @@ export async function createCurriculumTestApp(...args: Parameters<typeof createT
   const { ensureDatasetSubjectCategories } = await import('../../src/capabilities/academics/dataset-subject-categories')
   const { SubjectCategoryEntity } = await import('@edaya/core')
   for (const school of await fixture.schoolRepositories.schools.list()) {
-    await ensureDatasetSubjectCategories(fixture.schoolRepositories, school.id, subjectCategories)
-    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity({ id: 'test-category', schoolId: school.id, name: 'Fixture category' }))
+    await ensureDatasetSubjectCategories(fixture.schoolRepositories, school.id, subjectCategories, fixture.application.commandExecution)
+    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity(withShortName({ id: 'test-category', schoolId: school.id, name: 'Fixture category' })))
   }
   return fixture
 }

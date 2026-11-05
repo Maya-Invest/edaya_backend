@@ -1,14 +1,14 @@
 import { z } from 'zod'
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 const text = z.string().trim().min(1)
-const code = text.transform(v => v.toUpperCase())
 const optionalText = text.nullable().optional().transform(v => v ?? undefined)
 
 export const academicDisciplineSchema = z.object({
   id: text,
   schoolId: text,
-  code,
+  shortName: shortNameSchema.optional(),
   name: text,
   isActive: z.boolean().default(true),
   createdAt: zodDate().default(() => new Date()),
@@ -21,7 +21,7 @@ export class AcademicDiscipline {
   constructor(input: AcademicDisciplineInput) { this.data = parseDomain(academicDisciplineSchema, input) }
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
-  get code() { return this.data.code }
+  get shortName() { return this.data.shortName }
   get name() { return this.data.name }
   get isActive() { return this.data.isActive }
   get createdAt() { return this.data.createdAt }
@@ -32,8 +32,8 @@ export class AcademicDiscipline {
 export const placementStatusSchema = z.object({
   id: text,
   schoolId: text,
-  code,
-  label: text,
+  shortName: shortNameSchema.optional(),
+  name: text,
   isActive: z.boolean().default(true),
   createdAt: zodDate().default(() => new Date()),
   updatedAt: zodDate().default(() => new Date()),
@@ -45,8 +45,8 @@ export class PlacementStatus {
   constructor(input: PlacementStatusInput) { this.data = parseDomain(placementStatusSchema, input) }
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
-  get code() { return this.data.code }
-  get label() { return this.data.label }
+  get shortName() { return this.data.shortName }
+  get name() { return this.data.name }
   get isActive() { return this.data.isActive }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }

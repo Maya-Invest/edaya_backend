@@ -1,6 +1,7 @@
 import type { DocumentRendererPort, NotificationGatewayPort } from '@edaya/core'
-import { AcademicYear, ClassGroup, createInMemoryFileStorage, EnrollmentEndReason, GradeLevel, Guardian, GuardianStudentLink, noOpNotificationGateway, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
+import { AcademicYear, ClassGroup, createInMemoryFileStorage, EnrollmentEndReason, GradeLevel, Guardian, GuardianStudentLink, noOpNotificationGateway, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentStatus, withShortName } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
@@ -9,12 +10,12 @@ export async function createStudentTransitionContext({ activeEnrollmentId = 'enr
   const actor = createTestStaffActor('sch1', 'user1')
   const fixture = await createTestApp(actor, { owner: true, notificationGateway, documentRenderer, ...(documentRenderer ? { fileStorage: createInMemoryFileStorage() } : {}) })
   const repositories = fixture.schoolRepositories
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Current', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2026-07-01'), endDate: new Date('2027-06-30') }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: 'sch1', name: 'Grade 1', label: '1', order: sourceGradeOrder }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade2', schoolId: 'sch1', name: 'Grade 2', label: '2', order: nextGradeOrder }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Class 1', capacity: 30 }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'cg2', schoolId: 'sch1', academicYearId: 'ay2', gradeLevelId: 'grade2', name: 'Class 2', capacity: targetCapacity }))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Current', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2026-07-01'), endDate: new Date('2027-06-30') })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade1', schoolId: 'sch1', name: 'Grade 1', shortName: '1', order: sourceGradeOrder })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade2', schoolId: 'sch1', name: 'Grade 2', shortName: '2', order: nextGradeOrder })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg1', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'Class 1', capacity: 30 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg2', schoolId: 'sch1', academicYearId: 'ay2', gradeLevelId: 'grade2', name: 'Class 2', capacity: targetCapacity })))
   await repositories.students.save(new Student({ id: 'stu1', schoolId: 'sch1', firstName: 'Ada', lastName: 'Lovelace', birthDate: new Date('2010-01-01'), status: studentStatus }))
   if (activeEnrollmentId) {
     if (activeEnrollmentId !== 'enr1')
@@ -35,11 +36,11 @@ export async function createStudentAdminContext({ inviteBaseUrl, accountInvitati
   const fixture = await createStudentTransitionContext()
   const { repositories } = fixture
   await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', subjectId: 'subject-gua1' }))
-  await repositories.schools.save(new School({ id: 'other-school', name: 'Other', timeZone: 'UTC' }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay-other', schoolId: 'other-school', name: 'Foreign', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade-other', schoolId: 'other-school', name: 'Foreign', label: 'F', order: 1 }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'cg-other', schoolId: 'other-school', academicYearId: 'ay-other', gradeLevelId: 'grade-other', name: 'Foreign' }))
-  const service = new SchoolService({ repositories, actor: createTestStaffActor('sch1', 'user1'), atomicExecution: fixture.atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, inviteBaseUrl, accountInvitationsEnabled })
+  await repositories.schools.save(new School(withShortName({ id: 'other-school', name: 'Other', timeZone: 'UTC' })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay-other', schoolId: 'other-school', name: 'Foreign', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade-other', schoolId: 'other-school', name: 'Foreign', shortName: 'F', order: 1 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg-other', schoolId: 'other-school', academicYearId: 'ay-other', gradeLevelId: 'grade-other', name: 'Foreign' })))
+  const service = new SchoolService({ commandJournal: new PostgresCommandJournal(), repositories, actor: createTestStaffActor('sch1', 'user1'), atomicExecution: fixture.atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, inviteBaseUrl, accountInvitationsEnabled })
   return { ...repositories, service }
 }
 

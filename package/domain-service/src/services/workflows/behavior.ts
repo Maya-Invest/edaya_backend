@@ -88,7 +88,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const schoolId = input.schoolId ?? this.baseService.actor.schoolId
       this.checkActorSchool(schoolId)
-      const action = new DisciplinaryActionEntity({ ...input, schoolId })
+      const action = new DisciplinaryActionEntity(await this.namedInput('disciplinaryActions', { ...input, schoolId }))
       await this.baseService.entities.disciplinaryActions.save(action)
       return action
     })

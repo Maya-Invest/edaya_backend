@@ -162,7 +162,7 @@ describe("platform actor and s2s client routes", () => {
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "still-works",
-      displayName: "Still Works",
+      name: "Still Works",
       elevated: true,
     });
     const staffKeyList = await app.request(createAppRequest("/core/entities/students/list", {

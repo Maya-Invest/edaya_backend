@@ -27,7 +27,7 @@ export async function assembleAnnualReportCard(
   for (const context of [annual, ...contributors]) {
     for (const { classSubjectId, subject } of context.subjects) {
       subjectIdByClassSubjectId.set(classSubjectId, subject.id)
-      subjectNameByClassSubjectId.set(classSubjectId, catalogSubjectName(subject.name, catalogLangFromLocale(locale), subject.code))
+      subjectNameByClassSubjectId.set(classSubjectId, catalogSubjectName(subject.name, catalogLangFromLocale(locale), subject.shortName))
     }
   }
   const aggregation = annual.result.aggregation!

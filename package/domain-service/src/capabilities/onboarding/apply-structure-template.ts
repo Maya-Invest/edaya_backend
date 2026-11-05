@@ -3,17 +3,15 @@ import type { AppliedDatasetLevel } from './apply-report-cards-from-dataset'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingDataset, OnboardingDatasetGradeLevel } from './onboarding-dataset'
 import type { ClassNamingMode } from './structure-naming'
-import { randomUUID } from 'node:crypto'
 import { requireActorSchoolId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor, SubjectMatter } from '@edaya/core'
+import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor, SubjectMatter, withShortName } from '@edaya/core'
+import { ensureDatasetCatalog, ensureDatasetSubjectCategories } from '../academics/dataset-subject-categories'
 
-import { ensureDatasetSubjectCategories } from '../academics/dataset-subject-categories'
 import { applyReportCardsFromDataset } from './apply-report-cards-from-dataset'
+import { datasetEntityId } from './dataset-bindings'
 import { ensureAcademicPeriodsFromDataset, resolveDatasetCalendar } from './ensure-academic-periods-from-dataset'
-import { nextOnboardingClassGroupId } from './next-class-group-id'
 import { onboardingDatasetSchema } from './onboarding-dataset'
 import { classNameFromLabel } from './structure-naming'
-import { structureGradeLevelSeedId } from './structure-seed-ids'
 
 export interface ApplyStructureLevelInput {
   gradeLevelId: string
@@ -86,23 +84,6 @@ export function resolveDatasetStructure(input: ApplyStructureTemplateInput): Nor
   })
 }
 
-async function allocateUniqueId(
-  preferredId: string,
-  schoolId: string,
-  findById: (id: string) => Promise<{ id: string, schoolId?: string } | undefined>,
-  usedIds: Set<string>,
-): Promise<string> {
-  for (const candidate of [preferredId, `${preferredId}--${schoolId.slice(0, 8)}`]) {
-    if (!usedIds.has(candidate) && !(await findById(candidate))) {
-      usedIds.add(candidate)
-      return candidate
-    }
-  }
-  const id = randomUUID()
-  usedIds.add(id)
-  return id
-}
-
 export async function buildStructureBootstrapGraph(
   application: OnboardingSchoolApplication,
   schoolId: string,
@@ -110,6 +91,7 @@ export async function buildStructureBootstrapGraph(
   levels: NormalizedStructureLevel[],
   disciplineIdsByCode: ReadonlyMap<string, string>,
   categoryIdsByCode: ReadonlyMap<string, string>,
+  datasetId: string,
 ): Promise<StructureBootstrapGraph> {
   const gradeLevels: GradeLevel[] = []
   const subjects: Subject[] = []
@@ -119,30 +101,27 @@ export async function buildStructureBootstrapGraph(
   const classSubjectMatters: ClassSubjectMatter[] = []
   const appliedLevels: AppliedDatasetLevel[] = []
 
-  const usedGradeLevelIds = new Set<string>()
-  const usedClassGroupIds = new Set<string>()
-  const classSiblingCountByGradeSeed = new Map<string, number>()
+  const boundId = (kind: string, ...keys: (string | number)[]) => datasetEntityId(application, schoolId, datasetId, kind, keys)
 
-  function ensureSubject(entry: OnboardingDatasetGradeLevel['subjects'][number], gradeLevelId: string): Subject {
+  async function ensureSubject(entry: OnboardingDatasetGradeLevel['subjects'][number], gradeLevelId: string): Promise<Subject> {
     const disciplineId = disciplineIdsByCode.get(entry.disciplineCode)
     const categoryId = categoryIdsByCode.get(entry.categoryCode)
     if (!disciplineId || !categoryId)
       throw new BusinessRuleViolationError('STRUCTURE_CATALOG_UNRESOLVED', `Unresolved catalog for subject ${entry.code}`)
-    const subject = new Subject({
-      id: randomUUID(),
+    const subject = new Subject(withShortName({
+      id: await boundId('subjects', academicYearId, gradeLevelId, entry.code),
       schoolId,
       academicYearId,
       gradeLevelId,
       name: entry.name,
       shortName: entry.shortName,
-      code: entry.code,
       disciplineId,
       categoryId,
       coefficient: entry.coefficient,
       isOptional: entry.isOptional,
       color: entry.categoryCode === 'LANGUAGES' ? SubjectColor.Sky : ['HUMANITIES', 'ARTS'].includes(entry.categoryCode) ? SubjectColor.Warm : SubjectColor.Mint,
       reportOrder: entry.reportOrder,
-    })
+    }))
     subjects.push(subject)
     return subject
   }
@@ -152,35 +131,31 @@ export async function buildStructureBootstrapGraph(
   for (const level of levels) {
     const gradeLevelDef = level.definition
 
-    const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId)
-    const gradeLevelId = await allocateUniqueId(
-      preferredGradeLevelId,
-      schoolId,
-      id => application.repositories.gradeLevels.findById(id),
-      usedGradeLevelIds,
-    )
+    const gradeLevelId = await boundId('gradeLevels', level.template.id, level.gradeLevelId)
 
     const classNamingMode = level.classNamingMode ?? 'numerical'
-    gradeLevels.push(new GradeLevel({
+    gradeLevels.push(new GradeLevel(withShortName({
       id: gradeLevelId,
       schoolId,
       name: gradeLevelDef.name,
-      label: gradeLevelDef.shortLabel,
+      shortName: gradeLevelDef.shortLabel,
       order: gradeLevelDef.order,
       cycle: level.template.cycle,
-    }))
+    })))
 
     const entries = gradeLevelDef.subjects
-    const levelSubjects = entries.map((entry) => {
-      const subject = ensureSubject(entry, gradeLevelId)
-      const matterIds = [...entry.chapters].sort((a, b) => a.order - b.order).map((chapter) => {
-        const id = randomUUID()
-        subjectMatters.push(new SubjectMatter({ id, subjectId: subject.id, name: chapter.title, description: chapter.title, sequenceOrder: chapter.order, estimatedHours: 2 }))
-        return id
-      })
+    const levelSubjects: { subject: Subject, matterIds: string[], definition: typeof entries[number] }[] = []
+    for (const entry of entries) {
+      const subject = await ensureSubject(entry, gradeLevelId)
+      const matterIds: string[] = []
+      for (const chapter of [...entry.chapters].sort((a, b) => a.order - b.order)) {
+        const id = await boundId('subjectMatters', subject.id, chapter.code)
+        subjectMatters.push(new SubjectMatter(withShortName({ id, subjectId: subject.id, name: chapter.title, description: chapter.title, sequenceOrder: chapter.order, estimatedHours: 2 })))
+        matterIds.push(id)
+      }
       classSubjectCount += level.classCount
-      return { subject, matterIds, definition: entry }
-    })
+      levelSubjects.push({ subject, matterIds, definition: entry })
+    }
 
     appliedLevels.push({
       definition: gradeLevelDef,
@@ -189,30 +164,19 @@ export async function buildStructureBootstrapGraph(
     })
 
     for (let index = 0; index < level.classCount; index += 1) {
-      const preferredClassGroupId = nextOnboardingClassGroupId(
-        level.gradeLevelId,
-        usedClassGroupIds,
-        classSiblingCountByGradeSeed,
-      )
-      const classGroupId = await allocateUniqueId(
-        preferredClassGroupId,
-        schoolId,
-        id => application.repositories.classGroups.findById(id),
-        usedClassGroupIds,
-      )
-      usedClassGroupIds.add(classGroupId)
+      const classGroupId = await boundId('classGroups', academicYearId, gradeLevelId, index)
 
-      classGroups.push(new ClassGroup({
+      classGroups.push(new ClassGroup(withShortName({
         id: classGroupId,
         schoolId,
         academicYearId,
         gradeLevelId,
         name: classNameFromLabel(gradeLevelDef.shortLabel, index, classNamingMode),
         capacity: level.capacity,
-      }))
+      })))
 
       for (const { subject, matterIds } of levelSubjects) {
-        const classSubjectId = randomUUID()
+        const classSubjectId = await boundId('classSubjects', classGroupId, subject.id)
         classSubjects.push(new ClassSubject({
           id: classSubjectId,
           classGroupId,
@@ -227,7 +191,7 @@ export async function buildStructureBootstrapGraph(
 
         for (const matterId of matterIds) {
           classSubjectMatters.push(new ClassSubjectMatter({
-            id: randomUUID(),
+            id: await boundId('classSubjectMatters', classSubjectId, matterId),
             classSubjectId,
             subjectMatterId: matterId,
             status: ClassSubjectMatterStatus.NotStarted,
@@ -325,6 +289,7 @@ export async function applyStructureTemplate(
     const uniqueTemplates = [...new Map(levels.map(level => [level.template.id, level.template])).values()]
     await ensureAcademicPeriodsFromDataset(application, actor, {
       schoolId,
+      datasetId: dataset.id,
       academicYearId: academicYear.id,
       academicYearStart: academicYear.startDate,
       academicYearEnd: academicYear.endDate,
@@ -332,18 +297,8 @@ export async function applyStructureTemplate(
     })
 
     await service.baseService.access.curriculum.assertConfigure()
-    const categoryIdsByCode = await ensureDatasetSubjectCategories(application.repositories, schoolId, dataset.subjectCategories)
-    const disciplineIdsByCode = new Map<string, string>()
-    const existingDisciplines = await service.baseService.entities.academicDisciplines.list({ schoolId })
-    for (const spec of dataset.disciplines) {
-      const code = spec.code.toUpperCase()
-      const matches = existingDisciplines.filter(row => row.code.toUpperCase() === code)
-      const existing = matches[0]
-      if (matches.length > 1 || (existing && (!existing.isActive || existing.name !== spec.name)))
-        throw new BusinessRuleViolationError('STRUCTURE_DISCIPLINE_CONFLICT', `Dataset discipline ${spec.code} conflicts with the school catalog`)
-      const discipline = existing ?? await service.academicsWorkflow.configureAcademicDiscipline({ id: randomUUID(), code, name: spec.name, isActive: true })
-      disciplineIdsByCode.set(spec.code, discipline.id)
-    }
+    const categoryIdsByCode = await ensureDatasetSubjectCategories(application.repositories, schoolId, dataset.subjectCategories, application.commandExecution, dataset.id)
+    const disciplineIdsByCode = await ensureDatasetCatalog(application.repositories, application.commandExecution, schoolId, 'academicDisciplines', dataset.disciplines, dataset.id)
     const graph = await buildStructureBootstrapGraph(
       application,
       schoolId,
@@ -351,6 +306,7 @@ export async function applyStructureTemplate(
       levels,
       disciplineIdsByCode,
       categoryIdsByCode,
+      dataset.id,
     )
 
     await application.forActor(actor).baseService.access.curriculum.assertConfigure()

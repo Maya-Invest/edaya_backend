@@ -1,3 +1,4 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/types";
@@ -21,7 +22,7 @@ describe("onboarding register-school route", () => {
     });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const response = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -85,7 +86,7 @@ describe("onboarding register-school route", () => {
       }),
     ]);
 
-    const secondRegister = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const secondRegister = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -117,7 +118,7 @@ describe("onboarding register-school route", () => {
     await signUpAuthUser(runtime, { email, name: "Ada Owner" });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const response = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",

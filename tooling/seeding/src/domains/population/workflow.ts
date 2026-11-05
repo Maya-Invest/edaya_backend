@@ -28,6 +28,8 @@ async function seedPopulationFromDataset(
     const birthDate = isoDateString(student.birthDate)
     await port.registerStudent({
       id: student.id,
+      identifier: student.identifier ?? undefined,
+      globalIdentifier: student.globalIdentifier ?? undefined,
       schoolId: dataset.schoolId,
       firstName: student.firstName,
       lastName: student.lastName,
@@ -48,6 +50,7 @@ async function seedPopulationFromDataset(
   for (const guardian of guardians) {
     await port.registerGuardian({
       id: guardian.id,
+      identifier: guardian.identifier ?? undefined,
       schoolId: dataset.schoolId,
       firstName: guardian.firstName,
       lastName: guardian.lastName,

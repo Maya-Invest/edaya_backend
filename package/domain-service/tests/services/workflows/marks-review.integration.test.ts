@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createReportCardContext } from './report-card-workflow-context'
@@ -84,7 +84,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     const student = (await f.repositories.students.findById('stu1'))!
     const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
-    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', identifier: undefined, subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
     await seedSubjectParticipation(f.repositories)
     const mark = (id: string, studentId: string, score: number) => new AssessmentResult({ id, studentId, assessmentId: 'ass1', score })
@@ -134,7 +134,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-    await f.repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art', coefficient: 1 }))
+    await f.repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art', coefficient: 1 })))
     await f.repositories.classSubjects.save(new ClassSubject({ ...(await f.repositories.classSubjects.findById('cs1'))!.data, id: 'cs-art', subjectId: 'art' }))
     await f.repositories.assessments.save(new Assessment({ ...(await f.repositories.assessments.findById('ass1'))!.data, id: 'ass-art', classSubjectId: 'cs-art' }))
     await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar-art', assessmentId: 'ass-art', studentId: 'stu1', score: 50 }))
@@ -151,11 +151,11 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-    await f.repositories.classGroups.save(new ClassGroup({ ...(await f.repositories.classGroups.findById('cg1'))!.data, id: 'cg-destination', name: 'Destination' }))
+    await f.repositories.classGroups.save(new ClassGroup(withShortName({ ...(await f.repositories.classGroups.findById('cg1'))!.data, id: 'cg-destination', name: 'Destination' })))
     await f.repositories.classSubjects.save(new ClassSubject({ ...(await f.repositories.classSubjects.findById('cs1'))!.data, id: 'cs-destination', classGroupId: 'cg-destination' }))
     await f.service.studentWorkflow.transferStudent({ enrollmentId: 'enr1', nextEnrollmentId: 'enr-transfer', nextClassGroupId: 'cg-destination', effectiveAt: new Date('2026-02-15') })
     const sourcePeriod = (await f.repositories.academicPeriods.findById('per1'))!
-    await f.repositories.academicPeriods.save(new AcademicPeriod({ ...sourcePeriod.data, id: 'per-aggregate', name: 'Aggregate', type: AcademicPeriodType.Other }))
+    await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ ...sourcePeriod.data, id: 'per-aggregate', name: 'Aggregate', type: AcademicPeriodType.Other })))
     const input = { ...reportInput, periodId: 'per-aggregate', aggregation: { source: ReportCardAggregationSource.Assessments, sourcePeriodIds: ['per1', 'per-t1'] } }
     const draft = await f.service.assessmentsWorkflow.generateReportCardResult(input)
     expect(draft.classGroupId).toBe('cg-destination')
@@ -234,7 +234,7 @@ describe('evaluation marks review', () => {
     await f.repositories.assessments.save(new Assessment({ ...assessment.data, kind: AssessmentKind.Homework, dueAt: assessment.startsAt, startsAt: undefined, endsAt: undefined }))
     const student = (await f.repositories.students.findById('stu1'))!
     const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
-    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', identifier: undefined, subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
     await seedSubjectParticipation(f.repositories)
     await f.edit()
@@ -257,7 +257,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     const student = (await f.repositories.students.findById('stu1'))!
     const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
-    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', identifier: undefined, subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
     await seedSubjectParticipation(f.repositories)
     await f.edit()
@@ -274,7 +274,7 @@ describe('evaluation marks review', () => {
 
   test('approval validates the entire batch before changing any official mark', async () => {
     const f = await fixture()
-    await f.repositories.students.save(new Student({ ...(await f.repositories.students.findById('stu1'))!.data, id: 'stu2', subjectId: undefined }))
+    await f.repositories.students.save(new Student({ ...(await f.repositories.students.findById('stu1'))!.data, id: 'stu2', identifier: undefined, subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...(await f.repositories.enrollments.findById('enr1'))!.data, id: 'enr2', studentId: 'stu2' }))
     await seedSubjectParticipation(f.repositories)
     await f.edit()
@@ -300,7 +300,7 @@ describe('evaluation marks review', () => {
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
     const correction = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection(correctionInput())
-    await f.repositories.classGroups.save(new ClassGroup({ ...(await f.repositories.classGroups.findById('cg1'))!.data, id: 'unrelated-class' }))
+    await f.repositories.classGroups.save(new ClassGroup(withShortName({ ...(await f.repositories.classGroups.findById('cg1'))!.data, id: 'unrelated-class' })))
     await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: Permission.GRADE_VALIDATE, schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission: Permission.GRADE_VALIDATE, scopes: [{ kind: 'class_group', classGroupId: 'unrelated-class' }] }))
     const decision = { requestId: 'scope-review', correctionId: correction.id, expectedVersion: 0 }
     await expect(f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection(decision)).rejects.toThrow()

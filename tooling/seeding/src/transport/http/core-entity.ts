@@ -1,5 +1,6 @@
 import type { SeedCommandKey, SeedEntityKey, SeedQueryKey } from './catalog'
 import type { HttpSeedClient } from './client'
+/* eslint dot-notation: "off" -- Seed payloads are index-signature records. */
 import { ApiError } from '@maya-invest/edaya-api-client'
 import { createSeedSchoolClient } from './school-client'
 
@@ -74,7 +75,13 @@ export async function postCoreCommand(
     : payload
 
   try {
-    return await schoolClient(options).commands[methodName](serializedPayload)
+    const client = schoolClient(options)
+    const groups: Record<string, 'students' | 'teachers' | 'guardians' | 'staff'> = { registerStudent: 'students', registerTeacher: 'teachers', registerGuardian: 'guardians', registerStaffMember: 'staff' }
+    const group = groups[methodName]
+    const data = serializedPayload as Record<string, unknown>
+    if (group)
+      return await client.commands[methodName]({ ...data, requestId: `fixture:${group}:${String(data['id'])}` })
+    return await client.commands[methodName](serializedPayload)
   }
   catch (error) {
     throw formatCoreError(`Core command failed for ${methodName}`, error)

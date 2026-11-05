@@ -317,6 +317,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     clearSchoolIssuanceAsset: payload => workflows.documents.clearSchoolIssuanceAsset(payload as Parameters<DocumentsServiceWorkflow['clearSchoolIssuanceAsset']>[0]),
     manageStudentSubjectEnrollments: payload => workflows.student.manageStudentSubjectEnrollments(payload as Parameters<StudentServiceWorkflow['manageStudentSubjectEnrollments']>[0]),
     // student
+    correctHumanIdentifier: payload => workflows.setup.correctHumanIdentifier(payload as Parameters<SetupServiceWorkflow['correctHumanIdentifier']>[0]),
     registerStudent: payload => workflows.student.registerStudent(payload as RegisterStudentInput),
     enrollStudent: payload => workflows.student.enrollStudent(payload as EnrollStudentInput),
     linkGuardianToStudent: payload => workflows.student.linkGuardianToStudent(payload as LinkGuardianToStudentInput),

@@ -1,7 +1,7 @@
 import type { GradingPolicy } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, GradeLevel, gradingPolicySchema } from '@edaya/core'
+import { BusinessRuleViolationError, GradeLevel, gradingPolicySchema, withShortName } from '@edaya/core'
 import { GRADING_RECALCULATE_KIND } from '../../capabilities/academics/grading'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { normalizeCommandRequest } from '../commands/command-execution'
@@ -88,7 +88,7 @@ export class GradingConfigurationWorkflow {
         else {
           policies = policies.map(row => row === previous ? { ...row, aggregateLabel: policy.aggregateLabel } : row)
         }
-        const updated = new GradeLevel({ ...level.data, gradingPolicies: policies })
+        const updated = new GradeLevel(withShortName({ ...level.data, gradingPolicies: policies }))
         const scope = await this.base.access.reportCards.assertConfigureGrading(updated, level)
         await this.base.repositories.gradeLevels.forAccess(scope).save(updated)
         return updated
@@ -118,7 +118,7 @@ export class GradingConfigurationWorkflow {
         if (!policy || policy.revision !== input.expectedRevision || policy.status === 'completed')
           throw new BusinessRuleViolationError('GRADING_RETRY_CONFLICT', 'This configuration no longer requires an update')
         queued = crypto.randomUUID()
-        const updated = new GradeLevel({ ...level.data, gradingPolicies: level.gradingPolicies.map(row => row === policy ? { ...row, status: 'updating', failureCode: undefined, workId: queued } : row) })
+        const updated = new GradeLevel(withShortName({ ...level.data, gradingPolicies: level.gradingPolicies.map(row => row === policy ? { ...row, status: 'updating', failureCode: undefined, workId: queued } : row) }))
         await this.base.repositories.gradeLevels.forSchool!(level.schoolId).save(updated)
         return updated
       },

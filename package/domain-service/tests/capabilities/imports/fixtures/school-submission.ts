@@ -1,7 +1,7 @@
 /** Synthetic structure only. No source names, phones, identifiers or school decisions. */
 export function schoolSubmissionFixture() {
   const classes = Array.from({ length: 27 }, (_, index) => ({ name: `Reviewed class ${index + 1}`, grade: 'reviewed-grade', capacity: 50 }))
-  const students = Array.from({ length: 1144 }, (_, index) => ({ matricule: String(index + 1).padStart(6, '0'), first_name: `Synthetic First ${index + 1}`, last_name: 'Synthetic Compound Last', class: classes[index % 27]!.name, is_repeating: index < 231, enrollment_effective_date: '2025-09-01' }))
+  const students = Array.from({ length: 1144 }, (_, index) => ({ identifier: String(index + 1).padStart(6, '0'), first_name: `Synthetic First ${index + 1}`, last_name: 'Synthetic Compound Last', class: classes[index % 27]!.name, is_repeating: index < 231, enrollment_effective_date: '2025-09-01' }))
   const teachers = Array.from({ length: 34 }, (_, index) => ({ code: `T${String(index + 1).padStart(3, '0')}`, first_name: `Synthetic Teacher ${index + 1}`, last_name: 'Synthetic Last', declared_hours: index < 31 ? 20 : index === 31 ? 29 : null, hours_period: 'unspecified' }))
   const coefficients = [
     ...Array.from({ length: 133 }, (_, index) => ({ source: `cell-${index + 1}`, kind: 'numeric', raw: String(index % 5 + 1), disposition: 'pending_review' })),

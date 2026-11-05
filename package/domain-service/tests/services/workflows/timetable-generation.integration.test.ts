@@ -1,5 +1,5 @@
-/* eslint-disable dot-notation -- Document facts use an index signature. */
 import type { SchoolInput } from '@edaya/core'
+/* eslint-disable dot-notation -- Document facts use an index signature. */
 import {
   AcademicYear,
   CalendarEvent,
@@ -23,6 +23,7 @@ import {
   TeacherUnavailability,
   TeacherUnavailabilityRecurrence,
   TimetableGenerationMode,
+  withShortName,
 } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { BaseSchoolService } from '../../../src/services/base-school-service'
@@ -35,18 +36,18 @@ const weekEnd = new Date('2026-09-11T00:00:00.000Z')
 const weekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday]
 
 function period(dayOfWeek: DayOfWeek, suffix = '') {
-  return new PeriodDefinition({
+  return new PeriodDefinition(withShortName({
     id: `period-${dayOfWeek}${suffix}`,
     schoolId: 'school-1',
     academicYearId: 'year-1',
-    label: `Period ${dayOfWeek}`,
+    name: `Period ${dayOfWeek}`,
     dayOfWeek,
     order: suffix ? 2 : 1,
     startTime: suffix ? '09:00' : '08:00',
     endTime: suffix ? '10:00' : '09:00',
     isBreak: suffix === '-break',
     isTeachingSlot: suffix !== '-disabled',
-  })
+  }))
 }
 
 async function createWorkflowContext(
@@ -55,33 +56,33 @@ async function createWorkflowContext(
   calendarEvents: CalendarEvent[] = [],
   academicYearRange?: { startDate: Date, endDate: Date },
 ) {
-  const school = new School({
+  const school = new School(withShortName({
     id: 'school-1',
     name: 'School',
     timeZone: 'UTC',
     timetableMinDayGapSameSubject: 1,
     ownerSubjectId: createTestStaffActor('school-1', 'staff-1').subjectId,
-  } satisfies SchoolInput)
-  const academicYear = new AcademicYear({
+  } satisfies SchoolInput))
+  const academicYear = new AcademicYear(withShortName({
     id: 'year-1',
     schoolId: school.id,
     name: '2026',
     startDate: academicYearRange?.startDate ?? weekStart,
     endDate: academicYearRange?.endDate ?? weekEnd,
     status: 'published',
-  })
-  const grade = new GradeLevel({ id: 'grade-1', schoolId: school.id, name: 'Grade 1', label: 'G1', order: 1 })
+  }))
+  const grade = new GradeLevel(withShortName({ id: 'grade-1', schoolId: school.id, name: 'Grade 1', shortName: 'G1', order: 1 }))
   const groups = [
-    new ClassGroup({
+    new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: school.id,
       academicYearId: academicYear.id,
       gradeLevelId: grade.id,
       name: 'A',
-    }),
-    new ClassGroup({ id: 'class-2', schoolId: school.id, academicYearId: academicYear.id, gradeLevelId: grade.id, name: 'B' }),
+    })),
+    new ClassGroup(withShortName({ id: 'class-2', schoolId: school.id, academicYearId: academicYear.id, gradeLevelId: grade.id, name: 'B' })),
   ]
-  const subject = new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: school.id, name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Mint })
+  const subject = new Subject(withShortName({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: school.id, name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Mint }))
   const classSubjects = groups.map((group, index) => new ClassSubject({
     id: `class-subject-${index + 1}`,
     classGroupId: group.id,
@@ -156,7 +157,7 @@ describe('timetable generation workflow', () => {
 
   test('a failed later class rolls back its replacement while earlier and unselected classes retain their sessions', async () => {
     const { service, repositories } = await createWorkflowContext([])
-    await repositories.classGroups.save(new ClassGroup({ id: 'class-3', schoolId: 'school-1', academicYearId: 'year-1', gradeLevelId: 'grade-1', name: 'C' }))
+    await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'class-3', schoolId: 'school-1', academicYearId: 'year-1', gradeLevelId: 'grade-1', name: 'C' })))
     const retained = ['class-2', 'class-3'].map(classGroupId => new LessonSession({ id: `old-${classGroupId}`, schoolId: 'school-1', classGroupId, classSubjectId: 'class-subject-2', displayLabel: 'Old generated', startsAt: new Date('2026-09-11T10:00:00Z'), endsAt: new Date('2026-09-11T11:00:00Z'), timetableGenerated: true }))
     await repositories.lessonSessions.batchSave(retained)
     const first = await service.timetableGenerationWorkflow.generateClassGroupTimetable({ classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd })
@@ -218,7 +219,7 @@ describe('timetable generation workflow', () => {
   test('scoped creation cannot borrow another action to generate unrelated classes', async () => {
     const { service, repositories } = await createWorkflowContext()
     const school = (await repositories.schools.findById('school-1'))!
-    await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
+    await repositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: undefined })))
     for (const [id, permission, classGroupId] of [['create', Permission.TIMETABLE_MANAGE, 'class-1'], ['other-read', Permission.TIMETABLE_READ, 'class-2']] as const)
       await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id, staffId: 'staff-1', schoolId: 'school-1', academicYearId: 'year-1', permission, scopes: [{ kind: 'class_group', classGroupId }] }))
     const input = { classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd }
@@ -233,11 +234,11 @@ describe('timetable generation workflow', () => {
 
   test('both generation modes reject an existing class in another school without replacing its timetable', async () => {
     const { service, repositories } = await createWorkflowContext()
-    await repositories.schools.save(new School({ id: 'foreign-school', name: 'Other school', timeZone: 'UTC' }))
-    await repositories.academicYears.save(new AcademicYear({ id: 'foreign-year', schoolId: 'foreign-school', name: '2026', startDate: weekStart, endDate: weekEnd, status: 'published' }))
-    await repositories.gradeLevels.save(new GradeLevel({ id: 'foreign-grade', schoolId: 'foreign-school', name: 'Grade 1', label: 'G1', order: 1 }))
-    await repositories.classGroups.save(new ClassGroup({ id: 'foreign-class', schoolId: 'foreign-school', academicYearId: 'foreign-year', gradeLevelId: 'foreign-grade', name: 'Other class' }))
-    await repositories.subjects.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'foreign-subject', schoolId: 'foreign-school', name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Mint }))
+    await repositories.schools.save(new School(withShortName({ id: 'foreign-school', name: 'Other school', timeZone: 'UTC' })))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'foreign-year', schoolId: 'foreign-school', name: '2026', startDate: weekStart, endDate: weekEnd, status: 'published' })))
+    await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'foreign-grade', schoolId: 'foreign-school', name: 'Grade 1', shortName: 'G1', order: 1 })))
+    await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'foreign-class', schoolId: 'foreign-school', academicYearId: 'foreign-year', gradeLevelId: 'foreign-grade', name: 'Other class' })))
+    await repositories.subjects.save(new Subject(withShortName({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'foreign-subject', schoolId: 'foreign-school', name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Mint })))
     await repositories.classSubjects.save(new ClassSubject({ id: 'foreign-class-subject', classGroupId: 'foreign-class', subjectId: 'foreign-subject', periodsPerWeek: 1 }))
     const existing = new LessonSession({ id: 'foreign-generated', schoolId: 'foreign-school', classGroupId: 'foreign-class', classSubjectId: 'foreign-class-subject', displayLabel: 'Existing generated', startsAt: new Date('2026-09-07T08:00:00Z'), endsAt: new Date('2026-09-07T09:00:00Z'), timetableGenerated: true })
     await repositories.lessonSessions.save(existing)
@@ -609,9 +610,9 @@ describe('generated timetable printing', () => {
     expect(firstClass.snapshot.facts?.['rows']).toHaveLength(2)
     await sessions.save(first.sessions[0]!.copyWith({ status: OccurrenceStatus.Cancelled }))
     const year = (await repositories.academicYears.findById('year-1'))!
-    await repositories.academicYears.save(new AcademicYear({ ...year.data, id: 'other-year' }))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ ...year.data, id: 'other-year' })))
     const group = (await repositories.classGroups.findById('class-1'))!
-    await repositories.classGroups.save(new ClassGroup({ ...group.data, id: 'other-class', academicYearId: 'other-year' }))
+    await repositories.classGroups.save(new ClassGroup(withShortName({ ...group.data, id: 'other-class', academicYearId: 'other-year' })))
     await sessions.save(first.sessions[1]!.copyWith({ id: 'other-year-session', classGroupId: 'other-class' }))
     const teacher = await assembleTeacherTimetable(base, teacherInput, school, 'en', 'UTC', 'Timetable', {})
     const classDoc = await assembleClassOperational(base, classInput, school, 'en', 'UTC', 'Timetable', {})

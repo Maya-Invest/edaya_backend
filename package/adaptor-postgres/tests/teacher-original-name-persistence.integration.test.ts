@@ -14,7 +14,7 @@ describe('teacher original-name persistence', () => {
         firstName: 'Jean Pierre',
         lastName: 'Kouamé',
         sourceFullName: '  KOUAMÉ  Jean Pierre  ',
-        code: 'T-001',
+        identifier: 'T-001',
       })
       await repositories.teachers.save(teacher)
       const saved = (await repositories.teachers.findById(teacher.id))!

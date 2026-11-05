@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum ActivityCategory {
   Sport = 'Sport',
@@ -14,6 +15,7 @@ export const activityBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   category: z.nativeEnum(ActivityCategory),
   coach: z.string().trim().min(1, 'coach must not be blank'),
   schedule: z.string().trim().min(1, 'schedule must not be blank'),
@@ -62,6 +64,8 @@ export const activityUpdateSchema = activityBaseSchema
 export class Activity {
   readonly data: ActivityData
 
+  copyWith(changes: Partial<ActivityInput>): Activity { return new Activity({ ...this.data, ...changes }) }
+
   constructor(args: ActivityInput) {
     this.data = parseDomain(activitySchema, args)
   }
@@ -69,6 +73,7 @@ export class Activity {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get category() { return this.data.category }
   get coach() { return this.data.coach }
   get schedule() { return this.data.schedule }

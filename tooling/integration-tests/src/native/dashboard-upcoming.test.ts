@@ -21,8 +21,8 @@ test('native dashboard upcoming uses saved labels, unpaid installments and a rol
       { id: 'second', label: 'Deuxième tranche', expectedAmount: 5000, dueDate: '2026-10-29' },
     ]],
   ] as const) {
-    await db.execute(sql`insert into catalog_services (id,school_id,academic_year_id,name,category,auto_billing,billing_kind,default_price,currency,billing_terms,status,created_at)
-      values (${f.id(`catalog-${id}`)},${f.id('school')},${f.id('year')},${`Scolarité ${id}`},'tuition','{"mode":"off"}'::jsonb,'one_time',10000,'XOF','{"kind":"one_time","installments":[]}'::jsonb,'active',now())`)
+    await db.execute(sql`insert into catalog_services (id,school_id,academic_year_id,name,short_name,category,auto_billing,billing_kind,default_price,currency,billing_terms,status,created_at)
+      values (${f.id(`catalog-${id}`)},${f.id('school')},${f.id('year')},${`Scolarité ${id}`},${id},'tuition','{"mode":"off"}'::jsonb,'one_time',10000,'XOF','{"kind":"one_time","installments":[]}'::jsonb,'active',now())`)
     await db.execute(sql`insert into student_service_enrollments (id,school_id,student_id,catalog_service_id,academic_year_id,status,source,accepted_terms,enrolled_at,created_at)
       values (${f.id(`service-${id}`)},${f.id('school')},${f.id('student')},${f.id(`catalog-${id}`)},${f.id('year')},'active','manual','{}'::jsonb,'2026-01-01',now())`)
     await db.execute(sql`insert into student_charges (id,school_id,student_id,enrollment_id,academic_year_id,label,expected_amount,allocated_amount,adjustment_amount,waiver_amount,currency,due_date,status,installments,created_at)

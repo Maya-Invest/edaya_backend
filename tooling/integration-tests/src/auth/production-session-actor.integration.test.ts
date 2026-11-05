@@ -1,7 +1,7 @@
 import type { IdentityClient } from '../../../../apps/api/src/identity/server/index'
 import type { AppBindings } from '@/http/types'
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, Permission, School, StaffPermissionAssignment } from '@edaya/core'
+import { AcademicYear, Permission, School, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { Hono } from 'hono'
 import { createSessionActorDependency } from '@/http/dependencies/session-actor'
@@ -12,9 +12,9 @@ import { createTestApp } from '../utils/test-adapter'
 describeIntegration('production session actor', () => {
   async function fixture(emailVerified = true, subjectId = 'admin-user') {
     const { schoolRepositories: repos } = await createTestApp(createStaffActorMetadata({ schoolId: 'school', staffMemberId: 'admin', subjectId: 'admin-user', requestId: 'test', authenticatedAt: new Date() }))
-    await repos.schools.save(new School({ id: 'school', name: 'School', timeZone: 'UTC' }))
+    await repos.schools.save(new School(withShortName({ id: 'school', name: 'School', timeZone: 'UTC' })))
     for (const [id, schoolId] of [['selected', 'school'], ['other', 'school'], ['foreign', 'elsewhere']] as const) {
-      await repos.academicYears.save(new AcademicYear({ id, schoolId, name: id, startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+      await repos.academicYears.save(new AcademicYear(withShortName({ id, schoolId, name: id, startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
     }
     await repos.staffPermissionAssignments.save(new StaffPermissionAssignment({
       id: 'selected-grant',

@@ -1,6 +1,6 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
 import { AuthorizationError } from '@edaya/authorization'
-import { AcademicYear, Guardian, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, Student, StudentStatus } from '@edaya/core'
+import { AcademicYear, Guardian, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, Student, StudentStatus, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -8,7 +8,7 @@ import { createTestStaffActor } from '../../support/test-actor'
 async function createAccessControlContext(permissions: readonly Permission[] = [Permission.ACCESS_CONTROL_MANAGE, Permission.ACCESS_CONTROL_READ], notificationGateway = noOpNotificationGateway) {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'staff-admin'), { notificationGateway })
   const repositories = fixture.schoolRepositories
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
   for (const permission of permissions) await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'sch1', academicYearId: 'ay1', staffId: 'staff-admin', permission, scopes: [{ kind: 'school' }] }))
   await repositories.staffMembers.save(new StaffMember({ id: 'st1', schoolId: 'sch1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@school.edu' }))
   await repositories.guardians.save(new Guardian({ id: 'g1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', email: 'grace@mail.com', phone: '+33 6 00 00 00 00' }))

@@ -1,5 +1,4 @@
 import { readFile } from 'node:fs/promises'
-import { deriveSchoolShortName } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { expect, test } from 'bun:test'
 
@@ -11,7 +10,7 @@ test('configuration migration backfills the existing derived short name and pres
     for (const [index, name] of names.entries()) await db.query('INSERT INTO schools VALUES ($1, $2, $3)', [String(index), name, 'k12'])
     await db.exec(await readFile(new URL('../drizzle/0041_configuration_editors.sql', import.meta.url), 'utf8'))
     const { rows } = await db.query<{ name: string, short_name: string }>('SELECT name, short_name FROM schools ORDER BY id')
-    expect(rows.map(row => row.short_name)).toEqual(names.map(deriveSchoolShortName))
+    expect(rows.map(row => row.short_name)).toEqual(['Cocody', 'North', 'Campus', 'École', 'C', 'A'])
     expect((await db.query('SELECT type FROM schools').catch(() => null))).toBeNull()
     await db.exec('UPDATE report_card_definition_sections SET weight = 1.5 WHERE id = \'s\'')
     expect((await db.query<{ weight: number }>('SELECT weight FROM report_card_definition_sections')).rows[0]?.weight).toBe(1.5)

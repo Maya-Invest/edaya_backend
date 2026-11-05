@@ -26,7 +26,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('staff_members_school_id_idx').on(col(table, 'schoolId')),
         index('staff_members_subject_id_idx').on(col(table, 'subjectId')),
-        uniqueIndex('staff_members_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+        uniqueIndex('staff_members_school_identifier_uidx').on(col(table, 'schoolId'), col(table, 'identifier')),
         uniqueIndex('staff_members_school_subject_uidx')
           .on(col(table, 'schoolId'), col(table, 'subjectId'))
           .where(sql`${col(table, 'subjectId')} is not null`),
@@ -178,7 +178,6 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'subject_categories':
       return [
         index('subject_categories_school_id_idx').on(col(table, 'schoolId')),
-        uniqueIndex('subject_categories_school_name_uidx').on(col(table, 'schoolId'), col(table, 'name')),
       ]
     case 'subjects':
       return [
@@ -263,7 +262,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'guardians':
       return [
         index('guardians_school_id_idx').on(col(table, 'schoolId')),
-        uniqueIndex('guardians_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+        uniqueIndex('guardians_school_identifier_uidx').on(col(table, 'schoolId'), col(table, 'identifier')),
         uniqueIndex('guardians_school_subject_uidx')
           .on(col(table, 'schoolId'), col(table, 'subjectId'))
           .where(sql`${col(table, 'subjectId')} is not null`),
@@ -312,7 +311,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'teachers':
       return [
         index('teachers_school_id_idx').on(col(table, 'schoolId')),
-        uniqueIndex('teachers_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+        uniqueIndex('teachers_school_identifier_uidx').on(col(table, 'schoolId'), col(table, 'identifier')),
         uniqueIndex('teachers_school_subject_uidx')
           .on(col(table, 'schoolId'), col(table, 'subjectId'))
           .where(sql`${col(table, 'subjectId')} is not null`),

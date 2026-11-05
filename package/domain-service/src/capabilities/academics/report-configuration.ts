@@ -1,6 +1,6 @@
 import type { Subject } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import { BusinessRuleViolationError, GradeLevel, ReportCardResult } from '@edaya/core'
+import { BusinessRuleViolationError, GradeLevel, ReportCardResult, withShortName } from '@edaya/core'
 
 /** Called under the school academic lock, including by curriculum/import hooks. */
 export async function invalidateReportConfiguration(repositories: SchoolRepositories, gradeLevelId: string, academicYearId: string) {
@@ -8,7 +8,7 @@ export async function invalidateReportConfiguration(repositories: SchoolReposito
   if (!level)
     throw new BusinessRuleViolationError('REPORT_LEVEL_REQUIRED', 'The report grade level no longer exists')
   const settings = level.reportSettingsFor(academicYearId)
-  const updated = new GradeLevel({ ...level.data, reportSettings: [...level.reportSettings.filter(row => row.academicYearId !== academicYearId), { ...settings, revision: settings.revision + 1 }] })
+  const updated = new GradeLevel(withShortName({ ...level.data, reportSettings: [...level.reportSettings.filter(row => row.academicYearId !== academicYearId), { ...settings, revision: settings.revision + 1 }] }))
   await repositories.gradeLevels.forSchool!(level.schoolId).save(updated)
   let after = ''
   for (;;) {

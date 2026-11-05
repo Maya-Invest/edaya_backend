@@ -7,7 +7,7 @@ import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingDataset } from './onboarding-dataset'
 import type { RegisterSchoolOwnerSession } from './register-school-with-owner'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, createSchoolBootstrapActor, createStaffActorMetadata } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { digestCommandRequest } from '../../services/commands/command-execution'
 import { applyStructureTemplate, resolveDatasetStructure } from './apply-structure-template'
@@ -27,6 +27,7 @@ interface ProvisionOnboardingSession extends RegisterSchoolOwnerSession {
 }
 
 export interface ProvisionOnboardingSchoolInput {
+  shortName?: string
   name: string
   timeZone: string
   financeCurrency?: string
@@ -55,11 +56,13 @@ export interface ProvisionOnboardingStructureInput {
 }
 
 export interface ProvisionOnboardingInviteInput {
+  identifier?: string | null
   email: string
   role: string
 }
 
 export interface ProvisionOnboardingInput {
+  ownerIdentifier?: string | null
   schoolId: string
   requestId: string
   school: ProvisionOnboardingSchoolInput
@@ -126,6 +129,7 @@ function toOwnerSession(session: RegisterSchoolOwnerSession) {
 function parseInvites(invites: ProvisionOnboardingInviteInput[] | undefined): Array<{
   email: string
   role: OnboardingStaffInviteRoleKey
+  identifier?: string | null
 }> {
   if (!invites?.length) {
     return []
@@ -140,6 +144,7 @@ function parseInvites(invites: ProvisionOnboardingInviteInput[] | undefined): Ar
     return {
       email: invite.email.trim().toLowerCase(),
       role: invite.role,
+      identifier: invite.identifier,
     }
   })
 }
@@ -293,6 +298,8 @@ async function executeProvision(
       return registerSchoolWithOwner(application, toOwnerSession(session), {
         id: schoolId,
         name: input.school.name,
+        shortName: input.school.shortName,
+        ownerIdentifier: input.ownerIdentifier,
         timeZone: input.school.timeZone,
         financeCurrency: input.school.financeCurrency,
         city: input.school.city,
@@ -348,6 +355,7 @@ async function executeProvision(
     staff = await track('inviteStaffMembers', async () => {
       return inviteStaffMembers(application, actor, { invites }, {
         inviteBaseUrl: options.inviteBaseUrl,
+        registrationActor: createSchoolBootstrapActor({ schoolId, requestId, onBehalfOfSubjectId: session.user.id }),
       })
     })
   }
@@ -410,6 +418,7 @@ export async function provisionOnboarding(
       schoolId,
       requestId,
       school: input.school,
+      ownerIdentifier: input.ownerIdentifier,
       structure: {
         templates: input.structure.templates,
         levels: input.structure.levels,

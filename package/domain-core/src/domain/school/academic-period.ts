@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum AcademicPeriodType {
   Trimester = 'trimester',
@@ -15,6 +16,7 @@ export const academicPeriodBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   type: z.nativeEnum(AcademicPeriodType).optional(),
   startDate: zodDate(),
   endDate: zodDate(),
@@ -38,6 +40,8 @@ export const academicPeriodUpdateSchema = academicPeriodBaseSchema.partial().req
 export class AcademicPeriod {
   readonly data: AcademicPeriodData
 
+  copyWith(changes: Partial<AcademicPeriodInput>): AcademicPeriod { return new AcademicPeriod({ ...this.data, ...changes }) }
+
   constructor(args: AcademicPeriodInput) {
     this.data = parseDomain(academicPeriodSchema, args)
   }
@@ -46,6 +50,7 @@ export class AcademicPeriod {
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get type() { return this.data.type }
   get startDate() { return this.data.startDate }
   get endDate() { return this.data.endDate }

@@ -12,7 +12,7 @@ describe('Student biographical fields validation', () => {
       birthDate: new Date('2015-05-10'),
       placeOfBirth: 'Paris',
       nationality: 'French',
-      matricule: 'MAT-123',
+      identifier: 'MAT-123',
       photoUrl: 'https://example.com/photo.jpg',
       status: StudentStatus.Active,
       enrollmentDate: new Date('2026-09-01'),
@@ -26,7 +26,7 @@ describe('Student biographical fields validation', () => {
     expect(student.birthDate).toEqual(new Date('2015-05-10'))
     expect(student.placeOfBirth).toBe('Paris')
     expect(student.nationality).toBe('French')
-    expect(student.matricule).toBe('MAT-123')
+    expect(student.identifier).toBe('MAT-123')
     expect(student.photoUrl).toBe('https://example.com/photo.jpg')
     expect(student.status).toBe(StudentStatus.Active)
     expect(student.enrollmentDate).toEqual(new Date('2026-09-01'))

@@ -1,4 +1,4 @@
-import { AcademicYear, CatalogServiceStatus, ChargeStatus, PaymentKind, PaymentMethod, PaymentStatus, Student } from '@edaya/core'
+import { AcademicYear, CatalogServiceStatus, ChargeStatus, PaymentKind, PaymentMethod, PaymentStatus, Student, withShortName } from '@edaya/core'
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { createTestApp } from '../support/create-test-app'
 
@@ -8,14 +8,14 @@ describe('service catalog accounting', () => {
   beforeEach(async () => {
     fixture = await createTestApp()
     await fixture.app.setupWorkflow.updateSchoolConfiguration({ schoolId: 'school', financeCurrency: 'XOF' })
-    await fixture.schoolRepositories.academicYears.save(new AcademicYear({
+    await fixture.schoolRepositories.academicYears.save(new AcademicYear(withShortName({
       id: 'year-1',
       schoolId: 'school',
       name: '2026',
       startDate: new Date('2026-01-01'),
       endDate: new Date('2026-12-31'),
       status: 'published',
-    }))
+    })))
     await fixture.schoolRepositories.students.save(new Student({
       id: 'stu-1',
       schoolId: 'school',

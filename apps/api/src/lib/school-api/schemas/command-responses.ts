@@ -239,6 +239,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   enrollStudentInActivity: activityEnrollmentResponseSchema,
   createClassGroup: classGroupResponseSchema,
   updateClassGroupConfiguration: classGroupResponseSchema,
+  correctHumanIdentifier: z.object({ id: z.string(), identifier: z.string().nullable() }).openapi("CorrectedHumanIdentifier"),
   registerStaffMember: staffMemberResponseSchema,
   registerTeacher: teacherResponseSchema,
   updateStaffMemberStatus: staffMemberResponseSchema,

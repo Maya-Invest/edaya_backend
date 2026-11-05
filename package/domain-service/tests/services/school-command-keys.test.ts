@@ -4,6 +4,7 @@ import type { SchoolRepositories } from '@edaya/service'
 import { noOpNotificationGateway } from '@edaya/core'
 import { BaseSchoolService, createSchoolCommandHandlers, SCHOOL_COMMAND_KEYS, SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { testFileStorage } from '../support/test-file-storage'
 
 function keyDifference(actual: readonly string[], expected: readonly string[]) {
@@ -27,13 +28,7 @@ describe('school command keys', () => {
       execute: operation => operation(),
     }
 
-    const service = new SchoolService({
-      actor: {} as SchoolScopedActorMetadata,
-      repositories,
-      atomicExecution,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: {} as SchoolScopedActorMetadata, repositories, atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
 
     expect(keyDifference(Object.keys(service.commands), SCHOOL_COMMAND_KEYS)).toEqual({
       missing: [],

@@ -9,7 +9,7 @@ import type { ReportAggregationContext } from './report-card-aggregation'
 import type { HomeroomCommentInput, SectionCommentsInput } from './report-comments'
 import type { ConfigureReportModulesInput, ConfigureReportSettingsInput } from './report-configuration'
 import { denyResourceAccess } from '@edaya/authorization'
-import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, calculateModuleReport, describeGrade, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, reportCardSnapshotSchema } from '@edaya/core'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, calculateModuleReport, describeGrade, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, reportCardSnapshotSchema, withShortName } from '@edaya/core'
 import { assessmentGradingPolicy, captureGradeEntry } from '../../capabilities/academics/grading'
 import { academicStateLock, assertMarksRevision, enrollmentEffectiveAt } from '../../capabilities/academics/marks-state'
 import { loadReportAssessmentContext, scopeReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
@@ -87,7 +87,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
 
   async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
     return this.baseService.atomicExecution.execute(async () => {
-      const gradeScale = new GradeScaleEntity(input)
+      const gradeScale = new GradeScaleEntity(withShortName(input))
       await this.baseService.entities.gradeScales.save(gradeScale)
       return gradeScale
     })

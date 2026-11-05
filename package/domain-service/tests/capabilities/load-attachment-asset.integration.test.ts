@@ -1,5 +1,5 @@
 import type { AttachmentAssetRequest } from '../../src/capabilities/files/load-attachment-asset'
-import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, School, StaffMember } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, School, StaffMember, withShortName } from '@edaya/core'
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { grantAttachmentDownload } from '../../src/capabilities/files/grant-attachment-download'
 import { loadAttachmentAsset } from '../../src/capabilities/files/load-attachment-asset'
@@ -62,7 +62,7 @@ describe('authorized private attachment assets', () => {
   })
 
   test('conceals missing and foreign-school attachment IDs before reading storage', async () => {
-    await fixture.schoolRepositories.schools.save(new School({ id: 'other-school', name: 'Other', timeZone: 'UTC' }))
+    await fixture.schoolRepositories.schools.save(new School(withShortName({ id: 'other-school', name: 'Other', timeZone: 'UTC' })))
     await fixture.schoolRepositories.staffMembers.save(new StaffMember({ id: 'other-staff', schoolId: 'other-school', firstName: 'Other', lastName: 'Staff' }))
     await fixture.schoolRepositories.attachments.save(new Attachment({ ...attachment.data, id: 'foreign', schoolId: 'other-school', ownerId: 'other-staff', storageKey: 'other-school/private/foreign.png' }))
     for (const attachmentId of ['missing', 'foreign'])
@@ -81,7 +81,7 @@ describe('authorized private attachment assets', () => {
   test('withholds read bytes when current access is revoked during storage I/O', async () => {
     duringRead = async () => {
       const school = (await fixture.schoolRepositories.schools.findById('school'))!
-      await fixture.schoolRepositories.schools.save(new School({ ...school.data, ownerSubjectId: 'different-owner' }))
+      await fixture.schoolRepositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: 'different-owner' })))
     }
     await expect(loadAttachmentAsset(fixture.app.baseService, request)).rejects.toThrow()
     expect(reads).toBe(1)
@@ -113,7 +113,7 @@ describe('authorized private attachment assets', () => {
     expect(await grantAttachmentDownload(fixture.app.baseService, attachment.id, { inlineImages: true })).toMatchObject({ downloadUrl: 'https://private.invalid/?signed=credential' })
     fixture.app.baseService.fileStorage.createPresignedDownload = async () => {
       const school = (await fixture.schoolRepositories.schools.findById('school'))!
-      await fixture.schoolRepositories.schools.save(new School({ ...school.data, ownerSubjectId: 'different-owner' }))
+      await fixture.schoolRepositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: 'different-owner' })))
       return { downloadUrl: 'https://private.invalid/?signed=credential', expiresAt: new Date() }
     }
     await expect(grantAttachmentDownload(fixture.app.baseService, attachment.id)).rejects.toThrow()

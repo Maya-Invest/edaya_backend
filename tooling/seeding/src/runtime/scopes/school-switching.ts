@@ -29,6 +29,7 @@ export async function seedSchoolSwitching({ client, seedContext }: Pick<HttpSeed
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-school-id': seedContext.schoolId, 'x-actor-kind': 'staff', 'x-actor-id': owner.staffId },
         body: JSON.stringify({
+          ownerIdentifier: member.identifier,
           id: school.id,
           name: school.name,
           shortName: school.shortName,
@@ -52,13 +53,13 @@ export async function seedSchoolSwitching({ client, seedContext }: Pick<HttpSeed
     const yearId = `${school.id}-${year.id}`
     const existingYear = await postEntityFindById(opts, 'academicYears', yearId) as { status: string } | undefined
     if (!existingYear)
-      await postCoreCommand(opts, 'createAcademicYear', { id: yearId, schoolId: school.id, name: year.name, startDate: year.startDate, endDate: year.endDate })
+      await postCoreCommand(opts, 'createAcademicYear', { id: yearId, schoolId: school.id, name: year.name, shortName: year.shortName, startDate: year.startDate, endDate: year.endDate })
     if (!existingYear || existingYear.status === 'draft')
       await postCoreCommand(opts, 'publishAcademicYear', { academicYearId: yearId })
 
     const gradeId = `${school.id}-6e`
     if (!await postEntityFindById(opts, 'gradeLevels', gradeId))
-      await postCoreCommand(opts, 'configureGradeLevel', { id: gradeId, schoolId: school.id, name: 'Sixième', label: '6e', cycle: 'Collège', order: 1 })
+      await postCoreCommand(opts, 'configureGradeLevel', { id: gradeId, schoolId: school.id, name: 'Sixième', shortName: '6e', cycle: 'Collège', order: 1 })
   })
   return school.name
 }

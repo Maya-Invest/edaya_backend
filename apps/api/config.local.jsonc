@@ -30,6 +30,7 @@
   // See docs/reference/api-configuration.md and phone-verification.md.
   "RUNTIME": "local",
   "NODE_ENV": "development",
+  "ALLOW_PUBLIC_ACCOUNT_REGISTRATION": "true",
   // Require acceptance of the draft terms during local sign-in.
   "AUTH_TERMS_MODE": "live",
   "PORT": "9999",

@@ -3,8 +3,8 @@ import type { PermissionResolutionReport } from '../../capabilities/access-contr
 import type { BaseSchoolService } from '../base-school-service'
 import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
+import { BusinessRuleViolationError, corePermissionDefinition, findPublishedAcademicYear, grantScopesEquivalent, StaffManualPermissionAssignment as StaffManualPermissionAssignmentEntity, StaffPermissionProfileBinding as StaffPermissionProfileBindingEntity, StaffPermissionProfile as StaffPermissionProfileEntity, StaffPermissionScopeDefaults as StaffPermissionScopeDefaultsEntity, validatePermissionScopes, withShortName } from '@edaya/core'
 
-import { BusinessRuleViolationError, corePermissionDefinition, findPublishedAcademicYear, grantScopesEquivalent, StaffManualPermissionAssignment as StaffManualPermissionAssignmentEntity, StaffPermissionProfileBinding as StaffPermissionProfileBindingEntity, StaffPermissionProfile as StaffPermissionProfileEntity, StaffPermissionScopeDefaults as StaffPermissionScopeDefaultsEntity, validatePermissionScopes } from '@edaya/core'
 import { planStaffPermissionGrants, resolveStaffProfileGrants, validateScopeSelections } from '../../capabilities/access-control/resolve-staff-profile-grants'
 import { linkSubjectToActor, relinkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
 
@@ -29,6 +29,7 @@ export interface ConfigurePermissionProfileInput {
   id: string
   schoolId?: string
   name: string
+  shortName?: string
   description?: string
   previewOnly?: boolean
   permissions: StaffPermissionProfile['permissions']
@@ -194,7 +195,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
       const existing = await this.repositories.staffPermissionProfiles.findById(input.id)
       if (existing && existing.schoolId !== schoolId)
         throw new BusinessRuleViolationError('PERMISSION_PROFILE_SCHOOL_MISMATCH', 'Permission profile belongs to a different school')
-      const profile = new StaffPermissionProfileEntity({ id: input.id, schoolId, name: input.name, description: input.description, permissions: input.permissions, sourceKey: existing?.sourceKey, createdAt: existing?.createdAt, updatedAt: new Date() })
+      const profile = new StaffPermissionProfileEntity(withShortName({ id: input.id, schoolId, name: input.name, shortName: input.shortName ?? existing?.shortName, description: input.description, permissions: input.permissions, sourceKey: existing?.sourceKey, createdAt: existing?.createdAt, updatedAt: new Date() }))
       const bindings = await this.repositories.staffPermissionProfileBindings.list({ profileId: profile.id })
       const staffIds = [...new Set(bindings.map(binding => binding.staffId))]
       const args = (staffId: string) => ({ actor: this.baseService.actor, repositories: this.baseService.repositories, staffId, profile })

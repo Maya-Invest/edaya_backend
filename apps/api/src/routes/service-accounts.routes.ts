@@ -124,7 +124,7 @@ export const createServiceAccountHandler: AppRouteHandler<typeof createServiceAc
     const body = c.req.valid("json");
     const result = await createServiceAccount(c.get("schoolApp").repositories, actor, {
       serviceId: body.serviceId,
-      displayName: body.displayName,
+      name: body.name,
       ...(body.permissionAssignments ? { permissionAssignments: body.permissionAssignments } : {}),
       ...(body.elevated !== undefined ? { elevated: body.elevated } : {}),
       ...(body.apiKey ? { apiKey: body.apiKey } : {}),
@@ -165,7 +165,7 @@ export const updateServiceAccountHandler: AppRouteHandler<typeof updateServiceAc
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     const updated = await updateServiceAccount(c.get("schoolApp").repositories, actor, id, {
-      ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
+      ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.permissionAssignments !== undefined ? { permissionAssignments: body.permissionAssignments } : {}),
     }, c.get("schoolApp").atomicExecution);
 

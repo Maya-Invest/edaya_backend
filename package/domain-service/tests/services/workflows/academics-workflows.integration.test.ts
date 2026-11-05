@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { AcademicDiscipline, AcademicYear, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, StaffPermissionAssignment, Subject, SubjectColor, SubjectMatter } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, StaffPermissionAssignment, Subject, SubjectColor, SubjectMatter, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -7,15 +7,15 @@ import { createTestStaffActor } from '../../support/test-actor'
 async function createContext({ existingProgress = false, matterCompletedPercentage = 0, matterList, owner = true }: { existingProgress?: boolean, matterCompletedPercentage?: number, matterList?: Array<{ id: string, completedPercentage: number }>, owner?: boolean } = {}) {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner })
   const repositories = fixture.schoolRepositories
-  await repositories.academicDisciplines.save(new AcademicDiscipline({ id: 'test-discipline', schoolId: 'sch1', code: 'TEST', name: 'Test discipline' }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'gl1', schoolId: 'sch1', name: 'Grade', label: 'G', order: 1 }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Class' }))
-  for (const id of ['subj1', 'subj-math']) await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'gl1', academicYearId: 'ay1', id, schoolId: 'sch1', name: id }))
+  await repositories.academicDisciplines.save(new AcademicDiscipline(withShortName({ id: 'test-discipline', schoolId: 'sch1', shortName: 'TEST', name: 'Test discipline' })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'gl1', schoolId: 'sch1', name: 'Grade', shortName: 'G', order: 1 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg1', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Class' })))
+  for (const id of ['subj1', 'subj-math']) await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'gl1', academicYearId: 'ay1', id, schoolId: 'sch1', name: id })))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subj1', coefficient: 1, completedPercentage: 0 }))
   const matters = matterList ?? [{ id: 'csm1', completedPercentage: matterCompletedPercentage }, { id: 'other-matter', completedPercentage: 50 }]
   for (const matter of matters) {
-    await repositories.subjectMatters.save(new SubjectMatter({ id: `sm-${matter.id}`, subjectId: 'subj1', name: matter.id, sequenceOrder: 1 }))
+    await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: `sm-${matter.id}`, subjectId: 'subj1', name: matter.id, sequenceOrder: 1 })))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ ...matter, classSubjectId: 'cs1', subjectMatterId: `sm-${matter.id}`, status: ClassSubjectMatterStatus.InProgress }))
   }
   await repositories.lessonSessions.save(new LessonSession({ id: 'sess1', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Lesson', startsAt: new Date('2026-02-01T09:00:00Z'), endsAt: new Date('2026-02-01T10:00:00Z') }))

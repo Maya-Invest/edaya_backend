@@ -1,4 +1,4 @@
-import { AcademicDiscipline, AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor, withShortName } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -6,22 +6,22 @@ import { createTestStaffActor } from '../../support/test-actor'
 async function createContext(owner = true) {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner })
   const repositories = fixture.schoolRepositories
-  await repositories.academicDisciplines.save(new AcademicDiscipline({ id: 'test-discipline', schoolId: 'sch1', code: 'TEST', name: 'Test discipline' }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-6', schoolId: 'sch1', name: '6', label: '6', order: 6 }))
+  await repositories.academicDisciplines.save(new AcademicDiscipline(withShortName({ id: 'test-discipline', schoolId: 'sch1', shortName: 'TEST', name: 'Test discipline' })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'gl-6', schoolId: 'sch1', name: '6', shortName: '6', order: 6 })))
   return { service: fixture.app, repositories }
 }
 
 async function createWorkloadContext(owner = true) {
   const context = await createContext(owner)
   const { repositories } = context
-  await repositories.subjects.save(new Subject({ categoryId: 'test-category', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math', code: 'MATH', coefficient: 2, periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2 }))
+  await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl-6', academicYearId: 'ay1', name: 'Math', shortName: 'MATH', coefficient: 2, periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2 })))
   for (const id of ['6a', '6b']) {
-    await repositories.classGroups.save(new ClassGroup({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: id }))
+    await repositories.classGroups.save(new ClassGroup(withShortName({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: id })))
     await repositories.classSubjects.save(new ClassSubject({ id: `cs-${id}`, classGroupId: id, subjectId: 'subj-math', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2, completedPercentage: 25, isOffered: id === '6a' }))
   }
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-5', schoolId: 'sch1', name: '5', label: '5', order: 5 }))
-  await repositories.subjects.save(new Subject({ categoryId: 'test-category', id: 'other-math', schoolId: 'sch1', name: 'Math', gradeLevelId: 'gl-5', academicYearId: 'ay1', periodsPerWeek: 7 }))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'gl-5', schoolId: 'sch1', name: '5', shortName: '5', order: 5 })))
+  await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', id: 'other-math', schoolId: 'sch1', name: 'Math', gradeLevelId: 'gl-5', academicYearId: 'ay1', periodsPerWeek: 7 })))
   return context
 }
 
@@ -32,7 +32,7 @@ describe('subject inheritance through native policies', () => {
     const subject = await repositories.subjects.findById('subj-math')
     expect(subject?.name).toBe('Mathematics')
     expect(subject?.color).toBe(SubjectColor.Sky)
-    expect(subject?.code).toBe('MATH')
+    expect(subject?.shortName).toBe('MATH')
     expect(subject?.coefficient).toBe(2)
     expect((await repositories.subjects.findById('subj-math'))?.periodsPerWeek).toBe(5)
     expect((await repositories.subjects.findById('other-math'))?.periodsPerWeek).toBe(7)
@@ -107,8 +107,8 @@ describe('subject inheritance through native policies', () => {
 
   it('keeps same-name subjects independent within and across grades and years', async () => {
     const { service, repositories } = await createContext()
-    await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-5', schoolId: 'sch1', name: '5', label: '5', order: 5 }))
-    await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next year', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' }))
+    await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'gl-5', schoolId: 'sch1', name: '5', shortName: '5', order: 5 })))
+    await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay2', schoolId: 'sch1', name: 'Next year', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31'), status: 'draft' })))
     for (const [id, gradeLevelId, academicYearId] of [['first', 'gl-6', 'ay1'], ['second', 'gl-6', 'ay1'], ['other-grade', 'gl-5', 'ay1'], ['other-year', 'gl-6', 'ay2']] as const)
       await service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id, schoolId: 'sch1', gradeLevelId, academicYearId, name: 'Math' })
     await service.setupWorkflow.createClassGroup({ id: '6a', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6A' })

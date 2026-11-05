@@ -248,8 +248,8 @@
     },
     {
       "code": "SVT",
-      "name": "Sciences de la Vie et de la Terre",
-      "shortName": "Sciences de la Vie et de la Terre",
+      "name": "SVT",
+      "shortName": "SVT",
       "disciplineCode": "SVT",
       "categoryCode": "SCIENTIFIC",
       "coefficient": 2,
@@ -286,8 +286,8 @@
     },
     {
       "code": "EDHC",
-      "name": "Éducation aux Droits de l'Homme et à la Citoyenneté",
-      "shortName": "Éducation aux Droits de l'Homme et à la Citoyenneté",
+      "name": "EDHC",
+      "shortName": "EDHC",
       "disciplineCode": "EDHC",
       "categoryCode": "HUMANITIES",
       "coefficient": 1,

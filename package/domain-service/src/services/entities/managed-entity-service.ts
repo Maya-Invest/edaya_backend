@@ -2,7 +2,7 @@ import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, QueryOptions, ResourceAccessScope } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode, createAccessPolicies } from '@edaya/authorization'
-import { ReportCardResult, ReportCardResultSection } from '@edaya/core'
+import { BusinessRuleViolationError, ReportCardResult, ReportCardResultSection } from '@edaya/core'
 import { visibleReportRevision } from '../../capabilities/academics/report-comment-revisions'
 import { assertTeacherWorkflowWrite, recordTeacherWorkflowDecision } from '../../capabilities/academics/teacher-workflow-boundaries'
 
@@ -24,6 +24,7 @@ export interface EntityBusinessHooks<T> {
   postDelete?: (entity: T, repositories: SchoolRepositories, actor: SchoolScopedActorMetadata) => Promise<void>
 }
 export interface ManagedEntityServiceConfig<T> {
+  prepareSave?: (entity: T, existing: T | undefined) => T
   repository: BaseRepositoryInterface<T>
   tenant: EntityTenantResolver<T>
   resource: CoreEntityKey
@@ -106,10 +107,13 @@ export class ManagedEntityService<T> {
     return (await this.readRepository()).count(filter)
   }
 
-  async save(entity: T): Promise<void> {
+  async save(entity: T, correctingIdentifier = false): Promise<void> {
     await this.executeWrite(async () => {
       const id = getEntityId(entity)
       const existing = id ? await this.tenantRepository().findById(id) : undefined
+      entity = this.config.prepareSave?.(entity, existing) ?? entity
+      if (!correctingIdentifier)
+        this.assertIdentifierPreserved(entity, existing)
       const { repository } = await this.authorizeSave(entity, existing)
       await this.config.gates?.preSave?.(entity, existing, this.repositories)
       await repository.save(entity)
@@ -125,6 +129,7 @@ export class ManagedEntityService<T> {
         this.deny()
       const existing = await this.tenantRepository().findByIds(ids as string[])
       const existingById = new Map(existing.map(entity => [getEntityId(entity), entity]))
+      entities = entities.map(entity => this.config.prepareSave?.(entity, existingById.get(getEntityId(entity))) ?? entity)
       const access = this.access.forOperation()
       const validationRepositories = await this.config.gates?.prepareBatch?.(entities, this.repositories) ?? this.repositories
       for (const entity of entities) {
@@ -134,6 +139,8 @@ export class ManagedEntityService<T> {
           await this.ensureEntityTenant(before, validationRepositories)
       }
       const scopes = await access.entity(this.config.resource).assertBatchSave(entities as CoreEntityMap[CoreEntityKey][], existingById as Map<string, CoreEntityMap[CoreEntityKey]>)
+      for (const entity of entities)
+        this.assertIdentifierPreserved(entity, existingById.get(getEntityId(entity)))
       for (const entity of entities) await assertTeacherWorkflowWrite(this.actor, this.config.resource, entity, existingById.get(getEntityId(entity)), this.repositories)
       const authorized = scopes.map(scope => ({ scope, repository: this.config.repository.forAccess(scope) }))
       if (authorized.length && ((!this.config.gates?.preSave && !this.config.hooks?.postSave) || this.config.hooks?.postBatchSave)) {
@@ -189,6 +196,13 @@ export class ManagedEntityService<T> {
     })
   }
 
+  private assertIdentifierPreserved(entity: T, existing?: T) {
+    if (existing && entity && typeof entity === 'object' && typeof existing === 'object'
+      && 'identifier' in entity && 'identifier' in existing && entity.identifier !== existing.identifier) {
+      throw new BusinessRuleViolationError('IDENTIFIER_CORRECTION_REQUIRED', 'Use the identifier correction command')
+    }
+  }
+
   private async authorizeSave(entity: T, existing: T | undefined, access = this.access, repositories = this.repositories): Promise<{ repository: BaseRepositoryInterface<T>, scope: ResourceAccessScope }> {
     await this.ensureEntityTenant(entity, repositories)
     if (existing)
@@ -209,6 +223,14 @@ export class ManagedEntityService<T> {
       throw new Error('Entity writes require atomic execution')
     return this.config.atomicExecution.execute(operation, {
       lockKeys: [...(this.config.writeLockGroup ? [this.config.writeLockGroup] : []), ...this.config.additionalWriteLockGroups ?? []].map(group => `${group}:${this.actor.schoolId}`),
+    }).catch((error: unknown) => {
+      for (let cause = error; cause && typeof cause === 'object'; cause = 'cause' in cause ? cause.cause : undefined) {
+        if ('code' in cause && cause.code === '23505' && 'constraint' in cause
+          && /^(?:students|teachers|guardians|staff_members)_school_identifier_uidx$/.test(String(cause.constraint))) {
+          throw new BusinessRuleViolationError('IDENTIFIER_UNAVAILABLE', 'This identifier is unavailable', { field: 'identifier' })
+        }
+      }
+      throw error
     })
   }
 

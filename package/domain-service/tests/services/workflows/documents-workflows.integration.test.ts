@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, ClassSubject, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, LessonSession, Student, StudentClassEnrollment, Subject, Teacher } from '@edaya/core'
+import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, ClassSubject, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, LessonSession, Student, StudentClassEnrollment, Subject, Teacher, withShortName } from '@edaya/core'
 import { dispatchDocumentRender, resolveAttachmentReadPolicy } from '@edaya/service'
 import {
   describe,
@@ -26,16 +26,16 @@ function renderer() {
 }
 
 async function seedSchooling(repositories: Awaited<ReturnType<typeof createTestApp>>['schoolRepositories']) {
-  await repositories.academicYears.save(new AcademicYear({
+  await repositories.academicYears.save(new AcademicYear(withShortName({
     id: 'ay1',
     schoolId: 'sch1',
     name: '2025-2026',
     startDate: new Date('2025-09-01'),
     endDate: new Date('2026-06-30'),
     status: 'published',
-  }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: 'sch1', name: 'Grade 1', label: '1', order: 1 }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'CM1 A' }))
+  })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade1', schoolId: 'sch1', name: 'Grade 1', shortName: '1', order: 1 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg1', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'CM1 A' })))
   await repositories.students.save(new Student({ id: 'stu1', schoolId: 'sch1', firstName: 'Ada', lastName: 'Lovelace', birthDate: new Date('2010-01-01') }))
   await repositories.enrollments.save(new StudentClassEnrollment({
     id: 'enr1',
@@ -305,7 +305,7 @@ describe('DocumentsServiceWorkflow', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
     const year = (await schoolRepositories.academicYears.findById('ay1'))!
-    await schoolRepositories.academicYears.save(new AcademicYear({ ...year.data, status: 'draft' }))
+    await schoolRepositories.academicYears.save(new AcademicYear(withShortName({ ...year.data, status: 'draft' })))
     await expect(app.documentsWorkflow.requestDocumentIssuance({
       requestId: 'req-draft-year',
       templateKey: 'schooling-certificate.v1',
@@ -319,7 +319,7 @@ test('generated timetables issue class and teacher PDFs immediately without prot
   const { app, application, schoolRepositories: repositories } = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true, documentRenderer: renderer(), fileStorage: createInMemoryFileStorage() })
   await seedSchooling(repositories)
   await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Ada', lastName: 'Teacher' }))
-  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math' }))
+  await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math' })))
   await repositories.classSubjects.save(new ClassSubject({ id: 'math', classGroupId: 'cg1', subjectId: 'subject-math' }))
   const lesson = new LessonSession({ id: 'generated', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'math', timetableGenerated: true, timetableTeacherIds: ['teacher'], displayLabel: 'Math', startsAt: new Date('2026-04-15T08:00Z'), endsAt: new Date('2026-04-15T09:00Z') })
   await repositories.lessonSessions.save(lesson)
@@ -342,4 +342,19 @@ test('generated timetables issue class and teacher PDFs immediately without prot
   const refreshed = await app.documentsWorkflow.requestDocumentIssuance({ requestId: 'new-class-print', templateKey: 'class-timetable.v1', sourceId: 'cg1', academicYearId: 'ay1' })
   expect(refreshed.sourceVersion).not.toBe(original.sourceVersion)
   expect((await repositories.documentIssuances.findById(original.id))?.data).toEqual(original.data)
+})
+
+test('identifier correction invalidates pending certificates without rewriting their captured identity', async () => {
+  const { app, application, schoolRepositories } = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true, documentRenderer: renderer(), fileStorage: createInMemoryFileStorage() })
+  await seedSchooling(schoolRepositories)
+  const student = (await schoolRepositories.students.findById('stu1'))!
+  const first = await app.documentsWorkflow.requestDocumentIssuance({ requestId: 'before-correction', templateKey: 'schooling-certificate.v1', sourceId: 'enr1' })
+  await app.setupWorkflow.correctHumanIdentifier({ group: 'students', entityId: student.id, expectedIdentifier: student.identifier ?? null, identifier: 'CORRECTED', requestId: 'correct-identifier' })
+  await dispatchDocumentRender(application)
+  const failed = (await schoolRepositories.documentIssuances.findById(first.id))!
+  expect(failed.status).toBe(DocumentIssuanceStatus.Failed)
+  expect(failed.failureCode).toBe('DOCUMENT_SOURCE_CHANGED')
+  expect(failed.sourceVersion).toBe(first.sourceVersion)
+  const next = await app.documentsWorkflow.requestDocumentIssuance({ requestId: 'after-correction', templateKey: 'schooling-certificate.v1', sourceId: 'enr1' })
+  expect(next.sourceVersion).not.toBe(first.sourceVersion)
 })

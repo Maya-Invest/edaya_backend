@@ -331,7 +331,7 @@ export async function provisionServiceAccountForTests(
   application: ApiSchoolApplication,
   input: {
     serviceId: string;
-    displayName: string;
+    name: string;
     permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[];
     elevated?: boolean;
     creatorStaffId?: string;

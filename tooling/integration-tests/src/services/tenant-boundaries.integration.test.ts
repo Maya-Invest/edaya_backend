@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, ClassSubject, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, ClassSubject, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter, withShortName } from '@edaya/core'
 import { createAttachmentUpload } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -26,13 +26,14 @@ describeIntegration('tenant boundary safeguards', () => {
     }))
     await repositories.staffMemberRepository.save(new StaffMember({
       id: 'school-b-admin',
+      identifier: 'OWNER-B',
       schoolId: 'school-b',
       firstName: 'School B',
       lastName: 'Administrator',
       subjectId: 'school-b-admin-user',
     }))
-    await repositories.schoolRepository.save(new School({ id: 'school-a', name: 'School A', timeZone: 'UTC', financeCurrency: 'XAF', ownerSubjectId: 'school-a-admin-user' }))
-    await repositories.schoolRepository.save(new School({ id: 'school-b', name: 'School B', timeZone: 'UTC', financeCurrency: 'XAF', ownerSubjectId: 'school-b-admin-user' }))
+    await repositories.schoolRepository.save(new School(withShortName({ id: 'school-a', name: 'School A', timeZone: 'UTC', financeCurrency: 'XAF', ownerSubjectId: 'school-a-admin-user' })))
+    await repositories.schoolRepository.save(new School(withShortName({ id: 'school-b', name: 'School B', timeZone: 'UTC', financeCurrency: 'XAF', ownerSubjectId: 'school-b-admin-user' })))
     await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC', financeCurrency: 'XAF' })
     await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
@@ -43,7 +44,7 @@ describeIntegration('tenant boundary safeguards', () => {
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', label: 'G6', order: 6 }),
+      new GradeLevel(withShortName({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', shortName: 'G6', order: 6 })),
     )
     await schoolBApp.setupWorkflow.createAcademicYear({
       id: 'year-b',
@@ -62,7 +63,7 @@ describeIntegration('tenant boundary safeguards', () => {
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
     await schoolBApp.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', label: 'G6', order: 6 }),
+      new GradeLevel(withShortName({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', shortName: 'G6', order: 6 })),
     )
     await expect(updateSchool(app, {
       schoolId: 'school-b',
@@ -98,7 +99,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school-a')).id, id: 'subject-a', gradeLevelId: 'level-a', academicYearId: 'year-a', schoolId: 'school-a', name: 'Local subject' })),
+      new Subject(withShortName(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school-a')).id, id: 'subject-a', gradeLevelId: 'level-a', academicYearId: 'year-a', schoolId: 'school-a', name: 'Local subject' }))),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-subject-a',
@@ -113,7 +114,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Grade 6 B',
     })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(schoolBApp, 'school-b')).id, id: 'subject-b', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Outside subject' })),
+      new Subject(withShortName(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(schoolBApp, 'school-b')).id, id: 'subject-b', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Outside subject' }))),
     )
     const classSubjectB = await saveClassSubject(schoolBApp, {
       id: 'class-subject-b',
@@ -217,12 +218,12 @@ describeIntegration('tenant boundary safeguards', () => {
       lessonSessionId: sessionB.id,
       status: AttendanceStatus.Absent,
     })
-    const actionB = new DisciplinaryAction({
+    const actionB = new DisciplinaryAction(withShortName({
       id: 'action-b',
       schoolId: 'school-b',
       name: 'Outside action',
       kind: DisciplinaryActionKind.Sanction,
-    })
+    }))
     await schoolBApp.baseService.entities.disciplinaryActions.save(actionB)
     const incidentB = await saveIncident(schoolBApp, {
       id: 'incident-b',
@@ -269,12 +270,12 @@ describeIntegration('tenant boundary safeguards', () => {
       allocation: { mode: 'fifo' },
     })
     await schoolBApp.baseService.entities.resources.save(
-      new Resource({
+      new Resource(withShortName({
         id: 'resource-b',
         schoolId: 'school-b',
         name: 'Outside room',
         kind: ResourceKind.Location,
-      }),
+      })),
     )
     await saveResourceAssignment(schoolBApp, {
       id: 'resource-session-b',
@@ -289,7 +290,7 @@ describeIntegration('tenant boundary safeguards', () => {
       fileName: 'outside.pdf',
       fileUrl: 'https://files.example.test/outside.pdf',
     }))
-    await schoolBApp.baseService.entities.gradeScales.save(new GradeScale({
+    await schoolBApp.baseService.entities.gradeScales.save(new GradeScale(withShortName({
       id: 'gs-b',
       schoolId: 'school-b',
       name: 'Standard',
@@ -297,7 +298,7 @@ describeIntegration('tenant boundary safeguards', () => {
       maxScore: 20,
       intervalConvention: 'continuous',
       ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }],
-    }))
+    })))
     await seedReportGradingPolicy(schoolBApp, {
       academicYearId: 'year-b',
       gradeLevelId: 'level-b',
@@ -351,7 +352,7 @@ describeIntegration('tenant boundary safeguards', () => {
       targetId: 'staff-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(schoolBApp, 'school-b')).id, id: 'subject-b-assessment', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Assessment subject' })),
+      new Subject(withShortName(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(schoolBApp, 'school-b')).id, id: 'subject-b-assessment', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Assessment subject' }))),
     )
     const classSubjectBForAssessment = await saveClassSubject(schoolBApp, {
       id: 'class-subject-b-assessment',
@@ -410,12 +411,12 @@ describeIntegration('tenant boundary safeguards', () => {
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     for (const subjectId of ['missing-subject', 'subject-b']) {
       await expect(app.baseService.entities.subjectMatters.save(
-        new SubjectMatter({
+        new SubjectMatter(withShortName({
           id: `probe-${subjectId}`,
           subjectId,
           name: 'Probe matter',
           sequenceOrder: 1,
-        }),
+        })),
       )).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
     await saveAnnouncement(schoolBApp, {

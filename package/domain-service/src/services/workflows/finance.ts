@@ -3,36 +3,7 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import {
-  AccountEntryDirection,
-  AccountEntrySourceKind,
-  Allocation,
-  AllocationKind,
-  BusinessRuleViolationError,
-  CatalogService as CatalogServiceEntity,
-  CatalogServiceStatus,
-  ChargeStatus,
-  compareChargesForFifo,
-  deriveChargeStatus,
-  FINANCE_BATCH_ENROLL_LIMIT,
-  isAllocationActive,
-  netActiveSettlement,
-  oneTimeChargeId,
-  overdueInstallmentRemainder,
-  parseStudentYearAccountId,
-  Payment as PaymentEntity,
-  PaymentKind,
-  PaymentStatus,
-  remainingChargeObligation,
-  ServiceEnrollmentSource,
-  ServiceEnrollmentStatus,
-  StudentAccountEntry,
-  StudentFinanceSummary,
-  StudentServiceEnrollment as StudentServiceEnrollmentEntity,
-  StudentYearAccount as StudentYearAccountEntity,
-  studentYearAccountId,
-  sumEntryBalance,
-} from '@edaya/core'
+import { AccountEntryDirection, AccountEntrySourceKind, Allocation, AllocationKind, BusinessRuleViolationError, CatalogService as CatalogServiceEntity, CatalogServiceStatus, ChargeStatus, compareChargesForFifo, deriveChargeStatus, FINANCE_BATCH_ENROLL_LIMIT, isAllocationActive, netActiveSettlement, oneTimeChargeId, overdueInstallmentRemainder, parseStudentYearAccountId, Payment as PaymentEntity, PaymentKind, PaymentStatus, remainingChargeObligation, ServiceEnrollmentSource, ServiceEnrollmentStatus, StudentAccountEntry, StudentFinanceSummary, StudentServiceEnrollment as StudentServiceEnrollmentEntity, StudentYearAccount as StudentYearAccountEntity, studentYearAccountId, sumEntryBalance, withShortName } from '@edaya/core'
 import { acceptedCatalogTerms } from '../../capabilities/finance/accepted-catalog-terms'
 import { getAutoBillingOptions, getFeeAutoBilling, retryAutoBilling } from '../../capabilities/finance/auto-billing-management'
 import { loadFinanceReconciliation } from '../../capabilities/finance/load-finance-reconciliation'
@@ -83,6 +54,7 @@ export interface CreateCatalogServiceInput {
   id: string
   academicYearId: string
   name: string
+  shortName?: string
   description?: string
   category?: CatalogService['category']
   autoBilling?: CatalogService['autoBilling']
@@ -96,6 +68,7 @@ export interface UpdateCatalogServiceInput {
   requestId: string
   id: string
   name?: string
+  shortName?: string
   description?: string | null
   category?: CatalogService['category']
   autoBilling?: CatalogService['autoBilling']
@@ -220,11 +193,31 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       input,
       lockKeys: [`academic-state:${this.schoolId()}`, `catalog:${input.id}`],
       authorize: async () => {
-        await this.baseService.access.entity('catalogServices').assertSave(new CatalogServiceEntity({
+        await this.baseService.access.entity('catalogServices').assertSave(new CatalogServiceEntity(withShortName({
           id: input.id,
           schoolId,
           academicYearId: input.academicYearId,
           name: input.name,
+          shortName: input.shortName,
+          description: input.description,
+          category: input.category,
+          autoBilling: input.autoBilling,
+          defaultPrice: input.defaultPrice,
+          currency: input.currency,
+          billingTerms: input.billingTerms,
+          status: input.status ?? CatalogServiceStatus.Draft,
+        })))
+      },
+      execute: async () => {
+        const existing = await this.repositories.catalogServices.findById(input.id)
+        if (existing)
+          return this.sameCatalog(existing, input)
+        const service = new CatalogServiceEntity(withShortName({
+          id: input.id,
+          schoolId,
+          academicYearId: input.academicYearId,
+          name: input.name,
+          shortName: input.shortName,
           description: input.description,
           category: input.category,
           autoBilling: input.autoBilling,
@@ -233,24 +226,6 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
           billingTerms: input.billingTerms,
           status: input.status ?? CatalogServiceStatus.Draft,
         }))
-      },
-      execute: async () => {
-        const existing = await this.repositories.catalogServices.findById(input.id)
-        if (existing)
-          return this.sameCatalog(existing, input)
-        const service = new CatalogServiceEntity({
-          id: input.id,
-          schoolId,
-          academicYearId: input.academicYearId,
-          name: input.name,
-          description: input.description,
-          category: input.category,
-          autoBilling: input.autoBilling,
-          defaultPrice: input.defaultPrice,
-          currency: input.currency,
-          billingTerms: input.billingTerms,
-          status: input.status ?? CatalogServiceStatus.Draft,
-        })
         await this.baseService.entities.catalogServices.save(service)
         return service
       },
@@ -269,6 +244,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         const existing = await this.requireCatalog(input.id)
         await this.baseService.access.entity('catalogServices').assertSave(existing.copyWith({
           name: input.name ?? existing.name,
+          shortName: input.shortName ?? existing.shortName,
           description: input.description === undefined ? existing.description : input.description ?? undefined,
           category: input.category ?? existing.category,
           autoBilling: input.autoBilling ?? existing.autoBilling,
@@ -282,6 +258,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
           fail('CATALOG_ARCHIVED', `Catalog service ${input.id} is archived`)
         const updated = existing.copyWith({
           name: input.name ?? existing.name,
+          shortName: input.shortName ?? existing.shortName,
           description: input.description === undefined ? existing.description : input.description ?? undefined,
           category: input.category ?? existing.category,
           autoBilling: input.autoBilling ?? existing.autoBilling,

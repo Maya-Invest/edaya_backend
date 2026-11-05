@@ -74,6 +74,9 @@ type FilesClients<TSchemas extends Record<string, unknown>> = {
 }
 
 type ImportsClients<TSchemas extends Record<string, unknown>> = {
+  candidates: (payload: SchemaName<TSchemas, 'SchoolImportCandidatesRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportCandidates'>>
+  resolve: (payload: SchemaName<TSchemas, 'ResolveSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  export: (payload: SchemaName<TSchemas, 'ExportSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportExport'>>
   create: (payload: SchemaName<TSchemas, 'CreateSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
   settings: (payload: SchemaName<TSchemas, 'UpdateSchoolImportSettingsRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
   submit: (payload: SchemaName<TSchemas, 'SubmitSchoolImportFileRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportFile'>>
@@ -219,6 +222,9 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     getContent: (params: { attachmentId: string }) => transport.request('GET', resolveClientRoutePath('files/{attachmentId}/content', params)),
   } as FilesClients<TSchemas>,
     imports: {
+    candidates: (payload: SchemaName<TSchemas, 'SchoolImportCandidatesRequest'>) => transport.request('POST', resolveClientRoutePath('imports/candidates'), { body: payload }),
+    resolve: (payload: SchemaName<TSchemas, 'ResolveSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/resolve'), { body: payload }),
+    export: (payload: SchemaName<TSchemas, 'ExportSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/export'), { body: payload }),
     create: (payload: SchemaName<TSchemas, 'CreateSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/create'), { body: payload }),
     settings: (payload: SchemaName<TSchemas, 'UpdateSchoolImportSettingsRequest'>) => transport.request('POST', resolveClientRoutePath('imports/settings'), { body: payload }),
     submit: (payload: SchemaName<TSchemas, 'SubmitSchoolImportFileRequest'>) => transport.request('POST', resolveClientRoutePath('imports/submit'), { body: payload }),

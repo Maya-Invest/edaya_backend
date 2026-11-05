@@ -1,3 +1,4 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { resolveOnboardingDataset } from "@edaya/fixtures/onboarding";
 import { describe, expect, it } from "bun:test";
 import {
@@ -34,7 +35,7 @@ describe("onboarding provision route", () => {
     const accessToken = await signInPhoneWithBearerForTests("+2250700000042");
     const schoolId = crypto.randomUUID();
     const headers = { "content-type": "application/json", "authorization": `Bearer ${accessToken}` };
-    const provision = await app.request(createAppRequest("/core/onboarding/provision", {
+    const provision = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers,
       body: JSON.stringify({ schoolId, requestId: crypto.randomUUID(), ...typicalProvisionBody }),
@@ -113,7 +114,7 @@ describe("onboarding provision route", () => {
       ...typicalProvisionBody,
     });
 
-    const response = await app.request(createAppRequest("/core/onboarding/provision", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -145,7 +146,7 @@ describe("onboarding provision route", () => {
     expect(payload.phases?.length).toBeGreaterThan(0);
     expect(payload.replayed).toBeFalsy();
 
-    const replay = await app.request(createAppRequest("/core/onboarding/provision", {
+    const replay = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -158,7 +159,7 @@ describe("onboarding provision route", () => {
     expect(replayed.schoolId).toBe(schoolId);
     expect(replayed.replayed).toBe(true);
 
-    const conflict = await app.request(createAppRequest("/core/onboarding/provision", {
+    const conflict = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -232,7 +233,7 @@ describe("canonical onboarding request contracts", () => {
     template.id = "custom-college";
     for (const level of template.gradeLevels) level.id = `${template.id}:${level.code}`;
     const schoolId = crypto.randomUUID();
-    const response = await app.request(createAppRequest("/core/onboarding/provision", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: { "content-type": "application/json", "authorization": `Bearer ${token}` },
       body: JSON.stringify({

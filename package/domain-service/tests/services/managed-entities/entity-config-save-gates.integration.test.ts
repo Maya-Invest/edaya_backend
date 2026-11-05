@@ -3,7 +3,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardResult, ReportCardResultStatus, ReportModule, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectColor } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardResult, ReportCardResultStatus, ReportModule, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectColor, withShortName } from '@edaya/core'
 import { validateStudentChargeSave } from '@edaya/service'
 import {
   describe,
@@ -16,14 +16,14 @@ import { createAcademicTestApp } from './academic-test-app'
 describe('Entity config save gates', () => {
   test('allows progress-only updates on inherited class subjects with periodsPerWeek', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
-    await repositories.subjectRepository.save(new Subject({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'French', categoryId: 'test-category', color: SubjectColor.Warm }))
+    })))
+    await repositories.subjectRepository.save(new Subject(withShortName({ gradeLevelId: 'grade-1', academicYearId: 'year-1', id: 'subject-1', schoolId: 'school', name: 'French', categoryId: 'test-category', color: SubjectColor.Warm })))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
@@ -47,12 +47,12 @@ describe('Entity config save gates', () => {
 
   test('assessment config preSave rejects duplicate default grade scales', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.schoolRepository.save(new School({
+    await repositories.schoolRepository.save(new School(withShortName({
       id: 'school',
       name: 'School',
       timeZone: 'UTC',
-    }))
-    await repositories.gradeScaleRepository.save(new GradeScale({
+    })))
+    await repositories.gradeScaleRepository.save(new GradeScale(withShortName({
       id: 'scale-existing',
       schoolId: 'school',
       name: 'Default',
@@ -60,9 +60,9 @@ describe('Entity config save gates', () => {
       maxScore: 100,
       ranges: [{ letter: 'A', minScore: 0, maxScore: 100 }],
       isDefault: true,
-    }))
+    })))
 
-    await expect(app.baseService.entities.gradeScales.save(new GradeScale({
+    await expect(app.baseService.entities.gradeScales.save(new GradeScale(withShortName({
       id: 'scale-new',
       schoolId: 'school',
       name: 'Other default',
@@ -70,29 +70,29 @@ describe('Entity config save gates', () => {
       maxScore: 100,
       ranges: [{ letter: 'A', minScore: 0, maxScore: 100 }],
       isDefault: true,
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    })))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('modules require revision-aware configuration commands', async () => {
     const { app } = await createAcademicTestApp()
-    await expect(app.baseService.entities.reportModules.save(new ReportModule({ id: 'new-module', schoolId: 'school', gradeLevelId: 'grade-1', academicYearId: 'year-1', name: 'Science', order: 1 }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(app.baseService.entities.reportModules.save(new ReportModule(withShortName({ id: 'new-module', schoolId: 'school', gradeLevelId: 'grade-1', academicYearId: 'year-1', name: 'Science', order: 1 })))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('assessment preSave rejects inconsistent class subject, period, and lesson session references', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
       subjectId: 'subject-1',
     }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-2',
@@ -100,7 +100,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
     await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-1',
       schoolId: 'school',
@@ -124,7 +124,7 @@ describe('Entity config save gates', () => {
       endsAt: new Date('2026-02-01T10:00:00Z'),
     }))).rejects.toBeInstanceOf(AuthorizationError)
 
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-valid',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -132,7 +132,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
 
     await expect(app.baseService.entities.assessments.save(new Assessment({
       id: 'assessment-bad-lesson-session',
@@ -148,20 +148,20 @@ describe('Entity config save gates', () => {
 
   test('assessment preSave rejects class subjects that are not offered', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
       subjectId: 'subject-1',
       isOffered: false,
     }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -169,7 +169,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
 
     await expect(app.baseService.entities.assessments.save(new Assessment({
       id: 'assessment-not-offered',
@@ -186,25 +186,25 @@ describe('Entity config save gates', () => {
 
   test('assessment preSave rejects self-timed overlap when schedule conflict enforcement is enabled', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.schoolRepository.save(new School({
+    await repositories.schoolRepository.save(new School(withShortName({
       id: 'school',
       name: 'School',
       timeZone: 'UTC',
       enforceScheduleConflicts: true,
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    })))
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
       subjectId: 'subject-1',
     }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -212,7 +212,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
     await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'ls-1',
       schoolId: 'school',
@@ -240,19 +240,19 @@ describe('Entity config save gates', () => {
 
   test('assessment preSave allows completion without submitting marks after results are recorded', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
       subjectId: 'subject-1',
     }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -260,7 +260,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
     const assessment = new Assessment({
       id: 'assessment-1',
       classGroupId: 'class-1',
@@ -302,13 +302,13 @@ describe('Entity config save gates', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.StudentClassEnrollmentRepository.save(new StudentClassEnrollment({
       id: 'enrollment-current',
       studentId: 'student-1',
@@ -348,13 +348,13 @@ describe('Entity config save gates', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-1',
       schoolId: 'school',
@@ -464,7 +464,7 @@ describe('Entity config save gates', () => {
     await repositories.studentRepository.save(new Student({ id: 'student-1', schoolId: 'school', firstName: 'Student', lastName: 'One' }))
     await repositories.staffMemberRepository.save(new StaffMember({ id: 'staff-1', schoolId: 'school', firstName: 'Staff', lastName: 'One' }))
     await repositories.incidentRepository.save(new Incident({ id: 'incident-1', schoolId: 'school', title: 'Incident', description: 'Description', date: new Date('2026-05-01'), kind: IncidentKind.MinorInfraction, reporterId: 'staff-1', classGroupId: 'class-1' }))
-    await repositories.disciplinaryActionRepository.save(new DisciplinaryAction({ id: 'catalog-1', schoolId: 'school', name: 'Sanction' }))
+    await repositories.disciplinaryActionRepository.save(new DisciplinaryAction(withShortName({ id: 'catalog-1', schoolId: 'school', name: 'Sanction' })))
     await repositories.studentIncidentInvolvementRepository.save(new StudentIncidentInvolvement({ id: 'involvement-1', incidentId: 'incident-1', studentId: 'student-1', role: IncidentInvolvementRole.Subject }))
     const completedAction = new StudentDisciplinaryAction({
       id: 'disciplinary-action-1',
@@ -499,7 +499,7 @@ describe('Entity config save gates', () => {
       assuranceLevel: ActorAssuranceLevel.Strong,
     })
     const { app, repositories, schoolRepositories } = await createTestApp(staffActor)
-    await schoolRepositories.academicYears.save(new AcademicYear({ id: 'archive-year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+    await schoolRepositories.academicYears.save(new AcademicYear(withShortName({ id: 'archive-year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
     await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive', schoolId: 'school', academicYearId: 'archive-year', staffId: staffActor.staffMemberId, permission: Permission.STAFF_MANAGE, scopes: [{ kind: 'school' }] }))
     const staffMember = new StaffMember({
       id: 'staff-1',
@@ -524,15 +524,16 @@ describe('Entity config save gates', () => {
 
   test('setup preSave rejects school owner deactivation and delete', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.schoolRepository.save(new School({
+    await repositories.schoolRepository.save(new School(withShortName({
       id: 'school',
       name: 'School',
       timeZone: 'UTC',
       ownerSubjectId: 'subject-owner',
-    }))
+    })))
     await app.baseService.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive-owner', schoolId: 'school', academicYearId: 'year-1', staffId: 'staff-test', permission: Permission.STAFF_MANAGE, scopes: [{ kind: 'school' }] }))
     const owner = new StaffMember({
       id: 'owner',
+      identifier: 'OWNER',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Owner',
@@ -543,6 +544,7 @@ describe('Entity config save gates', () => {
     await expect(app.baseService.entities.staffMembers.save(new StaffMember({
       id: owner.id,
       schoolId: owner.schoolId,
+      identifier: owner.identifier,
       firstName: owner.firstName,
       lastName: owner.lastName,
       isActive: false,
@@ -557,19 +559,19 @@ describe('Entity config save gates', () => {
 
   test('resource assignment preSave rejects overlapping lesson session assignments', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.resourceRepository.save(new Resource({
+    await repositories.resourceRepository.save(new Resource(withShortName({
       id: 'resource-1',
       schoolId: 'school',
       name: 'Room A',
       kind: ResourceKind.Location,
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    })))
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.lessonSessionRepository.save(new LessonSession({
       id: 'session-1',
       schoolId: 'school',
@@ -609,13 +611,13 @@ describe('Entity config save gates', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
     await repositories.StudentClassEnrollmentRepository.save(new StudentClassEnrollment({
       id: 'enrollment-1',
       studentId: 'student-1',
@@ -628,7 +630,7 @@ describe('Entity config save gates', () => {
       classGroupId: 'class-1',
       subjectId: 'subject-1',
     }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -636,7 +638,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
     await repositories.assessmentRepository.save(new Assessment({
       id: 'assessment-1',
       classGroupId: 'class-1',
@@ -680,13 +682,13 @@ describe('Entity config save gates', () => {
       content: 'Hello',
       createdBy: 'system',
     }))
-    await repositories.gradeLevelRepository.save(new GradeLevel({
+    await repositories.gradeLevelRepository.save(new GradeLevel(withShortName({
       id: 'grade-other',
       schoolId: 'other-school',
       name: 'Other Grade',
-      label: 'Other',
+      shortName: 'Other',
       order: 1,
-    }))
+    })))
 
     await expect(app.baseService.entities.announcementTargets.save(new AnnouncementTarget({
       id: 'target-1',
@@ -743,14 +745,14 @@ describe('Entity config save gates', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    })))
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -758,7 +760,7 @@ describe('Entity config save gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
     const published = new ReportCardResult({
       id: 'report-card-1',
       gradeLevelId: 'grade-1',

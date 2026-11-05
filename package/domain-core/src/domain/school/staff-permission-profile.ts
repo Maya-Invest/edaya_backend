@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { Permission } from '../permissions/permission'
 import { corePermissionDefinition } from '../permissions/permission-catalog'
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 function refineStaffPermissionProfile(
   data: {
@@ -37,6 +38,7 @@ export const staffPermissionProfileBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   permissions: z.array(z.nativeEnum(Permission)).default([]),
   sourceKey: z.string().trim().min(1, 'sourceKey must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -61,6 +63,8 @@ export const staffPermissionProfileUpdateSchema = staffPermissionProfileBaseSche
 export class StaffPermissionProfile {
   readonly data: StaffPermissionProfileData
 
+  copyWith(changes: Partial<StaffPermissionProfileInput>): StaffPermissionProfile { return new StaffPermissionProfile({ ...this.data, ...changes }) }
+
   constructor(args: StaffPermissionProfileInput) {
     const parsed = parseDomain(staffPermissionProfileSchema, args)
     this.data = {
@@ -72,6 +76,7 @@ export class StaffPermissionProfile {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get description() { return this.data.description }
   get permissions() { return this.data.permissions }
   get sourceKey() { return this.data.sourceKey }

@@ -1,4 +1,4 @@
-import { AcademicPeriodType, AttendanceMode, GradeLevel } from '@edaya/core'
+import { AcademicPeriodType, AttendanceMode, GradeLevel, withShortName } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -61,7 +61,7 @@ describeIntegration('setup lifecycle journey', () => {
     await app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-2' })
 
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
+      new GradeLevel(withShortName({ id: 'level', schoolId: 'school', name: 'Grade 6', shortName: 'G6', order: 6 })),
     )
     await saveStaffMember(app, {
       id: 'teacher',

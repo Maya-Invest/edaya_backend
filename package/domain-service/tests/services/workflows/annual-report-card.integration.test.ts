@@ -1,8 +1,8 @@
-/* eslint-disable dot-notation -- TypeScript requires bracket access for environment variable index signatures. */
 import type { DocumentRenderInput } from '@edaya/core'
+/* eslint-disable dot-notation -- TypeScript requires bracket access for environment variable index signatures. */
 import { writeFileSync } from 'node:fs'
 import { ActorAssuranceLevel, createGuardianActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentResult, DocumentIssuanceStatus, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, Teacher, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentResult, DocumentIssuanceStatus, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { dispatchDocumentRender, renderReportCardDocument } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { createChromePdfRenderer, createDocumentRenderer, detectChromeExecutable } from '../../../../adaptor-docs/src/index'
@@ -22,8 +22,8 @@ async function annualFixture(hook?: (input: DocumentRenderInput) => Promise<void
     await hook?.(input)
     return result
   } } })
-  await f.repositories.academicPeriods.save(new AcademicPeriod({ id: 'sem2', schoolId: 'sch1', academicYearId: 'ay1', name: 'Second semester', type: AcademicPeriodType.Semester, startDate: new Date('2026-04-01'), endDate: new Date('2026-06-30'), isPublished: true }))
-  await f.repositories.academicPeriods.save(new AcademicPeriod({ id: 'annual', schoolId: 'sch1', academicYearId: 'ay1', name: 'Annual', type: AcademicPeriodType.Other, startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), isPublished: true }))
+  await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: 'sem2', schoolId: 'sch1', academicYearId: 'ay1', name: 'Second semester', type: AcademicPeriodType.Semester, startDate: new Date('2026-04-01'), endDate: new Date('2026-06-30'), isPublished: true })))
+  await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: 'annual', schoolId: 'sch1', academicYearId: 'ay1', name: 'Annual', type: AcademicPeriodType.Other, startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), isPublished: true })))
   const assessment = (await f.repositories.assessments.findById('ass1'))!
   await f.repositories.assessments.save(new Assessment({ ...assessment.data, id: 'ass2', periodId: 'sem2', startsAt: new Date('2026-05-01'), endsAt: new Date('2026-05-02') }))
   await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu1', assessmentId: 'ass2', score: 60 }))
@@ -123,7 +123,7 @@ describe('official annual report card workflow', () => {
     }
     await f.repositories.results.save(source)
     const period = (await f.repositories.academicPeriods.findById('sem2'))!
-    await f.repositories.academicPeriods.save(new AcademicPeriod({ ...period.data, isPublished: false }))
+    await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ ...period.data, isPublished: false })))
     await expect(f.request('period-unpublished')).rejects.toMatchObject({ code: 'DOCUMENT_SOURCE_UNPUBLISHED' })
   }, 60000)
 

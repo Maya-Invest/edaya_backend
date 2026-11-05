@@ -1,6 +1,6 @@
 import type { SeedApplication } from '../../../support/types'
 import type { TeachersSeedPort } from '../port'
-import { Teacher, TeacherAssignment } from '@edaya/core'
+import { TeacherAssignment } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -11,7 +11,7 @@ export function createInProcessTeachersSeedPort(
 
   return {
     saveTeacher: record => withSeedPortError('teachers.saveTeacher', async () => {
-      await service.baseService.entities.teachers.save(new Teacher({
+      await service.setupWorkflow.registerTeacher({
         id: record.id,
         schoolId: record.schoolId,
         firstName: record.firstName,
@@ -19,7 +19,7 @@ export function createInProcessTeachersSeedPort(
         email: record.email,
         subjectId: record.subjectId,
         isActive: true,
-      }))
+      })
     }),
     saveTeacherAssignment: record => withSeedPortError('teachers.saveTeacherAssignment', async () => {
       await service.baseService.entities.teacherAssignments.save(new TeacherAssignment(record))

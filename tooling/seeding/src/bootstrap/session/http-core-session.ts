@@ -120,8 +120,10 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
       'x-request-id': 'http-seed-bootstrap',
     },
     body: JSON.stringify({
+      ownerIdentifier: ownerMember.identifier,
       id: context.schoolId,
       name: school?.name,
+      shortName: school?.shortName,
       timeZone: school?.timeZone,
       financeCurrency: school?.financeCurrency,
       country: school?.country,

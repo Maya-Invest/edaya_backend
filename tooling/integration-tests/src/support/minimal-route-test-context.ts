@@ -1,7 +1,8 @@
-import { AcademicYear, School, StaffMember, Student } from '@edaya/core'
+import { AcademicYear, School, StaffMember, Student, withShortName } from '@edaya/core'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { DEMO_CI_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { afterEach, beforeEach, describe } from 'bun:test'
+import { saveHumanFixture } from '../../../test-support/human-fixtures'
 import { createCoreRouteTestApp, resetCoreRouteTestHarness, signInWithBearerThroughApp, testIdentityProvisioner } from './api-route-harness'
 
 /** Focused HTTP contracts keep real SQL actor resolution without the demo population. */
@@ -16,11 +17,11 @@ export function describeWithMinimalSchool(
       context = await createCoreRouteTestApp({ autoCleanup: false })
       const { subjectId } = await testIdentityProvisioner.ensureUser({ email: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL, name: 'Route owner', password: 'disposable-route-password' })
       const repositories = context.application.repositories
-      await repositories.schools.save(new School({ id: SEED_SCHOOL_ID, name: 'Route school', timeZone: 'UTC', ownerSubjectId: subjectId }))
-      await repositories.academicYears.save(new AcademicYear({ id: DEMO_CI_ACADEMIC_YEAR_ID, schoolId: SEED_SCHOOL_ID, name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-07-01'), status: 'published' }))
-      await repositories.staffMembers.save(new StaffMember({ id: 'route-owner', schoolId: SEED_SCHOOL_ID, firstName: 'Route', lastName: 'Owner', subjectId }))
+      await repositories.schools.save(new School(withShortName({ id: SEED_SCHOOL_ID, name: 'Route school', timeZone: 'UTC', ownerSubjectId: subjectId })))
+      await repositories.academicYears.save(new AcademicYear(withShortName({ id: DEMO_CI_ACADEMIC_YEAR_ID, schoolId: SEED_SCHOOL_ID, name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-07-01'), status: 'published' })))
+      await saveHumanFixture(repositories.staffMembers, new StaffMember({ id: 'route-owner', schoolId: SEED_SCHOOL_ID, firstName: 'Route', lastName: 'Owner', subjectId }))
       for (const id of students)
-        await repositories.students.save(new Student({ id, schoolId: SEED_SCHOOL_ID, firstName: 'Route', lastName: id }))
+        await saveHumanFixture(repositories.students, new Student({ id, schoolId: SEED_SCHOOL_ID, firstName: 'Route', lastName: id }))
     })
     afterEach(async () => {
       try {
