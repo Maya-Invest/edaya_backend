@@ -107,6 +107,7 @@ export class SchoolService {
   getClassSubjectRoster(input: Parameters<typeof getClassSubjectRoster>[1]) { return getClassSubjectRoster(this.baseService, input) }
   getStudentTimetable(input: Parameters<typeof getStudentTimetable>[1]) { return getStudentTimetable(this.baseService, input) }
 
+  listTeacherGuardianRecipients(input: Parameters<ConversationsWorkflow['guardianRecipients']>[0]) { return this.conversationsWorkflow.guardianRecipients(input) }
   listConversationRecipients(input: Parameters<ConversationsWorkflow['recipients']>[0]) { return this.conversationsWorkflow.recipients(input) }
   listConversations(input: Parameters<ConversationsWorkflow['list']>[0]) { return this.conversationsWorkflow.list(input) }
   getConversation(input: Parameters<ConversationsWorkflow['detail']>[0]) { return this.conversationsWorkflow.detail(input) }

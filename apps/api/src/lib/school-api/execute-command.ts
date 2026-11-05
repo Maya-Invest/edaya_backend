@@ -43,12 +43,15 @@ export async function executeSchoolCommand(
   const result = await dispatchSchoolCommand(service.commands, methodName, payload);
   if (["createCatalogService", "updateCatalogService", "activateCatalogService", "retryAutoBilling", "enrollStudent", "transferStudent", "promoteStudent", "closeEnrollment", "upsertStudentAcademicYearProfile", "removeStudentAcademicYearProfile", "updateClassGroupConfiguration"].includes(methodName))
     scheduleBackgroundApplicationTask(c, application => dispatchAutoBilling(application));
-  if (methodName === "startConversation" || methodName === "replyConversation")
+  if (methodName === "startConversation" || methodName === "startTeacherConversation" || methodName === "replyConversation")
     scheduleBackgroundApplicationTask(c, application => dispatchConversationNotifications(application));
   if (methodName === "configureGrading" || methodName === "retryGrading")
     scheduleBackgroundApplicationTask(c, application => dispatchGradingRecalculation(application));
   if (DOCUMENT_NUDGE_COMMANDS.has(methodName)) {
     nudgeDocumentRender(c);
   }
+  if (service.baseService.actor.kind === "teacher" && result && typeof result === "object" && "revisions" in result &&
+    ["requestTeacherCorrection", "reviseTeacherCorrection", "withdrawTeacherCorrection", "requestAssessmentMarksCorrection", "reviseAssessmentMarksCorrection", "withdrawAssessmentMarksCorrection"].includes(methodName))
+    return { ...result, revisions: [] };
   return result;
 }

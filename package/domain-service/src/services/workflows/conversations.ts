@@ -2,7 +2,7 @@ import type { Conversation, ConversationPlacement, ConversationReadScope } from 
 import type { z } from 'zod'
 import type { BaseSchoolService } from '../base-school-service'
 import { ActorAssuranceLevel, AuthorizationError, createAccessPolicies, createStaffActorMetadata, denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, CONVERSATION_NOTIFY_KIND, conversationDetailQuerySchema, conversationRecipientsQuerySchema, conversationsQuerySchema, markConversationReadSchema, Permission, replyConversationSchema, resolveConversationSchema, startConversationSchema } from '@edaya/core'
+import { BusinessRuleViolationError, CONVERSATION_NOTIFY_KIND, conversationDetailQuerySchema, conversationRecipientsQuerySchema, conversationsQuerySchema, markConversationReadSchema, Permission, replyConversationSchema, resolveConversationSchema, startConversationSchema, startTeacherConversationSchema, teacherGuardianRecipientsQuerySchema } from '@edaya/core'
 import { schoolCommandScope } from '../commands/school-command-scope'
 
 export class ConversationsWorkflow {
@@ -72,6 +72,58 @@ export class ConversationsWorkflow {
     await this.access.assertStart({ destination: 'school', studentId: parsed.studentId })
     const school = await this.base.repositories.schools.forSchool!(this.actor.schoolId).findById(this.actor.schoolId)
     return { schoolAvailable: (await this.schoolRecipients()).length > 0, schoolName: school?.name ?? '', teachers: parsed.studentId ? (await this.access.eligibleTeachers(parsed.studentId)).map(({ assignmentIds: _, ...teacher }) => teacher) : [] }
+  }
+
+  async guardianRecipients(input: z.input<typeof teacherGuardianRecipientsQuerySchema>) {
+    const { studentId, classGroupId } = teacherGuardianRecipientsQuerySchema.parse(input)
+    const { guardians } = await this.access.familyContacts(studentId, classGroupId)
+    return { guardians }
+  }
+
+  async startTeacher(input: z.input<typeof startTeacherConversationSchema>) {
+    const parsed = startTeacherConversationSchema.parse(input)
+    const recipient = async () => {
+      const contacts = await this.access.familyContacts(parsed.studentId, parsed.classGroupId)
+      const guardian = contacts.guardians.find(person => person.id === parsed.guardianId)
+      if (!guardian)
+        return denyResourceAccess()
+      return { guardian, assignmentIds: contacts.assignmentIds }
+    }
+    return this.command('startTeacherConversation', parsed, async () => {
+      await recipient()
+    }, async () => {
+      const { guardian, assignmentIds } = await recipient()
+      const author = await this.author()
+      const school = await this.base.repositories.schools.forSchool!(this.actor.schoolId).findById(this.actor.schoolId)
+      const student = await this.base.repositories.students.forSchool!(this.actor.schoolId).findById(parsed.studentId)
+      if (!student || this.actor.kind !== 'teacher')
+        return denyResourceAccess()
+      const now = new Date().toISOString()
+      const row: Conversation = {
+        id: crypto.randomUUID(),
+        schoolId: this.actor.schoolId,
+        destination: 'teacher',
+        teacherId: this.actor.teacherId,
+        guardianId: guardian.id,
+        studentId: student.id,
+        assignmentIds,
+        teacherName: author.authorName,
+        guardianName: guardian.name,
+        studentName: student.fullName,
+        schoolName: school?.name ?? '',
+        subject: parsed.subject,
+        status: 'awaiting_guardian',
+        version: 1,
+        lastSequence: 1,
+        lastMessage: parsed.body.slice(0, 160),
+        createdAt: now,
+        updatedAt: now,
+        awaitingSince: now,
+      }
+      await this.store.save(row)
+      await this.store.append({ id: crypto.randomUUID(), schoolId: row.schoolId, conversationId: row.id, sequence: 1, ...author, body: parsed.body, createdAt: now })
+      return row
+    }, true)
   }
 
   async list(input: z.input<typeof conversationsQuerySchema>) {

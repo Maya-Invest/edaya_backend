@@ -293,6 +293,8 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(await service.getTeacherFamilyFeedbackResult({ id: payload.id as string }) as never, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "listTeacherGuardianRecipients")
+          return c.json(await service.listTeacherGuardianRecipients(payload as Parameters<typeof service.listTeacherGuardianRecipients>[0]) as never, HttpStatusCodes.OK);
         if (queryConfig.methodName === "listConversationRecipients")
           return c.json(await service.listConversationRecipients(payload as Parameters<typeof service.listConversationRecipients>[0]) as never, HttpStatusCodes.OK);
         if (queryConfig.methodName === "listConversations")

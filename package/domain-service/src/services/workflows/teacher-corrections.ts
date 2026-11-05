@@ -513,7 +513,25 @@ export class TeacherCorrectionsWorkflow {
     const target = await this.target(proposal)
     const state = await this.state(proposal.workflow, proposal.targetId)
     const requests = await this.repositories.teacherCorrections.forTarget(this.actor.schoolId, proposal.workflow, proposal.targetId)
-    return { version: target.version, locked: target.locked, official: target.before, context: await this.labels({ classGroupId: target.classGroupId, authorSubjectId: this.human().subjectId, studentIds: target.studentIds }), history: state?.history ?? [], corrections: requests, consequences: target.consequences }
+    const currentCommentsOnly = proposal.workflow === 'report_comments' && this.actor.kind === 'teacher'
+    const corrections = currentCommentsOnly ? [] : requests
+    if (currentCommentsOnly) {
+      for (const row of requests.filter(row => this.activeCommentForTeacher(row))) {
+        try {
+          await this.authorizeProposal(row.proposal)
+          corrections.push({ ...row, revisions: [] })
+        }
+        catch (error) {
+          if (!(error instanceof AuthorizationError))
+            throw error
+        }
+      }
+    }
+    return { version: target.version, locked: target.locked, official: target.before, context: await this.labels({ classGroupId: target.classGroupId, authorSubjectId: this.human().subjectId, studentIds: target.studentIds }), history: currentCommentsOnly ? [] : state?.history ?? [], corrections, consequences: target.consequences }
+  }
+
+  private activeCommentForTeacher(row: TeacherCorrection): boolean {
+    return row.authorSubjectId === this.human().subjectId && (row.status === 'pending' || row.status === 'approved_pending_publication')
   }
 
   private async labels(row: { classGroupId: string, authorSubjectId: string, studentIds: string[] }) {
@@ -529,7 +547,7 @@ export class TeacherCorrectionsWorkflow {
     const grade = await this.repositories.marksCorrections.find(this.actor.schoolId, input.correctionId)
     if (grade) {
       const review = await getAssessmentMarksReview(this.base, { assessmentId: grade.assessmentId })
-      const row = review.corrections.find(c => c.id === grade.id)!
+      const row = review.corrections.find(c => c.id === grade.id) ?? denyResourceAccess()
       const group = await this.repositories.classGroups.findById(review.assessment.classGroupId)
       const level = group && await this.repositories.gradeLevels.findById(group.gradeLevelId)
       const policies = level?.gradingPolicies.filter(policy => policy.academicYearId === group?.academicYearId && policy.revision <= (grade.baseGradingRevision ?? 0)) ?? []
@@ -540,9 +558,12 @@ export class TeacherCorrectionsWorkflow {
             mentionLabels[range.id] = `${range.letter} · ${range.interpretation ?? range.letter}`
         }
       }
-      return { context: await this.labels({ classGroupId: review.assessment.classGroupId, authorSubjectId: grade.authorSubjectId, studentIds: grade.changes.map(c => c.studentId) }), correction: { ...grade, workflow: 'grades' as const, targetId: grade.assessmentId, classGroupId: review.assessment.classGroupId, studentIds: grade.changes.map(c => c.studentId), periodId: review.assessment.periodId }, original: { assessment: review.assessment, students: review.students, mentionLabels }, history: [], allowedActions: row.allowedActions }
+      return { context: await this.labels({ classGroupId: review.assessment.classGroupId, authorSubjectId: grade.authorSubjectId, studentIds: grade.changes.map(c => c.studentId) }), correction: { ...grade, revisions: row.revisions, workflow: 'grades' as const, targetId: grade.assessmentId, classGroupId: review.assessment.classGroupId, studentIds: grade.changes.map(c => c.studentId), periodId: review.assessment.periodId }, original: { assessment: review.assessment, students: review.students, mentionLabels }, history: [], allowedActions: row.allowedActions }
     }
     const row = await this.require(input.correctionId)
+    const currentCommentsOnly = row.workflow === 'report_comments' && this.actor.kind === 'teacher'
+    if (currentCommentsOnly && !this.activeCommentForTeacher(row))
+      denyResourceAccess()
     if (this.human().subjectId !== row.authorSubjectId) {
       if (this.actor.kind !== 'staff')
         denyResourceAccess()
@@ -586,7 +607,7 @@ export class TeacherCorrectionsWorkflow {
           throw error
       }
     }
-    return { context: await this.labels({ ...row, studentIds: [...new Set([...row.studentIds, ...(row.proposal.workflow === 'discipline' ? row.proposal.studentIds : [])])] }), correction: row, original: { ...state?.payload, fieldNames, ...(issuance ? { documentOutcome: { issuanceId: issuance.id, status: issuance.status, failureCode: issuance.failureCode } } : {}) }, history: history?.history ?? [], allowedActions: { approve: row.status === 'pending' && canReview, reject: ['pending', 'approved_pending_publication'].includes(row.status) && canReview, withdraw: ['pending', 'approved_pending_publication'].includes(row.status) && this.human().subjectId === row.authorSubjectId, publish: row.status === 'approved_pending_publication' && await this.canPublishReportCorrection(row) } }
+    return { context: await this.labels({ ...row, studentIds: [...new Set([...row.studentIds, ...(row.proposal.workflow === 'discipline' ? row.proposal.studentIds : [])])] }), correction: currentCommentsOnly ? { ...row, revisions: [] } : row, original: { ...(currentCommentsOnly ? {} : state?.payload), fieldNames, ...(issuance ? { documentOutcome: { issuanceId: issuance.id, status: issuance.status, failureCode: issuance.failureCode } } : {}) }, history: currentCommentsOnly ? [] : history?.history ?? [], allowedActions: { approve: row.status === 'pending' && canReview, reject: ['pending', 'approved_pending_publication'].includes(row.status) && canReview, withdraw: ['pending', 'approved_pending_publication'].includes(row.status) && this.human().subjectId === row.authorSubjectId, publish: row.status === 'approved_pending_publication' && await this.canPublishReportCorrection(row) } }
   }
 
   async list(raw: z.input<typeof teacherCorrectionsQuerySchema>) {

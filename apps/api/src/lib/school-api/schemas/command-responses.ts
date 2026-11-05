@@ -528,6 +528,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   materializeDeliveries: messageDeliveryCommandListResponseSchema,
   applyDeliveryEvent: messageDeliveryResponseSchema,
   markDeliveryRead: messageDeliveryResponseSchema,
+  startTeacherConversation: conversationResponseSchema,
   startConversation: conversationResponseSchema,
   replyConversation: conversationResponseSchema,
   resolveConversation: conversationResponseSchema,

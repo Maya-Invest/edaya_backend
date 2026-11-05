@@ -50,6 +50,13 @@ export const startConversationSchema = z.object({
   if (input.destination === 'school' && input.teacherId)
     ctx.addIssue({ code: 'custom', message: 'School enquiries cannot target a teacher' })
 })
+export const teacherGuardianRecipientsQuerySchema = z.object({ studentId: id, classGroupId: id })
+export const startTeacherConversationSchema = teacherGuardianRecipientsQuerySchema.extend({
+  guardianId: id,
+  requestId: id,
+  subject: z.string().trim().min(1).max(200),
+  body: z.string().trim().min(1).max(10000),
+})
 export const replyConversationSchema = z.object({ requestId: id, conversationId: id, expectedVersion: z.number().int().positive(), body: z.string().trim().min(1).max(10000) })
 export const resolveConversationSchema = replyConversationSchema.omit({ body: true })
 export const markConversationReadSchema = z.object({ conversationId: id, throughSequence: z.number().int().nonnegative() })

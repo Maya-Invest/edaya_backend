@@ -1293,6 +1293,11 @@ export const clientBindings = {
         "requestSchemaName": "ManageStudentSubjectEnrollmentsCommand",
         "responseSchemaName": "ManageStudentSubjectEnrollmentsResponse"
       },
+      "startTeacherConversation": {
+        "publicName": "start-teacher-conversation",
+        "requestSchemaName": "StartTeacherConversationCommand",
+        "responseSchemaName": "ConversationResponse"
+      },
       "startConversation": {
         "publicName": "start-conversation",
         "requestSchemaName": "StartConversationCommand",
@@ -1904,6 +1909,11 @@ export const clientBindings = {
         "publicName": "get-teacher-workflow-state",
         "requestSchemaName": "GetTeacherWorkflowStateQuery",
         "responseSchemaName": "TeacherWorkflowEligibilityResponse"
+      },
+      "listTeacherGuardianRecipients": {
+        "publicName": "list-teacher-guardian-recipients",
+        "requestSchemaName": "TeacherGuardianRecipientsQuery",
+        "responseSchemaName": "TeacherGuardianRecipientsResponse"
       },
       "listConversationRecipients": {
         "publicName": "list-conversation-recipients",

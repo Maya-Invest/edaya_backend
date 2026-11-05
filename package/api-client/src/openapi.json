@@ -16376,6 +16376,49 @@
           "awaitingSince"
         ]
       },
+      "StartTeacherConversationCommand": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "guardianId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "studentId",
+          "classGroupId",
+          "guardianId",
+          "requestId",
+          "subject",
+          "body"
+        ]
+      },
       "StartConversationCommand": {
         "type": "object",
         "properties": {
@@ -27942,6 +27985,51 @@
         },
         "required": [
           "proposal"
+        ]
+      },
+      "TeacherGuardianRecipientsResponse": {
+        "type": "object",
+        "properties": {
+          "guardians": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "guardians"
+        ]
+      },
+      "TeacherGuardianRecipientsQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "studentId",
+          "classGroupId"
         ]
       },
       "ConversationRecipientsResponse": {
@@ -54261,6 +54349,136 @@
         }
       }
     },
+    "/core/commands/start-teacher-conversation": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "start-teacher-conversation",
+        "operationId": "commands.startTeacherConversation",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "startTeacherConversation",
+        "x-edaya-command-public-name": "start-teacher-conversation",
+        "x-edaya-request-schema": "StartTeacherConversationCommand",
+        "x-edaya-response-schema": "ConversationResponse",
+        "requestBody": {
+          "description": "start-teacher-conversation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTeacherConversationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed start-teacher-conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/start-conversation": {
       "post": {
         "tags": [
@@ -70020,6 +70238,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TeacherWorkflowEligibilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-teacher-guardian-recipients": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-teacher-guardian-recipients",
+        "operationId": "queries.listTeacherGuardianRecipients",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listTeacherGuardianRecipients",
+        "x-edaya-query-public-name": "list-teacher-guardian-recipients",
+        "x-edaya-request-schema": "TeacherGuardianRecipientsQuery",
+        "x-edaya-response-schema": "TeacherGuardianRecipientsResponse",
+        "requestBody": {
+          "description": "list-teacher-guardian-recipients payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherGuardianRecipientsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-teacher-guardian-recipients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherGuardianRecipientsResponse"
                 }
               }
             }

@@ -2950,6 +2950,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/start-teacher-conversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** start-teacher-conversation */
+        post: operations["commands.startTeacherConversation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/start-conversation": {
         parameters: {
             query?: never;
@@ -5018,6 +5035,23 @@ export interface paths {
         put?: never;
         /** get-teacher-workflow-state */
         post: operations["queries.getTeacherWorkflowState"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-teacher-guardian-recipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-teacher-guardian-recipients */
+        post: operations["queries.listTeacherGuardianRecipients"];
         delete?: never;
         options?: never;
         head?: never;
@@ -16620,6 +16654,14 @@ export interface components {
             /** Format: date-time */
             awaitingSince: string;
         };
+        StartTeacherConversationCommand: {
+            studentId: string;
+            classGroupId: string;
+            guardianId: string;
+            requestId: string;
+            subject: string;
+            body: string;
+        };
         StartConversationCommand: {
             requestId: string;
             /** @enum {string} */
@@ -19356,6 +19398,16 @@ export interface components {
                 kind: "positive" | "minor_infraction" | "major_infraction" | "emergency";
                 studentIds: string[];
             };
+        };
+        TeacherGuardianRecipientsResponse: {
+            guardians: {
+                id: string;
+                name: string;
+            }[];
+        };
+        TeacherGuardianRecipientsQuery: {
+            studentId: string;
+            classGroupId: string;
         };
         ConversationRecipientsResponse: {
             schoolAvailable: boolean;
@@ -33000,6 +33052,84 @@ export interface operations {
             };
         };
     };
+    "commands.startTeacherConversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description start-teacher-conversation payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StartTeacherConversationCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed start-teacher-conversation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.startConversation": {
         parameters: {
             query?: never;
@@ -42459,6 +42589,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TeacherWorkflowEligibilityResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listTeacherGuardianRecipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-teacher-guardian-recipients payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TeacherGuardianRecipientsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-teacher-guardian-recipients */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherGuardianRecipientsResponse"];
                 };
             };
             /** @description Invalid request payload */

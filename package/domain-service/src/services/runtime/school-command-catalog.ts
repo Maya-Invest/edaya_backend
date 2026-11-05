@@ -1,5 +1,6 @@
 export type SchoolCommandKey
   = | 'manageStudentSubjectEnrollments'
+    | 'startTeacherConversation'
     | 'startConversation'
     | 'configureAcademicDiscipline'
     | 'configurePlacementStatus'
@@ -222,6 +223,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'removeStudentAcademicYearProfile',
   'removeTeacherAcademicYearProfile',
 
+  'startTeacherConversation',
   'startConversation',
   'replyConversation',
   'resolveConversation',

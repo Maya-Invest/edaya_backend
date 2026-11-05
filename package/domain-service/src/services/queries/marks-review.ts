@@ -64,7 +64,11 @@ export async function getAssessmentMarksReview(base: BaseSchoolService, input: {
   const published = await repositories.assessmentDependencies.publishedMarkIds(base.actor.schoolId, results.map(row => row.id))
   const history = await repositories.marksCorrections.forAssessment(base.actor.schoolId, assessment.id)
   const corrections = []
-  for (const row of history) corrections.push({ ...row, allowedActions: await correctionActions(base, row, assessment.classGroupId) })
+  for (const row of history) {
+    if (base.actor.kind === 'teacher' && (row.authorSubjectId !== base.actor.subjectId || row.status !== 'pending'))
+      continue
+    corrections.push({ ...row, revisions: base.actor.kind === 'teacher' ? [] : row.revisions, allowedActions: await correctionActions(base, row, assessment.classGroupId) })
+  }
   const editable = await base.access.marksReview.can('submit', assessment)
   return {
     assessment: assessment.data,

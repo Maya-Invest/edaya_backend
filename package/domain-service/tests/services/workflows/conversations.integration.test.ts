@@ -32,6 +32,29 @@ async function endTeaching(f: Awaited<ReturnType<typeof fixture>>) {
 }
 
 describe('guardian messaging through native SQL and workflow boundaries', () => {
+  test('teacher starts one pupil thread for the chosen guardian and retries the same first message', async () => {
+    const f = await fixture()
+    const scope = { classGroupId: 'cg1', studentId: 'stu1' }
+    const input = { ...scope, guardianId: 'gua1', subject: 'Exercise', body: 'Please check your notebook.', requestId: 'teacher-start' }
+    expect((await f.teacher.listTeacherGuardianRecipients(scope)).guardians.map(row => row.id)).toContain('gua1')
+    await expect(f.teacher.listTeacherGuardianRecipients({ ...scope, classGroupId: 'wrong' })).rejects.toThrow()
+    await expect(f.teacher.conversationsWorkflow.startTeacher({ ...input, guardianId: 'unlinked' })).rejects.toThrow()
+    await f.repositories.guardians.save(new Guardian({ id: 'gua2', schoolId: 'sch1', firstName: 'Second', lastName: 'Guardian', subjectId: 'subject-gua2' }))
+    await f.repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link2', schoolId: 'sch1', guardianId: 'gua2', studentId: 'stu1' }))
+    const other = f.forActor(createGuardianActorMetadata({ ...f.context, guardianId: 'gua2', subjectId: 'subject-gua2' }))
+    expect((await f.teacher.listTeacherGuardianRecipients(scope)).guardians).toHaveLength(2)
+    const thread = await f.teacher.conversationsWorkflow.startTeacher(input)
+    expect(thread.status).toBe('awaiting_guardian')
+    expect((await f.teacher.conversationsWorkflow.startTeacher(input)).id).toBe(thread.id)
+    const detail = await f.guardian.getConversation({ conversationId: thread.id })
+    expect(detail.messages.map(row => row.authorKind)).toEqual(['teacher'])
+    expect(detail.conversation.guardianId).toBe('gua1')
+    expect((await other.listConversations({})).total).toBe(0)
+    await expect(other.getConversation({ conversationId: thread.id })).rejects.toThrow()
+    await f.repositories.guardianLinks.delete('link')
+    await expect(f.teacher.conversationsWorkflow.startTeacher({ ...input, requestId: 'revoked' })).rejects.toThrow()
+  })
+
   test('deduplicated teachers, two-way replies, per-profile read positions and unread races', async () => {
     const f = await fixture()
     const recipients = await f.guardian.listConversationRecipients({ studentId: 'stu1' })

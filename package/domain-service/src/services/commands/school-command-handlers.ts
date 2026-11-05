@@ -198,6 +198,7 @@ export type SchoolCommandHandlerMap = {
 
 export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): SchoolCommandHandlerMap {
   return {
+    startTeacherConversation: payload => workflows.conversations.startTeacher(payload as Parameters<ConversationsWorkflow['startTeacher']>[0]),
     startConversation: payload => workflows.conversations.start(payload as Parameters<ConversationsWorkflow['start']>[0]),
     replyConversation: payload => workflows.conversations.reply(payload as Parameters<ConversationsWorkflow['reply']>[0]),
     resolveConversation: payload => workflows.conversations.resolve(payload as Parameters<ConversationsWorkflow['resolve']>[0]),
