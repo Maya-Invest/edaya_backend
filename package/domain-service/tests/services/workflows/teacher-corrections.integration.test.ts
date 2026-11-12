@@ -41,7 +41,41 @@ describe('teacher corrections across workflows', () => {
     const state = await f.repositories.teacherCorrections.state('sch1', 'attendance', record.id)
     expect(state?.history.map(h => h.action)).toEqual(['initial_submission', 'arrival'])
     expect((state?.payload['original'] as AttendanceRecord['data']).status).toBe(AttendanceStatus.Absent)
+    const departure = { requestId: 'left', recordId: record.id, expectedVersion: 2, occurredAt: new Date() }
+    await expect(f.teacher.teacherCorrectionsWorkflow.recordDeparture({ ...departure, requestId: 'stale-departure', expectedVersion: 0 })).rejects.toMatchObject({ code: 'ATTENDANCE_VERSION_CONFLICT' })
+    await expect(f.teacher.teacherCorrectionsWorkflow.recordDeparture({ ...departure, requestId: 'outside-window', occurredAt: endedAt })).rejects.toMatchObject({ code: 'ATTENDANCE_DEPARTURE_OUTSIDE_WINDOW' })
+    const other = f.forActor(createTeacherActorMetadata({ schoolId: 'sch1', teacherId: 'other-teacher', subjectId: 'other-subject', academicYearId: 'ay1', requestId: 'unauthorized', authenticatedAt: now, assuranceLevel: ActorAssuranceLevel.Verified }))
+    await expect(other.teacherCorrectionsWorkflow.recordDeparture(departure)).rejects.toThrow()
+    await f.teacher.teacherCorrectionsWorkflow.recordDeparture(departure)
+    await f.teacher.teacherCorrectionsWorkflow.recordDeparture(departure)
+    const call = await f.teacher.teacherCorrectionsWorkflow.getAttendanceCall({ anchor: input.anchor })
+    expect(call.records[0]).toMatchObject({ status: AttendanceStatus.Late, departedAt: departure.occurredAt.toISOString(), workflowVersion: 3 })
+    await expect(f.teacher.teacherCorrectionsWorkflow.recordDeparture({ ...departure, requestId: 'second-departure', expectedVersion: 3 })).rejects.toMatchObject({ code: 'ATTENDANCE_DEPARTURE_NOT_APPLICABLE' })
+    const proposal = { workflow: 'attendance' as const, targetId: record.id, status: 'late' as const, notes: 'Confirmed', teacherExplanation: 'Checked in class' }
+    const correction = await f.teacher.teacherCorrectionsWorkflow.request({ requestId: 'comment-after-departure', expectedVersion: 3, reason: 'Clarify the entry', proposal })
+    await f.reviewer.teacherCorrectionsWorkflow.decide('approve', { requestId: 'approve-comment', correctionId: correction.id, expectedVersion: 0 })
+    const reopened = await f.teacher.getTeacherAttendanceCall({ anchor: input.anchor })
+    expect(reopened.records[0]).toMatchObject({ departedAt: departure.occurredAt.toISOString(), status: AttendanceStatus.Late, justificationStatus: AttendanceJustificationStatus.None })
     await expect(f.teacher.teacherCorrectionsWorkflow.attendanceCall('save', { ...input, requestId: 'late-draft', expectedVersion: 2 })).rejects.toMatchObject({ code: 'CORRECTION_REQUIRED' })
+  })
+
+  test('a daily departure belongs only to that pupil and submitted register', async () => {
+    const f = await fixture()
+    const group = (await f.repositories.classGroups.findById('cg1'))!
+    await f.repositories.classGroups.save(new ClassGroup(withShortName({ ...group.data, attendanceMode: AttendanceMode.Daily })))
+    const now = new Date()
+    await f.repositories.students.save(new Student({ id: 'daily-pupil', schoolId: 'sch1', firstName: 'Daily', lastName: 'Pupil' }))
+    await f.repositories.enrollments.save(new StudentClassEnrollment({ id: 'daily-enrollment', studentId: 'daily-pupil', classGroupId: 'cg1', academicYearId: 'ay1', enrollmentIndex: 2, enrolledAt: new Date(now.getTime() - 86400000) }))
+    const anchor = { kind: 'daily' as const, classGroupId: 'cg1', date: now }
+    const { students } = await f.teacher.getTeacherAttendanceCall({ anchor })
+    await f.teacher.teacherCorrectionsWorkflow.attendanceCall('submit', { requestId: 'daily-finish', expectedVersion: 0, anchor, entries: students.map(s => ({ studentId: s.id, status: 'present' })) })
+    const before = await f.teacher.getTeacherAttendanceCall({ anchor })
+    const record = before.records.find(r => r.studentId === 'daily-pupil')!
+    const time = new Date()
+    await f.teacher.teacherCorrectionsWorkflow.recordDeparture({ requestId: 'daily-left', recordId: record.id, expectedVersion: record.workflowVersion, occurredAt: time })
+    const after = await f.teacher.getTeacherAttendanceCall({ anchor })
+    expect(after.records.filter(r => r.departedAt)).toHaveLength(1)
+    expect(after.records.find(r => r.id === record.id)).toMatchObject({ status: 'present', departedAt: time.toISOString() })
   })
 
   test('reviewed attendance requires consequence confirmation and retains the original decision', async () => {

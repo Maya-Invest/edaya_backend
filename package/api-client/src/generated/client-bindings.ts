@@ -1283,6 +1283,11 @@ export const clientBindings = {
         "requestSchemaName": "RecordTeacherAttendanceArrivalCommand",
         "responseSchemaName": "TeacherWorkflowStateResponse"
       },
+      "recordTeacherAttendanceDeparture": {
+        "publicName": "record-teacher-attendance-departure",
+        "requestSchemaName": "RecordTeacherAttendanceDepartureCommand",
+        "responseSchemaName": "TeacherAttendanceDepartureResponse"
+      },
       "reviseAssessmentMarksCorrection": {
         "publicName": "revise-assessment-marks-correction",
         "requestSchemaName": "ReviseAssessmentMarksCorrectionCommand",
@@ -1944,6 +1949,11 @@ export const clientBindings = {
         "publicName": "get-activity-roster",
         "requestSchemaName": "GetActivityRosterQuery",
         "responseSchemaName": "ActivityRosterResponse"
+      },
+      "getTeacherSubjectPeriodSummary": {
+        "publicName": "get-teacher-subject-period-summary",
+        "requestSchemaName": "GetTeacherSubjectPeriodSummaryQuery",
+        "responseSchemaName": "TeacherSubjectPeriodSummaryResponse"
       },
       "getAssessmentEditorContext": {
         "publicName": "get-assessment-editor-context",

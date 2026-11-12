@@ -2916,6 +2916,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/record-teacher-attendance-departure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** record-teacher-attendance-departure */
+        post: operations["commands.recordTeacherAttendanceDeparture"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/revise-assessment-marks-correction": {
         parameters: {
             query?: never;
@@ -5154,6 +5171,23 @@ export interface paths {
         put?: never;
         /** get-activity-roster */
         post: operations["queries.getActivityRoster"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-teacher-subject-period-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-teacher-subject-period-summary */
+        post: operations["queries.getTeacherSubjectPeriodSummary"];
         delete?: never;
         options?: never;
         head?: never;
@@ -16510,6 +16544,17 @@ export interface components {
             occurredAt: unknown;
             expectedVersion: number;
         };
+        TeacherAttendanceDepartureResponse: {
+            version: number;
+            /** Format: date-time */
+            departedAt: string;
+        };
+        RecordTeacherAttendanceDepartureCommand: {
+            requestId: string;
+            recordId: string;
+            occurredAt: unknown;
+            expectedVersion: number;
+        };
         AssessmentMarksCorrectionResponse: {
             id: string;
             schoolId: string;
@@ -19282,9 +19327,12 @@ export interface components {
                 notes?: string | null;
                 teacherExplanation?: string | null;
             }[];
-            records: {
+            records: ({
+                /** Format: date-time */
+                departedAt?: string | null;
+            } & {
                 [key: string]: unknown;
-            }[];
+            })[];
             students: {
                 id: string;
                 firstName: string;
@@ -19646,6 +19694,48 @@ export interface components {
         };
         GetActivityRosterQuery: {
             activityId: string;
+        };
+        TeacherSubjectPeriodSummaryResponse: {
+            classSubjectId: string;
+            classGroupId: string;
+            periodId: string;
+            calculationReady: boolean;
+            students: {
+                studentId: string;
+                firstName: string;
+                lastName: string;
+                average: number | null;
+                grading: {
+                    [key: string]: unknown;
+                } | null;
+                contributions: {
+                    assessmentId: string;
+                    title: string;
+                    coefficient: number;
+                    maxScore: number;
+                    score: number | null;
+                    designation: string;
+                    grading: {
+                        [key: string]: unknown;
+                    } | null;
+                }[];
+                comment: {
+                    reportId: string;
+                    sectionId: string;
+                    text: string;
+                    status: string;
+                    version: number;
+                    calculationStale: boolean;
+                    proposal: {
+                        text: string;
+                        status: string;
+                    } | null;
+                } | null;
+            }[];
+        };
+        GetTeacherSubjectPeriodSummaryQuery: {
+            classSubjectId: string;
+            periodId: string;
         };
         AssessmentEditorContextResponse: {
             assessmentsRaw: components["schemas"]["Assessment"][];
@@ -20583,6 +20673,10 @@ export interface components {
                 };
             }[];
             themes?: string;
+            academicYearId?: string;
+            academicPeriodId?: string;
+            classGroupId?: string;
+            classSubjectId?: string;
         };
         TeacherFamilyFeedbackResultList: components["schemas"]["TeacherFamilyFeedbackResult"][];
         ListTeacherFamilyFeedbackResultsQuery: Record<string, never>;
@@ -32896,6 +32990,84 @@ export interface operations {
             };
         };
     };
+    "commands.recordTeacherAttendanceDeparture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description record-teacher-attendance-departure payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RecordTeacherAttendanceDepartureCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed record-teacher-attendance-departure */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherAttendanceDepartureResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.reviseAssessmentMarksCorrection": {
         parameters: {
             query?: never;
@@ -43135,6 +43307,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityRosterResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getTeacherSubjectPeriodSummary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-teacher-subject-period-summary payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetTeacherSubjectPeriodSummaryQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-teacher-subject-period-summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherSubjectPeriodSummaryResponse"];
                 };
             };
             /** @description Invalid request payload */

@@ -217,6 +217,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     saveTeacherAttendanceDraft: payload => workflows.teacherCorrections.attendanceCall('save', payload as z.input<typeof attendanceCallSchema>),
     submitTeacherAttendance: payload => workflows.teacherCorrections.attendanceCall('submit', payload as z.input<typeof attendanceCallSchema>),
     recordTeacherAttendanceArrival: payload => workflows.teacherCorrections.recordArrival(payload as z.input<typeof attendanceArrivalSchema>),
+    recordTeacherAttendanceDeparture: payload => workflows.teacherCorrections.recordDeparture(payload as z.input<typeof attendanceArrivalSchema>),
     // setup
     registerSchool: payload => workflows.setup.registerSchool(payload as RegisterSchoolInput),
     updateSchoolConfiguration: payload => workflows.setup.updateSchoolConfiguration(payload as UpdateSchoolConfigurationInput),

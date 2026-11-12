@@ -15712,6 +15712,48 @@
         ],
         "additionalProperties": false
       },
+      "TeacherAttendanceDepartureResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "departedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "version",
+          "departedAt"
+        ]
+      },
+      "RecordTeacherAttendanceDepartureCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "recordId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "occurredAt": {},
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "requestId",
+          "recordId",
+          "occurredAt",
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
       "AssessmentMarksCorrectionResponse": {
         "type": "object",
         "properties": {
@@ -27403,6 +27445,13 @@
             "type": "array",
             "items": {
               "type": "object",
+              "properties": {
+                "departedAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "format": "date-time"
+                }
+              },
               "additionalProperties": {
                 "nullable": true
               }
@@ -29034,6 +29083,176 @@
         },
         "required": [
           "activityId"
+        ]
+      },
+      "TeacherSubjectPeriodSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "periodId": {
+            "type": "string"
+          },
+          "calculationReady": {
+            "type": "boolean"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "average": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "grading": {
+                  "type": "object",
+                  "nullable": true,
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                },
+                "contributions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "assessmentId": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "coefficient": {
+                        "type": "number"
+                      },
+                      "maxScore": {
+                        "type": "number"
+                      },
+                      "score": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "designation": {
+                        "type": "string"
+                      },
+                      "grading": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "required": [
+                      "assessmentId",
+                      "title",
+                      "coefficient",
+                      "maxScore",
+                      "score",
+                      "designation",
+                      "grading"
+                    ]
+                  }
+                },
+                "comment": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "reportId": {
+                      "type": "string"
+                    },
+                    "sectionId": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "number"
+                    },
+                    "calculationStale": {
+                      "type": "boolean"
+                    },
+                    "proposal": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "text": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "status"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "reportId",
+                    "sectionId",
+                    "text",
+                    "status",
+                    "version",
+                    "calculationStale",
+                    "proposal"
+                  ]
+                }
+              },
+              "required": [
+                "studentId",
+                "firstName",
+                "lastName",
+                "average",
+                "grading",
+                "contributions",
+                "comment"
+              ]
+            }
+          }
+        },
+        "required": [
+          "classSubjectId",
+          "classGroupId",
+          "periodId",
+          "calculationReady",
+          "students"
+        ]
+      },
+      "GetTeacherSubjectPeriodSummaryQuery": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "classSubjectId",
+          "periodId"
         ]
       },
       "AssessmentEditorContextResponse": {
@@ -33002,6 +33221,18 @@
             }
           },
           "themes": {
+            "type": "string"
+          },
+          "academicYearId": {
+            "type": "string"
+          },
+          "academicPeriodId": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "classSubjectId": {
             "type": "string"
           }
         },
@@ -54089,6 +54320,136 @@
         }
       }
     },
+    "/core/commands/record-teacher-attendance-departure": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "record-teacher-attendance-departure",
+        "operationId": "commands.recordTeacherAttendanceDeparture",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "recordTeacherAttendanceDeparture",
+        "x-edaya-command-public-name": "record-teacher-attendance-departure",
+        "x-edaya-request-schema": "RecordTeacherAttendanceDepartureCommand",
+        "x-edaya-response-schema": "TeacherAttendanceDepartureResponse",
+        "requestBody": {
+          "description": "record-teacher-attendance-departure payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordTeacherAttendanceDepartureCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed record-teacher-attendance-departure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAttendanceDepartureResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/revise-assessment-marks-correction": {
       "post": {
         "tags": [
@@ -71148,6 +71509,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityRosterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-teacher-subject-period-summary": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-teacher-subject-period-summary",
+        "operationId": "queries.getTeacherSubjectPeriodSummary",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getTeacherSubjectPeriodSummary",
+        "x-edaya-query-public-name": "get-teacher-subject-period-summary",
+        "x-edaya-request-schema": "GetTeacherSubjectPeriodSummaryQuery",
+        "x-edaya-response-schema": "TeacherSubjectPeriodSummaryResponse",
+        "requestBody": {
+          "description": "get-teacher-subject-period-summary payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTeacherSubjectPeriodSummaryQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-teacher-subject-period-summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherSubjectPeriodSummaryResponse"
                 }
               }
             }

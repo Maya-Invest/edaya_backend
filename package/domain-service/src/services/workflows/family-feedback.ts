@@ -668,7 +668,7 @@ export class FamilyFeedbackServiceWorkflow {
       const snapshot = await this.snapshots().findById(familyFeedbackSnapshotId(campaign.id))
       if (!snapshot)
         continue
-      items.push({ campaignId: campaign.id, ...snapshot.payload })
+      items.push({ ...snapshot.payload, campaignId: campaign.id, academicYearId: campaign.academicYearId, academicPeriodId: campaign.academicPeriodId, classGroupId: campaign.classGroupId, classSubjectId: campaign.classSubjectId })
     }
     return items
   }
@@ -682,7 +682,7 @@ export class FamilyFeedbackServiceWorkflow {
     const snapshot = await this.snapshots().findById(familyFeedbackSnapshotId(campaign.id))
     if (!snapshot)
       fail(FAMILY_FEEDBACK_FAILURES.NOT_FOUND, 'Published results are not available')
-    return { campaignId: campaign.id, ...snapshot.payload }
+    return { ...snapshot.payload, campaignId: campaign.id, academicYearId: campaign.academicYearId, academicPeriodId: campaign.academicPeriodId, classGroupId: campaign.classGroupId, classSubjectId: campaign.classSubjectId }
   }
 
   async advanceFamilyFeedbackCampaigns(asOf: Date): Promise<{ processed: number, skipped: number }> {

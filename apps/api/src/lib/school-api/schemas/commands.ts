@@ -1186,6 +1186,7 @@ export const saveTeacherAttendanceDraftCommandSchema = attendanceCallSchema.open
 export const submitTeacherAttendanceCommandSchema = attendanceCallSchema.openapi("SubmitTeacherAttendanceCommand");
 
 export const recordTeacherAttendanceArrivalCommandSchema = attendanceArrivalSchema.openapi("RecordTeacherAttendanceArrivalCommand");
+export const recordTeacherAttendanceDepartureCommandSchema = attendanceArrivalSchema.openapi("RecordTeacherAttendanceDepartureCommand");
 
 export const reviseAssessmentMarksCorrectionCommandSchema = reviseMarksCorrectionSchema.openapi("ReviseAssessmentMarksCorrectionCommand");
 

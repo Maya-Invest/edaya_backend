@@ -391,6 +391,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   saveTeacherAttendanceDraft: teacherWorkflowStateResponseSchema,
   submitTeacherAttendance: teacherWorkflowStateResponseSchema,
   recordTeacherAttendanceArrival: teacherWorkflowStateResponseSchema,
+  recordTeacherAttendanceDeparture: z.object({ version: z.number().int(), departedAt: z.string().datetime() }).openapi("TeacherAttendanceDepartureResponse"),
   requestTeacherCorrection: teacherCorrectionResponseSchema,
   reviseTeacherCorrection: teacherCorrectionResponseSchema,
   publishReportCommentCorrection: teacherCorrectionResponseSchema,

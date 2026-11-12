@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResultStatus, School, withShortName } from '@edaya/core'
+import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, School, withShortName } from '@edaya/core'
 import {
   describe,
   expect,
@@ -94,6 +94,21 @@ describe('SchoolService assessment workflows', () => {
 
     expect(result.teacherComment).toBe('Bon début d\'année.')
     expect((await results.findById('rc1'))?.teacherComment).toBe('Bon début d\'année.')
+  })
+
+  test('comment writes preserve canonical ranks hidden by stale-result display projections', async () => {
+    const { results, service } = await createReportCardContext()
+    const generated = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc-stale', studentId: 'stu1', periodId: 'per1' })
+    const stale = new ReportCardResult({ ...generated.data, sectionResults: [...generated.sectionResults], calculationStale: true, rank: 2, classSize: 4 })
+    await results.save(stale)
+    expect((await service.baseService.entities.results.findById(stale.id))?.rank).toBeUndefined()
+    const updated = await service.assessmentsWorkflow.writeHomeroomReportComment({ requestId: 'stale-comment', expectedVersion: stale.version, id: stale.id, teacherComment: 'Progression régulière.' })
+    const saved = (await results.findById(stale.id))!
+    expect(updated.teacherComment).toBe('Progression régulière.')
+    expect(saved.rank).toBe(2)
+    expect(saved.classSize).toBe(4)
+    expect(saved.overallAverage).toBe(stale.overallAverage)
+    expect(saved.calculationStale).toBe(true)
   })
 
   test('writeReportCardSectionComments updates only the named section comment', async () => {

@@ -50,8 +50,9 @@ export async function executeSchoolCommand(
   if (DOCUMENT_NUDGE_COMMANDS.has(methodName)) {
     nudgeDocumentRender(c);
   }
-  if (service.baseService.actor.kind === "teacher" && result && typeof result === "object" && "revisions" in result &&
-    ["requestTeacherCorrection", "reviseTeacherCorrection", "withdrawTeacherCorrection", "requestAssessmentMarksCorrection", "reviseAssessmentMarksCorrection", "withdrawAssessmentMarksCorrection"].includes(methodName))
+  if (["requestTeacherCorrection", "reviseTeacherCorrection", "withdrawTeacherCorrection", "requestAssessmentMarksCorrection", "reviseAssessmentMarksCorrection", "withdrawAssessmentMarksCorrection"].includes(methodName)
+    && service.baseService.actor.kind === "teacher" && result && typeof result === "object" && "revisions" in result) {
     return { ...result, revisions: [] };
+  }
   return result;
 }

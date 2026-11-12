@@ -171,6 +171,20 @@ describe('authorization policies against native repository scopes', () => {
     await expect(access.entity('assessments').assertSave(new Assessment({ ...assessment.data, title: 'Marks only' }), assessment)).rejects.toThrow()
   })
 
+  test('teacher period summary admits only the exact teaching and averages submitted official marks', async () => {
+    const service = schoolService(teacher)
+    const draft = await service.getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })
+    expect(draft.students.every(row => row.average === null)).toBe(true)
+    await db.exec('UPDATE assessments SET marks_status = \'submitted\' WHERE id = \'assessment-math\'')
+    const official = await service.getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })
+    expect(official.students.find(row => row.studentId === 'student-a')?.average).not.toBeNull()
+    expect(official.students.flatMap(row => row.contributions.map(mark => mark.assessmentId))).toEqual(['assessment-math'])
+    await expect(service.getTeacherSubjectPeriodSummary({ classSubjectId: 'french-a', periodId: 'period-a' })).rejects.toThrow()
+    await expect(schoolService(guardian).getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })).rejects.toThrow()
+    await db.exec('DELETE FROM teacher_assignments')
+    await expect(service.getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })).rejects.toThrow()
+  })
+
   test('assessment context mark reads retain teacher and guardian relationship isolation', async () => {
     await addGrant(Permission.GRADE_READ, 'class-other')
     const teacherContext = await schoolService(teacher).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })

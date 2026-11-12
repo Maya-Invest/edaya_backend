@@ -35,7 +35,7 @@ export async function notifyTeacherCorrection(base: BaseSchoolService, row: { id
   if (!recipients.length)
     return
   const labels = { requested: 'Correction à examiner', revised: 'Demande de correction révisée', approved: 'Correction approuvée', rejected: 'Correction refusée' }
-  const source: Record<string, string> = {}
+  const source: { assessmentId?: string, classGroupId?: string, periodId?: string, studentId?: string } = {}
   if (action === 'approved' || action === 'rejected') {
     if (row.assessmentId)
       source.assessmentId = row.assessmentId

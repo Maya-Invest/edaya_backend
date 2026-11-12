@@ -73,6 +73,7 @@ export type SchoolCommandKey
     | 'saveTeacherAttendanceDraft'
     | 'submitTeacherAttendance'
     | 'recordTeacherAttendanceArrival'
+    | 'recordTeacherAttendanceDeparture'
     | 'reviseAssessmentMarksCorrection'
     | 'requestTeacherCorrection'
     | 'reviseTeacherCorrection'
@@ -289,6 +290,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'saveTeacherAttendanceDraft',
   'submitTeacherAttendance',
   'recordTeacherAttendanceArrival',
+  'recordTeacherAttendanceDeparture',
   'reviseAssessmentMarksCorrection',
   'requestTeacherCorrection',
   'reviseTeacherCorrection',

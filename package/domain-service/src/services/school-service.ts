@@ -15,6 +15,7 @@ import { getAssessmentEditorContext } from './queries/assessment-editor-context'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
 import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
+import { getTeacherSubjectPeriodSummary } from './queries/teacher-subject-period-summary'
 
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
@@ -118,6 +119,8 @@ export class SchoolService {
   async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
 
   async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
+
+  async getTeacherSubjectPeriodSummary(input: { classSubjectId: string, periodId: string }) { return getTeacherSubjectPeriodSummary(this.baseService, input) }
 
   async getAssessmentEditorContext(input: { classGroupId: string, periodId: string }) { return getAssessmentEditorContext(this.baseService, input) }
 

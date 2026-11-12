@@ -311,6 +311,8 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(await service.getTeacherWorkflowState(payload as unknown as Parameters<typeof service.getTeacherWorkflowState>[0]) as never, HttpStatusCodes.OK);
         if (queryConfig.methodName === "getActivityRoster")
           return c.json(await service.getActivityRoster(payload as unknown as Parameters<typeof service.getActivityRoster>[0]) as never, HttpStatusCodes.OK);
+        if (queryConfig.methodName === "getTeacherSubjectPeriodSummary")
+          return c.json(await service.getTeacherSubjectPeriodSummary(payload as unknown as Parameters<typeof service.getTeacherSubjectPeriodSummary>[0]) as never, HttpStatusCodes.OK);
         if (queryConfig.methodName === "getAssessmentEditorContext")
           return c.json(await service.getAssessmentEditorContext(payload as unknown as Parameters<typeof service.getAssessmentEditorContext>[0]) as never, HttpStatusCodes.OK);
         const count = await service[queryConfig.methodName](payload.schoolId as string);

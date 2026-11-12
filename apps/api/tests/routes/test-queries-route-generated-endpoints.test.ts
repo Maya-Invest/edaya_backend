@@ -46,6 +46,7 @@ describe("generated core query endpoints", () => {
   });
 
   for (const query of [
+    { path: "get-teacher-subject-period-summary", method: "getTeacherSubjectPeriodSummary", input: { classSubjectId: "subject-1", periodId: "period-1" }, output: { classSubjectId: "subject-1", classGroupId: "class-1", periodId: "period-1", calculationReady: true, students: [] } },
     { path: "get-activity-roster", method: "getActivityRoster", input: { activityId: "club-1" }, output: { students: [], eligibleStudentIds: [], classes: [] } },
     { path: "get-assessment-editor-context", method: "getAssessmentEditorContext", input: { classGroupId: "class-1", periodId: "period-1" }, output: { assessmentsRaw: [], classSubjectsRaw: [], subjectsRaw: [], classSize: 0, markResults: [] } },
   ]) {

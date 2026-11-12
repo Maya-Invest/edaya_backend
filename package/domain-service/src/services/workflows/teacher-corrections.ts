@@ -448,7 +448,8 @@ export class TeacherCorrectionsWorkflow {
     const official = await Promise.all(records.map(async (record) => {
       const recordState = await this.state('attendance', record.id)
       const pending = (await this.repositories.teacherCorrections.forTarget(this.actor.schoolId, 'attendance', record.id)).find(c => c.status === 'pending' && c.authorSubjectId === this.human().subjectId)
-      return { ...record.data, workflowVersion: recordState?.version ?? 0, pendingCorrection: pending, teacherExplanation: recordState?.payload['teacherExplanation'] ?? null }
+      const departedAt = recordState?.history.find(event => event.action === 'departure')?.payload['departedAt'] ?? null
+      return { ...record.data, departedAt, workflowVersion: recordState?.version ?? 0, pendingCorrection: pending, teacherExplanation: recordState?.payload['teacherExplanation'] ?? null }
     }))
     return { key: context.key, version: state?.version ?? 0, submitted, entries: submitted ? official.map(r => ({ studentId: r.studentId, status: r.status, notes: r.notes, teacherExplanation: r.teacherExplanation })) : state?.payload['entries'] ?? [], records: official, students: students.map(s => ({ id: s.id, firstName: s.firstName, lastName: s.lastName })) }
   }
@@ -504,6 +505,29 @@ export class TeacherCorrectionsWorkflow {
       await this.repositories.attendance.save(updated)
       await runWorkflowNotifications(this.base, ATTENDANCE_RECORDED_EVENT_KEY, { records: [updated], schoolId: this.actor.schoolId, correction: true })
       return this.remember('attendance', record.id, 'arrival', { ...state?.payload, occurredAt: input.occurredAt.toISOString(), previous: record.data }, true)
+    })
+  }
+
+  async recordDeparture(raw: z.input<typeof attendanceArrivalSchema>) {
+    const input = attendanceArrivalSchema.parse(raw)
+    const proposal: CorrectionProposal = { workflow: 'attendance', targetId: input.recordId, status: 'present', notes: null, teacherExplanation: null }
+    return this.run('recordTeacherAttendanceDeparture', input, () => this.authorizeProposal(proposal), async () => {
+      const record = await this.repositories.attendance.forSchool!(this.actor.schoolId).findById(input.recordId)
+      if (!record)
+        denyResourceAccess()
+      const state = await this.state('attendance', record.id)
+      if ((state?.version ?? 0) !== input.expectedVersion)
+        fail('ATTENDANCE_VERSION_CONFLICT', 'The attendance record changed')
+      if (record.status === AttendanceStatus.Absent || state?.history.some(event => event.action === 'departure'))
+        fail('ATTENDANCE_DEPARTURE_NOT_APPLICABLE', 'Record one departure for a pupil who is present or late')
+      const occurrence = record.lessonSessionId ? await this.repositories.lessonSessions.forSchool!(this.actor.schoolId).findById(record.lessonSessionId) : record.attendanceId ? await this.repositories.attendances.forSchool!(this.actor.schoolId).findById(record.attendanceId) : undefined
+      const now = new Date()
+      const arrival = state?.history.slice().reverse().find(event => event.action === 'arrival')?.payload['occurredAt']
+      if (!occurrence || input.occurredAt < occurrence.startsAt || now > occurrence.endsAt || input.occurredAt > now || (typeof arrival === 'string' && input.occurredAt < new Date(arrival)))
+        fail('ATTENDANCE_DEPARTURE_OUTSIDE_WINDOW', 'Record the departure during this register, after arrival')
+      const departedAt = input.occurredAt.toISOString()
+      const saved = await this.remember('attendance', record.id, 'departure', { ...state?.payload, departedAt }, true)
+      return { version: saved.version, departedAt }
     })
   }
 
