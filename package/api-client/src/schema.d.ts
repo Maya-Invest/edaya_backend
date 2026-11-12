@@ -13856,9 +13856,28 @@ export interface components {
                     cycle?: string;
                 };
             }[];
+            schools: {
+                schoolId: string;
+                schoolName: string;
+                children: {
+                    studentId: string;
+                    schoolId: string;
+                    firstName: string;
+                    lastName: string;
+                    classLabel?: string;
+                    gradeLevel?: {
+                        id: string;
+                        name: string;
+                        label: string;
+                        order: number;
+                        cycle?: string;
+                    };
+                }[];
+            }[];
         };
         EdayaSparkResolveGuardianRequest: {
             subjectId: string;
+            email?: string;
         };
         School: {
             id: string;
