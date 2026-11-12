@@ -7,11 +7,9 @@ import { placementProfileBillingHooks } from '../../../../capabilities/finance/a
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
-async function validateCode(record: AcademicDiscipline | PlacementStatus, existing: AcademicDiscipline | PlacementStatus | undefined, records: readonly (AcademicDiscipline | PlacementStatus)[]) {
-  if (existing && (record.schoolId !== existing.schoolId || record.code !== existing.code))
-    throw new BusinessRuleViolationError('CATALOGUE_CODE_IMMUTABLE', 'Catalogue school and code cannot change')
-  if (records.some(other => other.id !== record.id && other.code.toLowerCase() === record.code.toLowerCase()))
-    throw new BusinessRuleViolationError('CATALOGUE_CODE_TAKEN', 'This code already exists in this school')
+async function validateCatalogScope(record: AcademicDiscipline | PlacementStatus, existing: AcademicDiscipline | PlacementStatus | undefined) {
+  if (existing && record.schoolId !== existing.schoolId)
+    throw new BusinessRuleViolationError('CATALOGUE_SCHOOL_IMMUTABLE', 'A catalogue entry cannot move to another school')
 }
 
 export const academicDisciplineConfig: EntityConfigFactory<AcademicDiscipline> = ({ repositories, atomicExecution }) => config({
@@ -21,7 +19,7 @@ export const academicDisciplineConfig: EntityConfigFactory<AcademicDiscipline> =
   atomicExecution,
   writeLockGroup: 'academic-state',
   gates: {
-    preSave: async (record, existing, repos) => { await validateCode(record, existing, await repos.academicDisciplines.list({ schoolId: record.schoolId })) },
+    preSave: async (record, existing) => { await validateCatalogScope(record, existing) },
     preDelete: async (record, repos) => {
       if (await repos.subjects.count({ disciplineId: record.id }) || (await repos.teacherAcademicYearProfiles.list({ schoolId: record.schoolId })).some(profile => profile.disciplineIds.includes(record.id)))
         throw new BusinessRuleViolationError('DISCIPLINE_IN_USE', 'Deactivate a discipline that is referenced by subjects or teachers')
@@ -35,7 +33,7 @@ export const placementStatusConfig: EntityConfigFactory<PlacementStatus> = ({ re
   atomicExecution,
   writeLockGroup: 'academic-state',
   gates: {
-    preSave: async (record, existing, repos) => { await validateCode(record, existing, await repos.placementStatuses.list({ schoolId: record.schoolId })) },
+    preSave: async (record, existing) => { await validateCatalogScope(record, existing) },
     preDelete: async (record, repos) => {
       if (await repos.studentAcademicYearProfiles.count({ placementStatusId: record.id }) || (await repos.catalogServices.list({ schoolId: record.schoolId })).some(fee => fee.autoBilling.mode === 'matching' && fee.autoBilling.placementStatusIds?.includes(record.id)))
         throw new BusinessRuleViolationError('PLACEMENT_STATUS_IN_USE', 'Deactivate a placement status that is referenced by students')

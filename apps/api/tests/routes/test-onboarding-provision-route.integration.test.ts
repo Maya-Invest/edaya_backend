@@ -1,8 +1,10 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { resolveOnboardingDataset } from "@edaya/fixtures/onboarding";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
   createCoreRouteTestApp,
+  signInPhoneWithBearerForTests,
   signInWithBearerThroughApp,
   signUpAuthUser,
 } from "../support/core-route-harness";
@@ -28,6 +30,28 @@ const typicalProvisionBody = {
 };
 
 describe("onboarding provision route", () => {
+  it("provisions and bootstraps school grants for a verified phone-only account", async () => {
+    const { app } = await createCoreRouteTestApp();
+    const accessToken = await signInPhoneWithBearerForTests("+2250700000042");
+    const schoolId = crypto.randomUUID();
+    const headers = { "content-type": "application/json", "authorization": `Bearer ${accessToken}` };
+    const provision = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ schoolId, requestId: crypto.randomUUID(), ...typicalProvisionBody }),
+    }));
+    expect(provision.status).toBe(200);
+    const profiles = await app.request(createAppRequest("/core/authorization/profiles", { headers }));
+    const { profiles: memberships } = await profiles.json() as { profiles: Array<{ actorId: string; schoolId: string; kind: string }> };
+    expect(memberships).toHaveLength(1);
+    expect(memberships[0]).toMatchObject({ kind: "staff", schoolId });
+    const grants = await app.request(createAppRequest("/core/authorization/effective-grants", {
+      headers: { ...headers, "x-actor-kind": "staff", "x-actor-id": memberships[0]!.actorId, "x-school-id": schoolId },
+    }));
+    expect(grants.status).toBe(200);
+    expect(await grants.json()).toMatchObject({ kind: "staff", schoolId, assuranceLevel: "verified" });
+  });
+
   it("returns 422 for an empty body before authentication", async () => {
     const { app } = await createCoreRouteTestApp();
     const response = await app.request(createAppRequest("/core/onboarding/provision", {
@@ -90,7 +114,7 @@ describe("onboarding provision route", () => {
       ...typicalProvisionBody,
     });
 
-    const response = await app.request(createAppRequest("/core/onboarding/provision", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -122,7 +146,7 @@ describe("onboarding provision route", () => {
     expect(payload.phases?.length).toBeGreaterThan(0);
     expect(payload.replayed).toBeFalsy();
 
-    const replay = await app.request(createAppRequest("/core/onboarding/provision", {
+    const replay = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -135,7 +159,7 @@ describe("onboarding provision route", () => {
     expect(replayed.schoolId).toBe(schoolId);
     expect(replayed.replayed).toBe(true);
 
-    const conflict = await app.request(createAppRequest("/core/onboarding/provision", {
+    const conflict = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -209,7 +233,7 @@ describe("canonical onboarding request contracts", () => {
     template.id = "custom-college";
     for (const level of template.gradeLevels) level.id = `${template.id}:${level.code}`;
     const schoolId = crypto.randomUUID();
-    const response = await app.request(createAppRequest("/core/onboarding/provision", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/provision", {
       method: "POST",
       headers: { "content-type": "application/json", "authorization": `Bearer ${token}` },
       body: JSON.stringify({

@@ -1,6 +1,6 @@
 import type { EntityConfigFactory } from '../../entity-config'
+import { BusinessRuleViolationError, GradeLevel, withShortName } from '@edaya/core'
 
-import { BusinessRuleViolationError, GradeLevel } from '@edaya/core'
 import { normalizeCommandRequest } from '../../../commands/command-execution'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
@@ -20,7 +20,7 @@ export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = ({ repositories
         const state = await durableWork.getState(policy.workId)
         return !state || state.status === 'dead' || state.status === 'failed' ? { ...policy, status: 'failed' as const, failureCode: 'GRADING_UPDATE_FAILED' } : policy
       }))
-      return new GradeLevel({ ...level.data, gradingPolicies })
+      return new GradeLevel(withShortName({ ...level.data, gradingPolicies }))
     },
     writeLockGroup: 'academic-state',
     gates: { preSave: async (level, existing) => {

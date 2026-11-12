@@ -1,4 +1,4 @@
-import { AttendanceStatus, ClassGroup, GuardianStudentLink, LessonSession, RecordingNotificationGateway, School, Student } from '@edaya/core'
+import { AttendanceStatus, ClassGroup, GuardianStudentLink, LessonSession, RecordingNotificationGateway, School, Student, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { ATTENDANCE_RECORDED_EVENT_KEY } from '../../src/capabilities/notifications'
 import { createSchedulingContext } from '../services/workflows/scheduling-workflow-context'
@@ -8,11 +8,11 @@ describe('enriched attendance notifications', () => {
     const gateway = new RecordingNotificationGateway()
     const { service, repositories } = await createSchedulingContext({ notificationGateway: gateway })
     const school = (await repositories.schools.findById('sch1'))!
-    await repositories.schools.save(new School({ ...school.data, timeZone: 'Africa/Douala' }))
+    await repositories.schools.save(new School(withShortName({ ...school.data, timeZone: 'Africa/Douala' })))
     const student = (await repositories.students.findById('stu1'))!
     await repositories.students.save(new Student({ ...student.data, firstName: 'Léa', lastName: 'Martin' }))
     const group = (await repositories.classGroups.findById('cg_daily'))!
-    await repositories.classGroups.save(new ClassGroup({ ...group.data, name: '6ème A' }))
+    await repositories.classGroups.save(new ClassGroup(withShortName({ ...group.data, name: '6ème A' })))
     const session = (await repositories.lessonSessions.findById('ses1'))!
     await repositories.lessonSessions.save(new LessonSession({ ...session.data, timetableTeacherIds: [...session.timetableTeacherIds], displayLabel: 'Mathematics' }))
     await service.schedulingWorkflow.recordAttendance({ id: 'att1', studentId: 'stu1', lessonSessionId: 'ses1', status: AttendanceStatus.Absent })

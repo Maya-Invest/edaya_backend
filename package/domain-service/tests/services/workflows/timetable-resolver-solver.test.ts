@@ -1,15 +1,6 @@
 import type { SchoolRepositories } from '@edaya/service'
 import type { ResolvedTimetableCell, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../../src/services/workflows/timetable-generation'
-import {
-  AcademicYear,
-  CalendarEvent,
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  ClassGroup,
-  DayOfWeek,
-  PeriodDefinition,
-  TimetableGenerationMode,
-} from '@edaya/core'
+import { AcademicYear, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ClassGroup, DayOfWeek, PeriodDefinition, TimetableGenerationMode, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { resolveTimetableSpace, resolveWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
 
@@ -56,40 +47,40 @@ function singlePlacement(
 }
 
 function period(dayOfWeek: DayOfWeek, suffix = '') {
-  return new PeriodDefinition({
+  return new PeriodDefinition(withShortName({
     id: `period-${dayOfWeek}${suffix}`,
     schoolId: 'school-1',
     academicYearId: 'year-1',
-    label: `Period ${dayOfWeek}`,
+    name: `Period ${dayOfWeek}`,
     dayOfWeek,
     order: suffix ? 2 : 1,
     startTime: suffix ? '09:00' : '08:00',
     endTime: suffix ? '10:00' : '09:00',
     isBreak: suffix === '-break',
     isTeachingSlot: suffix !== '-disabled',
-  })
+  }))
 }
 
 describe('timetable resolver and solver', () => {
   test('resolves ordered teaching cells and excludes closures, breaks, and disabled slots', async () => {
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Class 1',
-    })
+    }))
     const repositories = {
       classGroups: { findById: async () => classGroup },
       academicYears: {
-        findById: async () => new AcademicYear({
+        findById: async () => new AcademicYear(withShortName({
           id: 'year-1',
           schoolId: 'school-1',
           name: '2026',
           startDate: weekStart,
           endDate: weekEnd,
           status: 'published',
-        }),
+        })),
       },
       periodDefinitions: {
         list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Monday, '-break'), period(DayOfWeek.Tuesday), period(DayOfWeek.Wednesday, '-disabled')],
@@ -122,24 +113,24 @@ describe('timetable resolver and solver', () => {
   })
 
   test('resolves cells on partial closure days when isNonSchoolDay is false', async () => {
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Class 1',
-    })
+    }))
     const repositories = {
       classGroups: { findById: async () => classGroup },
       academicYears: {
-        findById: async () => new AcademicYear({
+        findById: async () => new AcademicYear(withShortName({
           id: 'year-1',
           schoolId: 'school-1',
           name: '2026',
           startDate: weekStart,
           endDate: weekEnd,
           status: 'published',
-        }),
+        })),
       },
       periodDefinitions: {
         list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Tuesday)],
@@ -170,24 +161,24 @@ describe('timetable resolver and solver', () => {
   })
 
   test('resolves cells for other classes on class-scoped non-school days', async () => {
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-2',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Class 2',
-    })
+    }))
     const repositories = {
       classGroups: { findById: async () => classGroup },
       academicYears: {
-        findById: async () => new AcademicYear({
+        findById: async () => new AcademicYear(withShortName({
           id: 'year-1',
           schoolId: 'school-1',
           name: '2026',
           startDate: weekStart,
           endDate: weekEnd,
           status: 'published',
-        }),
+        })),
       },
       periodDefinitions: {
         list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Tuesday)],
@@ -439,13 +430,13 @@ describe('timetable resolver and solver', () => {
   })
 
   test('resolves a logical weekly template grid without calendar closures', async () => {
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Class 1',
-    })
+    }))
     const repositories = {
       periodDefinitions: {
         list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Tuesday), period(DayOfWeek.Wednesday, '-disabled')],

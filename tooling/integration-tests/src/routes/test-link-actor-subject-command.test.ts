@@ -6,6 +6,7 @@ import {
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
+import { humanFixture } from '../../../test-support/human-fixtures'
 import {
   createAppRequest,
   grantAccessControlAssign,
@@ -26,13 +27,13 @@ describeWithLightSchool('link-actor-subject command route', (getContext) => {
     })
     const service = application.forActor(bootstrapActor)
 
-    await service.setupWorkflow.registerStaffMember({
+    await humanFixture({
       id: UNLINKED_STAFF_ID,
       schoolId: SEED_SCHOOL_ID,
       firstName: 'Paul',
       lastName: 'Martin',
       email: 'p.martin@school.edu',
-    })
+    }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))
 
     const subjectId = await signUpAuthUser(runtime, {
       email: 'p.martin@school.edu',

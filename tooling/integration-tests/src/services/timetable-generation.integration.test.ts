@@ -1,19 +1,4 @@
-import {
-  ActivitySession,
-  CalendarEvent,
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  ClassGroup,
-  ClassSubject,
-  DayOfWeek,
-  GradeLevel,
-  PeriodDefinition,
-  Subject,
-  SubjectColor,
-  TeacherAssignment,
-  TeacherAssignmentKind,
-  TimetableGenerationMode,
-} from '@edaya/core'
+import { ActivitySession, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ClassGroup, ClassSubject, DayOfWeek, GradeLevel, PeriodDefinition, Subject, SubjectColor, TeacherAssignment, TeacherAssignmentKind, TimetableGenerationMode, withShortName } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import { createFixtureSubjectCategory, saveSchool } from '../utils/core-service-helpers'
@@ -39,21 +24,21 @@ describeIntegration('timetable generation lifecycle', () => {
       startDate,
       endDate,
     })
-    await schoolRepositories.gradeLevels.save(new GradeLevel({
+    await schoolRepositories.gradeLevels.save(new GradeLevel(withShortName({
       id: 'grade',
       schoolId: 'school',
       name: 'Grade 6',
-      label: 'G6',
+      shortName: 'G6',
       order: 1,
-    }))
-    await schoolRepositories.classGroups.save(new ClassGroup({
+    })))
+    await schoolRepositories.classGroups.save(new ClassGroup(withShortName({
       id: 'class',
       schoolId: 'school',
       academicYearId: 'year',
       gradeLevelId: 'grade',
       name: 'Grade 6 A',
-    }))
-    await schoolRepositories.subjects.save(new Subject({ gradeLevelId: 'grade', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics', categoryId: (await createFixtureSubjectCategory(app, 'school')).id, color: SubjectColor.Mint }))
+    })))
+    await schoolRepositories.subjects.save(new Subject(withShortName({ gradeLevelId: 'grade', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics', categoryId: (await createFixtureSubjectCategory(app, 'school')).id, color: SubjectColor.Mint })))
     await schoolRepositories.classSubjects.save(new ClassSubject({
       id: 'class-math',
       classGroupId: 'class',
@@ -70,17 +55,17 @@ describeIntegration('timetable generation lifecycle', () => {
 
     const weekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday]
     for (const dayOfWeek of weekdays) {
-      await schoolRepositories.periodDefinitions.save(new PeriodDefinition({
+      await schoolRepositories.periodDefinitions.save(new PeriodDefinition(withShortName({
         id: `period-${dayOfWeek}`,
         schoolId: 'school',
         academicYearId: 'year',
-        label: 'Period 1',
+        name: 'Period 1',
         dayOfWeek,
         order: 1,
         startTime: '08:00',
         endTime: '09:00',
         isTeachingSlot: dayOfWeek !== DayOfWeek.Wednesday,
-      }))
+      })))
     }
     await schoolRepositories.calendarEvents.save(new CalendarEvent({
       id: 'closure',

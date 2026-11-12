@@ -8,7 +8,7 @@ const scope = reportConfigurationQuerySchema.extend({ requestId: z.string().min(
 
 export const configureReportModulesCommandSchema = scope.extend({
   action: z.enum(["save", "delete", "assign"]),
-  module: objectFromSchema(reportModuleBaseSchema).pick({ id: true, name: true, order: true, weightingMode: true, explicitWeight: true }).optional(),
+  module: objectFromSchema(reportModuleBaseSchema).pick({ id: true, name: true, shortName: true, order: true, weightingMode: true, explicitWeight: true }).optional(),
   moduleId: z.string().min(1).nullable().optional(),
   assignments: z.array(z.object({ subjectId: z.string().min(1), moduleId: z.string().min(1).nullable(), order: z.number().int().nonnegative().optional() })).max(500).optional(),
 }).openapi("ConfigureReportModulesCommand");

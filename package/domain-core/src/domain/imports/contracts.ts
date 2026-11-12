@@ -1,5 +1,5 @@
 /** Versioned, transport-independent school intake contracts. */
-export const IMPORT_TEMPLATE_VERSION = 1
+export const IMPORT_TEMPLATE_VERSION = 2
 export const IMPORT_MAX_FILE_BYTES = 5 * 1024 * 1024
 export const IMPORT_MAX_ROWS = 10000
 export const IMPORT_TYPES = ['academic_disciplines', 'placement_statuses', 'classes', 'subjects', 'students', 'guardians', 'teachers', 'staff', 'guardian_relationships', 'class_offerings', 'teacher_assignments', 'chapters', 'billing', 'payments'] as const
@@ -16,6 +16,7 @@ export interface ImportRecord {
 export type ImportOutcome = 'pending' | 'created' | 'updated' | 'unchanged' | 'skipped' | 'blocked' | 'dependency_blocked' | 'failed' | 'cancelled'
 export const IMPORT_COMPLETED_OUTCOMES: readonly ImportOutcome[] = ['created', 'updated', 'unchanged', 'skipped']
 export interface ImportIssue {
+  replacementColumns?: string[]
   code: string
   column?: string
   candidates?: string[]
@@ -68,6 +69,12 @@ export interface ImportFileRevision {
   createdAt: string
 }
 export interface ImportRow {
+  mirroredOfferingIds?: Record<string, string>
+  referenceReviews?: Record<string, { targetId: string, origin: 'automatic' | 'explicit', scope: import('./reference-resolution').ImportReferenceScope, digest: string, revisionId: string }>
+  resolvedReferences?: Record<string, string>
+  referenceSelections?: Record<string, string>
+  targetDecision?: 'create' | 'update'
+
   id: string
   batchId: string
   schoolId: string
@@ -75,7 +82,6 @@ export interface ImportRow {
   source: ImportSource
   raw: ImportValues
   values: ImportValues
-  generatedCode: string | null
   targetId: string
   sourceKey: string
   effectiveMode: ImportExistingMode
@@ -100,7 +106,6 @@ export interface ImportIdentity {
   type: ImportType
   sourceKey: string
   targetId: string
-  generatedCode: string | null
 }
 export interface ImportExecutionOutcome {
   schoolId: string

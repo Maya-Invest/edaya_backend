@@ -57,6 +57,7 @@ export async function buildSchoolApplication(
     importPersistence: new PostgresImportStore(),
     importFormat: new ImportFormatAdapter(),
     commandJournal: new PostgresCommandJournal(),
+
     durableWork: new PostgresDurableWork(db as PostgresTransactionalDb & { execute: (query: SQL) => Promise<unknown> }),
     documentRenderer: resolveDocumentRenderer(options.env, logger),
     notificationGateway,

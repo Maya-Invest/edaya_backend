@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
+import { optionalHumanIdentifierSchema } from '../shared/visible-identification'
 
 export function normalizeGuardianPhone(value: string): string {
   return value.trim().replace(/^#(?=\d)/, '+').replace(/[\s().-]/g, '').replace(/^00/, '+')
@@ -15,7 +16,7 @@ export const guardianSchema = z.object({
   sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
   firstName: z.string().trim(),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
-  code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  identifier: optionalHumanIdentifierSchema,
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   phone: guardianPhoneSchema,
   alternativePhone: guardianPhoneSchema,
@@ -41,6 +42,8 @@ export const guardianUpdateSchema = guardianSchema.partial().required({ id: true
 export class Guardian {
   readonly data: GuardianData
 
+  copyWith(changes: Partial<GuardianInput>): Guardian { return new Guardian({ ...this.data, ...changes }) }
+
   constructor(args: GuardianInput) {
     const data = parseDomain(guardianSchema, args)
     if (data.phone && data.phone === data.alternativePhone) {
@@ -55,7 +58,7 @@ export class Guardian {
   get sourceFullName() { return this.data.sourceFullName }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
-  get code() { return this.data.code }
+  get identifier() { return this.data.identifier }
   get photoUrl() { return this.data.photoUrl }
   get subjectId() { return this.data.subjectId }
   get hasAccess() { return this.data.hasAccess }

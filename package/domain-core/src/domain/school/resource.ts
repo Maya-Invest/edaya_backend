@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum ResourceKind {
   Location = 'location',
@@ -13,6 +14,7 @@ export const resourceBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   description: z.preprocess(
     val => typeof val === 'string' && val.trim() === '' ? undefined : val,
     z.string().trim().min(1, 'description must not be blank').nullable().optional(),
@@ -36,6 +38,8 @@ export const resourceUpdateSchema = resourceBaseSchema.partial().required({ id: 
 export class Resource {
   readonly data: ResourceData
 
+  copyWith(changes: Partial<ResourceInput>): Resource { return new Resource({ ...this.data, ...changes }) }
+
   constructor(args: ResourceInput) {
     this.data = parseDomain(resourceSchema, args)
   }
@@ -43,6 +47,7 @@ export class Resource {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get description() { return this.data.description }
   get kind() { return this.data.kind }
   get capacity() { return this.data.capacity }

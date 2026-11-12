@@ -1,6 +1,7 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { DisciplinaryAction, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, Permission, StaffPermissionAssignment, StudentDisciplinaryAction, StudentIncidentInvolvement } from '@edaya/core'
+import { DisciplinaryAction, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, Permission, StaffPermissionAssignment, StudentDisciplinaryAction, StudentIncidentInvolvement, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -16,7 +17,7 @@ describe('discipline policies authorize the incident and its participants', () =
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   let service: SchoolService
   function app(actor = teacher) {
-    return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    return new SchoolService({ commandJournal: new PostgresCommandJournal(), actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
@@ -27,7 +28,7 @@ describe('discipline policies authorize the incident and its participants', () =
     for (const [id, classGroupId, lessonSessionId] of [['class', 'class-a', undefined], ['math', 'class-a', 'math'], ['french', 'class-a', 'french'], ['lesson-only', undefined, 'math'], ['old', 'class-old', undefined], ['other', 'class-other', undefined], ['foreign', 'class-b', undefined]] as const) {
       await fixture.repositories.incidents.save(new Incident({ id, schoolId: id === 'foreign' ? 'school-b' : 'school-a', title: id, description: id, date: new Date('2026-05-01'), kind: IncidentKind.MinorInfraction, reporterId: 'staff-a', classGroupId, lessonSessionId }))
     }
-    await fixture.repositories.disciplinaryActions.save(new DisciplinaryAction({ id: 'catalog', schoolId: 'school-a', name: 'Warning' }))
+    await fixture.repositories.disciplinaryActions.save(new DisciplinaryAction(withShortName({ id: 'catalog', schoolId: 'school-a', name: 'Warning' })))
     for (const incidentId of ['math', 'french', 'lesson-only', 'old']) {
       await fixture.repositories.studentIncidentInvolvements.save(new StudentIncidentInvolvement({ id: incidentId, incidentId, studentId: 'student-a', role: IncidentInvolvementRole.Subject }))
       await fixture.repositories.studentDisciplinaryActions.save(new StudentDisciplinaryAction({ id: incidentId, schoolId: 'school-a', incidentId, studentId: 'student-a', disciplinaryActionId: 'catalog', assignedByStaffId: 'staff-a' }))
@@ -77,7 +78,7 @@ describe('discipline policies authorize the incident and its participants', () =
   })
 
   test('read grants cannot contribute to create scope and updates check both academic placements', async () => {
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'read', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_READ, scopes: [{ kind: 'all', grain: 'student' }] }))
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'create', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_CREATE, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     const other = (await fixture.repositories.incidents.findById('other'))!
@@ -91,7 +92,7 @@ describe('discipline policies authorize the incident and its participants', () =
   })
 
   test('resolution requires validation authority and never borrows content-update authority', async () => {
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     for (const permission of [Permission.DISCIPLINE_READ, Permission.DISCIPLINE_MANAGE])
       await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     const before = (await fixture.repositories.incidents.findById('class'))!
@@ -106,7 +107,7 @@ describe('discipline policies authorize the incident and its participants', () =
   })
 
   test('validation alone resolves existing participants without borrowing create or read authority', async () => {
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     const result = await service.behaviorWorkflow.resolveIncidentWithOutcomes({ incidentId: 'math', involvedStudents: [{ id: 'math', studentId: 'student-a', role: IncidentInvolvementRole.Subject }] })
     expect(result.incident.status).toBe(IncidentStatus.Resolved)
@@ -116,7 +117,7 @@ describe('discipline policies authorize the incident and its participants', () =
   })
 
   test('resolving cannot add or alter participants without their distinct mutation authority', async () => {
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({ incidentId: 'math', involvedStudents: [{ id: 'math', studentId: 'student-a', role: IncidentInvolvementRole.Witness }] })).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({ incidentId: 'class', involvedStudents: [{ id: 'new', studentId: 'student-a', role: IncidentInvolvementRole.Subject }] })).rejects.toBeInstanceOf(AuthorizationError)
@@ -131,7 +132,7 @@ describe('discipline policies authorize the incident and its participants', () =
   })
 
   test('management combines editing, cancellation and deletion within scope, while create grants and revocation deny them', async () => {
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     const grant = async (permission: Permission) => fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     await grant(Permission.DISCIPLINE_CREATE)
     await grant(Permission.DISCIPLINE_READ)
@@ -160,7 +161,7 @@ describe('discipline policies authorize the incident and its participants', () =
 
   test('guardian profile does not inherit same-login staff discipline access', async () => {
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
-    service = new SchoolService({ actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await expect(service.baseService.entities.incidents.list()).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.baseService.entities.studentDisciplinaryActions.list()).rejects.toBeInstanceOf(AuthorizationError)
   })

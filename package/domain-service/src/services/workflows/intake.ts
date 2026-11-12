@@ -1,7 +1,7 @@
 import type { AcademicDisciplineInput, PlacementStatusInput, StudentAcademicYearProfileInput, TeacherAcademicYearProfileInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { randomUUID } from 'node:crypto'
-import { AcademicDiscipline, PlacementStatus, StudentAcademicYearProfile, TeacherAcademicYearProfile } from '@edaya/core'
+import { AcademicDiscipline, PlacementStatus, StudentAcademicYearProfile, TeacherAcademicYearProfile, withShortName } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 
 export type ConfigureAcademicDisciplineInput = Omit<AcademicDisciplineInput, 'schoolId' | 'createdAt' | 'updatedAt'>
@@ -15,7 +15,7 @@ function patch<T extends object>(input: T): T {
 export async function configureAcademicDiscipline(base: BaseSchoolService, input: ConfigureAcademicDisciplineInput) {
   return base.atomicExecution.execute(async () => {
     const existing = await base.entities.academicDisciplines.findById(input.id)
-    const record = new AcademicDiscipline({ ...existing?.data, ...patch(input), schoolId: base.actor.schoolId, updatedAt: new Date() })
+    const record = new AcademicDiscipline(withShortName({ ...existing?.data, ...patch(input), schoolId: base.actor.schoolId, updatedAt: new Date() }))
     await base.entities.academicDisciplines.save(record)
     return record
   }, { lockKeys: [academicStateLock(base.actor.schoolId)] })
@@ -23,7 +23,7 @@ export async function configureAcademicDiscipline(base: BaseSchoolService, input
 export async function configurePlacementStatus(base: BaseSchoolService, input: ConfigurePlacementStatusInput) {
   return base.atomicExecution.execute(async () => {
     const existing = await base.entities.placementStatuses.findById(input.id)
-    const record = new PlacementStatus({ ...existing?.data, ...patch(input), schoolId: base.actor.schoolId, updatedAt: new Date() })
+    const record = new PlacementStatus(withShortName({ ...existing?.data, ...patch(input), schoolId: base.actor.schoolId, updatedAt: new Date() }))
     await base.entities.placementStatuses.save(record)
     return record
   }, { lockKeys: [academicStateLock(base.actor.schoolId)] })

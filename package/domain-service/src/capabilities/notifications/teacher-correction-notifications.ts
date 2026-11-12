@@ -4,7 +4,7 @@ import { ActorAssuranceLevel, AuthorizationError, createAccessPolicies, createSt
 import { MessageDeliveryRecipientKind } from '@edaya/core'
 import { deliverNotification } from './delivery/deliver-notification'
 
-export async function notifyTeacherCorrection(base: BaseSchoolService, row: { id: string, schoolId: string, classGroupId: string, authorSubjectId: string, version: number, reason: string }, action: 'requested' | 'revised' | 'approved' | 'rejected', permission: Permission) {
+export async function notifyTeacherCorrection(base: BaseSchoolService, row: { id: string, schoolId: string, classGroupId: string, authorSubjectId: string, version: number, reason: string, assessmentId?: string, workflow?: string, periodId?: string, studentIds?: string[] }, action: 'requested' | 'revised' | 'approved' | 'rejected', permission: Permission) {
   const recipients = []
   const group = await base.repositories.classGroups.findById(row.classGroupId)
   if (!group)
@@ -35,5 +35,15 @@ export async function notifyTeacherCorrection(base: BaseSchoolService, row: { id
   if (!recipients.length)
     return
   const labels = { requested: 'Correction à examiner', revised: 'Demande de correction révisée', approved: 'Correction approuvée', rejected: 'Correction refusée' }
-  await deliverNotification({ repositories: base.repositories, notificationGateway: base.notificationGateway }, { schoolId: row.schoolId, kind: 'event', eventKey: `teacher_correction.${action}`, idempotencyKeyPrefix: `teacher_correction:${row.id}:${row.version}:${action}`, title: labels[action], body: `${group.name} · ${row.reason}`, enablePush: true, enableEmail: false, enableSms: false, recipients, metadata: { correctionId: row.id, path: `/school/corrections?correction=${encodeURIComponent(row.id)}` } })
+  const source: { assessmentId?: string, classGroupId?: string, periodId?: string, studentId?: string } = {}
+  if (action === 'approved' || action === 'rejected') {
+    if (row.assessmentId)
+      source.assessmentId = row.assessmentId
+    if (row.workflow === 'report_comments' && row.periodId && row.studentIds?.length) {
+      source.classGroupId = row.classGroupId
+      source.periodId = row.periodId
+      source.studentId = row.studentIds[0]!
+    }
+  }
+  await deliverNotification({ repositories: base.repositories, notificationGateway: base.notificationGateway }, { schoolId: row.schoolId, kind: 'event', eventKey: `teacher_correction.${action}`, idempotencyKeyPrefix: `teacher_correction:${row.id}:${row.version}:${action}`, title: labels[action], body: `${group.name} · ${row.reason}`, enablePush: true, enableEmail: false, enableSms: false, recipients, metadata: { ...source, correctionId: row.id, path: `/school/corrections?correction=${encodeURIComponent(row.id)}` } })
 }

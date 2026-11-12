@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResultStatus, School } from '@edaya/core'
+import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, School, withShortName } from '@edaya/core'
 import {
   describe,
   expect,
@@ -78,7 +78,7 @@ describe('SchoolService assessment workflows', () => {
   test('writeHomeroomReportComment updates only the teacher comment on draft cards', async () => {
     const { results, service } = await createReportCardContext()
 
-    await service.assessmentsWorkflow.generateReportCardResult({
+    const generated = await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc1',
       studentId: 'stu1',
       periodId: 'per1',
@@ -87,13 +87,28 @@ describe('SchoolService assessment workflows', () => {
 
     const result = await service.assessmentsWorkflow.writeHomeroomReportComment({
       requestId: 'homeroom-comment',
-      expectedVersion: 1,
+      expectedVersion: generated.version,
       id: 'rc1',
       teacherComment: 'Bon début d\'année.',
     })
 
     expect(result.teacherComment).toBe('Bon début d\'année.')
     expect((await results.findById('rc1'))?.teacherComment).toBe('Bon début d\'année.')
+  })
+
+  test('comment writes preserve canonical ranks hidden by stale-result display projections', async () => {
+    const { results, service } = await createReportCardContext()
+    const generated = await service.assessmentsWorkflow.generateReportCardResult({ id: 'rc-stale', studentId: 'stu1', periodId: 'per1' })
+    const stale = new ReportCardResult({ ...generated.data, sectionResults: [...generated.sectionResults], calculationStale: true, rank: 2, classSize: 4 })
+    await results.save(stale)
+    expect((await service.baseService.entities.results.findById(stale.id))?.rank).toBeUndefined()
+    const updated = await service.assessmentsWorkflow.writeHomeroomReportComment({ requestId: 'stale-comment', expectedVersion: stale.version, id: stale.id, teacherComment: 'Progression régulière.' })
+    const saved = (await results.findById(stale.id))!
+    expect(updated.teacherComment).toBe('Progression régulière.')
+    expect(saved.rank).toBe(2)
+    expect(saved.classSize).toBe(4)
+    expect(saved.overallAverage).toBe(stale.overallAverage)
+    expect(saved.calculationStale).toBe(true)
   })
 
   test('writeReportCardSectionComments updates only the named section comment', async () => {
@@ -109,7 +124,7 @@ describe('SchoolService assessment workflows', () => {
 
     const updated = await service.assessmentsWorkflow.writeReportCardSectionComments({
       requestId: 'section-comment',
-      expectedVersion: 1,
+      expectedVersion: generated.version,
       id: generated.id,
       sections: [{ sectionId: math!.sectionId, comment: 'Solide en calcul.' }],
     })
@@ -317,7 +332,7 @@ describe('SchoolService assessment workflows', () => {
     })
 
     const school = (await repositories.schools.findById('sch1'))!
-    await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
+    await repositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: undefined })))
     await expect(service.assessmentsWorkflow.writeHomeroomReportComment({
       requestId: 'homeroom-comment',
       expectedVersion: 1,

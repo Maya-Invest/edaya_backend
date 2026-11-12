@@ -1,22 +1,13 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
-
-/** Stable IDs retained for explicit dataset initialization; does not create default categories. */
-export function defaultSubjectCategoryId(schoolId: string, name: string): string {
-  const slug = name
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return `${schoolId}:subject-category:${slug || 'category'}`
-}
+import { shortNameSchema } from '../shared/visible-identification'
 
 export const subjectCategorySchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -36,6 +27,7 @@ export class SubjectCategoryEntity {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get createdAt() { return this.data.createdAt }
 
   copyWith(overrides: Partial<SubjectCategoryInput>): SubjectCategoryEntity {
@@ -43,6 +35,7 @@ export class SubjectCategoryEntity {
       id: this.id,
       schoolId: this.schoolId,
       name: overrides.name ?? this.name,
+      shortName: overrides.shortName ?? this.shortName,
       createdAt: this.createdAt,
     })
   }

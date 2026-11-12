@@ -2,7 +2,7 @@ import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { PGlite } from '@electric-sql/pglite'
 import type { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher, withShortName } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -40,6 +40,7 @@ describe('authorization policies against native repository scopes', () => {
       repositories,
       atomicExecution: new PostgresAtomicExecution(drizzle(db)),
       commandJournal: new PostgresCommandJournal(),
+
       notificationGateway: noOpNotificationGateway,
       fileStorage: { putObject: unexpected, deleteObject: unexpected, headObject: unexpected, readObject: unexpected, createPresignedUpload: unexpected, createPresignedDownload: unexpected },
       accountInvitationsEnabled: false,
@@ -62,8 +63,8 @@ describe('authorization policies against native repository scopes', () => {
     const classIds = ['class-a', 'class-other']
     for (let index = 0; index < 10; index++) {
       const id = `selected-${index}`
-      await db.query(`INSERT INTO class_groups (id, school_id, grade_level_id, name, academic_year_id, created_at)
-        VALUES ($1, 'school-a', 'level-a', $1, 'year-a', now())`, [id])
+      await db.query(`INSERT INTO class_groups (id, school_id, grade_level_id, name, short_name, academic_year_id, created_at)
+        VALUES ($1, 'school-a', 'level-a', $1, $1, 'year-a', now())`, [id])
       classIds.push(id)
     }
     for (const permission of Object.values(Permission)) {
@@ -170,6 +171,20 @@ describe('authorization policies against native repository scopes', () => {
     await expect(access.entity('assessments').assertSave(new Assessment({ ...assessment.data, title: 'Marks only' }), assessment)).rejects.toThrow()
   })
 
+  test('teacher period summary admits only the exact teaching and averages submitted official marks', async () => {
+    const service = schoolService(teacher)
+    const draft = await service.getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })
+    expect(draft.students.every(row => row.average === null)).toBe(true)
+    await db.exec('UPDATE assessments SET marks_status = \'submitted\' WHERE id = \'assessment-math\'')
+    const official = await service.getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })
+    expect(official.students.find(row => row.studentId === 'student-a')?.average).not.toBeNull()
+    expect(official.students.flatMap(row => row.contributions.map(mark => mark.assessmentId))).toEqual(['assessment-math'])
+    await expect(service.getTeacherSubjectPeriodSummary({ classSubjectId: 'french-a', periodId: 'period-a' })).rejects.toThrow()
+    await expect(schoolService(guardian).getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })).rejects.toThrow()
+    await db.exec('DELETE FROM teacher_assignments')
+    await expect(service.getTeacherSubjectPeriodSummary({ classSubjectId: 'math-a', periodId: 'period-a' })).rejects.toThrow()
+  })
+
   test('assessment context mark reads retain teacher and guardian relationship isolation', async () => {
     await addGrant(Permission.GRADE_READ, 'class-other')
     const teacherContext = await schoolService(teacher).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
@@ -185,20 +200,20 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('activity class scope cannot edit a shared definition or manage another class participant', async () => {
-    const activity = new Activity({ id: 'club', schoolId: 'school-a', name: 'Club', category: ActivityCategory.Science, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: 'Science club', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })
+    const activity = new Activity(withShortName({ id: 'club', schoolId: 'school-a', name: 'Club', category: ActivityCategory.Science, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: 'Science club', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
     await repositories.activities.save(activity)
     for (const classGroupId of ['class-a', 'class-other'])
       await repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id: `club-${classGroupId}`, activityId: activity.id, classGroupId }))
     await addGrant(Permission.ACTIVITY_MANAGE, 'club', { scopes: [{ kind: 'activity', classGroupId: 'class-a' }] })
     await addGrant(Permission.ACTIVITY_ENROLLMENT_MANAGE, 'club', { scopes: [{ kind: 'activity', classGroupId: 'class-a' }] })
     const access = new AccessPolicies(staff, repositories)
-    await expect(access.assertSave(Permission.ACTIVITY_MANAGE, 'activities', new Activity({ ...activity.data, name: 'Changed' }), activity)).rejects.toThrow()
+    await expect(access.assertSave(Permission.ACTIVITY_MANAGE, 'activities', new Activity(withShortName({ ...activity.data, name: 'Changed' })), activity)).rejects.toThrow()
     await expect(schoolService().baseService.entities.activities.delete(activity.id)).rejects.toThrow()
     const enrollment = new ActivityEnrollment({ id: 'club-student', activityId: activity.id, studentId: 'student-a', status: ActivityEnrollmentStatus.Approved })
     await access.assertSave(Permission.ACTIVITY_ENROLLMENT_MANAGE, 'activityEnrollments', enrollment)
     await expect(access.assertSave(Permission.ACTIVITY_ENROLLMENT_MANAGE, 'activityEnrollments', new ActivityEnrollment({ ...enrollment.data, studentId: 'student-other' }), enrollment)).rejects.toThrow()
     await addGrant(Permission.ACTIVITY_MANAGE, 'club', { scopes: [{ kind: 'activity', activityId: 'club' }] })
-    await access.assertSave(Permission.ACTIVITY_MANAGE, 'activities', new Activity({ ...activity.data, name: 'Changed' }), activity)
+    await access.assertSave(Permission.ACTIVITY_MANAGE, 'activities', new Activity(withShortName({ ...activity.data, name: 'Changed' })), activity)
   })
 
   test('read, single, count and pagination have identical tenant and class boundaries', async () => {
@@ -377,7 +392,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('scoped overdue counts use the same student and tenant predicates as lists', async () => {
-    await repositories.catalogServices.save(new CatalogService({
+    await repositories.catalogServices.save(new CatalogService(withShortName({
       id: 'overdue-catalog',
       schoolId: 'school-a',
       academicYearId: 'year-a',
@@ -386,7 +401,7 @@ describe('authorization policies against native repository scopes', () => {
       currency: 'USD',
       billingTerms: { kind: 'one_time', installments: [] },
       status: CatalogServiceStatus.Active,
-    }))
+    })))
     for (const studentId of ['student-a', 'student-other', 'student-b']) {
       const schoolId = studentId === 'student-b' ? 'school-b' : 'school-a'
       const academicYearId = studentId === 'student-b' ? 'year-b' : 'year-a'
@@ -432,7 +447,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test.each(['grade_level', 'all'] as const)('%s grade grants reach enrolled students and payments through their current class', async (kind) => {
-    await db.exec(`INSERT INTO grade_levels (id, school_id, name, label, order_val, created_at)
+    await db.exec(`INSERT INTO grade_levels (id, school_id, name, short_name, order_val, created_at)
       VALUES ('level-other', 'school-a', 'Other', 'Other', 2, now());
       UPDATE class_groups SET grade_level_id = 'level-other' WHERE id = 'class-other'`)
     for (const permission of [Permission.STUDENT_READ, Permission.ENROLLMENT_READ, Permission.PAYMENT_READ, Permission.PAYMENT_RECORD]) {
@@ -537,7 +552,7 @@ describe('authorization policies against native repository scopes', () => {
 
   test('charge cancellation preserves recording authority for creation and financial details', async () => {
     await addGrant(Permission.PAYMENT_CANCEL, 'school', { scopes: [{ kind: 'all', grain: 'student' }] })
-    await repositories.catalogServices.save(new CatalogService({
+    await repositories.catalogServices.save(new CatalogService(withShortName({
       id: 'cancel-catalog',
       schoolId: 'school-a',
       academicYearId: 'year-a',
@@ -546,7 +561,7 @@ describe('authorization policies against native repository scopes', () => {
       currency: 'USD',
       billingTerms: { kind: 'one_time', installments: [] },
       status: CatalogServiceStatus.Active,
-    }))
+    })))
     await repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
       id: 'student-charge',
       schoolId: 'school-a',
@@ -628,7 +643,7 @@ describe('authorization policies against native repository scopes', () => {
     const input = { teacherId: 'teacher-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-01') }
     const service = schoolService(teacher)
     expect((await service.getTeacherTimetable(input)).events.map(event => event.id)).toEqual(['math-session'])
-    await repositories.teachers.save(new Teacher({ id: 'teacher-other', schoolId: 'school-a', firstName: 'Other', lastName: 'Teacher' }))
+    await repositories.teachers.save(new Teacher({ id: 'teacher-other', identifier: 'TEACHER-OTHER', schoolId: 'school-a', firstName: 'Other', lastName: 'Teacher' }))
     await expect(service.getTeacherTimetable({ ...input, teacherId: 'teacher-other' })).rejects.toThrow()
     await expect(schoolService(guardian).getTeacherTimetable(input)).rejects.toThrow()
   })
@@ -695,7 +710,8 @@ describe('authorization policies against native repository scopes', () => {
     await expect(students.save(new Student({ ...before.data, id: 'new-student' }))).rejects.toThrow()
     await students.save(new Student({ ...before.data, status: StudentStatus.Inactive }))
     await addGrant(Permission.STUDENT_CREATE, 'create', { scopes: [{ kind: 'school' }] })
-    await students.save(new Student({ ...before.data, id: 'new-student' }))
+    const workflow = schoolService().commands
+    await workflow.registerStudent({ ...before.data, id: 'new-student', requestId: 'new-student', identifier: null })
     await addGrant(Permission.STUDENT_MANAGE, 'archive', { scopes: [{ kind: 'all', grain: 'student' }] })
     await students.save(new Student({ ...before.data, status: StudentStatus.Inactive }))
     expect((await repositories.students.findById('student-a'))?.status).toBe(StudentStatus.Inactive)
@@ -742,7 +758,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('recording logbook progress authorizes the snapshot and both aggregates using the logbook action', async () => {
-    await repositories.subjectMatters.save(new SubjectMatter({ id: 'chapter', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }))
+    await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'chapter', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 })))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'chapter-a', classSubjectId: 'math-a', subjectMatterId: 'chapter', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
     const lesson = new LessonSession({ id: 'progress-lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z'), displayLabel: 'Math' })
     await repositories.lessonSessions.save(lesson)
@@ -756,13 +772,13 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('linking uses access-control authority and preserves profile data without granting profile-update authority', async () => {
-    const helper = new StaffMember({ id: 'helper', schoolId: 'school-a', firstName: 'Helper', lastName: 'Staff', code: 'HELPER', email: 'helper@example.com' })
+    const helper = new StaffMember({ id: 'helper', schoolId: 'school-a', firstName: 'Helper', lastName: 'Staff', identifier: 'HELPER', email: 'helper@example.com' })
     await repositories.staffMembers.save(helper)
     await addGrant(Permission.ACCESS_CONTROL_MANAGE, 'link', { scopes: [{ kind: 'school' }] })
     const service = schoolService()
     await service.accessControlWorkflow.linkActorSubject({ staffMemberId: helper.id, subjectId: 'helper-person' })
     expect((await repositories.staffMembers.findById(helper.id))?.subjectId).toBe('helper-person')
-    expect((await repositories.staffMembers.findById(helper.id))?.code).toBe('HELPER')
+    expect((await repositories.staffMembers.findById(helper.id))?.identifier).toBe('HELPER')
     await service.accessControlWorkflow.unlinkActorSubject({ staffMemberId: helper.id })
     expect((await repositories.staffMembers.findById(helper.id))?.subjectId).toBeUndefined()
     await expect(service.accessControlWorkflow.linkActorSubject({ staffMemberId: 'staff-b', subjectId: 'foreign' })).rejects.toThrow()
@@ -809,7 +825,7 @@ describe('authorization policies against native repository scopes', () => {
   test('curriculum removal retains all rows when teaching or assessment dependencies exist', async () => {
     await inheritedCurriculum()
     await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-a', { scopes: [{ kind: 'all', grain: 'subject' }] })
-    await repositories.subjectMatters.save(new SubjectMatter({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 }))
+    await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 })))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'allocation-delete', classSubjectId: 'math-a', subjectMatterId: 'topic-delete', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
     await expect(schoolService().academicsWorkflow.removeSubject({ subjectId: 'math' })).rejects.toMatchObject({ code: 'CLASS_SUBJECT_HAS_DEPENDENCIES' })
     expect(await repositories.subjects.findById('math')).toBeDefined()
@@ -820,7 +836,7 @@ describe('authorization policies against native repository scopes', () => {
 
   test('a curriculum allocation with progress cannot be deleted even by an owner', async () => {
     await db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
-    await repositories.subjectMatters.save(new SubjectMatter({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 }))
+    await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 })))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'allocation-delete', classSubjectId: 'math-a', subjectMatterId: 'topic-delete', status: ClassSubjectMatterStatus.InProgress, completedPercentage: 30 }))
     await repositories.lessonSessions.save(new LessonSession({ id: 'progress-lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z'), displayLabel: 'Math' }))
     await repositories.classSubjectProgress.save(new ClassSubjectProgress({ id: 'saved-progress', classSubjectMatterId: 'allocation-delete', lessonSessionId: 'progress-lesson', completedPercentage: 30 }))
@@ -829,7 +845,7 @@ describe('authorization policies against native repository scopes', () => {
     expect(await repositories.classSubjectMatters.findById('allocation-delete')).toBeDefined()
   })
   async function pendingOwnerInvitation() {
-    await repositories.staffMembers.save(new StaffMember({ id: 'pending-owner', schoolId: 'school-a', firstName: 'Pending', lastName: 'Owner', code: 'KEEP', email: 'owner@example.com' }))
+    await repositories.staffMembers.save(new StaffMember({ id: 'pending-owner', schoolId: 'school-a', firstName: 'Pending', lastName: 'Owner', identifier: 'KEEP', email: 'owner@example.com' }))
     await db.exec('UPDATE schools SET pending_owner_staff_id = \'pending-owner\' WHERE id = \'school-a\'')
     const invitation = new AccountInvitation({ id: 'owner-invitation', schoolId: 'school-a', kind: AccountInvitationKind.Staff, targetId: 'pending-owner', contactChannel: AccountInvitationContactChannel.Email, contactValue: 'owner@example.com', tokenHash: hashInvitationToken('test-owner-token'), expiresAt: new Date('2999-01-01'), createdByStaffId: 'staff-a' })
     await repositories.accountInvitations.save(invitation)
@@ -841,7 +857,7 @@ describe('authorization policies against native repository scopes', () => {
     const service = schoolService(createSystemActorMetadata({ schoolId: 'school-a', systemId: 'account-invitation-public', requestId: 'invitation', reason: 'Accept invitation' }))
     const result = await service.accountInvitationWorkflow.acceptAccountInvitation({ token: 'test-owner-token', subjectId: 'new-owner', contactValue: 'owner@example.com' })
     expect(result.entity.subjectId).toBe('new-owner')
-    expect((await repositories.staffMembers.findById('pending-owner'))?.code).toBe('KEEP')
+    expect((await repositories.staffMembers.findById('pending-owner'))?.identifier).toBe('KEEP')
     const school = (await repositories.schools.findById('school-a'))!
     expect(school.ownerSubjectId).toBe('new-owner')
     expect(school.pendingOwnerStaffId).toBeUndefined()

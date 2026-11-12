@@ -177,7 +177,7 @@ export class PostgresImportStore implements ImportPersistencePort {
   }
 
   async getIdentity(schoolId: string, type: ImportType, sourceKey: string) {
-    return (await this.query<ImportIdentity>(sql`SELECT school_id AS "schoolId", type, source_key AS "sourceKey", target_id AS "targetId", generated_code AS "generatedCode", bound
+    return (await this.query<ImportIdentity>(sql`SELECT school_id AS "schoolId", type, source_key AS "sourceKey", target_id AS "targetId", bound
       FROM school_import_identities WHERE school_id = ${schoolId} AND type = ${type} AND source_key = ${sourceKey}`))[0]
   }
 
@@ -185,7 +185,7 @@ export class PostgresImportStore implements ImportPersistencePort {
     const keys = [...new Set(sourceKeys)]
     const identities: ImportIdentity[] = []
     for (let offset = 0; offset < keys.length; offset += 200) {
-      identities.push(...await this.query<ImportIdentity>(sql`SELECT school_id AS "schoolId", type, source_key AS "sourceKey", target_id AS "targetId", generated_code AS "generatedCode", bound
+      identities.push(...await this.query<ImportIdentity>(sql`SELECT school_id AS "schoolId", type, source_key AS "sourceKey", target_id AS "targetId", bound
         FROM school_import_identities WHERE school_id = ${schoolId} AND type = ${type}
         AND source_key IN (${sql.join(keys.slice(offset, offset + 200).map(key => sql`${key}`), sql`, `)})`))
     }
@@ -199,10 +199,10 @@ export class PostgresImportStore implements ImportPersistencePort {
   async saveIdentities(identities: readonly ImportIdentity[]) {
     for (let offset = 0; offset < identities.length; offset += 200) {
       const chunk = identities.slice(offset, offset + 200)
-      const saved = await this.query(sql`INSERT INTO school_import_identities (school_id, type, source_key, target_id, generated_code, bound)
-        SELECT value->>'schoolId', value->>'type', value->>'sourceKey', value->>'targetId', value->>'generatedCode', (value->>'bound')::boolean
+      const saved = await this.query(sql`INSERT INTO school_import_identities (school_id, type, source_key, target_id, bound)
+        SELECT value->>'schoolId', value->>'type', value->>'sourceKey', value->>'targetId', (value->>'bound')::boolean
         FROM jsonb_array_elements(${JSON.stringify(chunk)}::jsonb)
-        ON CONFLICT (school_id, type, source_key) DO UPDATE SET target_id = EXCLUDED.target_id, bound = school_import_identities.bound OR EXCLUDED.bound, generated_code = COALESCE(school_import_identities.generated_code, EXCLUDED.generated_code)
+        ON CONFLICT (school_id, type, source_key) DO UPDATE SET target_id = EXCLUDED.target_id, bound = school_import_identities.bound OR EXCLUDED.bound
         WHERE school_import_identities.target_id = EXCLUDED.target_id OR NOT school_import_identities.bound RETURNING target_id`)
       if (saved.length !== chunk.length)
         throw new BusinessRuleViolationError('IMPORT_IDENTITY_CONFLICT', 'IMPORT_IDENTITY_CONFLICT')

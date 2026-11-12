@@ -15,6 +15,7 @@ import { getAssessmentEditorContext } from './queries/assessment-editor-context'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
 import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
+import { getTeacherSubjectPeriodSummary } from './queries/teacher-subject-period-summary'
 
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
@@ -107,6 +108,7 @@ export class SchoolService {
   getClassSubjectRoster(input: Parameters<typeof getClassSubjectRoster>[1]) { return getClassSubjectRoster(this.baseService, input) }
   getStudentTimetable(input: Parameters<typeof getStudentTimetable>[1]) { return getStudentTimetable(this.baseService, input) }
 
+  listTeacherGuardianRecipients(input: Parameters<ConversationsWorkflow['guardianRecipients']>[0]) { return this.conversationsWorkflow.guardianRecipients(input) }
   listConversationRecipients(input: Parameters<ConversationsWorkflow['recipients']>[0]) { return this.conversationsWorkflow.recipients(input) }
   listConversations(input: Parameters<ConversationsWorkflow['list']>[0]) { return this.conversationsWorkflow.list(input) }
   getConversation(input: Parameters<ConversationsWorkflow['detail']>[0]) { return this.conversationsWorkflow.detail(input) }
@@ -117,6 +119,8 @@ export class SchoolService {
   async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
 
   async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
+
+  async getTeacherSubjectPeriodSummary(input: { classSubjectId: string, periodId: string }) { return getTeacherSubjectPeriodSummary(this.baseService, input) }
 
   async getAssessmentEditorContext(input: { classGroupId: string, periodId: string }) { return getAssessmentEditorContext(this.baseService, input) }
 

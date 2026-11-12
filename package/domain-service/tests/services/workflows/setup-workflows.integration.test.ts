@@ -6,13 +6,14 @@ import {
   AuthorizationErrorCode,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DayOfWeek, GradeLevel, Resource, ResourceKind, School, StaffMember, Student } from '@edaya/core'
+import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DayOfWeek, GradeLevel, Resource, ResourceKind, School, StaffMember, Student, withShortName } from '@edaya/core'
 import {
   describe,
   expect,
   mock,
   test,
 } from 'bun:test'
+import { humanFixture } from '../../../../../tooling/test-support/human-fixtures'
 import { createAttachmentUpload } from '../../../src/capabilities/files/attachment-uploads'
 import { createTestApp } from '../../support/create-test-app'
 import { createPlatformRegisterTestActor, createTestStaffActor } from '../../support/test-actor'
@@ -24,9 +25,9 @@ async function createContext({ fileStorage = testFileStorage, actorOverride }: {
   const repositories = fixture.schoolRepositories
   if (actorOverride?.kind === 'staff')
     await repositories.staffMembers.save(new StaffMember({ id: actorOverride.staffMemberId, schoolId: actorOverride.schoolId, firstName: 'Other', lastName: 'Staff', subjectId: actorOverride.subjectId }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay-current', schoolId: 'sch1', name: '2025-2026', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay-next', schoolId: 'sch1', name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-06-30'), status: 'draft' }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade-1', schoolId: 'sch1', name: 'Grade 7', label: 'G7', order: 7 }))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay-current', schoolId: 'sch1', name: '2025-2026', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay-next', schoolId: 'sch1', name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-06-30'), status: 'draft' })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade-1', schoolId: 'sch1', name: 'Grade 7', shortName: 'G7', order: 7 })))
   await repositories.students.save(new Student({ id: 'stu1', schoolId: 'sch1', firstName: 'Student', lastName: 'One', birthDate: new Date('2010-01-01') }))
   return { ...repositories, service: actorOverride ? fixture.forActor(actorOverride) : fixture.app }
 }
@@ -53,7 +54,7 @@ describe('SchoolService setup workflows', () => {
 
   test('publishAcademicYear publishes a draft year when no other year is published', async () => {
     const { academicYears, service } = await createContext()
-    await academicYears.save(new AcademicYear({
+    await academicYears.save(new AcademicYear(withShortName({
       id: 'ay-current',
       schoolId: 'sch1',
       name: '2025-2026',
@@ -61,7 +62,7 @@ describe('SchoolService setup workflows', () => {
       endDate: new Date('2026-06-30T00:00:00Z'),
       status: 'archived',
       createdAt: new Date('2025-01-01T00:00:00Z'),
-    }))
+    })))
 
     const result = await service.setupWorkflow.publishAcademicYear({
       academicYearId: 'ay-next',
@@ -142,7 +143,7 @@ describe('SchoolService setup workflows', () => {
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {
     const { schools, service } = await createContext()
-    await schools.save(new School({
+    await schools.save(new School(withShortName({
       id: 'sch1',
       name: 'School',
       timeZone: 'UTC',
@@ -155,7 +156,7 @@ describe('SchoolService setup workflows', () => {
       timetableAllowUnassignedTeacherPlacements: true,
       timetableUseHomeroomTeacherFallback: true,
       createdAt: new Date('2025-01-01T00:00:00Z'),
-    }))
+    })))
 
     const updated = await service.setupWorkflow.updateSchoolConfiguration({
       schoolId: 'sch1',
@@ -235,14 +236,14 @@ describe('SchoolService setup workflows', () => {
 
   test('updateClassGroupConfiguration updates an existing class group', async () => {
     const { classGroups, service } = await createContext()
-    await classGroups.save(new ClassGroup({
+    await classGroups.save(new ClassGroup(withShortName({
       id: 'cg-existing',
       schoolId: 'sch1',
       academicYearId: 'ay-current',
       gradeLevelId: 'grade-1',
       name: 'Grade 7B',
       attendanceMode: AttendanceMode.Session,
-    }))
+    })))
 
     await expect(service.setupWorkflow.updateClassGroupConfiguration({ classGroupId: 'cg-existing', capacity: 0 })).rejects.toThrow('capacity must be a strictly positive integer')
 
@@ -258,13 +259,13 @@ describe('SchoolService setup workflows', () => {
   test('registerStaffMember and updateStaffMemberStatus persist staff lifecycle', async () => {
     const { staffMembers, service } = await createContext()
 
-    const created = await service.setupWorkflow.registerStaffMember({
+    const created = await humanFixture({
       id: 'staff-new',
       schoolId: 'sch1',
       firstName: 'Jane',
       lastName: 'Doe',
       sendAccountInvitation: false,
-    })
+    }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))
 
     expect(created.isActive).toBe(true)
     expect((await staffMembers.findById('staff-new'))).toBeDefined()
@@ -290,72 +291,72 @@ describe('SchoolService setup workflows', () => {
     await expect(service.setupWorkflow.updateStaffMemberStatus({ staffId: 'user1', isActive: false })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })
 
-  test('registerStaffMember persists code and rejects an existing id', async () => {
+  test('registerStaffMember persists identifiers and rejects changed creation retries', async () => {
     const { staffMembers, service } = await createContext()
 
-    const created = await service.setupWorkflow.registerStaffMember({
+    const created = await humanFixture({
       id: 'staff-coded',
       schoolId: 'sch1',
       firstName: 'Coded',
       lastName: 'Staff',
-      code: 'STF-001',
+      identifier: 'STF-001',
       sendAccountInvitation: false,
-    })
+    }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))
 
-    expect(created.code).toBe('STF-001')
-    expect((await staffMembers.findById('staff-coded'))?.code).toBe('STF-001')
+    expect(created.identifier).toBe('STF-001')
+    expect((await staffMembers.findById('staff-coded'))?.identifier).toBe('STF-001')
 
-    await expect(service.setupWorkflow.registerStaffMember({
+    await expect(humanFixture({
       id: 'staff-coded',
       schoolId: 'sch1',
       firstName: 'Other',
       lastName: 'Person',
-      code: 'STF-002',
+      identifier: 'STF-002',
       sendAccountInvitation: false,
-    })).rejects.toMatchObject({ code: 'STAFF_MEMBER_ID_ALREADY_EXISTS' })
+    }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
 
     expect((await staffMembers.findById('staff-coded'))).toMatchObject({
       firstName: 'Coded',
       lastName: 'Staff',
-      code: 'STF-001',
+      identifier: 'STF-001',
     })
   })
 
-  test('registerTeacher is create-only and keeps uniqueness on code not id', async () => {
+  test('registerTeacher is create-only and enforces reviewed identifier uniqueness', async () => {
     const { teachers, service } = await createContext()
 
-    const created = await service.setupWorkflow.registerTeacher({
+    const created = await humanFixture({
       id: 'teacher-1',
       schoolId: 'sch1',
       firstName: 'Ada',
       lastName: 'Lovelace',
-      code: 'T001',
+      identifier: 'T001',
       email: 'ada@example.test',
-    })
+    }).then(prepared => service.setupWorkflow.registerTeacher(prepared))
 
-    expect(created.code).toBe('T001')
+    expect(created.identifier).toBe('T001')
     expect(created.email).toBe('ada@example.test')
 
-    await expect(service.setupWorkflow.registerTeacher({
+    await expect(humanFixture({
       id: 'teacher-1',
       schoolId: 'sch1',
       firstName: 'Other',
       lastName: 'Teacher',
-      code: 'T002',
-    })).rejects.toMatchObject({ code: 'TEACHER_ID_ALREADY_EXISTS' })
+      identifier: 'T002',
+    }).then(prepared => service.setupWorkflow.registerTeacher(prepared))).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
 
-    await expect(service.setupWorkflow.registerTeacher({
+    await expect(humanFixture({
       id: 'teacher-2',
       schoolId: 'sch1',
       firstName: 'Other',
       lastName: 'Teacher',
-      code: 'T001',
-    })).rejects.toMatchObject({ code: 'TEACHER_CODE_ALREADY_EXISTS' })
+      identifier: 'T001',
+    }).then(prepared => service.setupWorkflow.registerTeacher(prepared))).rejects.toMatchObject({ code: 'IDENTIFIER_UNAVAILABLE' })
 
     expect(await teachers.findById('teacher-1')).toMatchObject({
       firstName: 'Ada',
       lastName: 'Lovelace',
-      code: 'T001',
+      identifier: 'T001',
       email: 'ada@example.test',
     })
     expect(await teachers.findById('teacher-2')).toBeUndefined()
@@ -400,14 +401,14 @@ describe('SchoolService setup workflows', () => {
       id: 'grade-1',
       schoolId: 'sch1',
       name: 'Grade 7',
-      label: 'G7',
+      shortName: 'G7',
       order: 7,
     })
     const periodDefinition = await service.setupWorkflow.configurePeriodDefinition({
       id: 'pd-1',
       schoolId: 'sch1',
       academicYearId: 'ay-current',
-      label: 'Morning',
+      name: 'Morning',
       dayOfWeek: DayOfWeek.Monday,
       order: 1,
       startTime: '08:00',
@@ -441,20 +442,20 @@ describe('SchoolService setup workflows', () => {
 
   test('assignResourceToClass and removeResourceAssignment manage resource assignments', async () => {
     const { classGroups, resourceAssignments, resources, service } = await createContext()
-    await classGroups.save(new ClassGroup({
+    await classGroups.save(new ClassGroup(withShortName({
       id: 'cg-new',
       schoolId: 'sch1',
       academicYearId: 'ay-current',
       gradeLevelId: 'grade-1',
       name: 'Grade 7A',
       attendanceMode: AttendanceMode.Session,
-    }))
-    await resources.save(new Resource({
+    })))
+    await resources.save(new Resource(withShortName({
       id: 'res-1',
       schoolId: 'sch1',
       name: 'Room 101',
       kind: ResourceKind.Location,
-    }))
+    })))
 
     const assignment = await service.setupWorkflow.assignResourceToClass({
       id: 'ra-1',

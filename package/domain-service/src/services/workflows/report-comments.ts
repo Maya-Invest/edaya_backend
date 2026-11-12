@@ -14,7 +14,10 @@ export interface SectionCommentsInput extends ReportCommentInput { sections: Arr
 export async function writeReportComments(base: BaseSchoolService, input: HomeroomCommentInput | SectionCommentsInput): Promise<ReportCardResult> {
   const command = 'sections' in input ? 'writeReportCardSectionComments' : 'writeHomeroomReportComment'
   const requireResult = async (id: string) => {
-    const result = await base.entities.results.findById(id)
+    // Display projections suppress stale ranks and may show the last ready
+    // publication. Patch the authorized canonical record instead.
+    const scope = await base.access.entity('results').readScope()
+    const result = await base.repositories.results.forAccess(scope).findById(id)
     if (!result)
       throw new BusinessRuleViolationError('REPORT_CARD_NOT_FOUND', 'Report card not found')
     return result

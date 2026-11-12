@@ -4,6 +4,7 @@ export const ACCESS_TOKEN_TTL_SECONDS = 5 * 60;
 export type DirectoryContactChannel = "email" | "phone";
 
 export interface IdentityClaims {
+  teacherScope?: { teacherId: string; schoolId: string };
   auth_time?: number;
   mfa_time?: number;
   amr?: string[];

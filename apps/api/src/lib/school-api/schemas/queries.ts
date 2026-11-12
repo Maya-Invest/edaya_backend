@@ -593,7 +593,7 @@ export const familyFeedbackAggregateResponseSchema = z.object({
 }).openapi("FamilyFeedbackAggregate");
 export const listTeacherFamilyFeedbackResultsQuerySchema = z.object({}).openapi("ListTeacherFamilyFeedbackResultsQuery");
 export const getTeacherFamilyFeedbackResultQuerySchema = z.object({ id: z.string().min(1) }).openapi("GetTeacherFamilyFeedbackResultQuery");
-export const teacherFamilyFeedbackResultResponseSchema = familyFeedbackAggregateResponseSchema.omit({ status: true }).openapi("TeacherFamilyFeedbackResult");
+export const teacherFamilyFeedbackResultResponseSchema = familyFeedbackAggregateResponseSchema.omit({ status: true }).extend({ academicYearId: z.string().optional(), academicPeriodId: z.string().optional(), classGroupId: z.string().optional(), classSubjectId: z.string().optional() }).openapi("TeacherFamilyFeedbackResult");
 export const teacherFamilyFeedbackResultListResponseSchema = z.array(teacherFamilyFeedbackResultResponseSchema).openapi("TeacherFamilyFeedbackResultList");
 
 export const getAssessmentMarksReviewQuerySchema = z.object({ assessmentId: z.string().min(1) }).openapi("GetAssessmentMarksReviewQuery");
@@ -630,7 +630,7 @@ export const assessmentEditorContextResponseSchema = z.object({ assessmentsRaw: 
 
 export const getActivityRosterQuerySchema = z.object({ activityId: z.string().min(1) }).openapi("GetActivityRosterQuery");
 export const activityRosterResponseSchema = z.object({
-  students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), matricule: z.string().optional(), classGroupId: z.string().optional() })),
+  students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), identifier: z.string().optional(), classGroupId: z.string().optional() })),
   eligibleStudentIds: z.array(z.string()),
   classes: z.array(z.object({ id: z.string(), name: z.string() })),
 }).openapi("ActivityRosterResponse");
@@ -731,3 +731,12 @@ const financePaymentRowSchema = z.object({
   amount: z.number().int(),
 }).openapi("FinancePaymentRow");
 export const financePaymentsPageResponseSchema = z.object({ rows: z.array(financePaymentRowSchema), total: z.number().int().nonnegative() }).openapi("FinancePaymentsPageResponse");
+
+export const getTeacherSubjectPeriodSummaryQuerySchema = z.object({ classSubjectId: z.string().min(1), periodId: z.string().min(1) }).openapi("GetTeacherSubjectPeriodSummaryQuery");
+export const teacherSubjectPeriodSummaryResponseSchema = z.object({
+  classSubjectId: z.string(),
+  classGroupId: z.string(),
+  periodId: z.string(),
+  calculationReady: z.boolean(),
+  students: z.array(z.object({ studentId: z.string(), firstName: z.string(), lastName: z.string(), average: z.number().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), contributions: z.array(z.object({ assessmentId: z.string(), title: z.string(), coefficient: z.number(), maxScore: z.number(), score: z.number().nullable(), designation: z.string(), grading: z.record(z.string(), z.unknown()).nullable() })), comment: z.object({ reportId: z.string(), sectionId: z.string(), text: z.string(), status: z.string(), version: z.number(), calculationStale: z.boolean(), proposal: z.object({ text: z.string(), status: z.string() }).nullable() }).nullable() })),
+}).openapi("TeacherSubjectPeriodSummaryResponse");

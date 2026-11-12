@@ -1,4 +1,4 @@
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment, withShortName } from '@edaya/core'
 import {
   describe,
   expect,
@@ -9,20 +9,20 @@ import { createAcademicTestApp } from './academic-test-app'
 describe('Entity config delete gates', () => {
   test('blocks deleting an academic year with class groups', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.academicYearRepository.save(new AcademicYear({
+    await repositories.academicYearRepository.save(new AcademicYear(withShortName({
       id: 'year-1',
       schoolId: 'school',
       name: '2026',
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-12-31T00:00:00Z'),
-    }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    })))
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
+    })))
 
     await expect(app.baseService.entities.academicYears.delete('year-1')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
@@ -41,14 +41,14 @@ describe('Entity config delete gates', () => {
       firstName: 'New',
       lastName: 'Student',
     }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-capacity',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
       capacity: 1,
-    }))
+    })))
     const existingEnrollment = new StudentClassEnrollment({
       id: 'enrollment-existing',
       studentId: 'student-existing',
@@ -77,14 +77,14 @@ describe('Entity config delete gates', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    await repositories.classGroupRepository.save(new ClassGroup({
+    await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 1',
-    }))
-    await repositories.academicPeriodRepository.save(new AcademicPeriod({
+    })))
+    await repositories.academicPeriodRepository.save(new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -92,7 +92,7 @@ describe('Entity config delete gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    }))
+    })))
     await repositories.reportCardResultRepository.save(new ReportCardResult({
       id: 'report-card-1',
       gradeLevelId: 'grade-1',
@@ -140,7 +140,7 @@ describe('Entity config delete gates', () => {
 
   test('academic period preDelete rejects dependent assessments and report cards', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    const period = new AcademicPeriod({
+    const period = new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -148,7 +148,7 @@ describe('Entity config delete gates', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T00:00:00Z'),
-    })
+    }))
     await repositories.academicPeriodRepository.save(period)
     await repositories.assessmentRepository.save(new Assessment({
       id: 'assessment-1',

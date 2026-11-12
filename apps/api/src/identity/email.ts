@@ -164,6 +164,12 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger, o
     log.info({ email: normalizedEmail, delivery: "log" }, "Auth verification email (set EMAIL_TRANSPORT=cloudflare for real email delivery)");
   }
   return {
+    canDeliverEmail: !!binding,
+    async sendTeacherCode(to: string, message: string) {
+      if (!binding)
+        throw new Error("Email unavailable");
+      await sendCloudflareEmail(env, binding, to, { subject: "EDAYA · Code enseignant / Teacher code", html: `<p>${escapeHtml(message)}</p>`, text: message });
+    },
     sendAuthVerificationOtp,
     sendAuthVerificationEmail,
   };

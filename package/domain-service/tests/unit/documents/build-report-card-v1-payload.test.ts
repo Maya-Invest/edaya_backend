@@ -1,21 +1,14 @@
-import {
-  AttendanceSummary,
-  ReportCardResult,
-  ReportCardResultSection,
-  ReportCardResultSectionKind,
-  School,
-  Student,
-} from '@edaya/core'
+import { AttendanceSummary, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, School, Student, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { buildReportCardV1Payload } from '../../../src/capabilities/documents/build-report-card-v1-payload'
 
 describe('buildReportCardV1Payload', () => {
-  const school = new School({
+  const school = new School(withShortName({
     id: 'sch-1',
     name: 'Lycée Test',
     timeZone: 'Africa/Abidjan',
     city: 'Abidjan',
-  })
+  }))
   const student = new Student({
     id: 'stu-1',
     schoolId: school.id,
@@ -81,6 +74,7 @@ describe('buildReportCardV1Payload', () => {
               coefficient: 3,
               classSubjectId: 'cs-math',
               rank: 2,
+              participantCount: 18,
               comment: 'Très bien',
             }),
             new ReportCardResultSection({
@@ -92,6 +86,7 @@ describe('buildReportCardV1Payload', () => {
               coefficient: 2,
               classSubjectId: 'cs-pc',
               rank: 8,
+              participantCount: 18,
             }),
           ],
         }),
@@ -133,12 +128,12 @@ describe('buildReportCardV1Payload', () => {
       average: '15,00',
       coefficient: '3',
       total: '45,00',
-      rank: '2è / 30',
+      rank: '2è / 18',
       appreciation: 'Très bien',
     })
     expect(payload.subjects[1]).toMatchObject({
       average: '11,00',
-      rank: '8è / 30',
+      rank: '8è / 18',
     })
     expect(payload.subjects.at(-1)).toMatchObject({
       kind: 'totals',
@@ -176,6 +171,7 @@ describe('buildReportCardV1Payload', () => {
           coefficient: 2,
           classSubjectId: 'cs-esp',
           rank: 2,
+          participantCount: 18,
         }),
       ],
     })
@@ -193,7 +189,7 @@ describe('buildReportCardV1Payload', () => {
     expect(payload.classLabel).toBe('10th A 1')
     expect(payload.semesterRank).toBe('3 / 30 students')
     expect(payload.subjects[0]?.name).toBe('Spanish')
-    expect(payload.subjects[0]?.rank).toBe('2 / 30')
+    expect(payload.subjects[0]?.rank).toBe('2 / 18')
   })
 
   test('throws when there are no renderable section rows', () => {
@@ -226,7 +222,7 @@ describe('buildReportCardV1Payload', () => {
 test('configured report documents use captured points, precision, mention and aggregate label', () => {
   const grading = { policyRevision: 2, scaleId: 'gpa', scaleRevision: 1, mode: 'mention-first' as const, maximum: 4, decimalPlaces: 3, roundingMode: 'nearest' as const, units: 'points' as const, value: 11 / 3, reportedValue: 3.667, mention: { id: 'a', code: 'A', label: 'Excellent' }, provenance: 'mention-points' as const }
   const result = new ReportCardResult({ id: 'configured', gradeLevelId: 'grade1', academicYearId: 'ay1', reportConfigurationRevision: 0, studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 2, attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, aggregateLabel: 'GPA', grading, gradingPolicyRevision: 2, overallAverage: 3.667, sectionResults: [new ReportCardResultSection({ sectionId: 'math', sectionKind: ReportCardResultSectionKind.Subject, classSubjectId: 'math', name: 'Math', weight: 1, average: 3.667, grading })] })
-  const school = new School({ id: 'school', name: 'School', timeZone: 'America/Toronto' })
+  const school = new School(withShortName({ id: 'school', name: 'School', timeZone: 'America/Toronto' }))
   const student = new Student({ id: 'student', schoolId: school.id, firstName: 'Ada', lastName: 'L' })
   for (const locale of ['en-US', 'fr-FR']) {
     const payload = buildReportCardV1Payload({ school, student, result, periodLabel: 'Term', locale })

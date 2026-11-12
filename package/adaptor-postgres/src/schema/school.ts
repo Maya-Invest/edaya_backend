@@ -56,7 +56,9 @@ export const staffMembers = pgTable('staff_members', {
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
-  code: text('code'),
+  identifier: text('identifier'),
+  name: text('name'),
+  shortName: text('short_name'),
   photoUrl: text('photo_url'),
   email: text('email'),
   phone: text('phone'),
@@ -180,6 +182,7 @@ export const staffPermissionProfiles = pgTable('staff_permission_profiles', {
   sourceKey: text('source_key'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('staff_permission_profiles', table))
 
 export const staffPermissionProfileBindings = pgTable('staff_permission_profile_bindings', {
@@ -225,6 +228,7 @@ export const resources = pgTable('resources', {
   kind: text('kind').notNull(),
   capacity: integer('capacity'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('resources', table))
 
 export const resourceAssignments = pgTable('resource_assignments', {
@@ -246,7 +250,7 @@ export const teachers = pgTable('teachers', {
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
-  code: text('code'),
+  identifier: text('identifier'),
   photoUrl: text('photo_url'),
   signatureAttachmentId: text('signature_attachment_id'),
   email: text('email'),

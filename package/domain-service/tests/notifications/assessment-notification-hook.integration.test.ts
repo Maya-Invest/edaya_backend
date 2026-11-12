@@ -1,6 +1,7 @@
 import { Assessment, AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { createTestStaffActor } from '../support/test-actor'
@@ -22,7 +23,7 @@ describe('assessment notification postSave hook through native authorization', (
     await seedAuthorizationRelationships(fixture.db)
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'subject-test\' WHERE id = \'school-a\'; UPDATE staff_members SET subject_id = \'subject-test\' WHERE id = \'staff-a\'; UPDATE students SET subject_id = \'student-login\' WHERE id = \'student-a\'; DELETE FROM guardian_student_links;')
     gateway = new RecordingNotificationGateway()
-    service = new SchoolService({ actor: createTestStaffActor('school-a', 'staff-a'), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: createTestStaffActor('school-a', 'staff-a'), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
   })
   afterEach(async () => {
     await releaseDatabase(fixture.db)

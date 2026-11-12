@@ -1,29 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createSystemActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import {
-  AcademicPeriod,
-  AcademicPeriodType,
-  AcademicYear,
-  ClassGroup,
-  ClassSubject,
-  EnrollmentEndReason,
-  FAMILY_FEEDBACK_FAILURES,
-  FAMILY_FEEDBACK_QUESTION_VERSION,
-  FAMILY_FEEDBACK_RETENTION_MS,
-  FamilyFeedbackCampaignStatus,
-  FamilyFeedbackSlotStatus,
-  GradeLevel,
-  Guardian,
-  GuardianStudentLink,
-  Permission,
-  StaffMember,
-  StaffPermissionAssignment,
-  Student,
-  StudentClassEnrollment,
-  Subject,
-  Teacher,
-  TeacherAssignment,
-  TeacherAssignmentKind,
-} from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, ClassGroup, ClassSubject, EnrollmentEndReason, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, FamilyFeedbackCampaignStatus, FamilyFeedbackSlotStatus, GradeLevel, Guardian, GuardianStudentLink, Permission, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { runCronJobs } from '../../../src/capabilities/scheduling-jobs/cron-job-runner'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
@@ -47,15 +23,15 @@ function guardianActor(guardianId: string, subjectId: string) {
 }
 
 async function seedAssignment(repositories: Awaited<ReturnType<typeof createTestApp>>['schoolRepositories'], studentCount = 1) {
-  await repositories.academicYears.save(new AcademicYear({
+  await repositories.academicYears.save(new AcademicYear(withShortName({
     id: 'ay1',
     schoolId: SCHOOL,
     name: '2025-2026',
     startDate: new Date('2025-09-01'),
     endDate: new Date('2026-06-30'),
     status: 'published',
-  }))
-  await repositories.academicPeriods.save(new AcademicPeriod({
+  })))
+  await repositories.academicPeriods.save(new AcademicPeriod(withShortName({
     id: 'per1',
     schoolId: SCHOOL,
     academicYearId: 'ay1',
@@ -64,10 +40,10 @@ async function seedAssignment(repositories: Awaited<ReturnType<typeof createTest
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-03-31'),
     isPublished: true,
-  }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: SCHOOL, name: 'CM1', label: 'CM1', order: 1 }))
-  await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: SCHOOL, academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'CM1 A' }))
-  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'math', schoolId: SCHOOL, name: 'Mathematics' }))
+  })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade1', schoolId: SCHOOL, name: 'CM1', shortName: 'CM1', order: 1 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg1', schoolId: SCHOOL, academicYearId: 'ay1', gradeLevelId: 'grade1', name: 'CM1 A' })))
+  await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'math', schoolId: SCHOOL, name: 'Mathematics' })))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'math', coefficient: 1 }))
   await repositories.teachers.save(new Teacher({
     id: 'teacher1',

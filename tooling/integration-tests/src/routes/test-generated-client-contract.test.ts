@@ -36,7 +36,11 @@ describeWithLightSchool('generated school client contract', (getContext) => {
     const { app, application, authHeaders } = getContext()
     const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
     const client = createSchoolClient<components['schemas']>(createInProcessTransport(app, { headers: { ...await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL), 'x-actor-kind': 'staff', 'x-school-id': school.id } }))
-    const guardian = await client.commands.registerGuardian({ id: 'single-token-api', schoolId: school.id, firstName: '', lastName: 'Koné', hasAccess: false, sendAccountInvitation: false })
+    const attemptId = crypto.randomUUID()
+    const creation = { requestId: attemptId, schoolId: school.id, firstName: '', lastName: 'Koné', hasAccess: false, sendAccountInvitation: false }
+    const guardian = await client.commands.registerGuardian(creation)
+    expect((await client.commands.registerGuardian(creation)).id).toBe(guardian.id)
+    expect(guardian.identifier ?? null).toBeNull()
     expect(guardian.firstName).toBe('')
     await client.commands.updateGuardianProfile({ guardianId: guardian.id, occupation: 'Teacher', hasAccess: false, phone: '+22501020304', alternativePhone: '+22505060708', smsNotificationsEnabled: false })
     await client.commands.updateGuardianProfile({ guardianId: guardian.id, phone: null })

@@ -1,7 +1,7 @@
-/* eslint-disable dot-notation -- Snapshot payload fixtures require bracket access. */
 import { Buffer } from 'node:buffer'
+/* eslint-disable dot-notation -- Snapshot payload fixtures require bracket access. */
 import { AuthorizationError, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, DocumentIssuanceStatus, Incident, IncidentKind, Teacher, TEACHER_SIGNATURE_MAX_BYTES, TEACHER_SIGNATURE_PURPOSE } from '@edaya/core'
+import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, DocumentIssuanceStatus, Incident, IncidentKind, Teacher, TEACHER_SIGNATURE_MAX_BYTES, TEACHER_SIGNATURE_PURPOSE, withShortName } from '@edaya/core'
 import { dispatchDocumentRender, freezeDocumentTeachers, grantAttachmentDownload, resolveAttachmentReadPolicy } from '@edaya/service'
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { PNG } from 'pngjs'
@@ -29,7 +29,7 @@ describe('teacher signatures', () => {
     for (const id of ['teacher-a', 'teacher-b']) {
       await fixture.schoolRepositories.teachers.save(new Teacher({ id, schoolId: 'school', firstName: 'Ada', lastName: 'Teacher', subjectId: `${id}-subject` }))
     }
-    await fixture.schoolRepositories.academicYears.save(new AcademicYear({ id: 'year', schoolId: 'school', name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-06-30'), status: 'published' }))
+    await fixture.schoolRepositories.academicYears.save(new AcademicYear(withShortName({ id: 'year', schoolId: 'school', name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-06-30'), status: 'published' })))
   })
 
   async function upload(id: string, actor = teacher()) {

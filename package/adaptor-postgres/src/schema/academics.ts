@@ -10,6 +10,7 @@ export const academicYears = pgTable('academic_years', {
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('academic_years', table))
 
 // 3. Academic Period Table
@@ -24,6 +25,7 @@ export const academicPeriods = pgTable('academic_periods', {
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
   isPublished: boolean('is_published').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('academic_periods', table))
 
 // 4. Period Definition Table
@@ -32,7 +34,7 @@ export const periodDefinitions = pgTable('period_definitions', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
-  label: text('label').notNull(),
+  name: text('name').notNull(),
   dayOfWeek: text('day_of_week').notNull(),
   order: integer('order_val').notNull(),
   startTime: text('start_time').notNull(),
@@ -40,6 +42,7 @@ export const periodDefinitions = pgTable('period_definitions', {
   isBreak: boolean('is_break').notNull().default(false),
   isTeachingSlot: boolean('is_teaching_slot').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('period_definitions', table))
 
 // 5. Grade Level Table
@@ -50,7 +53,7 @@ export const gradeLevels = pgTable('grade_levels', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
-  label: text('label').notNull(),
+  shortName: text('short_name').notNull(),
   order: integer('order_val').notNull(),
   cycle: text('cycle'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
@@ -63,6 +66,7 @@ export const subjectCategories = pgTable('subject_categories', {
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('subject_categories', table))
 
 export const subjects = pgTable('subjects', {
@@ -70,10 +74,9 @@ export const subjects = pgTable('subjects', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
-  code: text('code'),
   gradeLevelId: text('grade_level_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
-  shortName: text('short_name'),
+  shortName: text('short_name').notNull(),
   reportModuleId: text('report_module_id'),
   reportOrder: integer('report_order').notNull().default(0),
   coefficient: doublePrecision('coefficient'),
@@ -96,6 +99,7 @@ export const subjectMatters = pgTable('subject_matters', {
   sequenceOrder: integer('sequence_order').notNull(),
   estimatedHours: integer('estimated_hours'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('subject_matters', table))
 
 // 23. Class Group Table
@@ -110,6 +114,7 @@ export const classGroups = pgTable('class_groups', {
   attendanceMode: text('attendance_mode').notNull().default('session'),
   homeroomStaffId: text('homeroom_staff_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('class_groups', table))
 
 // 24. Class Subject Table
@@ -158,6 +163,7 @@ export const classSubjectProgress = pgTable('class_subject_progress', {
 // 27. Assessment Table
 
 export const activities = pgTable('activities', {
+  shortName: text('short_name').notNull(),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),

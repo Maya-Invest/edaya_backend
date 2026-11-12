@@ -198,6 +198,7 @@ export type SchoolCommandHandlerMap = {
 
 export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): SchoolCommandHandlerMap {
   return {
+    startTeacherConversation: payload => workflows.conversations.startTeacher(payload as Parameters<ConversationsWorkflow['startTeacher']>[0]),
     startConversation: payload => workflows.conversations.start(payload as Parameters<ConversationsWorkflow['start']>[0]),
     replyConversation: payload => workflows.conversations.reply(payload as Parameters<ConversationsWorkflow['reply']>[0]),
     resolveConversation: payload => workflows.conversations.resolve(payload as Parameters<ConversationsWorkflow['resolve']>[0]),
@@ -216,6 +217,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     saveTeacherAttendanceDraft: payload => workflows.teacherCorrections.attendanceCall('save', payload as z.input<typeof attendanceCallSchema>),
     submitTeacherAttendance: payload => workflows.teacherCorrections.attendanceCall('submit', payload as z.input<typeof attendanceCallSchema>),
     recordTeacherAttendanceArrival: payload => workflows.teacherCorrections.recordArrival(payload as z.input<typeof attendanceArrivalSchema>),
+    recordTeacherAttendanceDeparture: payload => workflows.teacherCorrections.recordDeparture(payload as z.input<typeof attendanceArrivalSchema>),
     // setup
     registerSchool: payload => workflows.setup.registerSchool(payload as RegisterSchoolInput),
     updateSchoolConfiguration: payload => workflows.setup.updateSchoolConfiguration(payload as UpdateSchoolConfigurationInput),
@@ -317,6 +319,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     clearSchoolIssuanceAsset: payload => workflows.documents.clearSchoolIssuanceAsset(payload as Parameters<DocumentsServiceWorkflow['clearSchoolIssuanceAsset']>[0]),
     manageStudentSubjectEnrollments: payload => workflows.student.manageStudentSubjectEnrollments(payload as Parameters<StudentServiceWorkflow['manageStudentSubjectEnrollments']>[0]),
     // student
+    correctHumanIdentifier: payload => workflows.setup.correctHumanIdentifier(payload as Parameters<SetupServiceWorkflow['correctHumanIdentifier']>[0]),
     registerStudent: payload => workflows.student.registerStudent(payload as RegisterStudentInput),
     enrollStudent: payload => workflows.student.enrollStudent(payload as EnrollStudentInput),
     linkGuardianToStudent: payload => workflows.student.linkGuardianToStudent(payload as LinkGuardianToStudentInput),

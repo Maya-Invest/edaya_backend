@@ -67,14 +67,14 @@ function memoryPersistence(): ImportPersistencePort {
   }
 }
 test('application staging and matching use only ports, inherit M, preserve false and invalidate settings', async () => {
-  const staff = new StaffMember({ id: 'staff', schoolId: 'school', code: '001', firstName: 'Original', lastName: 'Name', phone: '0012', isActive: true })
+  const staff = new StaffMember({ id: 'staff', schoolId: 'school', identifier: '001', firstName: 'Original', lastName: 'Name', phone: '0012', isActive: true })
   const repo = (entities: {
     id: string
   }[]) => ({ forSchool: () => ({ list: async () => entities }), forAccess: () => ({ list: async () => entities, findById: async (id: string) => entities.find(entity => entity.id === id) }) })
   const actor = { kind: 'staff', accountKind: 'human', schoolId: 'school', staffMemberId: 'owner', subjectId: 'subject' }
   const repositories = new Proxy({ staffMembers: repo([staff]), privateFiles: { reserve: async () => { }, retain: async () => { } } }, { get: (target, property) => Reflect.get(target, property) ?? repo([]) })
   const service = { baseService: { actor, access: { forOperation: () => service.baseService.access, actor, assertSchool: async () => { }, scope: async () => ({}), entity: () => ({ readScope: async () => ({}), assertSave: async () => { } }) }, atomicExecution: { execute: async (run: () => Promise<unknown>) => run() }, entities: { academicYears: { findById: async () => ({ id: 'year', schoolId: 'school' }) } }, repositories, fileStorage: createInMemoryFileStorage() } } as unknown as SchoolService
-  const imports = new SchoolImportService(service, memoryPersistence(), { parse: async () => ({ headers: ['code', 'first_name', 'phone', 'is_active', 'on_existing'], rows: [{ row: 2, cells: ['001', 'Compound First Name', '', false, ' m '] }] }), serialize: async () => new Uint8Array() })
+  const imports = new SchoolImportService(service, memoryPersistence(), { parse: async () => ({ headers: ['identifier', 'first_name', 'phone', 'is_active', 'on_existing'], rows: [{ row: 2, cells: ['001', 'Compound First Name', '', false, ' m '] }] }), serialize: async () => new Uint8Array() })
   const batch = await imports.create({ academicYearId: 'year' })
   expect(batch.defaultOnExisting).toBe('M')
   await imports.submit({ batchId: batch.id, fileName: 'staff.csv', bytes: new Uint8Array([1]), type: 'staff' })

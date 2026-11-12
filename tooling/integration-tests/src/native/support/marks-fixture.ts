@@ -1,11 +1,12 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import process from 'node:process'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicYear, Assessment, AssessmentKind, ClassGroup, ClassSubject, GradeLevel, GradeScale, noOpFileStorage, Permission, RecordingNotificationGateway, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentSubjectEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicYear, Assessment, AssessmentKind, ClassGroup, ClassSubject, GradeLevel, GradeScale, noOpFileStorage, Permission, RecordingNotificationGateway, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentSubjectEnrollment, Subject, withShortName } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { onTestFinished } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -16,25 +17,25 @@ export async function fixture(prefix: string) {
   onTestFinished(async () => {
     for (const handle of handles) await handle.dispose()
   })
-  const stores = handles.map(handle => new PostgresSchoolRepositories(handle.db))
+  const stores = handles.map(handle => createFixtureRepositories(handle.db))
   const r = stores[0]!
   await r.init({ driver: 'node-postgres' })
   const dates = { startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }
-  await r.schools.save(new School({ id: id('school'), name: 'Native approval', timeZone: 'UTC', ownerSubjectId: id('editor'), financeCurrency: 'XOF' }))
-  await r.academicYears.save(new AcademicYear({ id: id('year'), schoolId: id('school'), name: '2026', status: 'published', ...dates }))
-  await r.academicPeriods.save(new AcademicPeriod({ id: id('period'), schoolId: id('school'), academicYearId: id('year'), name: 'Term', isPublished: true, ...dates }))
-  await r.gradeLevels.save(new GradeLevel({ id: id('grade'), schoolId: id('school'), name: 'Grade', label: 'Grade', order: 1 }))
-  await r.classGroups.save(new ClassGroup({ id: id('class'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), name: 'Class' }))
-  await r.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: id('grade'), academicYearId: id('year'), id: id('math'), schoolId: id('school'), name: 'Math', coefficient: 1 }))
+  await r.schools.save(new School(withShortName({ id: id('school'), name: 'Native approval', timeZone: 'UTC', ownerSubjectId: id('editor'), financeCurrency: 'XOF' })))
+  await r.academicYears.save(new AcademicYear(withShortName({ id: id('year'), schoolId: id('school'), name: '2026', status: 'published', ...dates })))
+  await r.academicPeriods.save(new AcademicPeriod(withShortName({ id: id('period'), schoolId: id('school'), academicYearId: id('year'), name: 'Term', isPublished: true, ...dates })))
+  await r.gradeLevels.save(new GradeLevel(withShortName({ id: id('grade'), schoolId: id('school'), name: 'Grade', shortName: 'Grade', order: 1 })))
+  await r.classGroups.save(new ClassGroup(withShortName({ id: id('class'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), name: 'Class' })))
+  await r.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: id('grade'), academicYearId: id('year'), id: id('math'), schoolId: id('school'), name: 'Math', coefficient: 1 })))
   await r.classSubjects.save(new ClassSubject({ id: id('subject'), classGroupId: id('class'), subjectId: id('math') }))
   await r.students.save(new Student({ id: id('student'), schoolId: id('school'), firstName: 'Native', lastName: 'Student' }))
   await r.enrollments.save(new StudentClassEnrollment({ id: id('enrollment'), studentId: id('student'), classGroupId: id('class'), academicYearId: id('year'), enrollmentIndex: 1, enrolledAt: dates.startDate }))
   await r.subjectEnrollments.save(new StudentSubjectEnrollment({ id: id('participation'), studentClassEnrollmentId: id('enrollment'), classSubjectId: id('subject'), enrolledAt: dates.startDate, endedAt: new Date('2027-01-01'), source: 'automatic' }))
   // Quarter-point marks in these journeys require an explicit two-decimal report scale.
-  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, decimalPlaces: 2, intervalConvention: 'continuous', ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] }))
+  await r.gradeScales.save(new GradeScale(withShortName({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, decimalPlaces: 2, intervalConvention: 'continuous', ranges: [{ id: 'all', letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] })))
   const scale = (await r.gradeScales.findById(id('scale')))!
   const level = (await r.gradeLevels.findById(id('grade')))!
-  await r.gradeLevels.save(new GradeLevel({ ...level.data, gradingPolicies: [{ academicYearId: id('year'), revision: 1, mode: 'numeric-first', aggregateLabel: 'Average', status: 'completed', scale: { ...scale.data, ranges: [...scale.ranges] } }] }))
+  await r.gradeLevels.save(new GradeLevel(withShortName({ ...level.data, gradingPolicies: [{ academicYearId: id('year'), revision: 1, mode: 'numeric-first', aggregateLabel: 'Average', status: 'completed', scale: { ...scale.data, ranges: [...scale.ranges] } }] })))
   await r.assessments.save(new Assessment({ id: id('assessment'), classGroupId: id('class'), classSubjectId: id('subject'), periodId: id('period'), title: 'Quiz', kind: AssessmentKind.Quiz, maxScore: 20, startsAt: new Date('2026-02-01'), endsAt: new Date('2026-02-02') }))
   for (const who of ['editor', 'reviewer']) await r.staffMembers.save(new StaffMember({ id: id(who), schoolId: id('school'), firstName: who, lastName: 'Staff', subjectId: id(who) }))
   for (const permission of [Permission.GRADE_READ, Permission.GRADE_VALIDATE]) await r.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: id(permission), schoolId: id('school'), staffId: id('reviewer'), academicYearId: id('year'), permission, scopes: [{ kind: 'class_group', classGroupId: id('class') }] }))

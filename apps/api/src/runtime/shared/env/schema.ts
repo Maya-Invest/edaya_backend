@@ -18,6 +18,7 @@ export const EnvSchema = z.object({
   REQUIRE_PRIVILEGED_TOTP: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),
+  TEACHER_QUICK_LOGIN_ENABLED: envBooleanSchema.optional(),
   LOCAL_OTP_CAPTURE: envBooleanSchema.default(false),
   LOCAL_OPERATIONS_ROOT: z.string().optional(),
   PAUSE_API: envBooleanSchema.default(false),
@@ -45,7 +46,7 @@ export const EnvSchema = z.object({
   CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
   /** Firebase Cloud Messaging HTTP v1 service-account JSON (Worker secret) */
   FCM_SERVICE_ACCOUNT_JSON: z.string().min(1).optional(),
-  /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
+  /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users and active owners of their selected school. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: envBooleanSchema.optional(),
   ALLOW_PUBLIC_ACCOUNT_REGISTRATION: envBooleanSchema.optional(),
   /** Comma-separated identity emails that may bootstrap the first platform operators. */

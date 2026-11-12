@@ -1,3 +1,4 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/types";
@@ -21,7 +22,7 @@ describe("onboarding register-school route", () => {
     });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const response = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -85,7 +86,7 @@ describe("onboarding register-school route", () => {
       }),
     ]);
 
-    const secondRegister = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const secondRegister = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -96,8 +97,17 @@ describe("onboarding register-school route", () => {
         timeZone: "UTC",
       }),
     }));
-    expect(secondRegister.status).toBe(409);
-    expect(await secondRegister.json()).toMatchObject({ code: "SUBJECT_ALREADY_LINKED" });
+    expect(secondRegister.status).toBe(200);
+    const second = await secondRegister.json() as { id: string; ownerSubjectId: string };
+    expect(second.id).not.toBe(school.id);
+    expect(second.ownerSubjectId).toBe(subjectId);
+    for (const schoolId of [school.id, second.id]) {
+      const scoped = await app.request(createAppRequest("/core/authorization/effective-grants", {
+        headers: { "authorization": `Bearer ${accessToken}`, "x-actor-kind": "staff", "x-school-id": schoolId },
+      }));
+      expect(scoped.status).toBe(200);
+      expect(await scoped.json()).toMatchObject({ schoolId, grants: expect.arrayContaining([expect.objectContaining({ source: "owner" })]) });
+    }
   });
 
   it("lets the platform bootstrap owner register the first school", async () => {
@@ -108,7 +118,7 @@ describe("onboarding register-school route", () => {
     await signUpAuthUser(runtime, { email, name: "Ada Owner" });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const response = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",

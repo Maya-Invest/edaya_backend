@@ -5,6 +5,7 @@ import {
   expect,
   test,
 } from 'bun:test'
+import { humanFixture } from '../../../../../tooling/test-support/human-fixtures'
 import {
   createGuardianLinkContext,
   createStudentAdminContext,
@@ -266,14 +267,14 @@ describe('SchoolService student workflows', () => {
       inviteBaseUrl: 'https://app.edaya.test/invite',
     })
 
-    const student = await service.studentWorkflow.registerStudent({
+    const student = await humanFixture({
       id: 'stu-new',
       schoolId: 'sch1',
       firstName: 'New',
       lastName: 'Student',
       birthDate: new Date('2011-01-01'),
       sendAccountInvitation: false,
-    })
+    }).then(prepared => service.studentWorkflow.registerStudent(prepared))
 
     expect(student.id).toBe('stu-new')
     expect((await students.findById('stu-new'))).toBeDefined()
@@ -284,58 +285,58 @@ describe('SchoolService student workflows', () => {
       inviteBaseUrl: 'https://app.edaya.test/invite',
     })
 
-    await expect(service.studentWorkflow.registerStudent({
+    await expect(humanFixture({
       id: 'stu-new',
       schoolId: 'sch1',
       firstName: 'New',
       lastName: 'Student',
       birthDate: new Date('2011-01-01'),
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    }).then(prepared => service.studentWorkflow.registerStudent(prepared))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('registerGuardian persists guardian records', async () => {
     const { guardians, service } = await createStudentAdminContext()
 
-    const guardian = await service.studentWorkflow.registerGuardian({
+    const guardian = await humanFixture({
       id: 'gua-new',
       schoolId: 'sch1',
       firstName: 'Alan',
       lastName: 'Turing',
       sendAccountInvitation: false,
-    })
+    }).then(prepared => service.studentWorkflow.registerGuardian(prepared))
 
     expect(guardian.id).toBe('gua-new')
     expect((await guardians.findById('gua-new'))).toBeDefined()
   })
 
-  test('registerGuardian persists code and rejects an existing id', async () => {
+  test('registerGuardian persists identifiers and rejects changed creation retries', async () => {
     const { guardians, service } = await createStudentAdminContext()
 
-    const created = await service.studentWorkflow.registerGuardian({
+    const created = await humanFixture({
       id: 'gua-coded',
       schoolId: 'sch1',
       firstName: 'Grace',
       lastName: 'Hopper',
-      code: 'GRD-001',
+      identifier: 'GRD-001',
       sendAccountInvitation: false,
-    })
+    }).then(prepared => service.studentWorkflow.registerGuardian(prepared))
 
-    expect(created.code).toBe('GRD-001')
-    expect((await guardians.findById('gua-coded'))?.code).toBe('GRD-001')
+    expect(created.identifier).toBe('GRD-001')
+    expect((await guardians.findById('gua-coded'))?.identifier).toBe('GRD-001')
 
-    await expect(service.studentWorkflow.registerGuardian({
+    await expect(humanFixture({
       id: 'gua-coded',
       schoolId: 'sch1',
       firstName: 'Other',
       lastName: 'Guardian',
-      code: 'GRD-002',
+      identifier: 'GRD-002',
       sendAccountInvitation: false,
-    })).rejects.toMatchObject({ code: 'GUARDIAN_ID_ALREADY_EXISTS' })
+    }).then(prepared => service.studentWorkflow.registerGuardian(prepared))).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
 
     expect((await guardians.findById('gua-coded'))).toMatchObject({
       firstName: 'Grace',
       lastName: 'Hopper',
-      code: 'GRD-001',
+      identifier: 'GRD-001',
     })
   })
 
@@ -344,23 +345,23 @@ describe('SchoolService student workflows', () => {
       inviteBaseUrl: 'https://app.edaya.test/invite',
     })
 
-    await service.studentWorkflow.registerStudent({
+    await humanFixture({
       id: 'stu-new',
       schoolId: 'sch1',
       firstName: 'New',
       lastName: 'Student',
       birthDate: new Date('2011-01-01'),
       sendAccountInvitation: false,
-    })
+    }).then(prepared => service.studentWorkflow.registerStudent(prepared))
 
-    await expect(service.studentWorkflow.registerStudent({
+    await expect(humanFixture({
       id: 'stu-new',
       schoolId: 'sch1',
       firstName: 'Other',
       lastName: 'Student',
       birthDate: new Date('2012-01-01'),
       sendAccountInvitation: false,
-    })).rejects.toMatchObject({ code: 'STUDENT_ID_ALREADY_EXISTS' })
+    }).then(prepared => service.studentWorkflow.registerStudent(prepared))).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
 
     expect((await students.findById('stu-new'))).toMatchObject({
       firstName: 'New',

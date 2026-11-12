@@ -13,7 +13,7 @@ async function context(gates: EntityBusinessGates<Student> = {}, hooks: EntityBu
   })
   return { ...fixture, service }
 }
-const student = (id = 'student') => new Student({ id, schoolId: 'school', firstName: 'A', lastName: 'Student' })
+const student = (id = 'student') => new Student({ id, identifier: id.toUpperCase(), schoolId: 'school', firstName: 'A', lastName: 'Student' })
 
 describe('managed entities with native policy scopes', () => {
   test('list, single, count and pagination use the same tenant scope', async () => {

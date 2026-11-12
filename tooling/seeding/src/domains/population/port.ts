@@ -1,4 +1,6 @@
 export interface StudentSeedRecord {
+  identifier?: string
+  globalIdentifier?: string
   id: string
   schoolId: string
   firstName: string
@@ -15,6 +17,7 @@ export interface EnrollmentSeedRecord {
 }
 
 export interface GuardianSeedRecord {
+  identifier?: string
   id: string
   schoolId: string
   firstName: string

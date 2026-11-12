@@ -1,3 +1,4 @@
+import quickCodes from "@/routes/teacher-quick-code.routes";
 import importsRouter from "@/routes/imports.routes";
 import { createRouter } from "@/http/create-app";
 import { edayaSparkResolveGuardianHandler, edayaSparkResolveGuardianRoute } from "@/routes/edaya-spark-internal.routes";
@@ -94,6 +95,7 @@ import { buildCoreRoutes } from "@/lib/school-api/routes";
 // Index route
 const router = createRouter()
   .route("/", importsRouter)
+  .route("/", quickCodes)
   .openapi(
     createRoute({
       tags: ["Index"],

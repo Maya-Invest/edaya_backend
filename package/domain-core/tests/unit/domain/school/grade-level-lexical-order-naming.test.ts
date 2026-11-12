@@ -6,7 +6,7 @@ describe('GradeLevel entity lexical order and naming', () => {
     id: 'grade-6',
     schoolId: 'school-1',
     name: 'Grade 6',
-    label: 'G6',
+    shortName: 'G6',
     order: 6,
   }
 
@@ -16,7 +16,7 @@ describe('GradeLevel entity lexical order and naming', () => {
     expect(gradeLevel.id).toBe('grade-6')
     expect(gradeLevel.schoolId).toBe('school-1')
     expect(gradeLevel.name).toBe('Grade 6')
-    expect(gradeLevel.label).toBe('G6')
+    expect(gradeLevel.shortName).toBe('G6')
     expect(gradeLevel.order).toBe(6)
     expect(gradeLevel.createdAt).toBeInstanceOf(Date)
   })
@@ -37,7 +37,7 @@ describe('GradeLevel entity lexical order and naming', () => {
     expect(() => new GradeLevel({ ...baseArgs, id: ' ' })).toThrow()
     expect(() => new GradeLevel({ ...baseArgs, schoolId: '' })).toThrow()
     expect(() => new GradeLevel({ ...baseArgs, name: ' \t ' })).toThrow()
-    expect(() => new GradeLevel({ ...baseArgs, label: '  ' })).toThrow()
+    expect(() => new GradeLevel({ ...baseArgs, shortName: '  ' })).toThrow()
   })
 
   it('throws error when order is zero or negative', () => {

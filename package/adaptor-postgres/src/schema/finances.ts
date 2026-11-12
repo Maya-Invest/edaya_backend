@@ -16,6 +16,7 @@ export const catalogServices = pgTable('catalog_services', {
   status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('catalog_services', table))
 
 export const studentServiceEnrollments = pgTable('student_service_enrollments', {

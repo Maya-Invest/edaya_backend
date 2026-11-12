@@ -1,6 +1,8 @@
 import { ActorAssuranceLevel, AuthorizationError, createServiceAccount, createStaffActorMetadata, revokeServiceAccount, updateServiceAccount } from '@edaya/authorization'
 import { noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
 import { testFileStorage } from '../../support/test-file-storage'
@@ -16,14 +18,14 @@ describe('service accounts cannot be administered through ordinary staff entitie
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
-    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    account = (await createServiceAccount(fixture.repositories, actor, { serviceId: 'reports', displayName: 'Reports', permissionAssignments: [requested] }, fixture.atomic)).staffMember
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    account = (await createServiceAccount(fixture.repositories, actor, { serviceId: 'reports', name: 'Reports', permissionAssignments: [requested] }, fixture.atomic)).staffMember
   })
   afterEach(async () => releaseDatabase(fixture.db))
 
   test('generic save and mixed deletion batches cannot bypass service revocation', async () => {
     await expect(service.baseService.entities.staffMembers.save(new StaffMember({ ...account.data, isActive: false }))).rejects.toBeInstanceOf(AuthorizationError)
-    await fixture.repositories.staffMembers.save(new StaffMember({ id: 'ordinary', schoolId: 'school-a', firstName: 'Human', lastName: 'Staff' }))
+    await saveHumanFixture(fixture.repositories.staffMembers, new StaffMember({ id: 'ordinary', schoolId: 'school-a', firstName: 'Human', lastName: 'Staff' }))
     await expect(service.baseService.entities.staffMembers.batchDelete(['ordinary', account.id])).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.staffMembers.findById('ordinary')).toBeDefined()
     expect((await fixture.repositories.staffMembers.findById(account.id))?.isActive).toBe(true)

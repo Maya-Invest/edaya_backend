@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum SubjectColor {
   Mint = 'mint',
@@ -15,8 +16,7 @@ export const subjectSchema = z.object({
   gradeLevelId: z.string().trim().min(1, 'gradeLevelId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
-  shortName: z.string().trim().min(1, 'shortName must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  shortName: shortNameSchema.optional(),
   reportModuleId: z.string().trim().min(1).nullish().transform(value => value ?? undefined),
   reportOrder: z.number().int().nonnegative().default(0),
   coefficient: z.number().finite().positive().nullable().optional().transform(v => v ?? undefined),
@@ -56,9 +56,8 @@ export class Subject {
   get gradeLevelId() { return this.data.gradeLevelId }
   get academicYearId() { return this.data.academicYearId }
   get name() { return this.data.name }
-  get shortName() { return this.data.shortName }
+  get shortName() { return this.data.shortName ?? this.name }
   get displayShortName() { return this.data.shortName ?? this.data.name }
-  get code() { return this.data.code }
   get reportModuleId() { return this.data.reportModuleId }
   get reportOrder() { return this.data.reportOrder }
   get coefficient() { return this.data.coefficient }
@@ -79,7 +78,6 @@ export class Subject {
       academicYearId: this.academicYearId,
       name: overrides.name ?? this.name,
       shortName: overrides.shortName !== undefined ? overrides.shortName : this.shortName,
-      code: overrides.code !== undefined ? overrides.code : this.code,
       reportModuleId: overrides.reportModuleId !== undefined ? overrides.reportModuleId : this.reportModuleId,
       reportOrder: overrides.reportOrder ?? this.reportOrder,
       coefficient: overrides.coefficient !== undefined ? overrides.coefficient : this.coefficient,

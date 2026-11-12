@@ -1,7 +1,7 @@
+import { AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from "@edaya/core";
 import type { AppBindings } from "@/http/types";
 import { PostgresCommandJournal } from "@edaya/adaptor-postgres";
 import { createStaffActorMetadata } from "@edaya/authorization";
-import { AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember } from "@edaya/core";
 import { createAttachmentUpload } from "@edaya/service";
 import { describe, expect, it } from "bun:test";
 import { Hono } from "hono";
@@ -36,8 +36,8 @@ describe("memory file storage routes", () => {
     const fixture = await createAuthorizationDatabase();
     try {
       const actor = createStaffActorMetadata({ schoolId: "school-a", staffMemberId: "file-owner", subjectId: "file-owner-subject", requestId: "upload", authenticatedAt: new Date() });
-      await fixture.repositories.schools.save(new School({ id: "school-a", name: "Files", timeZone: "UTC", ownerSubjectId: actor.subjectId }));
-      await fixture.repositories.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: "school-a", subjectId: actor.subjectId, firstName: "File", lastName: "Owner" }));
+      await fixture.repositories.schools.save(new School(withShortName({ id: "school-a", name: "Files", timeZone: "UTC", ownerSubjectId: actor.subjectId })));
+      await fixture.repositories.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: "school-a", subjectId: actor.subjectId, identifier: "FILE-OWNER", firstName: "File", lastName: "Owner" }));
       const fileStorage = createInMemoryFileStorage();
       const school = new ApiSchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: new PostgresCommandJournal(), notificationGateway: noOpNotificationGateway, fileStorage });
       let authenticated = true;

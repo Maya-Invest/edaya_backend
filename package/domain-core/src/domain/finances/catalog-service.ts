@@ -1,7 +1,8 @@
 import { z } from 'zod'
-
 import { Money } from '../../domain/value-objects/money'
+
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum CatalogServiceCategory {
   Tuition = 'tuition',
@@ -51,6 +52,7 @@ export const catalogServiceBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   category: z.nativeEnum(CatalogServiceCategory).default(CatalogServiceCategory.Tuition),
   autoBilling: autoBillingSchema.default({ mode: 'off' }),
@@ -121,6 +123,7 @@ export class CatalogService {
       schoolId: validated.schoolId,
       academicYearId: validated.academicYearId,
       name: validated.name,
+      shortName: validated.shortName,
       description: validated.description,
       category: validated.category,
       autoBilling: validated.autoBilling,
@@ -137,6 +140,7 @@ export class CatalogService {
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get description() { return this.data.description }
   get category() { return this.data.category }
   get autoBilling() { return this.data.autoBilling }
@@ -157,6 +161,7 @@ export class CatalogService {
       schoolId: this.schoolId,
       academicYearId: this.academicYearId,
       name: this.name,
+      shortName: this.data.shortName,
       description: this.description,
       category: this.category,
       autoBilling: this.autoBilling,

@@ -3,20 +3,16 @@ import { z } from 'zod'
 import { SCHOOL_CREST_PURPOSE, SCHOOL_LOGO_PURPOSE } from '../documents/document-failures'
 import { TimetableGenerationMode } from '../scheduling/timetable-generation-mode'
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema, suggestShortName } from '../shared/visible-identification'
 
 export function deriveSchoolShortName(name: string): string {
-  for (const separator of ['—', ' - ']) {
-    const parts = name.split(separator)
-    if (parts.length > 1 && parts.at(-1)?.trim())
-      return parts.at(-1)!.trim()
-  }
-  return name.trim().split(/\s+/)[0] ?? name.trim()
+  return suggestShortName(name)
 }
 
 const schoolSchemaBase = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
-  shortName: z.string().trim().min(1, 'shortName must not be blank').optional(),
+  shortName: shortNameSchema.optional(),
   timeZone: z.string().trim().min(1, 'timeZone must not be blank').refine((val) => {
     try {
       new Intl.DateTimeFormat('en-US', { timeZone: val }).format()
@@ -93,8 +89,10 @@ export const schoolUpdateSchema = schoolSchemaBase.partial().required({ id: true
 export class School {
   readonly data: SchoolData
 
+  copyWith(changes: Partial<SchoolInput>): School { return new School({ ...this.data, ...changes }) }
+
   constructor(args: SchoolInput) {
-    this.data = parseDomain(schoolSchema, { ...args, shortName: args.shortName ?? deriveSchoolShortName(args.name) })
+    this.data = parseDomain(schoolSchema, args)
   }
 
   get id() { return this.data.id }
@@ -104,7 +102,7 @@ export class School {
   get ownerSubjectId() { return this.data.ownerSubjectId }
   get consortiumId() { return this.data.consortiumId }
   get pendingOwnerStaffId() { return this.data.pendingOwnerStaffId }
-  get shortName() { return this.data.shortName ?? deriveSchoolShortName(this.name) }
+  get shortName() { return this.data.shortName ?? this.name }
   get country() { return this.data.country }
   get city() { return this.data.city }
   get enforceScheduleConflicts() { return this.data.enforceScheduleConflicts }

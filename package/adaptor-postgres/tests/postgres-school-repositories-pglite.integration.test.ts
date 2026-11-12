@@ -1,6 +1,6 @@
 import type { PGlite } from '@electric-sql/pglite'
 import type { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevel, LessonSession, PeriodDefinition, ReportCardResult, School, Subject, SubjectCategoryEntity, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevel, LessonSession, PeriodDefinition, ReportCardResult, School, Subject, SubjectCategoryEntity, TeacherUnavailability, TeacherUnavailabilityRecurrence, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { usePooledDatabases } from './support/pooled-database'
 
@@ -21,7 +21,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
   })
 
   test('round-trips optional report thresholds without losing three-decimal precision', async () => {
-    const level = new GradeLevel({ id: 'level', schoolId: 'school', name: 'Level', label: 'L', order: 1, reportSettings: [{ academicYearId: 'year', revision: 1, passThreshold: 10.125 }] })
+    const level = new GradeLevel(withShortName({ id: 'level', schoolId: 'school', name: 'Level', shortName: 'L', order: 1, reportSettings: [{ academicYearId: 'year', revision: 1, passThreshold: 10.125 }] }))
     await repos.gradeLevels.save(level)
     expect((await repos.gradeLevels.findById('level'))?.reportSettingsFor('year').passThreshold).toBe(10.125)
     const result = new ReportCardResult({ id: 'threshold-result', gradeLevelId: 'level', academicYearId: 'year', reportConfigurationRevision: 1, studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 0, sectionResults: [], attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, overallAverage: 10.12, passThreshold: 10.125 })
@@ -61,7 +61,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
   })
 
   test('persists and reads schools through PostgresStore', async () => {
-    const school = new School({
+    const school = new School(withShortName({
       id: 'school-1',
       name: 'Edaya Academy',
       timeZone: 'Africa/Douala',
@@ -72,7 +72,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       timetableAllowUnassignedTeacherPlacements: true,
       timetableUseHomeroomTeacherFallback: true,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
-    })
+    }))
 
     await repos.schoolsStore.save(school)
 
@@ -91,18 +91,18 @@ describe('PostgresSchoolRepositories with PGlite', () => {
 
   test('lists and counts schools with repository filters', async () => {
     await repos.schoolsStore.batchSave([
-      new School({
+      new School(withShortName({
         id: 'school-a',
         name: 'North Campus',
         timeZone: 'Africa/Douala',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
-      }),
-      new School({
+      })),
+      new School(withShortName({
         id: 'school-b',
         name: 'South Campus',
         timeZone: 'Africa/Douala',
         createdAt: new Date('2026-01-02T00:00:00.000Z'),
-      }),
+      })),
     ])
 
     await expect(repos.schoolsStore.list({ name: 'North Campus' })).resolves.toHaveLength(1)
@@ -110,31 +110,31 @@ describe('PostgresSchoolRepositories with PGlite', () => {
   })
 
   test('deletes persisted schools by id', async () => {
-    await repos.schoolsStore.save(new School({
+    await repos.schoolsStore.save(new School(withShortName({
       id: 'school-delete',
       name: 'Temporary School',
       timeZone: 'Africa/Douala',
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
-    }))
+    })))
 
     await repos.schoolsStore.delete('school-delete')
     await expect(repos.schoolsStore.findById('school-delete')).resolves.toBeUndefined()
   })
 
   test('round trips timetable preparation fields', async () => {
-    await repos.periodDefinitions.save(new PeriodDefinition({
+    await repos.periodDefinitions.save(new PeriodDefinition(withShortName({
       id: 'period-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
-      label: 'Monday morning',
+      name: 'Monday morning',
       dayOfWeek: DayOfWeek.Monday,
       order: 1,
       startTime: '08:00',
       endTime: '09:00',
       isTeachingSlot: false,
-    }))
-    await repos.subjectCategories.save(new SubjectCategoryEntity({ id: 'category-1', schoolId: 'school-1', name: 'Scientific' }))
-    await repos.subjects.save(new Subject({
+    })))
+    await repos.subjectCategories.save(new SubjectCategoryEntity(withShortName({ id: 'category-1', schoolId: 'school-1', name: 'Scientific' })))
+    await repos.subjects.save(new Subject(withShortName({
       categoryId: 'category-1',
       id: 'subject-1',
       schoolId: 'school-1',
@@ -142,7 +142,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       gradeLevelId: 'grade-1',
       academicYearId: 'year-1',
       periodsPerWeek: 5,
-    }))
+    })))
     await repos.classSubjects.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',

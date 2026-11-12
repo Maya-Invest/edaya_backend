@@ -1,6 +1,9 @@
-import { conversationDetailSchema, conversationRecipientsSchema, conversationSchema, conversationsPageSchema, markConversationReadSchema, replyConversationSchema, resolveConversationSchema, startConversationSchema } from "@edaya/core";
+import { conversationDetailSchema, conversationRecipientsSchema, conversationSchema, conversationsPageSchema, markConversationReadSchema, replyConversationSchema, resolveConversationSchema, startConversationSchema, startTeacherConversationSchema, teacherGuardianRecipientsQuerySchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
 
+export const teacherGuardianQuery = teacherGuardianRecipientsQuerySchema.openapi("TeacherGuardianRecipientsQuery");
+export const teacherGuardianResponse = z.object({ guardians: z.array(z.object({ id: z.string(), name: z.string() })) }).openapi("TeacherGuardianRecipientsResponse");
+export const startTeacherCommand = startTeacherConversationSchema.openapi("StartTeacherConversationCommand");
 export const startConversationCommandSchema = startConversationSchema.openapi("StartConversationCommand");
 export const replyConversationCommandSchema = replyConversationSchema.openapi("ReplyConversationCommand");
 export const resolveConversationCommandSchema = resolveConversationSchema.openapi("ResolveConversationCommand");

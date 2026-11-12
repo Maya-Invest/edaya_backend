@@ -99,7 +99,7 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
             return { stopped: true }
           // This context ends before the first business write; never reuse its facts
           // for a later member or command after persistence changes relationships.
-          const ctx = new ImportBusinessContext(service, currentBatch, [], 'validation')
+          const ctx = new ImportBusinessContext(service, currentBatch, [], 'execution')
           // Recheck the entire affected cohort under the same academic lock as the placement.
           const classId = row.type === 'students' && row.proposed?.['classGroupId']
           if (typeof classId === 'string') {
@@ -147,7 +147,7 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
             const result = (prepared.current && (prepared.effectiveMode === 'S' || unchanged)) ? { targetId: prepared.targetId } : await executeImportRow(new ImportBusinessContext(service, currentBatch), prepared)
             const outcome = prepared.current ? prepared.effectiveMode === 'S' || (unchanged && ['billing', 'payments'].includes(prepared.type)) ? 'skipped' : unchanged && !row.collection ? 'unchanged' : 'updated' : 'created'
             const targetId = String(result['targetId'] ?? prepared.targetId)
-            identities.push({ schoolId: work.schoolId, type: member.type, sourceKey: member.sourceKey, targetId, generatedCode: member.generatedCode, bound: true })
+            identities.push({ schoolId: work.schoolId, type: member.type, sourceKey: member.sourceKey, targetId, bound: true })
             outcomes.push({ schoolId: work.schoolId, batchId: batch.id, rowId: member.id, operationId: member.operationId, inputDigest: member.inputDigest, targetId, outcome, result, completedAt: new Date().toISOString() })
             completedRows.push({ ...member, targetId, outcome, result })
           }

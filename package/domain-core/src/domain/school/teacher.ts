@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { optionalHumanIdentifierSchema } from '../shared/visible-identification'
 
 export const teacherSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
@@ -8,7 +9,7 @@ export const teacherSchema = z.object({
   sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
-  code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  identifier: optionalHumanIdentifierSchema,
   signatureAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -39,7 +40,7 @@ export class Teacher {
   get sourceFullName() { return this.data.sourceFullName }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
-  get code() { return this.data.code }
+  get identifier() { return this.data.identifier }
   get signatureAttachmentId() { return this.data.signatureAttachmentId }
   get photoUrl() { return this.data.photoUrl }
   get email() { return this.data.email }

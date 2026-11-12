@@ -1,4 +1,4 @@
-import { GradeScale } from '@edaya/core'
+import { GradeScale, withShortName } from '@edaya/core'
 import { onboardingDatasetSchema } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { IVORY_COAST_ONBOARDING_DATASET, IVORY_COAST_STRUCTURE_TEMPLATES, loadIvoryCoastFixture, loadIvoryCoastFixtureFromRecords, resolveOnboardingDataset } from '../../../src/onboarding/index'
@@ -21,15 +21,15 @@ describe('canonical onboarding dataset', () => {
     expect(dataset.subjectCategories).toHaveLength(6)
     expect(dataset.templates.flatMap(row => row.gradeLevels)).toHaveLength(12)
   })
-  test('preserves the complete pre-migration legacy template content', () => {
+  test('pins canonical template content with curated short names', () => {
     const legacy = IVORY_COAST_STRUCTURE_TEMPLATES.map(({ subjectCategories: _categories, ...template }) => ({ ...template, subjects: template.subjects.map(({ categoryCode: _code, ...subject }) => subject) }))
     const hash = new Bun.CryptoHasher('sha256').update(JSON.stringify(sorted(legacy))).digest('hex')
-    expect(hash).toBe('88d4ac07db25b65a5a4501a5f10389d918bffb172622acff65012d33eecafb46')
+    expect(hash).toBe('0963a0795352379ae6de15b058aa594ba807f2b25da39e5e9968694e485a7831')
   })
   test('stores the requested nine bands and classifies every boundary', () => {
     const preset = dataset.gradeScales[0]!
     expect(preset.ranges.map(row => row.label)).toEqual(['Très-faible', 'Faible', 'Très-insuffisant', 'Insuffisant', 'Passable', 'Assez-Bien', 'Bien', 'Très-Bien', 'Excellent'])
-    const scale = new GradeScale({ ...preset, id: preset.code, schoolId: 'test', ranges: preset.ranges.map(row => ({ id: row.code, letter: row.code, minScore: row.minScore, maxScore: row.maxScore, interpretation: row.label })) })
+    const scale = new GradeScale(withShortName({ ...preset, id: preset.code, schoolId: 'test', ranges: preset.ranges.map(row => ({ id: row.code, letter: row.code, minScore: row.minScore, maxScore: row.maxScore, interpretation: row.label })) }))
     for (const [index, range] of preset.ranges.entries()) {
       expect(scale.findRange(range.minScore)?.letter).toBe(range.code)
       expect(scale.findRange(range.maxScore - 0.01)?.letter).toBe(range.code)

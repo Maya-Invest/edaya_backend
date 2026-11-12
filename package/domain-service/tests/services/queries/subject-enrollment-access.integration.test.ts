@@ -1,6 +1,7 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { AttendanceRecord, AttendanceStatus, LessonSession, noOpNotificationGateway, Permission, StaffPermissionAssignment } from '@edaya/core'
 import { expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -14,8 +15,8 @@ test('student participation queries retain assigned-subject teacher scope and fa
     await seedAuthorizationRelationships(fixture.db)
     const identity = { schoolId: 'school-a', subjectId: 'person-a', academicYearId: 'year-a', requestId: 'participation-reads', authenticatedAt: new Date() }
     const base = { repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage }
-    const teacher = new SchoolService({ ...base, actor: createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }) })
-    const guardian = new SchoolService({ ...base, actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) })
+    const teacher = new SchoolService({ commandJournal: new PostgresCommandJournal(), ...base, actor: createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }) })
+    const guardian = new SchoolService({ commandJournal: new PostgresCommandJournal(), ...base, actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) })
     for (const subject of ['math', 'french']) {
       await fixture.repositories.lessonSessions.save(new LessonSession({ id: `${subject}-lesson`, schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: `${subject}-a`, displayLabel: subject, startsAt: new Date('2026-05-02T09:00:00Z'), endsAt: new Date('2026-05-02T10:00:00Z') }))
     }
@@ -44,7 +45,7 @@ test('enrollment read grants authorize participation reads without unrelated stu
   try {
     await seedAuthorizationRelationships(fixture.db)
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'enrollment-reader', schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission: Permission.ENROLLMENT_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
-    const service = new SchoolService({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, actor: createStaffActorMetadata({ schoolId: 'school-a', subjectId: 'person-a', staffMemberId: 'staff-a', academicYearId: 'year-a', requestId: 'enrollment-read-only', authenticatedAt: new Date() }) })
+    const service = new SchoolService({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, actor: createStaffActorMetadata({ schoolId: 'school-a', subjectId: 'person-a', staffMemberId: 'staff-a', academicYearId: 'year-a', requestId: 'enrollment-read-only', authenticatedAt: new Date() }) })
     expect((await service.getStudentSubjectEnrollments({ studentId: 'student-a' })).enrollments).toHaveLength(2)
     expect((await service.getClassSubjectRoster({ classSubjectId: 'math-a', at: new Date('2026-05-01') })).basis).toBe('unavailable')
     await expect(service.getStudentSubjectEnrollments({ studentId: 'student-other' })).rejects.toBeInstanceOf(AuthorizationError)

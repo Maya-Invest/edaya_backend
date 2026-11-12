@@ -1,9 +1,11 @@
 import type { ActorMetadata } from '@edaya/authorization'
+import type { AtomicExecutionPort } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { noOpFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
+import { saveHumanFixture } from '../../../test-support/human-fixtures'
 
 export type FailableRepository
   = | 'classSubjectMatterRepository'
@@ -73,6 +75,7 @@ export function buildSchoolApplication(opts: {
   return new SchoolApplication({
     atomicExecution: opts.atomicExecution,
     commandJournal: new PostgresCommandJournal(),
+
     repositories: opts.repositories,
     notificationGateway: noOpNotificationGateway,
     fileStorage: noOpFileStorage,
@@ -80,19 +83,22 @@ export function buildSchoolApplication(opts: {
   })
 }
 
-export async function seedDefaultStaffMember(repos: SchoolRepositories, actor: ActorMetadata, owner: boolean) {
+export async function seedDefaultStaffMember(repos: SchoolRepositories, actor: ActorMetadata, owner: boolean, _atomic: AtomicExecutionPort) {
   if (actor.kind === 'staff') {
     if (owner) {
-      await repos.schools.save(new School({ id: actor.schoolId, name: 'Fixture school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+      await repos.schools.save(new School(withShortName({ id: actor.schoolId, name: 'Fixture school', timeZone: 'UTC', ownerSubjectId: actor.subjectId })))
     }
-    await repos.staffMembers.save(new StaffMember({
+    const staff = new StaffMember({
       id: actor.staffMemberId,
       schoolId: actor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
       accountKind: actor.accountKind,
-      ...(actor.accountKind === 'human' ? { subjectId: actor.subjectId } : { serviceId: 'fixture-service' }),
-    }))
+      ...(actor.accountKind === 'human' ? { subjectId: actor.subjectId } : { serviceId: 'fixture-service', name: 'Fixture service', shortName: 'Fixture' }),
+    })
+    if (staff.accountKind === 'service')
+      await repos.staffMembers.save(staff)
+    else await saveHumanFixture(repos.staffMembers, staff)
   }
 }
 

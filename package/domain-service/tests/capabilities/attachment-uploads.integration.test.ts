@@ -1,5 +1,5 @@
 import { createStaffActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, School, StaffMember } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, School, StaffMember, withShortName } from '@edaya/core'
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { completeAttachmentUpload, createAttachmentUpload } from '../../src/capabilities/files/attachment-uploads'
 import { createTestApp } from '../support/create-test-app'
@@ -61,7 +61,7 @@ describe('persisted attachment upload admission', () => {
   test('rejects colliding identities across schools without returning database details', async () => {
     const intent = await createAttachmentUpload(fixture.app.baseService, input)
     const original = (await fixture.schoolRepositories.attachmentUploads.find('school', intent.attachmentId))!
-    await fixture.schoolRepositories.schools.save(new School({ id: 'another-school', name: 'Other school', timeZone: 'UTC' }))
+    await fixture.schoolRepositories.schools.save(new School(withShortName({ id: 'another-school', name: 'Other school', timeZone: 'UTC' })))
     await expect(fixture.atomicExecution.execute(() => fixture.schoolRepositories.attachmentUploads.create({
       ...original,
       schoolId: 'another-school',
@@ -78,7 +78,7 @@ describe('persisted attachment upload admission', () => {
     fixture.app.baseService.fileStorage.putObject = async (value) => {
       const result = await originalPut(value)
       const school = (await fixture.schoolRepositories.schools.findById('school'))!
-      await fixture.schoolRepositories.schools.save(new School({ ...school.data, ownerSubjectId: 'revoked-owner' }))
+      await fixture.schoolRepositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: 'revoked-owner' })))
       return result
     }
     const completion = { ...input, id: intent.attachmentId, schoolId: 'school', storageKey: intent.storageKey, uploadedById: 'forged-uploader', createdAt: new Date(0) }
@@ -86,7 +86,7 @@ describe('persisted attachment upload admission', () => {
     expect(await fixture.schoolRepositories.attachments.findById(intent.attachmentId)).toBeUndefined()
     fixture.app.baseService.fileStorage.putObject = originalPut
     const school = (await fixture.schoolRepositories.schools.findById('school'))!
-    await fixture.schoolRepositories.schools.save(new School({ ...school.data, ownerSubjectId: 'admin-user' }))
+    await fixture.schoolRepositories.schools.save(new School(withShortName({ ...school.data, ownerSubjectId: 'admin-user' })))
     const attachment = await completeAttachmentUpload(fixture.app.baseService, completion)
     expect(attachment.uploadedById).toBe('admin')
     expect(attachment.createdAt.getTime()).toBeGreaterThan(0)

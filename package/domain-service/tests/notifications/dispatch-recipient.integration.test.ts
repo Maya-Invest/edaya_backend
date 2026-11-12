@@ -125,13 +125,13 @@ describe('delayed notification dispatch uses current business facts', () => {
   async function sourceRecords() {
     await fixture.db.exec('UPDATE assessments SET marks_status = \'submitted\' WHERE id = \'assessment-math\'')
     await fixture.db.exec(`
-      INSERT INTO grade_scales (id, school_id, name, min_score, max_score, ranges, is_default, created_at) VALUES ('scale', 'school-a', 'Scale', 0, 20, '[]', true, NOW());
+      INSERT INTO grade_scales (id, school_id, name, short_name, min_score, max_score, ranges, is_default, created_at) VALUES ('scale', 'school-a', 'Scale', 'Scale', 0, 20, '[]', true, NOW());
       INSERT INTO report_card_results (id, student_id, class_group_id, period_id, grade_level_id, academic_year_id, report_configuration_revision, section_results, attendance_summary, assessment_result_count, status, generated_at, published_at)
         VALUES ('report', 'student-a', 'class-a', 'period-a', 'level-a', 'year-a', 0, '[]', '{"presentCount":0,"absenceCount":0,"excusedAbsenceCount":0,"lateCount":0}', 1, 'published', NOW(), NOW());
       INSERT INTO calendar_events (id, school_id, academic_year_id, title, start_date, end_date, kind, is_non_school_day, scope_kind, scope_id, created_at)
         VALUES ('calendar', 'school-a', 'year-a', 'Class event', NOW() + INTERVAL '1 day', NOW() + INTERVAL '2 days', 'event', false, 'class_group', 'class-a', NOW());
-      INSERT INTO activities (id, school_id, name, category, coach, schedule, participants, capacity, description, start_date, end_date, created_at)
-        VALUES ('activity', 'school-a', 'Football', 'Sport', 'Coach', 'Monday', 1, 20, 'Sport', NOW() + INTERVAL '1 day', NOW() + INTERVAL '2 days', NOW());
+      INSERT INTO activities (id, school_id, name, short_name, category, coach, schedule, participants, capacity, description, start_date, end_date, created_at)
+        VALUES ('activity', 'school-a', 'Football', 'Football', 'Sport', 'Coach', 'Monday', 1, 20, 'Sport', NOW() + INTERVAL '1 day', NOW() + INTERVAL '2 days', NOW());
       INSERT INTO activity_enrollments VALUES ('activity-enrollment', 'activity', 'student-a', 'approved', NOW());
       INSERT INTO incidents (id, school_id, title, description, date, kind, reporter_id, class_group_id, status, created_at, updated_at)
         VALUES ('incident', 'school-a', 'Notice', 'Details', NOW(), 'minor_infraction', 'staff-a', 'class-a', 'open', NOW(), NOW());

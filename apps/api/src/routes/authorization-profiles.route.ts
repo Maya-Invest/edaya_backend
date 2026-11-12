@@ -42,14 +42,14 @@ export const getAuthorizationProfilesRoute = createRoute({
 });
 
 export const getAuthorizationProfilesHandler: AppRouteHandler<typeof getAuthorizationProfilesRoute> = async (c) => {
-  const session = await resolveAuthenticatedSession(c.req.raw.headers, c.var.identityClient);
+  const session = await resolveAuthenticatedSession(c.req.raw.headers, c.var.identityClient, true);
   if (!session) {
     return unauthorizedResponse(c);
   }
 
   try {
     const repositories = c.get("schoolApp").repositories;
-    const identities = await listIdentitiesForSubject(repositories, session.user.id);
+    const identities = (await listIdentitiesForSubject(repositories, session.user.id)).filter(i => !session.teacherScope || (i.kind === "teacher" && i.schoolId === session.teacherScope.schoolId && i.actorId === session.teacherScope.teacherId));
     const schoolIds = [...new Set(identities.map(identity => identity.schoolId))];
     const schools = schoolIds.length > 0
       ? await repositories.schools.findByIds(schoolIds)

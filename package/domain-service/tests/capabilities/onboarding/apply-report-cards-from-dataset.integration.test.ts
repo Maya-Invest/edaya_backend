@@ -10,7 +10,7 @@ describe('onboarding report-card scales', () => {
     test(`creates immediately editable continuous intervals on a ${maximum}-point scale`, async () => {
       const f = await createReportCardContext()
       const dataset = resolveOnboardingDataset('ci-general-secondary', '1.0.0')
-      await applyReportCardsFromDataset({ repositories: f.repositories, forActor: () => f.service } as unknown as OnboardingSchoolApplication, createTestStaffActor('sch1', 'user1'), {
+      await applyReportCardsFromDataset({ repositories: f.repositories, commandExecution: f.service.baseService.commandExecution, forActor: () => f.service } as unknown as OnboardingSchoolApplication, createTestStaffActor('sch1', 'user1'), {
         schoolId: 'sch1',
         academicYearId: 'ay1',
         dataset,

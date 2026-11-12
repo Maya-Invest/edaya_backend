@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, autoBillingSchema, CatalogServiceStatus, ChargeStatus, ClassGroup, EnrollmentEndReason, GradeLevel, PaymentMethod, Permission, PlacementStatus, ServiceEnrollmentSource, StaffMember, StaffPermissionAssignment, Student, StudentAcademicYearProfile, StudentClassEnrollment } from '@edaya/core'
+import { AcademicYear, autoBillingSchema, CatalogServiceStatus, ChargeStatus, ClassGroup, EnrollmentEndReason, GradeLevel, PaymentMethod, Permission, PlacementStatus, ServiceEnrollmentSource, StaffMember, StaffPermissionAssignment, Student, StudentAcademicYearProfile, StudentClassEnrollment, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { dispatchAutoBilling } from '../../../src/capabilities/finance/durable-auto-billing'
 import { createTestApp } from '../../support/create-test-app'
@@ -7,11 +7,11 @@ import { createTestApp } from '../../support/create-test-app'
 async function fixture(count = 1) {
   const ctx = await createTestApp()
   const repos = ctx.schoolRepositories
-  await repos.academicYears.save(new AcademicYear({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-  await repos.gradeLevels.save(new GradeLevel({ id: 'grade', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 1 }))
-  await repos.gradeLevels.save(new GradeLevel({ id: 'other-grade', schoolId: 'school', name: 'Grade 7', label: 'G7', order: 2 }))
-  await repos.classGroups.save(new ClassGroup({ id: 'class', schoolId: 'school', academicYearId: 'year', gradeLevelId: 'grade', name: '6A' }))
-  await repos.placementStatuses.save(new PlacementStatus({ id: 'status', schoolId: 'school', code: 'A', label: 'A' }))
+  await repos.academicYears.save(new AcademicYear(withShortName({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+  await repos.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade', schoolId: 'school', name: 'Grade 6', shortName: 'G6', order: 1 })))
+  await repos.gradeLevels.save(new GradeLevel(withShortName({ id: 'other-grade', schoolId: 'school', name: 'Grade 7', shortName: 'G7', order: 2 })))
+  await repos.classGroups.save(new ClassGroup(withShortName({ id: 'class', schoolId: 'school', academicYearId: 'year', gradeLevelId: 'grade', name: '6A' })))
+  await repos.placementStatuses.save(new PlacementStatus(withShortName({ id: 'status', schoolId: 'school', shortName: 'A', name: 'A' })))
   for (let i = 0; i < count; i++) {
     const id = `student-${String(i).padStart(3, '0')}`
     await repos.students.save(new Student({ id, schoolId: 'school', firstName: 'Student', lastName: String(i) }))
@@ -138,7 +138,7 @@ describe('automatic billing boundaries', () => {
     const ctx = await fixture(0)
     await ctx.createFee({ mode: 'matching', gradeLevelIds: ['grade'], placementStatusIds: null })
     await ctx.createFee({ mode: 'matching', gradeLevelIds: ['other-grade'], placementStatusIds: null }, 'next-fee')
-    await ctx.repos.classGroups.save(new ClassGroup({ id: 'next-class', schoolId: 'school', academicYearId: 'year', gradeLevelId: 'other-grade', name: '7A' }))
+    await ctx.repos.classGroups.save(new ClassGroup(withShortName({ id: 'next-class', schoolId: 'school', academicYearId: 'year', gradeLevelId: 'other-grade', name: '7A' })))
     await ctx.repos.students.save(new Student({ id: 'student', schoolId: 'school', firstName: 'New', lastName: 'Student' }))
     await ctx.app.studentWorkflow.enrollStudent({ id: 'new-placement', studentId: 'student', classGroupId: 'class', enrolledAt: new Date('2026-01-01') })
     await ctx.drain()
@@ -185,7 +185,7 @@ describe('automatic billing boundaries', () => {
     await ctx.app.financeWorkflow.activateCatalogService({ id: 'draft', requestId: 'activate' })
     await ctx.drain()
     expect(await ctx.repos.studentCharges.count()).toBe(1)
-    await ctx.repos.gradeLevels.save(new GradeLevel({ id: 'foreign', schoolId: 'other-school', name: 'Foreign', label: 'F', order: 1 }))
+    await ctx.repos.gradeLevels.save(new GradeLevel(withShortName({ id: 'foreign', schoolId: 'other-school', name: 'Foreign', shortName: 'F', order: 1 })))
     await expect(ctx.createFee({ mode: 'matching', gradeLevelIds: ['foreign'], placementStatusIds: null })).rejects.toMatchObject({ code: 'AUTO_BILLING_GRADE_INVALID' })
   })
 
@@ -229,10 +229,10 @@ describe('automatic billing reconciliation coverage', () => {
 
   test('batch profile writes combine filters without accepting another year or school', async () => {
     const ctx = await fixture(2)
-    await ctx.repos.academicYears.save(new AcademicYear({ id: 'other-year', schoolId: 'school', name: 'Other year', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31') }))
+    await ctx.repos.academicYears.save(new AcademicYear(withShortName({ id: 'other-year', schoolId: 'school', name: 'Other year', startDate: new Date('2027-01-01'), endDate: new Date('2027-12-31') })))
     await ctx.repos.studentAcademicYearProfiles.save(new StudentAcademicYearProfile({ id: 'wrong-year-profile', schoolId: 'school', studentId: 'student-000', academicYearId: 'other-year', placementStatusId: 'status' }))
     await ctx.repos.students.save(new Student({ id: 'foreign-student', schoolId: 'foreign-school', firstName: 'Foreign', lastName: 'Student' }))
-    await ctx.repos.classGroups.save(new ClassGroup({ id: 'foreign-class', schoolId: 'foreign-school', academicYearId: 'year', gradeLevelId: 'grade', name: 'Foreign' }))
+    await ctx.repos.classGroups.save(new ClassGroup(withShortName({ id: 'foreign-class', schoolId: 'foreign-school', academicYearId: 'year', gradeLevelId: 'grade', name: 'Foreign' })))
     await ctx.repos.enrollments.save(new StudentClassEnrollment({ id: 'foreign-placement', studentId: 'foreign-student', classGroupId: 'foreign-class', academicYearId: 'year', enrollmentIndex: 1 }))
     await ctx.createFee({ mode: 'matching', gradeLevelIds: ['grade', 'other-grade'], placementStatusIds: ['status'] })
     await ctx.drain()

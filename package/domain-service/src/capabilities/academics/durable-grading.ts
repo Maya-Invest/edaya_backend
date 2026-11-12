@@ -2,7 +2,7 @@ import type { ClaimedDurableWork, GradingPolicy } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
 import type { SchoolApplication } from '../../services/school-application'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { GradeLevel, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus } from '@edaya/core'
+import { GradeLevel, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, withShortName } from '@edaya/core'
 import { schoolCommandScope } from '../../services/commands/school-command-scope'
 import { AssessmentsServiceWorkflow } from '../../services/workflows/assessments'
 import { DurableWorkFailure, runDurableWorkBatch } from '../scheduling-jobs/durable-work'
@@ -127,7 +127,7 @@ async function runPage(application: Pick<SchoolApplication, 'forActor'>, work: C
           cursor = { phase: 'reports', classId: pending, assessmentId: '', afterId: '' }
       }
       nextId = cursor.phase === 'done' ? undefined : crypto.randomUUID()
-      const updated = new GradeLevel({ ...level.data, gradingPolicies: level.gradingPolicies.map(row => row === policy ? { ...row, cursor, workId: nextId, status: cursor.phase === 'done' ? 'completed' : 'updating', failureCode: undefined } : row) })
+      const updated = new GradeLevel(withShortName({ ...level.data, gradingPolicies: level.gradingPolicies.map(row => row === policy ? { ...row, cursor, workId: nextId, status: cursor.phase === 'done' ? 'completed' : 'updating', failureCode: undefined } : row) }))
       await base.repositories.gradeLevels.forSchool!(work.schoolId).save(updated)
       return { id: level.id }
     },
@@ -149,7 +149,7 @@ export async function dispatchGradingRecalculation(application: Pick<SchoolAppli
         await base.atomicExecution.execute(async () => {
           const level = await base.repositories.gradeLevels.forSchool!(work.schoolId).findById(work.resourceId)
           if (level)
-            await base.repositories.gradeLevels.forSchool!(work.schoolId).save(new GradeLevel({ ...level.data, gradingPolicies: level.gradingPolicies.map(row => row.workId === work.id ? { ...row, status: 'failed', failureCode: 'GRADING_UPDATE_FAILED' } : row) }))
+            await base.repositories.gradeLevels.forSchool!(work.schoolId).save(new GradeLevel(withShortName({ ...level.data, gradingPolicies: level.gradingPolicies.map(row => row.workId === work.id ? { ...row, status: 'failed', failureCode: 'GRADING_UPDATE_FAILED' } : row) })))
         }, { lockKeys: [academicStateLock(work.schoolId)] })
         throw error
       }

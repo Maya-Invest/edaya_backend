@@ -331,7 +331,7 @@ export async function provisionServiceAccountForTests(
   application: ApiSchoolApplication,
   input: {
     serviceId: string;
-    displayName: string;
+    name: string;
     permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[];
     elevated?: boolean;
     creatorStaffId?: string;
@@ -382,6 +382,16 @@ export async function signInWithBearerThroughApp(
     sub: subjectForEmail(input.email),
     email: input.email,
     email_verified: true,
+    iss: pgliteEnv.API_ORIGIN,
+    aud: pgliteEnv.API_ORIGIN,
+  });
+}
+
+export async function signInPhoneWithBearerForTests(phone: string): Promise<string> {
+  return signTestIdentityToken(await loadTestIdentityKeys(), {
+    sub: `phone:${phone}`,
+    phone,
+    phone_verified: true,
     iss: pgliteEnv.API_ORIGIN,
     aud: pgliteEnv.API_ORIGIN,
   });

@@ -1,39 +1,33 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SQL } from 'drizzle-orm'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, transactionContext } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, transactionContext } from '@edaya/adaptor-postgres'
 import { createStaffActorMetadata, createSystemActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, noOpFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { dispatchPrivateFileCleanup, preparePrivateFileCleanup, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
   throw new Error('Use the disposable native test runner')
 const handles = await Promise.all([createPostgresSchoolDatabase(url), createPostgresSchoolDatabase(url)])
-const stores = handles.map(handle => new PostgresSchoolRepositories(handle.db))
+const stores = handles.map(handle => createFixtureRepositories(handle.db))
 const atomics = handles.map(handle => new PostgresAtomicExecution(handle.db as PostgresTransactionalDb))
 const actor = createStaffActorMetadata({ schoolId: 'cleanup-school', staffMemberId: 'cleanup-staff', subjectId: 'cleanup-owner', requestId: 'native-cleanup', authenticatedAt: new Date() })
 const staff = new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, firstName: 'Cleanup', lastName: 'Owner', subjectId: actor.subjectId })
 const deleted: string[] = []
 interface Executor { execute: (query: SQL) => Promise<unknown> }
-const applications = handles.map((handle, index) => new SchoolApplication({
-  repositories: stores[index]!,
-  atomicExecution: atomics[index]!,
-  commandJournal: new PostgresCommandJournal(),
-  durableWork: new PostgresDurableWork(handle.db as Executor),
-  notificationGateway: noOpNotificationGateway,
-  fileStorage: { ...noOpFileStorage, async deleteObject(key) {
-    expect(transactionContext.getStore()).toBeUndefined()
-    expect((await stores[index]!.schools.findById(actor.schoolId))?.id).toBe(actor.schoolId)
-    deleted.push(key)
-  } },
-}))
+const applications = handles.map((handle, index) => new SchoolApplication({ repositories: stores[index]!, atomicExecution: atomics[index]!, commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handle.db as Executor), notificationGateway: noOpNotificationGateway, fileStorage: { ...noOpFileStorage, async deleteObject(key) {
+  expect(transactionContext.getStore()).toBeUndefined()
+  expect((await stores[index]!.schools.findById(actor.schoolId))?.id).toBe(actor.schoolId)
+  deleted.push(key)
+} } }))
 const cleanupActor = createSystemActorMetadata({ schoolId: actor.schoolId, systemId: 'preparePrivateFileCleanup', requestId: 'prepare', reason: 'test' })
 const prepare = (index: number) => preparePrivateFileCleanup({ service: applications[index]!.forActor(cleanupActor), actor: cleanupActor, asOf: new Date() })
 beforeAll(async () => {
   await stores[0]!.init({ driver: 'node-postgres' })
-  await stores[0]!.schools.save(new School({ id: actor.schoolId, name: 'Cleanup', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+  await stores[0]!.schools.save(new School(withShortName({ id: actor.schoolId, name: 'Cleanup', timeZone: 'UTC', ownerSubjectId: actor.subjectId })))
   await stores[0]!.staffMembers.save(staff)
 })
 afterAll(() => Promise.all(handles.map(handle => handle.dispose())))

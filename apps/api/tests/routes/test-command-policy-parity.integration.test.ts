@@ -1,6 +1,6 @@
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, MessageDelivery, MessageDeliveryStatus, Permission, School, StaffMember, StaffPermissionAssignment, SubjectMatter, withShortName } from "@edaya/core";
 import type { SchoolCommandKey } from "@edaya/service";
 import { ActorAssuranceLevel, AuthorizationError, createServiceStaffActorMetadata, createStaffActorMetadata, createSystemActorMetadata } from "@edaya/authorization";
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, MessageDelivery, MessageDeliveryStatus, Permission, School, StaffMember, StaffPermissionAssignment, SubjectMatter } from "@edaya/core";
 import { dispatchSchoolCommand } from "@edaya/service";
 import { expect, test } from "bun:test";
 import { coreCommands } from "@/lib/school-api/registry";
@@ -21,16 +21,16 @@ test.each(["human", "service"] as const)("%s command caller receives the same de
   const actor = kind === "human" ? createStaffActorMetadata(identity) : createServiceStaffActorMetadata(identity);
   const { app, school, repositories } = await createNativePolicyApp(actor);
   const ownerSchool = (await repositories.schools.findById("school-a"))!;
-  await repositories.schools.save(new School({ ...ownerSchool.data, ownerSubjectId: "person-a" }));
+  await repositories.schools.save(new School(withShortName({ ...ownerSchool.data, ownerSubjectId: "person-a" })));
   if (kind === "service") {
     const before = (await repositories.staffMembers.findById("staff-a"))!;
-    await repositories.staffMembers.save(new StaffMember({ ...before.data, subjectId: undefined, accountKind: "service", serviceId: "integration", serviceElevated: true }));
+    await repositories.staffMembers.save(new StaffMember({ ...before.data, subjectId: undefined, accountKind: "service", identifier: undefined, name: "Integration", shortName: "Integration", serviceId: "integration", serviceElevated: true }));
   }
-  await repositories.subjectMatters.save(new SubjectMatter({ id: "matter", subjectId: "math", name: "Numbers", sequenceOrder: 1 }));
+  await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: "matter", subjectId: "math", name: "Numbers", sequenceOrder: 1 })));
   await repositories.announcements.save(new Announcement({ id: "announcement", schoolId: "school-a", title: "News", content: "School news", status: AnnouncementStatus.Published, publishedAt: new Date() }));
   await repositories.announcementTargets.save(new AnnouncementTarget({ id: "target", announcementId: "announcement", targetKind: AnnouncementTargetKind.School }));
   await repositories.messageDeliveries.save(new MessageDelivery({ id: "delivery", schoolId: "school-a", subjectId: "person-a", title: "Notice", body: "Body" }));
-  await repositories.staffMembers.save(new StaffMember({ id: "invitee", schoolId: "school-a", firstName: "Invited", lastName: "Staff", email: "invitee@example.com" }));
+  await repositories.staffMembers.save(new StaffMember({ id: "invitee", identifier: "INVITEE", schoolId: "school-a", firstName: "Invited", lastName: "Staff", email: "invitee@example.com" }));
   await repositories.accountInvitations.save(new AccountInvitation({ id: "invitation", schoolId: "school-a", kind: AccountInvitationKind.Staff, targetId: "invitee", contactChannel: AccountInvitationContactChannel.Email, contactValue: "invitee@example.com", tokenHash: hashInvitationToken("invitation-token"), expiresAt: new Date("2999-01-01"), createdByStaffId: "staff-a" }));
 
   for (const { method, input } of commands) {
@@ -63,7 +63,7 @@ test("scoped service imports retain action isolation, both placements, validity 
   const actor = createServiceStaffActorMetadata(identity);
   const { school, repositories } = await createNativePolicyApp(actor);
   const before = (await repositories.staffMembers.findById("staff-a"))!;
-  const profile = new StaffMember({ ...before.data, subjectId: undefined, accountKind: "service", serviceId: "integration" });
+  const profile = new StaffMember({ ...before.data, subjectId: undefined, accountKind: "service", identifier: undefined, name: "Integration", shortName: "Integration", serviceId: "integration" });
   await repositories.staffMembers.save(profile);
   const update = new StaffPermissionAssignment({ id: "update", schoolId: "school-a", staffId: "staff-a", academicYearId: "year-a", permission: Permission.ACADEMIC_PROGRAM_MANAGE, scopes: [{ kind: "class_group", classGroupId: "class-a" }] });
   await repositories.staffPermissionAssignments.save(update);
@@ -87,7 +87,7 @@ test("missing delivery retries still require an admitted caller and its action",
   const actor = createStaffActorMetadata(identity);
   const { school, repositories } = await createNativePolicyApp(actor);
   const ownerSchool = (await repositories.schools.findById("school-a"))!;
-  await repositories.schools.save(new School({ ...ownerSchool.data, ownerSubjectId: "person-a" }));
+  await repositories.schools.save(new School(withShortName({ ...ownerSchool.data, ownerSubjectId: "person-a" })));
   const event = { deliveryId: "missing", status: MessageDeliveryStatus.Sent } as const;
   await expect(school.forActor(actor).communicationsWorkflow.applyDeliveryEvent(event)).rejects.toBeInstanceOf(AuthorizationError);
   for (const systemId of ["unknown-job", "expireAccountInvitations"]) {
@@ -98,6 +98,6 @@ test("missing delivery retries still require an admitted caller and its action",
   await expect(school.forActor(webhook).communicationsWorkflow.applyDeliveryEvent(event)).resolves.toBeUndefined();
   const service = createServiceStaffActorMetadata(identity);
   const before = (await repositories.staffMembers.findById("staff-a"))!;
-  await repositories.staffMembers.save(new StaffMember({ ...before.data, subjectId: undefined, accountKind: "service", serviceId: "integration" }));
+  await repositories.staffMembers.save(new StaffMember({ ...before.data, subjectId: undefined, accountKind: "service", identifier: undefined, name: "Integration", shortName: "Integration", serviceId: "integration" }));
   await expect(school.forActor(service).communicationsWorkflow.applyDeliveryEvent(event)).rejects.toBeInstanceOf(AuthorizationError);
 });

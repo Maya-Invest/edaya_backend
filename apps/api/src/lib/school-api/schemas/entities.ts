@@ -1,7 +1,7 @@
 import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, CatalogInstallmentTemplate, CatalogServiceInput, ChargeInstallment, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, DocumentIssuanceInput, GradeLevelInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, PlacementStatusInput, ReportCardResultInput, ReportModuleInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffManualPermissionAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StaffPermissionProfileBindingInput, StaffPermissionProfileInput, StaffPermissionScopeDefaultsInput, StudentAcademicYearProfileInput, StudentChargeInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, StudentPhotoSubmissionInput, StudentServiceEnrollmentInput, StudentSubjectEnrollmentInput, StudentYearAccountInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAcademicYearProfileInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from "@edaya/core";
-import { academicDisciplineSchema, academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeScaleSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, placementStatusSchema, reportCardResultSchema, reportCardSnapshotSchema, reportModuleSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentAcademicYearProfileSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentSubjectEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, teacherAcademicYearProfileSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
+import { academicDisciplineSchema, academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeScaleSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, placementStatusSchema, reportCardResultSchema, reportCardResultSectionBaseSchema, reportCardSnapshotSchema, reportModuleSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentAcademicYearProfileSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentSubjectEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, teacherAcademicYearProfileSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
-import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
+import { createQueryOptionsSchema, field, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
 
 // ==========================================================
 // 1. All Domain Entities Response OpenAPI Schemas
@@ -65,8 +65,14 @@ export const assessmentResultResponseSchema = responseSchema<AssessmentResultInp
 export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema));
 export const gradeScaleResponseSchema = responseSchema<GradeScaleInput>("GradeScale", unwrapShape(gradeScaleSchema));
 export const reportModuleResponseSchema = responseSchema<ReportModuleInput>("ReportModule", unwrapShape(reportModuleSchema));
-export const reportCardResultSectionSchema = lazySchema(() => coreReportCardResultSectionSchema)
-  .openapi("ReportCardResultSection", { type: "object" });
+const reportSubjectResultSchema = z.object({
+  ...reportCardResultSectionBaseSchema.shape,
+  subResults: z.array(z.unknown()).max(0).default([]),
+}).openapi("ReportSubjectResult");
+export const reportCardResultSectionSchema = z.object({
+  ...reportCardResultSectionBaseSchema.shape,
+  subResults: z.array(reportSubjectResultSchema).default([]),
+}).openapi("ReportCardResultSection");
 export const reportCardSnapshotResponseSchema = z.object({
   ...objectFromSchema(reportCardSnapshotSchema).shape,
   sectionResults: z.array(reportCardResultSectionSchema),
@@ -140,7 +146,7 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
-  code: field.string(),
+  identifier: field.string(),
   isActive: field.boolean(),
 });
 
@@ -149,7 +155,7 @@ export const teacherQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
-  code: field.string(),
+  identifier: field.string(),
   email: field.string(),
   isActive: field.boolean(),
 });
@@ -376,7 +382,7 @@ export const subjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
-  code: field.string(),
+  shortName: field.string(),
   categoryId: field.id(),
 });
 
@@ -484,7 +490,7 @@ export const studentQuerySchema = createQueryOptionsSchema({
   firstName: field.string(),
   lastName: field.string(),
   status: field.string(),
-  matricule: field.string(),
+  identifier: field.string(),
 });
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
@@ -500,7 +506,7 @@ export const guardianQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
-  code: field.string(),
+  identifier: field.string(),
   email: field.string(),
 });
 
@@ -579,10 +585,10 @@ export const staffManualPermissionAssignmentResponseSchema = responseSchema<Staf
 export const staffManualPermissionAssignmentQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id(), permission: field.string(), status: field.string() });
 
 export const academicDisciplineResponseSchema = responseSchema<AcademicDisciplineInput>("AcademicDiscipline", unwrapShape(academicDisciplineSchema));
-export const academicDisciplineQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), code: field.id(), isActive: field.boolean() });
+export const academicDisciplineQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), shortName: field.string(), name: field.string(), isActive: field.boolean() });
 
 export const placementStatusResponseSchema = responseSchema<PlacementStatusInput>("PlacementStatus", unwrapShape(placementStatusSchema));
-export const placementStatusQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), code: field.id(), isActive: field.boolean() });
+export const placementStatusQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), shortName: field.string(), name: field.string(), isActive: field.boolean() });
 
 export const studentAcademicYearProfileResponseSchema = responseSchema<StudentAcademicYearProfileInput>("StudentAcademicYearProfile", unwrapShape(studentAcademicYearProfileSchema));
 export const studentAcademicYearProfileQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), academicYearId: field.id(), studentId: field.id() });

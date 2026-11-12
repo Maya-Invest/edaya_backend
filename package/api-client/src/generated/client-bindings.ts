@@ -933,6 +933,11 @@ export const clientBindings = {
         "requestSchemaName": "UpdateClassGroupConfigurationCommand",
         "responseSchemaName": "ClassGroup"
       },
+      "correctHumanIdentifier": {
+        "publicName": "correct-human-identifier",
+        "requestSchemaName": "CorrectHumanIdentifierCommand",
+        "responseSchemaName": "CorrectedHumanIdentifier"
+      },
       "registerStaffMember": {
         "publicName": "register-staff-member",
         "requestSchemaName": "RegisterStaffMemberCommand",
@@ -1278,6 +1283,11 @@ export const clientBindings = {
         "requestSchemaName": "RecordTeacherAttendanceArrivalCommand",
         "responseSchemaName": "TeacherWorkflowStateResponse"
       },
+      "recordTeacherAttendanceDeparture": {
+        "publicName": "record-teacher-attendance-departure",
+        "requestSchemaName": "RecordTeacherAttendanceDepartureCommand",
+        "responseSchemaName": "TeacherAttendanceDepartureResponse"
+      },
       "reviseAssessmentMarksCorrection": {
         "publicName": "revise-assessment-marks-correction",
         "requestSchemaName": "ReviseAssessmentMarksCorrectionCommand",
@@ -1287,6 +1297,11 @@ export const clientBindings = {
         "publicName": "manage-student-subject-enrollments",
         "requestSchemaName": "ManageStudentSubjectEnrollmentsCommand",
         "responseSchemaName": "ManageStudentSubjectEnrollmentsResponse"
+      },
+      "startTeacherConversation": {
+        "publicName": "start-teacher-conversation",
+        "requestSchemaName": "StartTeacherConversationCommand",
+        "responseSchemaName": "ConversationResponse"
       },
       "startConversation": {
         "publicName": "start-conversation",
@@ -1900,6 +1915,11 @@ export const clientBindings = {
         "requestSchemaName": "GetTeacherWorkflowStateQuery",
         "responseSchemaName": "TeacherWorkflowEligibilityResponse"
       },
+      "listTeacherGuardianRecipients": {
+        "publicName": "list-teacher-guardian-recipients",
+        "requestSchemaName": "TeacherGuardianRecipientsQuery",
+        "responseSchemaName": "TeacherGuardianRecipientsResponse"
+      },
       "listConversationRecipients": {
         "publicName": "list-conversation-recipients",
         "requestSchemaName": "ConversationRecipientsQuery",
@@ -1929,6 +1949,11 @@ export const clientBindings = {
         "publicName": "get-activity-roster",
         "requestSchemaName": "GetActivityRosterQuery",
         "responseSchemaName": "ActivityRosterResponse"
+      },
+      "getTeacherSubjectPeriodSummary": {
+        "publicName": "get-teacher-subject-period-summary",
+        "requestSchemaName": "GetTeacherSubjectPeriodSummaryQuery",
+        "responseSchemaName": "TeacherSubjectPeriodSummaryResponse"
       },
       "getAssessmentEditorContext": {
         "publicName": "get-assessment-editor-context",
@@ -2177,6 +2202,13 @@ export const clientBindings = {
         "responseSchemaName": "AuthOutcome",
         "basePath": "root"
       },
+      "teacherCode": {
+        "method": "POST",
+        "path": "/auth/edaya/teacher-code",
+        "requestSchemaName": "AuthTeacherCodeLogin",
+        "responseSchemaName": "AuthOutcome",
+        "basePath": "root"
+      },
       "verifyOtp": {
         "method": "POST",
         "path": "/auth/edaya/otp/verify",
@@ -2270,6 +2302,24 @@ export const clientBindings = {
       }
     },
     "imports": {
+      "candidates": {
+        "method": "POST",
+        "path": "imports/candidates",
+        "requestSchemaName": "SchoolImportCandidatesRequest",
+        "responseSchemaName": "SchoolImportCandidates"
+      },
+      "resolve": {
+        "method": "POST",
+        "path": "imports/resolve",
+        "requestSchemaName": "ResolveSchoolImportRequest",
+        "responseSchemaName": "SchoolImportDetail"
+      },
+      "export": {
+        "method": "POST",
+        "path": "imports/export",
+        "requestSchemaName": "ExportSchoolImportRequest",
+        "responseSchemaName": "SchoolImportExport"
+      },
       "create": {
         "method": "POST",
         "path": "imports/create",
@@ -2344,6 +2394,23 @@ export const clientBindings = {
       }
     },
     "authorization": {
+      "teacherQuickCodeOptions": {
+        "method": "GET",
+        "path": "teachers/{teacherId}/quick-login-code",
+        "pathParams": [
+          "teacherId"
+        ],
+        "responseSchemaName": "TeacherQuickCodeOptions"
+      },
+      "issueTeacherQuickCode": {
+        "method": "POST",
+        "path": "teachers/{teacherId}/quick-login-code",
+        "pathParams": [
+          "teacherId"
+        ],
+        "requestSchemaName": "TeacherQuickCodeIssue",
+        "responseSchemaName": "TeacherQuickCodeDelivery"
+      },
       "effectiveGrants": {
         "method": "GET",
         "path": "authorization/effective-grants",

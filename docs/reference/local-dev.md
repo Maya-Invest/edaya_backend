@@ -139,6 +139,22 @@ Opens automatically at `http://127.0.0.1:8192`.
 |---------|-----|
 | School browser fails to open PGlite | Stop `bun run repo dev` first — the API holds the lock on `.data/school` |
 
+## Identifier and import-reference local cutover
+
+Migration `0054_visible_identification.sql` requires all affected school tables to be empty. It rejects existing records before changing their schema. Do not edit historical migrations or apply this cutover to populated production data.
+
+After backend, client and integration verification, stop the local API and back up the configured school store (normally `.data/school`). Retain the separate identity store (`.data/identity`) and record its existing account IDs before the reset. Use the school-only reset owned by the seed command; do not remove the whole `.data` directory.
+
+For the documented local fixture authentication mode, run:
+
+```sh
+AUTH_TERMS_MODE=off bun repo ops seed local --clean --yes
+```
+
+The command refuses an already running local API, resets only the school database, starts a temporary matching API with OTP capture, seeds through HTTP and stops its owned services. The identity database is retained. `AUTH_TERMS_MODE=off` is restricted to this local fixture run; ordinary development uses the configured terms mode. Alternatively use explicitly authenticated fixture sessions as described in the seeding README.
+
+Restart the matching API and clients. Verify people directories, creation with omitted and supplied identifiers, onboarding, ambiguous import selection and export/re-import. Run the seed again without `--clean` and compare entity/source bindings to confirm replay preserves internal identities. Keep the backup until the cutover smoke checks pass.
+
 ## Dev database seed
 
 Seeding targets both local deployments: the unified API at `http://localhost:9999`. Each service owns its database. After starting the API, run `bun repo ops seed` in another terminal to load demo data.
@@ -234,7 +250,7 @@ Before opening a pull request, run `bun run verify`. For integration coverage (p
 
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
-| `bun repo ops seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun run repo dev`, `rm -rf .data`, restart, `bun repo ops seed` |
+| `bun repo ops seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop the local API, back up the school store, then use the school-only reset procedure above; retain `.data/identity` |
 | `POST /auth/edaya/otp/start` fails | Identity database empty or identity service unavailable | Start the unified API on port 9999, then run the full seed |
 | Sign-in succeeds but app shows “Session API indisponible” | Identity subject exists but the school actor is not linked | Run the full seed against identity and school |
 | `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun run repo dev` |
@@ -273,3 +289,9 @@ Stop with Ctrl-C: the server clears captured codes and closes its database. The 
 Only the testing entry exposes `GET /auth/edaya/testing/capabilities` and `POST /auth/edaya/testing/otp` with `{challenge}`. Both return `Cache-Control: no-store`; pending challenges only, with original recent session authorization for linking. The normal application returns 404 for these routes and the removed `/auth/edaya/dev/last-otp` route in every environment. No migration or hosted testing deployment is required.
 
 For a complete disposable school/Identity/files stack, run `bun run repo ci fixture /absolute/consumer/path -- <command> [arguments]` from the acquired backend checkout. The supervisor starts owned services, injects their configuration into the command, and removes private files and processes on success, failure, or cancellation. Set `EDAYA_FIXTURE_SEED=true` to prepare the complete demo fixture. Ports can be selected with `EDAYA_CI_API_PORT` and `EDAYA_CI_FILES_PORT`. Frontend `bun run repo test integration` and mobile `dart run edaya_repo:repo ci integration` acquire their service inputs from the already prepared client record and manage this lifecycle automatically. Never upload private mailbox files or disposable environment files.
+
+### Teacher quick login
+
+Local staff with access-control management can generate a code in the linked teacher’s account section. The loopback development launcher exposes **Show code** when local OTP capture is enabled and both databases are local. A restart clears the reveal buffer. Generate a replacement to see it again. Local capture supports email testing without a provider. SMS requires a configured route.
+
+Teacher quick-code issuance is enabled by default in all environments. Set `TEACHER_QUICK_LOGIN_ENABLED=false` to disable staff issuance. For a hosted release, apply Account migration `0003_teacher_quick_codes` before deploying the matching API and clients. Code reveal is available only on the loopback development launcher with local capture enabled.

@@ -26,7 +26,7 @@ export interface GradeLevelSeedRecord {
   schoolId: string
   name: string
   /** Stem used to build class names (`6ème` → `6ème 1`). */
-  label: string
+  shortName: string
   order: number
   cycle?: string
 }
@@ -53,7 +53,7 @@ export interface PeriodDefinitionSeedRecord {
   id: string
   schoolId: string
   academicYearId: string
-  label: string
+  name: string
   dayOfWeek: DayOfWeek
   order: number
   startTime: string

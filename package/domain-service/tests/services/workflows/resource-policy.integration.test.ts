@@ -1,6 +1,7 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Activity, ActivityCategory, ActivitySession, Assessment, AssessmentKind, BusinessRuleViolationError, LessonSession, noOpNotificationGateway, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, ScheduleKind, StaffPermissionAssignment } from '@edaya/core'
+import { Activity, ActivityCategory, ActivitySession, Assessment, AssessmentKind, BusinessRuleViolationError, LessonSession, noOpNotificationGateway, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, ScheduleKind, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -23,11 +24,11 @@ describe('resource policies and atomic placement invariants', () => {
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     for (const id of ['room', 'other-room', 'foreign-room'])
-      await fixture.repositories.resources.save(new Resource({ id, schoolId: id === 'foreign-room' ? 'school-b' : 'school-a', name: id, kind: ResourceKind.Location }))
+      await fixture.repositories.resources.save(new Resource(withShortName({ id, schoolId: id === 'foreign-room' ? 'school-b' : 'school-a', name: id, kind: ResourceKind.Location })))
     await fixture.repositories.lessonSessions.save(new LessonSession({ id: 'lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', startsAt, endsAt, displayLabel: 'Math' }))
-    await fixture.repositories.activities.save(new Activity({ id: 'club', schoolId: 'school-a', name: 'Club', category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: 'Club', startDate: startsAt, endDate: endsAt }))
+    await fixture.repositories.activities.save(new Activity(withShortName({ id: 'club', schoolId: 'school-a', name: 'Club', category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: 'Club', startDate: startsAt, endDate: endsAt })))
     await fixture.repositories.schedules.save(new Schedule({ id: 'activity-schedule', schoolId: 'school-a', classGroupId: 'class-a', scheduleKind: ScheduleKind.Activity, activityId: 'club', title: 'Club', isRecurring: false, specificDate: startsAt, startTime: '08:00', endTime: '09:00' }))
     await fixture.repositories.activitySessions.save(new ActivitySession({ id: 'activity', schoolId: 'school-a', classGroupId: 'class-a', scheduleId: 'activity-schedule', activityId: 'club', startsAt, endsAt, displayLabel: 'Club' }))
     await fixture.repositories.assessments.save(new Assessment({ id: 'exam', classGroupId: 'class-a', classSubjectId: 'math-a', periodId: 'period-a', title: 'Exam', kind: AssessmentKind.Quiz, maxScore: 20, startsAt, endsAt }))
@@ -112,7 +113,7 @@ describe('resource policies and atomic placement invariants', () => {
   test.each(['teacher', 'guardian', 'student'] as const)('%s selection never inherits same-login owner resource authority', async (kind) => {
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'; UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
     const actor = kind === 'teacher' ? createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }) : kind === 'guardian' ? createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) : createStudentActorMetadata({ ...identity, studentId: 'student-a' })
-    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await expect(service.baseService.entities.resources.list()).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.baseService.entities.resourceAssignments.save(new ResourceAssignment({ id: 'new', resourceId: 'room', lessonSessionId: 'lesson' }))).rejects.toBeInstanceOf(AuthorizationError)
   })

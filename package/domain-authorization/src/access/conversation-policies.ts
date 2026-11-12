@@ -37,7 +37,7 @@ export class ConversationAccessPolicy {
     return false
   }
 
-  async teaching(row: ConversationPlacement, facts = this.facts()): Promise<boolean> {
+  async teaching(row: Pick<ConversationPlacement, 'teacherId' | 'studentId' | 'assignmentIds'>, facts = this.facts()): Promise<boolean> {
     if (!row.teacherId || !row.studentId)
       return false
     const teacher = await facts.repository('teachers').findById(row.teacherId)
@@ -131,6 +131,36 @@ export class ConversationAccessPolicy {
       return teacher.assignmentIds
     }
     return []
+  }
+
+  async familyContacts(studentId: string, classGroupId: string) {
+    const actor = this.access.actor
+    const facts = this.facts()
+    await facts.validateActor()
+    if (actor.kind !== 'teacher')
+      return denied()
+    const student = await facts.repository('students').findById(studentId)
+    if (student?.status !== StudentStatus.Active)
+      return denied()
+    const assignments = await facts.list('teacherAssignments', { teacherId: actor.teacherId, status: TeacherAssignmentStatus.Active })
+    const assignmentIds: string[] = []
+    for (const assignment of assignments) {
+      const subject = assignment.classSubjectId ? await facts.repository('classSubjects').findById(assignment.classSubjectId) : undefined
+      if ((assignment.classGroupId ?? subject?.classGroupId) !== classGroupId)
+        continue
+      if (await this.teaching({ teacherId: actor.teacherId, studentId, assignmentIds: [assignment.id] }, facts))
+        assignmentIds.push(assignment.id)
+    }
+    if (!assignmentIds.length)
+      return denied()
+    const links = await facts.list('guardianLinks', { studentId })
+    const guardians = []
+    for (const guardianId of new Set(links.map(link => link.guardianId))) {
+      const guardian = await facts.repository('guardians').findById(guardianId)
+      if (guardian?.hasAccess && guardian.subjectId)
+        guardians.push({ id: guardian.id, name: guardian.fullName })
+    }
+    return { assignmentIds, guardians: guardians.sort((a, b) => a.name.localeCompare(b.name)) }
   }
 
   async eligibleTeachers(studentId: string) {

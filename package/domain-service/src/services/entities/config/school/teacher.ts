@@ -5,7 +5,7 @@ import type { EntityConfigFactory } from '../../entity-config'
 import { AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, DEFAULT_PROFILE_PHOTO_MAX_BYTES, parseAttachmentIdFromContentUrl, PROFILE_PHOTO_JPEG_MIME, TEACHER_PORTRAIT_PURPOSE } from '@edaya/core'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
-import { assertUniquePersonCode } from '../person-code-uniqueness'
+import { assertUniqueHumanIdentifier } from '../human-identifier-uniqueness'
 
 // Extracted from domain/school/teacher.ts (PR3)
 export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
@@ -31,13 +31,13 @@ async function validateTeacherSave(
 ): Promise<void> {
   if (teacher.signatureAttachmentId !== existing?.signatureAttachmentId)
     throw new BusinessRuleViolationError('TEACHER_SIGNATURE_COMMAND_REQUIRED', 'Signatures require the teacher signature commands')
-  await assertUniquePersonCode({
-    code: teacher.code,
+  await assertUniqueHumanIdentifier({
+    identifier: teacher.identifier,
     schoolId: teacher.schoolId,
     entityId: teacher.id,
-    errorCode: 'TEACHER_CODE_ALREADY_EXISTS',
+    errorCode: 'IDENTIFIER_UNAVAILABLE',
     entityLabel: 'Teacher',
-    findCandidates: code => repositories.teachers.list({ schoolId: teacher.schoolId, code: { $normalizedCandidate: code } }),
+    findCandidates: identifier => repositories.teachers.list({ schoolId: teacher.schoolId, identifier: { $normalizedCandidate: identifier } }),
   })
   await validateTeacherPortrait(teacher, repositories)
 }

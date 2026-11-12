@@ -1,5 +1,5 @@
 import type { NotificationGatewayPort } from '@edaya/core'
-import { BusinessRuleViolationError, ClassSubject, DisciplinaryAction, DisciplinaryActionKind, Guardian, GuardianStudentLink, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, RecordingNotificationGateway, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, Subject } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, DisciplinaryAction, DisciplinaryActionKind, Guardian, GuardianStudentLink, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, RecordingNotificationGateway, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, Subject, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { INCIDENT_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import { createStudentTransitionContext } from './student-workflow-context'
@@ -7,12 +7,12 @@ import { createStudentTransitionContext } from './student-workflow-context'
 async function createBehaviorContext({ existingInvolvement = false, activeEnrollment = true, incidentStatus = IncidentStatus.Open, catalogActionSchoolId = 'sch1', lessonSessionScope = false, notificationGateway = noOpNotificationGateway }: { existingInvolvement?: boolean, activeEnrollment?: boolean, incidentStatus?: IncidentStatus, catalogActionSchoolId?: string, lessonSessionScope?: boolean, notificationGateway?: NotificationGatewayPort } = {}) {
   const fixture = await createStudentTransitionContext({ notificationGateway, activeEnrollmentId: activeEnrollment ? 'enr1' : '' })
   const { repositories } = fixture
-  await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject', schoolId: 'sch1', name: 'Math' }))
+  await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject', schoolId: 'sch1', name: 'Math' })))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject' }))
   await repositories.lessonSessions.save(new LessonSession({ id: 'sess1', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Math', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z') }))
   await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', subjectId: 'subject:gua1' }))
   await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link', schoolId: 'sch1', studentId: 'stu1', guardianId: 'gua1', relationship: 'parent' }))
-  await repositories.disciplinaryActions.save(new DisciplinaryAction({ id: 'da1', schoolId: catalogActionSchoolId, name: 'Detention' }))
+  await repositories.disciplinaryActions.save(new DisciplinaryAction(withShortName({ id: 'da1', schoolId: catalogActionSchoolId, name: 'Detention' })))
   await repositories.incidents.save(new Incident({ id: 'inc1', schoolId: 'sch1', title: 'Hall incident', description: 'Incident description', date: new Date('2026-05-01T10:00:00Z'), kind: IncidentKind.MinorInfraction, reporterId: 'user1', classGroupId: lessonSessionScope ? undefined : 'cg1', lessonSessionId: lessonSessionScope ? 'sess1' : undefined, status: incidentStatus, resolvedAt: incidentStatus === IncidentStatus.Resolved ? new Date('2026-05-01T11:00:00Z') : undefined, resolvedByStaffId: incidentStatus === IncidentStatus.Resolved ? 'user1' : undefined }))
   if (existingInvolvement)
     await repositories.studentIncidentInvolvements.save(new StudentIncidentInvolvement({ id: 'involvement-existing', incidentId: 'inc1', studentId: 'stu1', role: IncidentInvolvementRole.Subject }))

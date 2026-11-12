@@ -3,6 +3,7 @@ import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, c
 import { Announcement, AnnouncementStatus, AnnouncementTarget, BusinessRuleViolationError, MessageDelivery, Permission, MessageDeliveryRecipientKind as Recipient, RecordingNotificationGateway, StaffPermissionAssignment, MessageDeliveryStatus as Status, AnnouncementTargetKind as Target } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, cancelNotificationDeliveries, deliverNotification } from '../../../src/capabilities/notifications'
@@ -30,7 +31,7 @@ describe('communications workflows with production policies and transactions', (
   })
 
   function service(actor: SchoolScopedActorMetadata = staff) {
-    return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage, accountInvitationsEnabled: false })
+    return new SchoolService({ commandJournal: new PostgresCommandJournal(), actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage, accountInvitationsEnabled: false })
   }
   async function announcement(kind: Target = Target.School, targetId?: string, extra = {}) {
     const record = new Announcement({ id: 'announcement', schoolId: 'school-a', title: 'News', content: 'School news', status: AnnouncementStatus.Draft, ...extra })

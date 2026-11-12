@@ -135,7 +135,7 @@ function mapSubjectRow(
   section: ReportCardResultSection,
   kind: ReportCardV1SubjectRow['kind'],
   locale: string,
-  classSize?: number,
+  _classSize?: number,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
   teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
@@ -150,8 +150,8 @@ function mapSubjectRow(
     average: `${formatNumber(section.average, locale, section.grading?.decimalPlaces)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
     coefficient: kind === 'subject' ? (section.coefficient === undefined ? '—' : String(section.coefficient)) : String(section.weight),
     total: formatNumber(total, locale),
-    ...(section.rank !== undefined && classSize !== undefined
-      ? { rank: formatRank(section.rank, classSize, locale) }
+    ...(section.rank !== undefined
+      ? { rank: section.participantCount ? formatRank(section.rank, section.participantCount, locale) : `${section.rank} / —` }
       : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
     ...(teacherName ? { teacherName } : {}),
@@ -257,7 +257,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     ...(input.schoolYear ? { schoolYear: input.schoolYear } : {}),
     ...(input.classLabel ? { classLabel: catalogClassName(input.classLabel, lang) } : {}),
     ...(input.result.classSize !== undefined ? { classSize: String(input.result.classSize) } : {}),
-    ...(input.student.matricule ? { matricule: input.student.matricule } : {}),
+    ...(input.student.identifier ? { matricule: input.student.identifier } : {}),
     ...(input.student.birthDate ? { birthDate: formatDate(input.student.birthDate, locale) } : {}),
     ...(input.student.placeOfBirth ? { birthPlace: input.student.placeOfBirth } : {}),
     ...(input.student.nationality ? { nationality: input.student.nationality } : {}),

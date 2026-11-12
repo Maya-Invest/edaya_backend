@@ -1,6 +1,6 @@
 import type { SchoolRepositories } from '@edaya/service'
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, Announcement, AnnouncementTarget, AttachmentOwnerKind, BusinessRuleViolationError, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ChargeStatus, ClassGroup, DayOfWeek, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentHealthProfile, StudentNote, StudentNoteVisibility, StudentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core'
+import { AcademicYear, Announcement, AnnouncementTarget, AttachmentOwnerKind, BusinessRuleViolationError, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ChargeStatus, ClassGroup, DayOfWeek, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentHealthProfile, StudentNote, StudentNoteVisibility, StudentStatus, AnnouncementTargetKind as TargetKind, withShortName } from '@edaya/core'
 import { validateAttachmentSave, validateCalendarEventSave, validateLessonSessionSave, validateScheduleSave, validateStaffAssignmentSave, validateStudentSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
@@ -192,14 +192,14 @@ describe('entity config edge gates', () => {
       .toBeInstanceOf(BusinessRuleViolationError)
 
     const { app, repositories: store } = await createTestApp(actor, { owner: true })
-    const year = new AcademicYear({
+    const year = new AcademicYear(withShortName({
       id: 'year-1',
       schoolId: 'school',
       name: '2026',
       startDate: new Date('2026-01-01'),
       endDate: new Date('2026-12-31'),
       status: 'published',
-    })
+    }))
     const student = new Student({
       id: 'student-delete',
       schoolId: 'school',
@@ -254,9 +254,9 @@ describe('entity config edge gates', () => {
     })
     const teacherContext = await createTestApp(teacherActor)
     await teacherContext.repositories.studentRepository.save(student)
-    await teacherContext.schoolRepositories.academicYears.save(new AcademicYear({ id: 'year-note', schoolId: 'school', name: 'Notes year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-    await teacherContext.schoolRepositories.gradeLevels.save(new GradeLevel({ id: 'grade-note', schoolId: 'school', name: 'Grade', label: 'G', order: 1 }))
-    await teacherContext.schoolRepositories.classGroups.save(new ClassGroup({ id: 'teacher-class', schoolId: 'school', academicYearId: 'year-note', gradeLevelId: 'grade-note', name: 'Class' }))
+    await teacherContext.schoolRepositories.academicYears.save(new AcademicYear(withShortName({ id: 'year-note', schoolId: 'school', name: 'Notes year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+    await teacherContext.schoolRepositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade-note', schoolId: 'school', name: 'Grade', shortName: 'G', order: 1 })))
+    await teacherContext.schoolRepositories.classGroups.save(new ClassGroup(withShortName({ id: 'teacher-class', schoolId: 'school', academicYearId: 'year-note', gradeLevelId: 'grade-note', name: 'Class' })))
     await teacherContext.schoolRepositories.enrollments.save(new StudentClassEnrollment({ id: 'teacher-enrollment', studentId: student.id, classGroupId: 'teacher-class', academicYearId: 'year-note', enrollmentIndex: 1 }))
     await teacherContext.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'notes', schoolId: 'school', academicYearId: 'year-note', staffId: 'teacher', permission: Permission.STUDENT_NOTE_MANAGE, scopes: [{ kind: 'class_group', classGroupId: 'teacher-class' }] }))
 
@@ -336,7 +336,7 @@ describe('entity config edge gates', () => {
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
     }))
-    await standardCoordinator.schoolRepositories.academicYears.save(new AcademicYear({ id: 'health-year', schoolId: 'school', name: 'Health year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+    await standardCoordinator.schoolRepositories.academicYears.save(new AcademicYear(withShortName({ id: 'health-year', schoolId: 'school', name: 'Health year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
     await standardCoordinator.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'health-update', schoolId: 'school', academicYearId: 'health-year', staffId: 'coordinator-standard', permission: Permission.STUDENT_HEALTH_UPDATE, scopes: [{ kind: 'all', grain: 'student' }] }))
     await standardCoordinator.repositories.studentRepository.save(new Student({
       id: 'student-health-standard',
@@ -361,7 +361,7 @@ describe('entity config edge gates', () => {
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Verified,
     }))
-    await verifiedCoordinator.schoolRepositories.academicYears.save(new AcademicYear({ id: 'health-year', schoolId: 'school', name: 'Health year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+    await verifiedCoordinator.schoolRepositories.academicYears.save(new AcademicYear(withShortName({ id: 'health-year', schoolId: 'school', name: 'Health year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
     await verifiedCoordinator.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'health-update', schoolId: 'school', academicYearId: 'health-year', staffId: 'coordinator-verified', permission: Permission.STUDENT_HEALTH_UPDATE, scopes: [{ kind: 'all', grain: 'student' }] }))
     await verifiedCoordinator.repositories.studentRepository.save(new Student({
       id: 'student-health-verified',
@@ -398,13 +398,13 @@ describe('entity config edge gates', () => {
 
     await expect(app.baseService.entities.announcements.delete(announcement.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    const resource = new Resource({
+    const resource = new Resource(withShortName({
       id: 'resource-delete',
       schoolId: 'school',
       name: 'Room A',
       kind: ResourceKind.Location,
       capacity: 20,
-    })
+    }))
     await store.resourceRepository.save(resource)
     await store.resourceAssignmentRepository.save(new ResourceAssignment({
       id: 'resource-assignment-delete',

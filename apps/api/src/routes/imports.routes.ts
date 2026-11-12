@@ -20,11 +20,14 @@ const record = z.record(z.unknown());
 const approval = z.object({ staffMemberId: z.string(), subjectId: z.string(), assuranceLevel: z.enum(["standard", "verified", "strong"]), authenticatedAt: z.string(), approvedAt: z.string(), revision: z.number(), previewDigest: z.string() });
 const batch = z.object({ id: z.string(), schoolId: z.string(), academicYearId: z.string(), createdByStaffId: z.string(), createdBySubjectId: z.string(), defaultOnExisting: mode, enrollmentEffectiveDate: z.string().nullable(), revision: z.number(), state: z.enum(["draft", "validated", "running", "completed", "cancelled"]), previewDigest: z.string().nullable(), workId: z.string().nullable(), approval: approval.nullable(), createdAt: z.string(), updatedAt: z.string() }).openapi("SchoolImportBatch");
 const file = z.object({ id: z.string(), fileId: z.string(), batchId: z.string(), schoolId: z.string(), type: z.enum(IMPORT_TYPES), templateVersion: z.number(), revision: z.number(), fileName: z.string(), storageKey: z.string(), sha256: z.string(), headers: z.array(z.string()), createdAt: z.string() }).openapi("SchoolImportFile");
-const row = z.object({ id: z.string(), batchId: z.string(), schoolId: z.string(), type: z.enum(IMPORT_TYPES), source: z.object({ fileId: z.string(), revisionId: z.string(), row: z.number(), sheet: z.string().optional() }), raw: values, values, generatedCode: z.string().nullable(), targetId: z.string(), sourceKey: z.string(), effectiveMode: mode, inputDigest: z.string(), operationId: z.string(), collection: z.object({ ownerId: z.string(), memberIds: z.array(z.string()), before: z.array(record) }).optional(), dependencies: z.array(z.string()), current: record.nullable(), proposed: record.nullable(), expectedDigest: z.string().nullable(), issues: z.array(z.object({ code: z.string(), column: z.string().optional(), candidates: z.array(z.string()).optional(), severity: z.enum(["error", "warning"]) })), outcome, result: record.nullable() }).openapi("SchoolImportRow");
+const row = z.object({ targetDecision: z.enum(["create", "update"]).optional(), resolvedReferences: z.record(z.string()).optional(), referenceSelections: z.record(z.string()).optional(), id: z.string(), batchId: z.string(), schoolId: z.string(), type: z.enum(IMPORT_TYPES), source: z.object({ fileId: z.string(), revisionId: z.string(), row: z.number(), sheet: z.string().optional() }), raw: values, values, targetId: z.string(), sourceKey: z.string(), effectiveMode: mode, inputDigest: z.string(), operationId: z.string(), collection: z.object({ ownerId: z.string(), memberIds: z.array(z.string()), before: z.array(record) }).optional(), dependencies: z.array(z.string()), current: record.nullable(), proposed: record.nullable(), expectedDigest: z.string().nullable(), issues: z.array(z.object({ replacementColumns: z.array(z.string()).optional(), code: z.string(), column: z.string().optional(), candidates: z.array(z.string()).optional(), severity: z.enum(["error", "warning"]) })), outcome, result: record.nullable() }).openapi("SchoolImportRow");
 const detail = z.object({ batch, files: z.array(file), rows: z.array(row), counts: z.record(z.number()) }).openapi("SchoolImportDetail");
 const download = z.object({ fileName: z.string(), contentType: z.string(), base64: z.string() }).openapi("SchoolImportDownload");
 const identity = z.object({ batchId: z.string().min(1).max(100) }).strict();
 const definitions = {
+  candidates: { request: identity.extend({ rowId: z.string(), field: z.string() }).openapi("SchoolImportCandidatesRequest"), response: z.object({ revision: z.number(), candidates: z.array(z.object({ id: z.string(), name: z.string().optional(), shortName: z.string().optional(), identifier: z.string().optional() })) }).openapi("SchoolImportCandidates") },
+  resolve: { request: identity.extend({ rowId: z.string(), revision: z.number().int(), field: z.string(), targetId: z.string().optional(), decision: z.enum(["create", "update"]).optional() }).openapi("ResolveSchoolImportRequest"), response: detail },
+  export: { request: z.object({ type: z.enum(IMPORT_TYPES), academicYearId: z.string(), after: z.string().optional(), limit: z.number().int().min(1).max(500).optional(), format: z.enum(["csv", "xlsx"]).default("xlsx") }).strict().openapi("ExportSchoolImportRequest"), response: download.extend({ nextCursor: z.string().nullable() }).openapi("SchoolImportExport") },
   create: { request: z.object({ academicYearId: z.string().min(1), defaultOnExisting: mode.default("M"), enrollmentEffectiveDate: z.string().nullable().optional() }).strict().openapi("CreateSchoolImportRequest"), response: batch },
   settings: { request: identity.extend({ defaultOnExisting: mode, enrollmentEffectiveDate: z.string().nullable().optional() }).openapi("UpdateSchoolImportSettingsRequest"), response: batch },
   submit: { request: identity.extend({ fileId: z.string().optional(), type: z.enum(IMPORT_TYPES), fileName: z.string().min(1).max(200), base64: z.string().min(1).max(Math.ceil(IMPORT_MAX_FILE_BYTES / 3) * 4) }).openapi("SubmitSchoolImportFileRequest"), response: file },
@@ -56,6 +59,13 @@ for (const key of Object.keys(definitions) as (keyof typeof definitions)[]) {
       c.header("Vary", "Authorization");
       const run = async () => {
         switch (key) {
+          case "candidates": return service.candidates(definitions.candidates.request.parse(input));
+          case "resolve": return service.resolve(definitions.resolve.request.parse(input));
+          case "export": {
+            const body = definitions.export.request.parse(input);
+            const result = await service.export(body);
+            return { fileName: `${body.type}-v2.${body.format}`, contentType: body.format === "csv" ? "text/csv" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64: Buffer.from(result.bytes).toString("base64"), nextCursor: result.nextCursor };
+          }
           case "create": return service.create(definitions.create.request.parse(input));
           case "settings": return service.settings(definitions.settings.request.parse(input));
           case "submit": {
@@ -87,7 +97,7 @@ for (const key of Object.keys(definitions) as (keyof typeof definitions)[]) {
           }
           case "template": {
             const body = definitions.template.request.parse(input);
-            return { fileName: `${body.type}-v1.${body.format}`, contentType: body.format === "csv" ? "text/csv" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64: Buffer.from(await service.template(body.type, body.format)).toString("base64") };
+            return { fileName: `${body.type}-v2.${body.format}`, contentType: body.format === "csv" ? "text/csv" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64: Buffer.from(await service.template(body.type, body.format)).toString("base64") };
           }
         }
       };

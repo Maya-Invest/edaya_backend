@@ -1,27 +1,13 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SQL } from 'drizzle-orm'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
-import {
-  AcademicYear,
-  AllocationKind,
-  CatalogServiceStatus,
-  ChargeStatus,
-  Guardian,
-  GuardianStudentLink,
-  noOpFileStorage,
-  noOpNotificationGateway,
-  PaymentKind,
-  PaymentMethod,
-  School,
-  StaffMember,
-  Student,
-  studentYearAccountId,
-} from '@edaya/core'
+import { AcademicYear, AllocationKind, CatalogServiceStatus, ChargeStatus, Guardian, GuardianStudentLink, noOpFileStorage, noOpNotificationGateway, PaymentKind, PaymentMethod, School, StaffMember, Student, studentYearAccountId, withShortName } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -39,7 +25,7 @@ const handles = await Promise.all([
   createPostgresSchoolDatabase(url, { max: 1 }),
   createPostgresSchoolDatabase(url, { max: 1 }),
 ])
-const repositories = handles.map(handle => new PostgresSchoolRepositories(handle.db))
+const repositories = handles.map(handle => createFixtureRepositories(handle.db))
 const actor = createStaffActorMetadata({
   schoolId: 'finance-school',
   staffMemberId: 'finance-owner',
@@ -48,13 +34,7 @@ const actor = createStaffActorMetadata({
   authenticatedAt: new Date(),
   assuranceLevel: ActorAssuranceLevel.Strong,
 })
-const applications = handles.map((handle, index) => new SchoolApplication({
-  repositories: repositories[index]!,
-  atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb),
-  commandJournal: new PostgresCommandJournal(),
-  notificationGateway: noOpNotificationGateway,
-  fileStorage: noOpFileStorage,
-}))
+const applications = handles.map((handle, index) => new SchoolApplication({ repositories: repositories[index]!, atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb), commandJournal: new PostgresCommandJournal(), notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage }))
 const services = applications.map(application => application.forActor(actor))
 const repos = repositories[0]!
 const paymentDate = new Date('2026-09-08T00:00:00Z')
@@ -62,15 +42,15 @@ const yearId = 'finance-year'
 
 beforeAll(async () => {
   await repos.init({ driver: 'node-postgres' })
-  await repos.schools.save(new School({ financeCurrency: 'USD', id: actor.schoolId, name: 'Synthetic finance school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+  await repos.schools.save(new School(withShortName({ financeCurrency: 'USD', id: actor.schoolId, name: 'Synthetic finance school', timeZone: 'UTC', ownerSubjectId: actor.subjectId })))
   await repos.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, subjectId: actor.subjectId, firstName: 'Finance', lastName: 'Owner' }))
-  await repos.academicYears.save(new AcademicYear({
+  await repos.academicYears.save(new AcademicYear(withShortName({
     id: yearId,
     schoolId: actor.schoolId,
     name: '2026',
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-12-31'),
-  }))
+  })))
 }, 30000)
 
 afterAll(async () => {

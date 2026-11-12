@@ -57,6 +57,7 @@ export const gradeScales = pgTable('grade_scales', {
   description: text('description'),
   isDefault: boolean('is_default').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('grade_scales', table))
 
 export const reportModules = pgTable('report_modules', {
@@ -69,6 +70,7 @@ export const reportModules = pgTable('report_modules', {
   weightingMode: text('weighting_mode').notNull(),
   explicitWeight: doublePrecision('explicit_weight'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('report_modules', table))
 
 // 32. Report Card Result Table

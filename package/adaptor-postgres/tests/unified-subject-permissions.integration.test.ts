@@ -28,16 +28,16 @@ describe('unified Subject authority', () => {
   }
   test('Subject-wide scope reaches future matching classes while a restriction stays in its class', async () => {
     await fixture.db.exec(`
-      INSERT INTO grade_levels (id, school_id, name, label, order_val, created_at) VALUES ('level-other', 'school-a', 'Other', 'Other', 2, now());
-      INSERT INTO subjects (id, school_id, grade_level_id, academic_year_id, name, category_id, created_at) VALUES ('math-other-grade', 'school-a', 'level-other', 'year-a', 'Math', 'category-a', now());
-      INSERT INTO class_groups (id, school_id, grade_level_id, name, academic_year_id, created_at) VALUES ('other-grade', 'school-a', 'level-other', 'Other', 'year-a', now());
+      INSERT INTO grade_levels (id, school_id, name, short_name, order_val, created_at) VALUES ('level-other', 'school-a', 'Other', 'Other', 2, now());
+      INSERT INTO subjects (id, school_id, grade_level_id, academic_year_id, name, short_name, category_id, created_at) VALUES ('math-other-grade', 'school-a', 'level-other', 'year-a', 'Math', 'Math', 'category-a', now());
+      INSERT INTO class_groups (id, school_id, grade_level_id, name, short_name, academic_year_id, created_at) VALUES ('other-grade', 'school-a', 'level-other', 'Other', 'Other', 'year-a', now());
       INSERT INTO class_subjects (id, class_group_id, subject_id, created_at, completed_percentage) VALUES ('offering-other-grade', 'other-grade', 'math-other-grade', now(), 0);
       INSERT INTO assessments (id, class_group_id, class_subject_id, period_id, title, kind, max_score, coefficient, due_at, created_at) VALUES ('assessment-other-grade', 'other-grade', 'offering-other-grade', 'period-a', 'Math', 'homework', 20, 1, '2026-05-01', now());
     `)
     await grant([subject])
     expect(await visible()).toEqual(['assessment-math', 'assessment-other'])
     await fixture.db.exec(`
-      INSERT INTO class_groups (id, school_id, grade_level_id, name, academic_year_id, created_at) VALUES ('future', 'school-a', 'level-a', 'Future', 'year-a', now());
+      INSERT INTO class_groups (id, school_id, grade_level_id, name, short_name, academic_year_id, created_at) VALUES ('future', 'school-a', 'level-a', 'Future', 'Future', 'year-a', now());
       INSERT INTO class_subjects (id, class_group_id, subject_id, created_at, completed_percentage) VALUES ('math-future', 'future', 'math', now(), 0);
       INSERT INTO assessments (id, class_group_id, class_subject_id, period_id, title, kind, max_score, coefficient, due_at, created_at) VALUES ('assessment-future', 'future', 'math-future', 'period-a', 'Math', 'homework', 20, 1, '2026-05-01', now());
     `)

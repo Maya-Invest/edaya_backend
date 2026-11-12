@@ -1,5 +1,5 @@
 import type { ActivitySession, AttendanceRecord, CalendarEventInput, NotificationGatewayPort, ScheduleInput } from '@edaya/core'
-import { AcademicYear, Activity, ActivityCategory, Attendance, AttendanceMode, CalendarEvent, ClassGroup, ClassSubject, DayOfWeek, GradeLevel, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, Schedule, ScheduleKind, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AcademicYear, Activity, ActivityCategory, Attendance, AttendanceMode, CalendarEvent, ClassGroup, ClassSubject, DayOfWeek, GradeLevel, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, Schedule, ScheduleKind, School, StaffMember, Student, StudentClassEnrollment, Subject, withShortName } from '@edaya/core'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -8,15 +8,15 @@ export async function createSchedulingContext({ classGroupAttendanceMode = Atten
   const actor = createTestStaffActor('sch1', 'user1')
   const fixture = await createTestApp(actor, { owner: true, notificationGateway })
   const repositories = fixture.schoolRepositories
-  await repositories.schools.save(new School({ id: 'sch1', name: 'School', timeZone: 'UTC', ownerSubjectId: actor.subjectId, enforceScheduleConflicts }))
-  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', ...academicYear, status: 'published' }))
-  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: 'sch1', name: 'Grade', label: 'G', order: 1 }))
-  for (const [id, attendanceMode] of [['cg_daily', classGroupAttendanceMode], ['cg_session', AttendanceMode.Session]] as const) await repositories.classGroups.save(new ClassGroup({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: id, attendanceMode }))
+  await repositories.schools.save(new School(withShortName({ id: 'sch1', name: 'School', timeZone: 'UTC', ownerSubjectId: actor.subjectId, enforceScheduleConflicts })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', ...academicYear, status: 'published' })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'grade1', schoolId: 'sch1', name: 'Grade', shortName: 'G', order: 1 })))
+  for (const [id, attendanceMode] of [['cg_daily', classGroupAttendanceMode], ['cg_session', AttendanceMode.Session]] as const) await repositories.classGroups.save(new ClassGroup(withShortName({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', name: id, attendanceMode })))
   for (const [id, name] of [['cs1', 'Math'], ['cs2', 'Science lab'], ['cs3', 'History']] as const) {
-    await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: `subj-${id}`, schoolId: 'sch1', name }))
+    await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'grade1', academicYearId: 'ay1', id: `subj-${id}`, schoolId: 'sch1', name })))
     await repositories.classSubjects.save(new ClassSubject({ id, classGroupId: 'cg_daily', subjectId: `subj-${id}` }))
   }
-  await repositories.activities.save(new Activity({ id: 'act1', schoolId: 'sch1', name: 'Chess Club', category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Thursday', description: 'Chess', participants: 0, capacity: 30, startDate: academicYear.startDate, endDate: academicYear.endDate }))
+  await repositories.activities.save(new Activity(withShortName({ id: 'act1', schoolId: 'sch1', name: 'Chess Club', category: ActivityCategory.Arts, coach: 'Coach', schedule: 'Thursday', description: 'Chess', participants: 0, capacity: 30, startDate: academicYear.startDate, endDate: academicYear.endDate })))
   for (const input of [{ id: 'sched-1', schoolId: 'sch1', classGroupId: 'cg_daily', classSubjectId: 'cs1', scheduleKind: ScheduleKind.Lesson, title: 'Math', isRecurring: true, dayOfWeek: DayOfWeek.Thursday, startTime: '08:00', endTime: '09:00' }, { id: 'sched-chess', schoolId: 'sch1', classGroupId: 'cg_daily', activityId: 'act1', scheduleKind: ScheduleKind.Activity, title: 'Chess', isRecurring: true, dayOfWeek: DayOfWeek.Thursday, startTime: '15:00', endTime: '16:00' }, { id: 'sched-other', schoolId: 'sch1', classGroupId: 'cg_daily', classSubjectId: 'cs2', scheduleKind: ScheduleKind.Lesson, title: 'Science', isRecurring: true, dayOfWeek: DayOfWeek.Thursday, startTime: '08:30', endTime: '09:30' }, ...schedules]) await repositories.schedules.save(new Schedule(input))
   await repositories.lessonSessions.save(new LessonSession({ id: 'ses1', schoolId: 'sch1', classGroupId: 'cg_daily', scheduleId: 'sched-1', classSubjectId: 'cs1', displayLabel: 'Math', startsAt: new Date('2026-05-28T08:00:00Z'), endsAt: new Date('2026-05-28T09:00:00Z') }))
   for (const session of Object.values(extraLessonSessions)) await repositories.lessonSessions.save(session)

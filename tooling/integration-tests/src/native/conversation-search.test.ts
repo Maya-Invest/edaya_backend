@@ -1,5 +1,5 @@
 import type { Conversation } from '@edaya/core'
-import { conversationsQuerySchema, School } from '@edaya/core'
+import { conversationsQuerySchema, School, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { fixture } from './support/marks-fixture'
 
@@ -14,7 +14,7 @@ test('conversation search covers authorized history and participants before coun
   }
   for (const [index, id] of ids.entries()) await save(id, index)
   await save(f.id('forbidden-thread'), 0)
-  await f.r.schools.save(new School({ id: 'other-school', name: 'Other school', timeZone: 'UTC', ownerSubjectId: f.id('other-owner'), financeCurrency: 'XOF' }))
+  await f.r.schools.save(new School(withShortName({ id: 'other-school', name: 'Other school', timeZone: 'UTC', ownerSubjectId: f.id('other-owner'), financeCurrency: 'XOF' })))
   await save(f.id('other-school'), 0, 'other-school')
   const scope = { schoolId: f.id('school'), ids: [...ids, f.id('other-school')], profileKind: 'staff' as const, profileId: f.id('editor') }
   const query = (input: Parameters<typeof conversationsQuerySchema.parse>[0]) => conversationsQuerySchema.parse(input)

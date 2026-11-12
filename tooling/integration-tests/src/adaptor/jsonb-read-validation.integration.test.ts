@@ -1,7 +1,7 @@
 import type { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import type { drizzle } from 'drizzle-orm/pglite'
 import { Permission } from '@edaya/authorization'
-import { CatalogService, CatalogServiceStatus, DomainValidationError, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { CatalogService, CatalogServiceStatus, DomainValidationError, StaffMember, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { createDatabasePool } from '../../../../package/adaptor-postgres/tests/support/database-pool'
@@ -21,7 +21,7 @@ describe('[Postgres PGlite] JSONB read validation', () => {
   })
 
   test('CatalogService rejects corrupt billing terms JSON on read', async () => {
-    await repos.catalogServices.save(new CatalogService({
+    await repos.catalogServices.save(new CatalogService(withShortName({
       id: 'fee-corrupt-1',
       schoolId: 'school',
       academicYearId: 'year-1',
@@ -30,7 +30,7 @@ describe('[Postgres PGlite] JSONB read validation', () => {
       currency: 'XAF',
       billingTerms: { kind: 'one_time', installments: [] },
       status: CatalogServiceStatus.Draft,
-    }))
+    })))
 
     await db.execute(sql`
       UPDATE catalog_services
@@ -44,6 +44,7 @@ describe('[Postgres PGlite] JSONB read validation', () => {
   test('StaffPermissionAssignment rejects invalid permission on read', async () => {
     await repos.staffMembers.save(new StaffMember({
       id: 'staff-1',
+      identifier: 'STAFF-1',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Lovelace',
@@ -64,6 +65,7 @@ describe('[Postgres PGlite] JSONB read validation', () => {
   test('StaffPermissionAssignment rejects invalid typed scopes on read', async () => {
     await repos.staffMembers.save(new StaffMember({
       id: 'staff-2',
+      identifier: 'STAFF-2',
       schoolId: 'school',
       firstName: 'Grace',
       lastName: 'Hopper',

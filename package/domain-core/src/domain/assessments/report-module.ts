@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export const reportModuleWeightingModeSchema = z.enum(['subject_coefficients', 'explicit'])
 export type ReportModuleWeightingMode = z.infer<typeof reportModuleWeightingModeSchema>
@@ -10,6 +11,7 @@ export const reportModuleBaseSchema = z.object({
   gradeLevelId: z.string().trim().min(1),
   academicYearId: z.string().trim().min(1),
   name: z.string().trim().min(1),
+  shortName: shortNameSchema.optional(),
   order: z.number().int().positive(),
   weightingMode: reportModuleWeightingModeSchema.default('subject_coefficients'),
   explicitWeight: z.number().finite().positive().nullish().transform(value => value ?? undefined),
@@ -26,12 +28,15 @@ export type ReportModuleData = z.infer<typeof reportModuleSchema>
 /** One flat result group belonging to one grade level and academic year. */
 export class ReportModule {
   readonly data: ReportModuleData
+  copyWith(changes: Partial<ReportModuleInput>): ReportModule { return new ReportModule({ ...this.data, ...changes }) }
+
   constructor(input: ReportModuleInput) { this.data = parseDomain(reportModuleSchema, input) }
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get gradeLevelId() { return this.data.gradeLevelId }
   get academicYearId() { return this.data.academicYearId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get order() { return this.data.order }
   get weightingMode() { return this.data.weightingMode }
   get explicitWeight() { return this.data.explicitWeight }

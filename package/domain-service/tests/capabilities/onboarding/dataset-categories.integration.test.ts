@@ -1,9 +1,7 @@
-import { AcademicDiscipline, AcademicYear, defaultSubjectCategoryId, SubjectCategoryEntity } from '@edaya/core'
+import { SubjectCategoryEntity, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { ensureDatasetSubjectCategories, requireSubjectCategory } from '../../../src/capabilities/academics/dataset-subject-categories'
-import { applyStructureTemplate } from '../../../src/capabilities/onboarding/apply-structure-template'
 import { createTestApp } from '../../support/create-test-app'
-import { createOnboardingTestDataset } from '../../support/onboarding-dataset'
 import { createPlatformRegisterTestActor } from '../../support/test-actor'
 
 const catalog = [{ code: 'SCI', name: 'Scientifique' }, { code: 'ART', name: 'Arts' }]
@@ -16,42 +14,40 @@ describe('dataset-owned categories', () => {
     await expect(requireSubjectCategory(fixture.schoolRepositories, school.id, 'missing')).rejects.toMatchObject({ code: 'SUBJECT_CATEGORY_NOT_FOUND' })
     expect(await fixture.schoolRepositories.subjectCategories.count()).toBe(0)
   })
-  test('reuses deterministic IDs and same-school names without renaming user records', async () => {
+  test('binds dataset keys to opaque IDs without merging duplicate display names', async () => {
     const fixture = await createTestApp()
     const schoolId = (await fixture.schoolRepositories.schools.list())[0]!.id
-    const id = defaultSubjectCategoryId(schoolId, 'Scientifique')
-    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity({ id, schoolId, name: 'Renamed science' }))
-    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity({ id: 'custom-art', schoolId, name: 'Arts' }))
-    const first = await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, catalog)
-    const second = await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, catalog)
+    const id = 'user-science'
+    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity(withShortName({ id, schoolId, name: 'Renamed science' })))
+    await fixture.schoolRepositories.subjectCategories.save(new SubjectCategoryEntity(withShortName({ id: 'custom-art', schoolId, name: 'Arts' })))
+    const first = await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, catalog, fixture.application.commandExecution)
+    const second = await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, catalog, fixture.application.commandExecution)
     expect(first).toEqual(second)
-    expect(first.get('SCI')).toBe(id)
-    expect(first.get('ART')).toBe('custom-art')
+    expect(first.get('SCI')).not.toBe(id)
+    expect(first.get('ART')).not.toBe('custom-art')
     expect((await fixture.schoolRepositories.subjectCategories.findById(id))!.name).toBe('Renamed science')
-    expect(await fixture.schoolRepositories.subjectCategories.count()).toBe(2)
+    expect(await fixture.schoolRepositories.subjectCategories.count()).toBe(4)
     await expect(requireSubjectCategory(fixture.schoolRepositories, 'another-school', id)).rejects.toMatchObject({ code: 'SUBJECT_CATEGORY_NOT_FOUND' })
   })
   test('category initialization rolls back with its surrounding transaction', async () => {
     const fixture = await createTestApp()
     const schoolId = (await fixture.schoolRepositories.schools.list())[0]!.id
     await expect(fixture.app.baseService.atomicExecution.execute(async () => {
-      await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, catalog)
+      await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, catalog, fixture.application.commandExecution)
       throw new Error('later subject failure')
     })).rejects.toThrow('later subject failure')
     expect(await fixture.schoolRepositories.subjectCategories.count()).toBe(0)
   })
-  test('structure failure rolls back categories created before its subjects', async () => {
+  test('distinct dataset keys may have identical display names and survive a rename', async () => {
     const fixture = await createTestApp()
     const schoolId = (await fixture.schoolRepositories.schools.list())[0]!.id
-    await fixture.schoolRepositories.academicYears.save(new AcademicYear({ id: 'category-year', schoolId, name: '2026', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-    await fixture.schoolRepositories.academicDisciplines.save(new AcademicDiscipline({ id: 'conflicting', schoolId, code: 'MATH', name: 'Conflicting name' }))
-    const actor = fixture.app.baseService.actor
-    await expect(applyStructureTemplate(fixture.application, actor, {
-      templates: ['ci-college'],
-      levels: [{ gradeLevelId: 'ci-college:4EME', classCount: 1, capacity: 30 }],
-      dataset: createOnboardingTestDataset(),
-    })).rejects.toMatchObject({ code: 'STRUCTURE_DISCIPLINE_CONFLICT' })
-    expect(await fixture.schoolRepositories.subjectCategories.count()).toBe(0)
-    expect(await fixture.schoolRepositories.subjects.count()).toBe(0)
+    const definitions = [{ code: 'FIRST', name: 'Arts', shortName: 'Arts' }, { code: 'SECOND', name: 'Arts', shortName: 'Arts' }]
+    const first = await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, definitions, fixture.application.commandExecution, 'dataset-v1')
+    expect(first.get('FIRST')).not.toBe(first.get('SECOND'))
+    const category = (await fixture.schoolRepositories.subjectCategories.findById(first.get('FIRST')!))!
+    await fixture.schoolRepositories.subjectCategories.save(category.copyWith({ name: 'Renamed' }))
+    expect(await ensureDatasetSubjectCategories(fixture.schoolRepositories, schoolId, definitions, fixture.application.commandExecution, 'dataset-v1')).toEqual(first)
+    expect((await fixture.schoolRepositories.subjectCategories.findById(category.id))!.name).toBe('Renamed')
+    expect(await fixture.schoolRepositories.subjectCategories.count()).toBe(2)
   })
 })

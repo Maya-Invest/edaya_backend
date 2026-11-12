@@ -1,10 +1,10 @@
 import type { OccupiedInterval, ResolvedTimetableCell, SolveTimetableInput, SpreadWeeklyTemplateInput, TimetablePlacement } from '../../src/capabilities/timetable'
-import { DayOfWeek, PeriodDefinition, TimetableGenerationMode } from '@edaya/core'
+import { DayOfWeek, PeriodDefinition, TimetableGenerationMode, withShortName } from '@edaya/core'
 import { WEEKLY_TEMPLATE_WEEK_KEY } from '../../src/capabilities/timetable'
 
 export function timetableEquivalenceCase(seed: number, mode: TimetableGenerationMode) {
   const weekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday]
-  const periods = weekdays.flatMap(dayOfWeek => Array.from({ length: 4 }, (_, index) => new PeriodDefinition({ id: `${dayOfWeek}-${index}`, schoolId: 'school', academicYearId: 'year', label: `${index}`, dayOfWeek, order: index + 1, startTime: `${String(8 + index).padStart(2, '0')}:00`, endTime: `${String(9 + index).padStart(2, '0')}:00`, isTeachingSlot: true })))
+  const periods = weekdays.flatMap(dayOfWeek => Array.from({ length: 4 }, (_, index) => new PeriodDefinition(withShortName({ id: `${dayOfWeek}-${index}`, schoolId: 'school', academicYearId: 'year', name: `${index}`, dayOfWeek, order: index + 1, startTime: `${String(8 + index).padStart(2, '0')}:00`, endTime: `${String(9 + index).padStart(2, '0')}:00`, isTeachingSlot: true }))))
   const cells: ResolvedTimetableCell[] = []
   const reference = mode === TimetableGenerationMode.Weekly ? Date.UTC(2026, 0, 5) : Date.UTC(2026, 8, 7)
   const weeks = mode === TimetableGenerationMode.Weekly ? 1 : 3

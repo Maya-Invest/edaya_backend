@@ -95,6 +95,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/edaya/teacher-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.teacherCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/edaya/otp/verify": {
         parameters: {
             query?: never;
@@ -400,6 +416,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/imports/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.candidates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.export"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/imports/create": {
         parameters: {
             query?: never;
@@ -586,6 +650,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["imports.template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/teachers/{teacherId}/quick-login-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["authorization.teacherQuickCodeOptions"];
+        put?: never;
+        post: operations["authorization.issueTeacherQuickCode"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1640,6 +1720,23 @@ export interface paths {
         put?: never;
         /** update-class-group-configuration */
         post: operations["commands.updateClassGroupConfiguration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/correct-human-identifier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** correct-human-identifier */
+        post: operations["commands.correctHumanIdentifier"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2819,6 +2916,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/record-teacher-attendance-departure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** record-teacher-attendance-departure */
+        post: operations["commands.recordTeacherAttendanceDeparture"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/revise-assessment-marks-correction": {
         parameters: {
             query?: never;
@@ -2847,6 +2961,23 @@ export interface paths {
         put?: never;
         /** manage-student-subject-enrollments */
         post: operations["commands.manageStudentSubjectEnrollments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/start-teacher-conversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** start-teacher-conversation */
+        post: operations["commands.startTeacherConversation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4927,6 +5058,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/queries/list-teacher-guardian-recipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-teacher-guardian-recipients */
+        post: operations["queries.listTeacherGuardianRecipients"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/queries/list-conversation-recipients": {
         parameters: {
             query?: never;
@@ -5023,6 +5171,23 @@ export interface paths {
         put?: never;
         /** get-activity-roster */
         post: operations["queries.getActivityRoster"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-teacher-subject-period-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-teacher-subject-period-summary */
+        post: operations["queries.getTeacherSubjectPeriodSummary"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13145,6 +13310,31 @@ export interface components {
             proof: string;
             termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
         };
+        AuthTeacherCodeLogin: {
+            code: string;
+            termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
+        };
+        SchoolImportCandidates: {
+            revision: number;
+            candidates: {
+                id: string;
+                name?: string;
+                shortName?: string;
+                identifier?: string;
+            }[];
+        };
+        BusinessRuleViolationResponse: {
+            message: string;
+            code: string;
+            details?: {
+                [key: string]: unknown;
+            };
+        };
+        SchoolImportCandidatesRequest: {
+            batchId: string;
+            rowId: string;
+            field: string;
+        };
         SchoolImportBatch: {
             id: string;
             schoolId: string;
@@ -13172,28 +13362,6 @@ export interface components {
             createdAt: string;
             updatedAt: string;
         };
-        BusinessRuleViolationResponse: {
-            message: string;
-            code: string;
-            details?: {
-                [key: string]: unknown;
-            };
-        };
-        CreateSchoolImportRequest: {
-            academicYearId: string;
-            /**
-             * @default M
-             * @enum {string}
-             */
-            defaultOnExisting: "S" | "M" | "O";
-            enrollmentEffectiveDate?: string | null;
-        };
-        UpdateSchoolImportSettingsRequest: {
-            batchId: string;
-            /** @enum {string} */
-            defaultOnExisting: "S" | "M" | "O";
-            enrollmentEffectiveDate?: string | null;
-        };
         SchoolImportFile: {
             id: string;
             fileId: string;
@@ -13209,15 +13377,15 @@ export interface components {
             headers: string[];
             createdAt: string;
         };
-        SubmitSchoolImportFileRequest: {
-            batchId: string;
-            fileId?: string;
-            /** @enum {string} */
-            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
-            fileName: string;
-            base64: string;
-        };
         SchoolImportRow: {
+            /** @enum {string} */
+            targetDecision?: "create" | "update";
+            resolvedReferences?: {
+                [key: string]: string;
+            };
+            referenceSelections?: {
+                [key: string]: string;
+            };
             id: string;
             batchId: string;
             schoolId: string;
@@ -13235,7 +13403,6 @@ export interface components {
             values: {
                 [key: string]: string | number | boolean | unknown | unknown;
             };
-            generatedCode: string | null;
             targetId: string;
             sourceKey: string;
             /** @enum {string} */
@@ -13258,6 +13425,7 @@ export interface components {
             } | null;
             expectedDigest: string | null;
             issues: {
+                replacementColumns?: string[];
                 code: string;
                 column?: string;
                 candidates?: string[];
@@ -13277,6 +13445,58 @@ export interface components {
             counts: {
                 [key: string]: number;
             };
+        };
+        ResolveSchoolImportRequest: {
+            batchId: string;
+            rowId: string;
+            revision: number;
+            field: string;
+            targetId?: string;
+            /** @enum {string} */
+            decision?: "create" | "update";
+        };
+        SchoolImportDownload: {
+            fileName: string;
+            contentType: string;
+            base64: string;
+        };
+        SchoolImportExport: components["schemas"]["SchoolImportDownload"] & {
+            nextCursor: string | null;
+        };
+        ExportSchoolImportRequest: {
+            /** @enum {string} */
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            academicYearId: string;
+            after?: string;
+            limit?: number;
+            /**
+             * @default xlsx
+             * @enum {string}
+             */
+            format: "csv" | "xlsx";
+        };
+        CreateSchoolImportRequest: {
+            academicYearId: string;
+            /**
+             * @default M
+             * @enum {string}
+             */
+            defaultOnExisting: "S" | "M" | "O";
+            enrollmentEffectiveDate?: string | null;
+        };
+        UpdateSchoolImportSettingsRequest: {
+            batchId: string;
+            /** @enum {string} */
+            defaultOnExisting: "S" | "M" | "O";
+            enrollmentEffectiveDate?: string | null;
+        };
+        SubmitSchoolImportFileRequest: {
+            batchId: string;
+            fileId?: string;
+            /** @enum {string} */
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            fileName: string;
+            base64: string;
         };
         ValidateSchoolImportRequest: {
             batchId: string;
@@ -13313,11 +13533,6 @@ export interface components {
             limit?: number;
             before?: string;
         };
-        SchoolImportDownload: {
-            fileName: string;
-            contentType: string;
-            base64: string;
-        };
         SchoolImportReportRequest: {
             batchId: string;
             fileId: string;
@@ -13335,6 +13550,32 @@ export interface components {
              * @enum {string}
              */
             format: "csv" | "xlsx";
+        };
+        TeacherQuickCodeOptions: {
+            contacts: {
+                id: string;
+                /** @enum {string} */
+                channel: "email" | "sms";
+                hint: string;
+            }[];
+            expiries: {
+                [key: string]: number | null;
+            };
+            active: {
+                channel: string;
+                hint: string;
+                expiry: number | null;
+            } | null;
+        };
+        TeacherQuickCodeDelivery: {
+            status: string;
+        };
+        TeacherQuickCodeIssue: {
+            /** Format: uuid */
+            requestId: string;
+            identifierId: string;
+            /** @enum {string} */
+            expiry: "week" | "month" | "period" | "year" | "none";
         };
         EffectiveGrantsResponse: {
             /** @enum {string} */
@@ -13676,6 +13917,7 @@ export interface components {
             country?: string | null;
             city?: string | null;
             id?: string;
+            ownerIdentifier?: string | null;
             ownerStaffId?: string;
             ownerFirstName?: string;
             ownerLastName?: string;
@@ -13922,6 +14164,7 @@ export interface components {
         };
         OnboardingInviteStaffMembersRequest: {
             invites: {
+                identifier?: string | null;
                 /** Format: email */
                 email: string;
                 role: string;
@@ -13941,12 +14184,14 @@ export interface components {
             replayed?: boolean;
         };
         OnboardingProvisionRequest: {
+            ownerIdentifier?: string | null;
             /** Format: uuid */
             schoolId: string;
             /** Format: uuid */
             requestId: string;
             school: {
                 name: string;
+                shortName?: string;
                 timeZone: string;
                 financeCurrency?: string;
                 city: string;
@@ -13981,6 +14226,7 @@ export interface components {
                 }[];
             };
             invites?: {
+                identifier?: string | null;
                 /** Format: email */
                 email: string;
                 role: string;
@@ -13990,7 +14236,8 @@ export interface components {
             id: string;
             schoolId: string;
             serviceId: string;
-            displayName: string;
+            name: string;
+            shortName: string;
             /** @enum {string} */
             accountKind: "service";
             serviceElevated: boolean;
@@ -14038,13 +14285,15 @@ export interface components {
         };
         CreateServiceAccountRequest: {
             serviceId: string;
-            displayName: string;
+            name: string;
+            shortName?: string;
             permissionAssignments?: components["schemas"]["ServiceAccountPermissionAssignmentRequest"][];
             elevated?: boolean;
             apiKey?: string;
         };
         UpdateServiceAccountRequest: {
-            displayName?: string;
+            name?: string;
+            shortName?: string;
             permissionAssignments?: components["schemas"]["ServiceAccountPermissionAssignmentRequest"][];
         };
         RotateServiceAccountKeyResponse: {
@@ -14272,6 +14521,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             startDate: unknown;
             endDate: unknown;
             /**
@@ -14285,6 +14535,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             startDate: unknown;
             endDate: unknown;
         };
@@ -14299,6 +14550,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             name: string;
+            shortName?: string;
             /** @enum {string} */
             type?: "trimester" | "semester" | "other";
             startDate: unknown;
@@ -14312,6 +14564,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             name: string;
+            shortName?: string;
             /** @enum {string} */
             type?: "trimester" | "semester" | "other";
             startDate: unknown;
@@ -14343,6 +14596,7 @@ export interface components {
                     id: string;
                     schoolId: string;
                     name: string;
+                    shortName?: string;
                     minScore: number;
                     maxScore: number;
                     /** @default 1 */
@@ -14396,7 +14650,7 @@ export interface components {
             }[];
             schoolId: string;
             name: string;
-            label: string;
+            shortName?: string;
             order: number;
             cycle?: string | null;
             createdAt?: unknown;
@@ -14405,7 +14659,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
-            label: string;
+            shortName?: string;
             order: number;
             cycle?: string | null;
             createdAt?: unknown;
@@ -14414,7 +14668,8 @@ export interface components {
             id: string;
             schoolId: string;
             academicYearId: string;
-            label: string;
+            name: string;
+            shortName?: string;
             /** @enum {string} */
             dayOfWeek: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
             order: number;
@@ -14429,7 +14684,8 @@ export interface components {
         PeriodDefinitionConfigCommand: {
             id: string;
             academicYearId: string;
-            label: string;
+            name: string;
+            shortName?: string;
             /** @enum {string} */
             dayOfWeek: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
             order: number;
@@ -14445,6 +14701,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             /** @enum {string} */
             kind: "location" | "equipment" | "vehicle" | "other";
@@ -14454,6 +14711,7 @@ export interface components {
         ResourceConfigCommand: {
             id: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             /** @enum {string} */
             kind: "location" | "equipment" | "vehicle" | "other";
@@ -14464,6 +14722,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             /** @enum {string} */
             category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
             coach: string;
@@ -14478,6 +14737,7 @@ export interface components {
         ActivityConfigCommand: {
             id: string;
             name: string;
+            shortName?: string;
             /** @enum {string} */
             category: "Sport" | "Arts" | "Science" | "Language" | "Wellbeing";
             coach: string;
@@ -14511,6 +14771,7 @@ export interface components {
             academicYearId: string;
             gradeLevelId: string;
             name: string;
+            shortName?: string;
             capacity?: number | null;
             /**
              * @default session
@@ -14526,6 +14787,7 @@ export interface components {
             academicYearId: string;
             gradeLevelId: string;
             name: string;
+            shortName?: string;
             capacity?: number | null;
             /**
              * @default session
@@ -14537,6 +14799,7 @@ export interface components {
         };
         UpdateClassGroupConfigurationCommand: {
             name?: string;
+            shortName?: string;
             capacity?: number | null;
             /**
              * @default session
@@ -14546,12 +14809,26 @@ export interface components {
             homeroomStaffId?: string | null;
             classGroupId: string;
         };
+        CorrectedHumanIdentifier: {
+            id: string;
+            identifier: string | null;
+        };
+        CorrectHumanIdentifierCommand: {
+            /** @enum {string} */
+            group: "students" | "teachers" | "guardians" | "staff";
+            entityId: string;
+            expectedIdentifier: string | null;
+            identifier: string | null;
+            requestId: string;
+        };
         StaffMember: {
             id: string;
             schoolId: string;
             firstName: string;
             lastName: string;
-            code?: string | null;
+            identifier?: string | null;
+            name?: string;
+            shortName?: string;
             photoUrl?: string | null;
             email?: string | null;
             phone?: string | null;
@@ -14576,11 +14853,13 @@ export interface components {
             createdAt?: unknown;
         };
         RegisterStaffMemberCommand: {
-            id: string;
+            id?: string;
             schoolId: string;
             firstName: string;
             lastName: string;
-            code?: string | null;
+            identifier?: string | null;
+            name?: string;
+            shortName?: string;
             photoUrl?: string | null;
             email?: string | null;
             phone?: string | null;
@@ -14603,6 +14882,7 @@ export interface components {
             /** @enum {string|null} */
             profileRole?: "directeur" | "deputy_director" | "studies_director" | "educateur" | "cpe" | "secretary" | "accountant" | "it_admin" | null;
             createdAt?: unknown;
+            requestId: string;
             sendAccountInvitation?: boolean;
         };
         Teacher: {
@@ -14611,7 +14891,7 @@ export interface components {
             sourceFullName?: string | null;
             firstName: string;
             lastName: string;
-            code?: string | null;
+            identifier?: string | null;
             signatureAttachmentId?: string | null;
             photoUrl?: string | null;
             email?: string | null;
@@ -14624,12 +14904,12 @@ export interface components {
             createdAt?: unknown;
         };
         RegisterTeacherCommand: {
-            id: string;
+            id?: string;
             schoolId: string;
             sourceFullName?: string | null;
             firstName: string;
             lastName: string;
-            code?: string | null;
+            identifier?: string | null;
             signatureAttachmentId?: string | null;
             photoUrl?: string | null;
             email?: string | null;
@@ -14640,6 +14920,7 @@ export interface components {
             /** @default true */
             isActive: boolean;
             createdAt?: unknown;
+            requestId: string;
         };
         UpdateStaffMemberStatusCommand: {
             staffId: string;
@@ -14648,7 +14929,9 @@ export interface components {
         UpdateStaffMemberProfileCommand: {
             firstName?: string;
             lastName?: string;
-            code?: string | null;
+            identifier?: string | null;
+            name?: string;
+            shortName?: string;
             photoUrl?: string | null;
             email?: string | null;
             phone?: string | null;
@@ -14671,7 +14954,7 @@ export interface components {
             sourceFullName?: string | null;
             firstName: string;
             lastName: string;
-            code?: string | null;
+            identifier?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             alternativePhone?: string | null;
@@ -14691,7 +14974,7 @@ export interface components {
         Student: {
             id: string;
             schoolId: string;
-            nationalMatricule?: string | null;
+            globalIdentifier?: string | null;
             sourceFullName?: string | null;
             firstName: string;
             lastName: string;
@@ -14699,7 +14982,7 @@ export interface components {
             birthDate?: unknown;
             placeOfBirth?: string | null;
             nationality?: string | null;
-            matricule?: string | null;
+            identifier?: string | null;
             photoUrl?: string | null;
             photoAttachmentId?: string | null;
             subjectId?: string | null;
@@ -15172,6 +15455,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             /** @default [] */
             permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_MANAGE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_MANAGE" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_MANAGE" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_MANAGE" | "ACADEMIC_CATALOG_MANAGE" | "ACADEMIC_CATALOG_READ" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_MANAGE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "STUDENT_NOTE_MANAGE" | "STUDENT_NOTE_READ" | "PARENT_READ" | "PARENT_MANAGE" | "ENROLLMENT_READ" | "ENROLLMENT_MANAGE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_MANAGE" | "DISCIPLINE_VALIDATE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_MANAGE" | "ATTENDANCE_VALIDATE" | "ASSESSMENT_READ" | "ASSESSMENT_MANAGE" | "GRADE_SCALE_CONFIGURE" | "GRADE_READ" | "GRADE_MANAGE" | "GRADE_VALIDATE" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "REPORT_CARD_COMMENT" | "REPORT_CARD_REVIEW_COMMENTS" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_MANAGE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_MANAGE" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CATALOG_MANAGE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "FINANCIAL_REPORT_READ" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "SCHOOL_MESSAGES_READ" | "SCHOOL_MESSAGES_REPLY" | "TEACHER_MESSAGES_REVIEW" | "COMMUNICATION_READ" | "COMMUNICATION_DRAFT_MANAGE" | "COMMUNICATION_SEND" | "COMMUNICATION_SEND_BROADCAST" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "ACTIVITY_CREATE" | "ACTIVITY_ENROLLMENT_MANAGE" | "ACTIVITY_MANAGE" | "ACTIVITY_READ" | "RESOURCE_ASSIGNMENT_MANAGE" | "RESOURCE_ASSIGNMENT_READ" | "CLASS_READ" | "GUARDIAN_SELF_READ" | "OVERDUE_BALANCE_READ" | "PERSONAL_COMMUNICATIONS_READ" | "WORKSPACE_ACCESS" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_MANAGE" | "S2S_CLIENT_READ" | "S2S_CLIENT_MANAGE")[];
@@ -15186,6 +15470,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             /** @default [] */
             permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_MANAGE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_MANAGE" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_MANAGE" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_MANAGE" | "ACADEMIC_CATALOG_MANAGE" | "ACADEMIC_CATALOG_READ" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_MANAGE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "STUDENT_NOTE_MANAGE" | "STUDENT_NOTE_READ" | "PARENT_READ" | "PARENT_MANAGE" | "ENROLLMENT_READ" | "ENROLLMENT_MANAGE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_MANAGE" | "DISCIPLINE_VALIDATE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_MANAGE" | "ATTENDANCE_VALIDATE" | "ASSESSMENT_READ" | "ASSESSMENT_MANAGE" | "GRADE_SCALE_CONFIGURE" | "GRADE_READ" | "GRADE_MANAGE" | "GRADE_VALIDATE" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "REPORT_CARD_COMMENT" | "REPORT_CARD_REVIEW_COMMENTS" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_MANAGE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_MANAGE" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CATALOG_MANAGE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "FINANCIAL_REPORT_READ" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "SCHOOL_MESSAGES_READ" | "SCHOOL_MESSAGES_REPLY" | "TEACHER_MESSAGES_REVIEW" | "COMMUNICATION_READ" | "COMMUNICATION_DRAFT_MANAGE" | "COMMUNICATION_SEND" | "COMMUNICATION_SEND_BROADCAST" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "ACTIVITY_CREATE" | "ACTIVITY_ENROLLMENT_MANAGE" | "ACTIVITY_MANAGE" | "ACTIVITY_READ" | "RESOURCE_ASSIGNMENT_MANAGE" | "RESOURCE_ASSIGNMENT_READ" | "CLASS_READ" | "GUARDIAN_SELF_READ" | "OVERDUE_BALANCE_READ" | "PERSONAL_COMMUNICATIONS_READ" | "WORKSPACE_ACCESS" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_MANAGE" | "S2S_CLIENT_READ" | "S2S_CLIENT_MANAGE")[];
@@ -15373,9 +15658,9 @@ export interface components {
             attachmentId: string;
         };
         RegisterStudentCommand: {
-            id: string;
+            id?: string;
             schoolId: string;
-            nationalMatricule?: string | null;
+            globalIdentifier?: string | null;
             sourceFullName?: string | null;
             firstName: string;
             lastName: string;
@@ -15383,10 +15668,11 @@ export interface components {
             birthDate?: unknown;
             placeOfBirth?: string | null;
             nationality?: string | null;
-            matricule?: string | null;
+            identifier?: string | null;
             photoAttachmentId?: string | null;
             enrollmentDate?: unknown;
             createdAt?: unknown;
+            requestId: string;
             sendAccountInvitation?: boolean;
             inviteEmail?: string;
         };
@@ -15469,13 +15755,13 @@ export interface components {
             createdAt?: unknown;
         };
         RegisterGuardianCommand: {
-            id: string;
+            id?: string;
             schoolId: string;
             occupation?: string | null;
             sourceFullName?: string | null;
             firstName: string;
             lastName: string;
-            code?: string | null;
+            identifier?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             alternativePhone?: string | null;
@@ -15487,6 +15773,7 @@ export interface components {
             pushNotificationsEnabled?: boolean;
             hasAccess?: boolean;
             createdAt?: unknown;
+            requestId: string;
             sendAccountInvitation?: boolean;
         };
         PromoteStudentCommand: {
@@ -15524,7 +15811,7 @@ export interface components {
             notes?: string;
         };
         UpdateStudentProfileCommand: {
-            nationalMatricule?: string | null;
+            globalIdentifier?: string | null;
             sourceFullName?: string | null;
             firstName?: string;
             lastName?: string;
@@ -15532,7 +15819,7 @@ export interface components {
             birthDate?: unknown;
             placeOfBirth?: string | null;
             nationality?: string | null;
-            matricule?: string | null;
+            identifier?: string | null;
             subjectId?: string | null;
             enrollmentDate?: unknown;
             studentId: string;
@@ -15628,7 +15915,7 @@ export interface components {
             sourceFullName?: string | null;
             firstName?: string;
             lastName?: string;
-            code?: string | null;
+            identifier?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             alternativePhone?: string | null;
@@ -15672,8 +15959,7 @@ export interface components {
             gradeLevelId: string;
             academicYearId: string;
             name: string;
-            shortName?: string | null;
-            code?: string | null;
+            shortName?: string;
             reportModuleId?: string | null;
             /** @default 0 */
             reportOrder: number;
@@ -15697,8 +15983,7 @@ export interface components {
             gradeLevelId: string;
             academicYearId: string;
             name: string;
-            shortName?: string | null;
-            code?: string | null;
+            shortName?: string;
             reportModuleId?: string | null;
             reportOrder?: number;
             coefficient?: number | null;
@@ -15722,7 +16007,7 @@ export interface components {
         AcademicDiscipline: {
             id: string;
             schoolId: string;
-            code: string;
+            shortName?: string;
             name: string;
             /** @default true */
             isActive: boolean;
@@ -15731,15 +16016,15 @@ export interface components {
         };
         ConfigureAcademicDisciplineCommand: {
             id: string;
-            code: string;
+            shortName?: string | null;
             name: string;
             isActive?: boolean;
         };
         PlacementStatus: {
             id: string;
             schoolId: string;
-            code: string;
-            label: string;
+            shortName?: string;
+            name: string;
             /** @default true */
             isActive: boolean;
             createdAt?: unknown;
@@ -15747,8 +16032,8 @@ export interface components {
         };
         ConfigurePlacementStatusCommand: {
             id: string;
-            code: string;
-            label: string;
+            shortName?: string | null;
+            name: string;
             isActive?: boolean;
         };
         StudentAcademicYearProfile: {
@@ -15809,17 +16094,20 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             createdAt?: unknown;
         };
         SubjectCategoryConfigCommand: {
             id: string;
             name: string;
+            shortName?: string;
             createdAt?: unknown;
         };
         SubjectMatter: {
             id: string;
             subjectId: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             sequenceOrder: number;
             estimatedHours?: number | null;
@@ -15829,6 +16117,7 @@ export interface components {
             id: string;
             subjectId: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             sequenceOrder: number;
             estimatedHours?: number | null;
@@ -15842,8 +16131,7 @@ export interface components {
         };
         UpdateSubjectCommand: {
             name?: string;
-            shortName?: string | null;
-            code?: string | null;
+            shortName?: string;
             reportModuleId?: string | null;
             reportOrder?: number;
             coefficient?: number | null;
@@ -15911,6 +16199,7 @@ export interface components {
             gradeLevelId: string;
             academicYearId: string;
             name: string;
+            shortName?: string;
             order: number;
             /**
              * @default subject_coefficients
@@ -15938,8 +16227,7 @@ export interface components {
                 gradeLevelId: string;
                 academicYearId: string;
                 name: string;
-                shortName?: string | null;
-                code?: string | null;
+                shortName?: string;
                 reportModuleId?: string | null;
                 /** @default 0 */
                 reportOrder: number;
@@ -15968,6 +16256,7 @@ export interface components {
             module?: {
                 id: string;
                 name: string;
+                shortName?: string;
                 order: number;
                 /**
                  * @default subject_coefficients
@@ -16013,6 +16302,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             minScore: number;
             maxScore: number;
             /** @default 1 */
@@ -16050,6 +16340,7 @@ export interface components {
             action: "metadata" | "interval" | "remove-interval" | "convert" | "delete";
             metadata?: {
                 name: string;
+                shortName?: string;
                 minScore: number;
                 maxScore: number;
                 /** @default 1 */
@@ -16082,6 +16373,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             minScore: number;
             maxScore: number;
             /** @default 1 */
@@ -16252,6 +16544,17 @@ export interface components {
             occurredAt: unknown;
             expectedVersion: number;
         };
+        TeacherAttendanceDepartureResponse: {
+            version: number;
+            /** Format: date-time */
+            departedAt: string;
+        };
+        RecordTeacherAttendanceDepartureCommand: {
+            requestId: string;
+            recordId: string;
+            occurredAt: unknown;
+            expectedVersion: number;
+        };
         AssessmentMarksCorrectionResponse: {
             id: string;
             schoolId: string;
@@ -16395,6 +16698,14 @@ export interface components {
             updatedAt: string;
             /** Format: date-time */
             awaitingSince: string;
+        };
+        StartTeacherConversationCommand: {
+            studentId: string;
+            classGroupId: string;
+            guardianId: string;
+            requestId: string;
+            subject: string;
+            body: string;
         };
         StartConversationCommand: {
             requestId: string;
@@ -16892,7 +17203,106 @@ export interface components {
             classSubjectId: string;
             periodId: string;
         };
-        ReportCardResultSection: Record<string, never>;
+        ReportSubjectResult: {
+            sectionId: string;
+            /** @enum {string} */
+            sectionKind: "module" | "subject";
+            subjectId?: string;
+            moduleId?: string;
+            coefficient?: number;
+            /** @enum {string} */
+            weightingMode?: "subject_coefficients" | "explicit";
+            explicitWeight?: number;
+            contributingCoefficientSum?: number;
+            /** @default 0 */
+            order: number;
+            name: string;
+            grading?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
+            average?: number;
+            weight: number;
+            parentSectionId?: string | null;
+            classSubjectId?: string | null;
+            comment?: string | null;
+            participantCount?: number | null;
+            rank?: number | null;
+            /** @default [] */
+            subResults: unknown[];
+        };
+        ReportCardResultSection: {
+            sectionId: string;
+            /** @enum {string} */
+            sectionKind: "module" | "subject";
+            subjectId?: string;
+            moduleId?: string;
+            coefficient?: number;
+            /** @enum {string} */
+            weightingMode?: "subject_coefficients" | "explicit";
+            explicitWeight?: number;
+            contributingCoefficientSum?: number;
+            /** @default 0 */
+            order: number;
+            name: string;
+            grading?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
+            average?: number;
+            weight: number;
+            parentSectionId?: string | null;
+            classSubjectId?: string | null;
+            comment?: string | null;
+            participantCount?: number | null;
+            rank?: number | null;
+            /** @default [] */
+            subResults: components["schemas"]["ReportSubjectResult"][];
+        };
         ReportCardSnapshot: {
             id: string;
             /** @default 0 */
@@ -17348,6 +17758,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            shortName?: string;
             /**
              * @default sanction
              * @enum {string}
@@ -17361,6 +17772,7 @@ export interface components {
         DisciplinaryActionConfigCommand: {
             id: string;
             name: string;
+            shortName?: string;
             /**
              * @default sanction
              * @enum {string}
@@ -17560,6 +17972,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             name: string;
+            shortName?: string;
             description?: string | null;
             /**
              * @default tuition
@@ -17624,6 +18037,7 @@ export interface components {
             id: string;
             academicYearId: string;
             name: string;
+            shortName?: string;
             description?: string;
             category?: string;
             autoBilling?: {
@@ -18800,6 +19214,7 @@ export interface components {
                 schoolId: string;
                 academicYearId: string;
                 name: string;
+                shortName?: string;
                 /** @enum {string} */
                 type?: "trimester" | "semester" | "other";
                 /** Format: date-time */
@@ -18846,6 +19261,7 @@ export interface components {
                 schoolId: string;
                 academicYearId: string;
                 name: string;
+                shortName?: string;
                 /** @enum {string} */
                 type?: "trimester" | "semester" | "other";
                 /** Format: date-time */
@@ -18911,9 +19327,12 @@ export interface components {
                 notes?: string | null;
                 teacherExplanation?: string | null;
             }[];
-            records: {
+            records: ({
+                /** Format: date-time */
+                departedAt?: string | null;
+            } & {
                 [key: string]: unknown;
-            }[];
+            })[];
             students: {
                 id: string;
                 firstName: string;
@@ -19027,6 +19446,16 @@ export interface components {
                 kind: "positive" | "minor_infraction" | "major_infraction" | "emergency";
                 studentIds: string[];
             };
+        };
+        TeacherGuardianRecipientsResponse: {
+            guardians: {
+                id: string;
+                name: string;
+            }[];
+        };
+        TeacherGuardianRecipientsQuery: {
+            studentId: string;
+            classGroupId: string;
         };
         ConversationRecipientsResponse: {
             schoolAvailable: boolean;
@@ -19254,7 +19683,7 @@ export interface components {
                 id: string;
                 firstName: string;
                 lastName: string;
-                matricule?: string;
+                identifier?: string;
                 classGroupId?: string;
             }[];
             eligibleStudentIds: string[];
@@ -19265,6 +19694,48 @@ export interface components {
         };
         GetActivityRosterQuery: {
             activityId: string;
+        };
+        TeacherSubjectPeriodSummaryResponse: {
+            classSubjectId: string;
+            classGroupId: string;
+            periodId: string;
+            calculationReady: boolean;
+            students: {
+                studentId: string;
+                firstName: string;
+                lastName: string;
+                average: number | null;
+                grading: {
+                    [key: string]: unknown;
+                } | null;
+                contributions: {
+                    assessmentId: string;
+                    title: string;
+                    coefficient: number;
+                    maxScore: number;
+                    score: number | null;
+                    designation: string;
+                    grading: {
+                        [key: string]: unknown;
+                    } | null;
+                }[];
+                comment: {
+                    reportId: string;
+                    sectionId: string;
+                    text: string;
+                    status: string;
+                    version: number;
+                    calculationStale: boolean;
+                    proposal: {
+                        text: string;
+                        status: string;
+                    } | null;
+                } | null;
+            }[];
+        };
+        GetTeacherSubjectPeriodSummaryQuery: {
+            classSubjectId: string;
+            periodId: string;
         };
         AssessmentEditorContextResponse: {
             assessmentsRaw: components["schemas"]["Assessment"][];
@@ -19292,6 +19763,7 @@ export interface components {
                     id: string;
                     schoolId: string;
                     name: string;
+                    shortName?: string;
                     minScore: number;
                     maxScore: number;
                     /** @default 1 */
@@ -20201,6 +20673,10 @@ export interface components {
                 };
             }[];
             themes?: string;
+            academicYearId?: string;
+            academicPeriodId?: string;
+            classGroupId?: string;
+            classSubjectId?: string;
         };
         TeacherFamilyFeedbackResultList: components["schemas"]["TeacherFamilyFeedbackResult"][];
         ListTeacherFamilyFeedbackResultsQuery: Record<string, never>;
@@ -20991,6 +21467,83 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["AuthRegistrationInput"];
+            };
+        };
+        responses: {
+            /** @description Account operation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthOutcome"];
+                };
+            };
+            /** @description Invalid input or challenge */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Origin or security policy rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "auth.teacherCode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AuthTeacherCodeLogin"];
             };
         };
         responses: {
@@ -22059,6 +22612,240 @@ export interface operations {
             };
         };
     };
+    "imports.candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description SchoolImportCandidatesRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SchoolImportCandidatesRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportCandidates */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportCandidates"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description ResolveSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResolveSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportDetail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportDetail"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description ExportSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExportSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportExport */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportExport"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "imports.create": {
         parameters: {
             query?: never;
@@ -22991,6 +23778,55 @@ export interface operations {
                     "application/json": {
                         message: string;
                     };
+                };
+            };
+        };
+    };
+    "authorization.teacherQuickCodeOptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teacherId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quick login options */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherQuickCodeOptions"];
+                };
+            };
+        };
+    };
+    "authorization.issueTeacherQuickCode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teacherId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Issue a teacher code */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TeacherQuickCodeIssue"];
+            };
+        };
+        responses: {
+            /** @description Delivery status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherQuickCodeDelivery"];
                 };
             };
         };
@@ -26637,6 +27473,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassGroup"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.correctHumanIdentifier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description correct-human-identifier payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CorrectHumanIdentifierCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed correct-human-identifier */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectedHumanIdentifier"];
                 };
             };
             /** @description Invalid request payload */
@@ -32076,6 +32990,84 @@ export interface operations {
             };
         };
     };
+    "commands.recordTeacherAttendanceDeparture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description record-teacher-attendance-departure payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RecordTeacherAttendanceDepartureCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed record-teacher-attendance-departure */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherAttendanceDepartureResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.reviseAssessmentMarksCorrection": {
         parameters: {
             query?: never;
@@ -32175,6 +33167,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ManageStudentSubjectEnrollmentsResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.startTeacherConversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description start-teacher-conversation payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StartTeacherConversationCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed start-teacher-conversation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -41748,6 +42818,84 @@ export interface operations {
             };
         };
     };
+    "queries.listTeacherGuardianRecipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-teacher-guardian-recipients payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TeacherGuardianRecipientsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-teacher-guardian-recipients */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherGuardianRecipientsResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "queries.listConversationRecipients": {
         parameters: {
             query?: never;
@@ -42159,6 +43307,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityRosterResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getTeacherSubjectPeriodSummary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-teacher-subject-period-summary payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetTeacherSubjectPeriodSummaryQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-teacher-subject-period-summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherSubjectPeriodSummaryResponse"];
                 };
             };
             /** @description Invalid request payload */

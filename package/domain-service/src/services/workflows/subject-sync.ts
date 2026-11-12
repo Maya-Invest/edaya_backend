@@ -1,7 +1,7 @@
 import type { ClassGroup, Subject, SubjectMatter } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { randomUUID } from 'node:crypto'
-import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { reconcileOffering } from '../../capabilities/subject-enrollment/reconcile'
 import { assertClassSubjectGradingMutable, assertClassSubjectUnused } from '../entities/config/academics/class-subject'
@@ -16,6 +16,8 @@ export async function syncSubjectToClassGroup(baseService: BaseSchoolService, su
     if (subject.schoolId !== group.schoolId || subject.gradeLevelId !== group.gradeLevelId || subject.academicYearId !== group.academicYearId)
       throw new Error('Subject and class must belong to the same school, grade and academic year')
     const existing = await baseService.repositories.classSubjects.findOne({ classGroupId: group.id, subjectId: subject.id })
+    if (existing && options.classSubjectId && existing.id !== options.classSubjectId)
+      throw new BusinessRuleViolationError('IMPORT_TARGET_CHANGED', 'The reviewed offering identity is no longer available')
     const offering = existing ?? new ClassSubject({
       id: options.classSubjectId ?? randomUUID(),
       classGroupId: group.id,

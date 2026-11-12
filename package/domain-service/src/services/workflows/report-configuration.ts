@@ -1,7 +1,7 @@
 import type { ReportModuleInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError, GradeLevel, ReportModule } from '@edaya/core'
+import { BusinessRuleViolationError, GradeLevel, ReportModule, withShortName } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { invalidateReportConfiguration } from '../../capabilities/academics/report-configuration'
 import { schoolCommandScope } from '../commands/school-command-scope'
@@ -11,7 +11,7 @@ export interface ConfigureReportModulesInput extends ReportConfigurationScope {
   requestId: string
   expectedRevision: number
   action: 'save' | 'delete' | 'assign'
-  module?: Pick<ReportModuleInput, 'id' | 'name' | 'order' | 'weightingMode' | 'explicitWeight'>
+  module?: Pick<ReportModuleInput, 'id' | 'name' | 'shortName' | 'order' | 'weightingMode' | 'explicitWeight'>
   moduleId?: string | null
   assignments?: Array<{ subjectId: string, moduleId: string | null, order?: number }>
 }
@@ -75,7 +75,7 @@ export class ReportConfigurationWorkflow {
             const existing = await repositories.reportModules.findById(input.module.id)
             if (existing)
               await requireModule(existing.id)
-            await scoped.save(new ReportModule({ ...input.module, schoolId: level.schoolId, gradeLevelId: level.id, academicYearId: input.academicYearId, createdAt: existing?.createdAt }))
+            await scoped.save(new ReportModule(withShortName({ ...input.module, shortName: input.module.shortName ?? existing?.shortName, schoolId: level.schoolId, gradeLevelId: level.id, academicYearId: input.academicYearId, createdAt: existing?.createdAt })))
           }
           else if (input.action === 'delete') {
             if (!input.moduleId)
@@ -105,7 +105,7 @@ export class ReportConfigurationWorkflow {
             if (!policy || !Number.isFinite(threshold) || threshold < policy.scale.minScore || threshold > policy.scale.maxScore || Math.abs(threshold * factor - Math.round(threshold * factor)) > Number.EPSILON * Math.max(1, threshold * factor) * 4)
               throw new BusinessRuleViolationError('INVALID_REPORT_PASS_THRESHOLD', 'Passing threshold must match the grading scale bounds and precision')
           }
-          await repositories.gradeLevels.forSchool!(level.schoolId).save(new GradeLevel({ ...level.data, reportSettings: [...level.reportSettings.filter(row => row.academicYearId !== input.academicYearId), { ...settings, passThreshold: threshold }] }))
+          await repositories.gradeLevels.forSchool!(level.schoolId).save(new GradeLevel(withShortName({ ...level.data, reportSettings: [...level.reportSettings.filter(row => row.academicYearId !== input.academicYearId), { ...settings, passThreshold: threshold }] })))
         }
         await invalidateReportConfiguration(repositories, level.id, input.academicYearId)
         return this.read(input)

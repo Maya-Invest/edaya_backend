@@ -106,7 +106,10 @@ describe('authorization migration guards', () => {
       /\b(?:assertOperation|defineOperation|DefaultAuthorizationRepository|resolveActorScope|resolveActorGrants)\b/,
       /\b(?:syncStaffAssignmentPermissions|invalidateAuthCacheForEvents|resolveCachedEffectiveGrants)\b/,
       /\beffectiveGrants\s*:/,
-      /\.(?:effectiveGrants|teacherScope|guardianScope|studentScope)\b/,
+      /\.(?:effectiveGrants|guardianScope|studentScope)\b/,
+      // Teacher quick-login scope is carried by authenticated sessions and JWT
+      // claims; other teacherScope accesses still indicate the retired engine.
+      /(?<!\bclaims|\bsession)\.teacherScope\b/,
       /\bcheckGlobalAction\b/,
       /\b(?:serviceOnly|assertCommandActorKind)\b/,
       /\bAuthorizationAction\b/,

@@ -8,6 +8,7 @@ import {
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
+import { humanFixture } from '../../../test-support/human-fixtures'
 import {
   createAppRequest,
   grantAccessControlAssign,
@@ -29,13 +30,13 @@ async function registerUnlinkedStaff(
     requestId: `register-${input.id}`,
   })
   const service = application.forActor(bootstrapActor)
-  await service.setupWorkflow.registerStaffMember({
+  await humanFixture({
     id: input.id,
     schoolId: SEED_SCHOOL_ID,
     firstName: input.firstName,
     lastName: input.lastName,
     email: input.email,
-  })
+  }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))
 }
 
 async function sendStaffInvitation(

@@ -13,6 +13,19 @@ const manualClientRoutes: Pick<
 > = {
   imports: importClientBindings,
   authorization: {
+    teacherQuickCodeOptions: {
+      method: "GET",
+      path: "teachers/{teacherId}/quick-login-code",
+      pathParams: ["teacherId"],
+      responseSchemaName: "TeacherQuickCodeOptions",
+    },
+    issueTeacherQuickCode: {
+      method: "POST",
+      path: "teachers/{teacherId}/quick-login-code",
+      pathParams: ["teacherId"],
+      requestSchemaName: "TeacherQuickCodeIssue",
+      responseSchemaName: "TeacherQuickCodeDelivery",
+    },
     effectiveGrants: {
       method: "GET",
       path: "authorization/effective-grants",

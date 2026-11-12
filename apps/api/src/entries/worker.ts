@@ -1,19 +1,22 @@
 /// <reference types="@cloudflare/workers-types" />
 import { isPaused, maintenanceResponse } from "@/operational-controls";
+import { listTemplateDefinitions } from "@edaya/adaptor-docs";
 
-import { runIndependentJobs } from "@/identity/jobs";
-import app from "@/app";
 import type { CronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
-import { runCronQueueBatch } from "@/cron/run-cron-queue-consumer";
-import { runCronHeartbeatWithRuntime } from "@/cron/run-scheduled-cron";
-import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
-import { buildWorkerApiRuntime } from "@/runtime/worker/build-runtime";
-import { parseRuntimeEnv } from "@/runtime/shared/env";
+
+// AJV uses code generation, which Workers allow only during module initialization.
+// Keep document validators eager while deferring the rest of the application.
+listTemplateDefinitions();
 
 export default {
   async fetch(request: Request, bindings: Record<string, unknown>, executionCtx: ExecutionContext) {
     if (isPaused(bindings, "PAUSE_API"))
       return maintenanceResponse();
+    // Initialize application schemas inside the event's CPU budget, once per isolate.
+    const [{ default: app }, { parseRuntimeEnv }] = await Promise.all([
+      import("@/app"),
+      import("@/runtime/shared/env"),
+    ]);
     const env = parseRuntimeEnv(bindings, "worker");
     return app.fetch(request, env, executionCtx);
   },
@@ -21,6 +24,13 @@ export default {
   async scheduled(controller: ScheduledController, bindings: Record<string, unknown>, ctx: ExecutionContext) {
     if (isPaused(bindings, "PAUSE_SCHEDULER"))
       return;
+    const [{ parseRuntimeEnv }, { createAppLogger }, { buildWorkerApiRuntime }, { runIndependentJobs }, { runCronHeartbeatWithRuntime }] = await Promise.all([
+      import("@/runtime/shared/env"),
+      import("@/runtime/shared/adapters/pino-logger"),
+      import("@/runtime/worker/build-runtime"),
+      import("@/identity/jobs"),
+      import("@/cron/run-scheduled-cron"),
+    ]);
     const env = parseRuntimeEnv(bindings, "worker");
     const logger = createAppLogger(env);
     const runtime = await buildWorkerApiRuntime(env);
@@ -52,6 +62,12 @@ export default {
       batch.retryAll({ delaySeconds: 60 });
       return;
     }
+    const [{ parseRuntimeEnv }, { createAppLogger }, { buildWorkerApiRuntime }, { runCronQueueBatch }] = await Promise.all([
+      import("@/runtime/shared/env"),
+      import("@/runtime/shared/adapters/pino-logger"),
+      import("@/runtime/worker/build-runtime"),
+      import("@/cron/run-cron-queue-consumer"),
+    ]);
     const env = parseRuntimeEnv(bindings, "worker");
     const logger = createAppLogger(env);
     const runtime = await buildWorkerApiRuntime(env);

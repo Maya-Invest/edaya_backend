@@ -1,4 +1,4 @@
-import { AcademicPeriod } from '@edaya/core'
+import { AcademicPeriod, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { fixture } from './support/marks-fixture'
 
@@ -15,7 +15,7 @@ test('native dashboard loads a populated year with no periods and restores perio
   expect(overview.kpis.unpublishedReportCardCount).toBeNull()
   expect(overview.areaHealth.academics).toEqual({ gradingCompletionPercent: null, publishedReportCards: null, totalReportCards: null, incompleteGradingClassCount: null })
   expect(overview.actionItems).toEqual([])
-  await f.r.academicPeriods.save(new AcademicPeriod({ id: f.id('new-period'), schoolId: f.id('school'), academicYearId: f.id('year'), name: 'Term', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
+  await f.r.academicPeriods.save(new AcademicPeriod(withShortName({ id: f.id('new-period'), schoolId: f.id('school'), academicYearId: f.id('year'), name: 'Term', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })))
   const configured = await f.editor.getSchoolOverview({ ...input, academicPeriodId: f.id('new-period') })
   expect(configured.academicPeriodId).toBe(f.id('new-period'))
   expect(configured.kpis.unpublishedReportCardCount).toBe(1)

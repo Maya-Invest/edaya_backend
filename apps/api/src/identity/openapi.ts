@@ -19,6 +19,7 @@ export function registerAuthContract(app: AppOpenAPI) {
     ["statusOtp", "otp/status", schemas.AuthChallengeInput, schemas.PrimaryStatus],
     ["resendOtp", "otp/resend", schemas.AuthResend, schemas.PrimaryStatus],
     ["completeRegistration", "registration/complete", schemas.RegistrationInput, schemas.AuthOutcome],
+    ["teacherCode", "teacher-code", schemas.TeacherCodeLogin, schemas.AuthOutcome],
     ["verifyOtp", "otp/verify", schemas.AuthProof, schemas.AuthOutcome],
     ["verifyTotp", "totp/verify", schemas.AuthProof, schemas.AuthOutcome],
     ["enroll", "totp/enroll", schemas.AuthEnrollmentInput, schemas.Enrollment],
@@ -36,7 +37,7 @@ export function registerAuthContract(app: AppOpenAPI) {
   for (const [key, suffix, request, response, method] of operations) {
     const schemaName = (schema: typeof response | NonNullable<typeof request>) => getOpenApiSchemaName(schema);
     const path = `/auth/edaya/${suffix}`;
-    const publicOperation = ["terms", "methods", "startOtp", "statusOtp", "resendOtp", "verifyOtp", "completeRegistration", "verifyTotp", "recover"].includes(key);
+    const publicOperation = ["teacherCode", "terms", "methods", "startOtp", "statusOtp", "resendOtp", "verifyOtp", "completeRegistration", "verifyTotp", "recover"].includes(key);
     app.openAPIRegistry.registerPath({
       method: method === "GET" ? "get" : "post",
       path,

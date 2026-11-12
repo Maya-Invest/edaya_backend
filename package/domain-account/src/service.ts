@@ -1,4 +1,4 @@
-import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence, RegistrationOffer } from './model'
+import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence, RegistrationOffer, TeacherScope } from './model'
 import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, EmailRegistrationPolicy, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
 import type { AcceptedTerms, TermsAcceptanceInput, TermsLocale, TermsPolicyPort } from './terms'
 import { AuthError, normalizeIdentifier } from './model'
@@ -6,7 +6,7 @@ import { AuthError, normalizeIdentifier } from './model'
 const FIVE_MINUTES = 300000
 /** Owns Account policy. Provider sessions and identities never confer business access. */
 export class AccountService {
-  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort, private readonly registrationPolicy: EmailRegistrationPolicy = async () => ({ eligible: false })) { }
+  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort, private readonly registrationPolicy: EmailRegistrationPolicy = async () => ({ eligible: false }), private readonly teacherCodes?: { lookup: (code: string) => Promise<(TeacherScope & { accountId: string }) | undefined>, eligible: (scope: TeacherScope, accountId: string) => Promise<boolean> }) { }
   // Expected failures commit attempt counters; infrastructure failures roll back.
   private async atomic<T>(work: () => Promise<T>): Promise<T> {
     const result = await this.repository.transaction(async () => {
@@ -313,6 +313,29 @@ export class AccountService {
     })
   }
 
+  async teacherSignIn(code: string, ip: string, acceptance?: TermsAcceptanceInput): Promise<AuthOutcome> {
+    return this.atomic(async () => {
+      if (!await this.repository.quota(`teacher-code:ip:${ip}`, 20, 600, this.now()))
+        throw new AuthError('rate_limited', 429)
+      const target = await this.teacherCodes?.lookup(code)
+      if (!target || !await this.teacherCodes!.eligible(target, target.accountId))
+        throw new AuthError('invalid_code', 401)
+      const account = await this.repository.get(target.accountId)
+      if (account?.status !== 'active')
+        throw new AuthError('invalid_code', 401)
+      const terms = await this.acceptedTerms(acceptance)
+      const teacherScope = { schoolId: target.schoolId, teacherId: target.teacherId }
+      if ((await this.repository.security(account.id)).secret) {
+        const token = this.crypto.token()
+        await this.repository.savePending({ digest: await this.crypto.digest(token), accountId: account.id, primaryAt: this.now(), method: 'teacher_code', teacherScope, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: account.securityVersion, recoveryEligible: false, terms })
+        return { state: 'totp_required', challenge: token }
+      }
+      if (await this.policy.requiresTotp(account.id))
+        throw new AuthError('use_standard_login_for_enrollment', 403)
+      return this.complete(account, this.now(), 'teacher_code', undefined, terms, teacherScope)
+    })
+  }
+
   private async finishPrimary(challenge: AuthChallenge, evidence: PrimaryEvidence, account: Account | null): Promise<AuthOutcome> {
     const existingMapping = await this.repository.mappedAccount(evidence)
     if (!account && existingMapping)
@@ -337,9 +360,9 @@ export class AccountService {
     return this.complete(account, this.now(), challenge.kind, undefined, challenge.terms)
   }
 
-  private async complete(account: Account, primaryAt: number, method: IdentifierKind, secondAt?: number, terms?: AcceptedTerms): Promise<AuthOutcome> {
+  private async complete(account: Account, primaryAt: number, method: AuthSession['method'], secondAt?: number, terms?: AcceptedTerms, teacherScope?: TeacherScope): Promise<AuthOutcome> {
     const credential = this.crypto.token()
-    const session: AuthSession = { id: this.crypto.token(), accountId: account.id, digest: await this.crypto.digest(credential), primaryAt, ...(secondAt === undefined ? {} : { secondAt }), method, expiresAt: this.now() + 7 * 86400000, securityVersion: account.securityVersion, generation: this.provider.generation }
+    const session: AuthSession = { id: this.crypto.token(), accountId: account.id, digest: await this.crypto.digest(credential), primaryAt, teacherScope, ...(secondAt === undefined ? {} : { secondAt }), method, expiresAt: this.now() + 7 * 86400000, securityVersion: account.securityVersion, generation: this.provider.generation }
     if (terms)
       await this.repository.saveTermsAcceptance({ ...terms, accountId: account.id, acceptedAt: this.now() })
     await this.repository.saveSession(session)
@@ -356,6 +379,8 @@ export class AccountService {
       throw new AuthError('challenge_expired', 401)
     const account = await this.repository.get(pending.accountId)
     if (!account || account.status !== 'active' || account.securityVersion !== pending.securityVersion)
+      throw new AuthError('reauthentication_required', 401)
+    if (pending.teacherScope && !await this.teacherCodes?.eligible(pending.teacherScope, account.id))
       throw new AuthError('reauthentication_required', 401)
     if (pending.attempts >= 5)
       throw new AuthError('attempts_exhausted', 429)
@@ -376,7 +401,7 @@ export class AccountService {
       security.lastStep = step
       await this.repository.saveSecurity(account.id, security)
       await this.repository.deletePending(pending.digest)
-      return this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms)
+      return this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms, pending.teacherScope)
     })
   }
 
@@ -395,6 +420,8 @@ export class AccountService {
         token = this.crypto.token()
         pending = { digest: await this.crypto.digest(token), accountId: session.accountId, primaryAt: session.primaryAt, method: session.method, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: session.securityVersion, recoveryEligible: false }
       }
+      if (pending.teacherScope)
+        throw new AuthError('use_standard_login_for_enrollment', 403)
       if ((await this.repository.security(pending.accountId)).secret && !pending.replacing)
         throw new AuthError('totp_already_enabled', 409)
       if (!pending.enrollmentSecret)
@@ -425,7 +452,7 @@ export class AccountService {
       await this.repository.revoke(account.id)
       await this.repository.deletePending(pending.digest)
       await this.repository.audit(account.id, 'totp_enrolled', this.now())
-      return { ...await this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms), recoveryCodes }
+      return { ...await this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms, pending.teacherScope), recoveryCodes }
     })
   }
 
@@ -463,6 +490,8 @@ export class AccountService {
     const account = await this.repository.get(session.accountId)
     if (!account || account.status !== 'active' || account.securityVersion !== session.securityVersion)
       throw new AuthError('reauthentication_required', 401)
+    if (session.teacherScope && !await this.teacherCodes?.eligible(session.teacherScope, account.id))
+      throw new AuthError('reauthentication_required', 401)
     if (!session.secondAt && ((await this.repository.security(account.id)).secret || await this.policy.requiresTotp(account.id)))
       throw new AuthError('reauthentication_required', 401)
     return { account, session }
@@ -470,7 +499,7 @@ export class AccountService {
 
   private async requireRecent(credential: string) {
     const { session } = await this.getSession(credential)
-    if (this.now() - session.primaryAt > FIVE_MINUTES || (session.secondAt && this.now() - session.secondAt > FIVE_MINUTES))
+    if (session.teacherScope || this.now() - session.primaryAt > FIVE_MINUTES || (session.secondAt && this.now() - session.secondAt > FIVE_MINUTES))
       throw new AuthError('reauthentication_required', 401)
     return session
   }

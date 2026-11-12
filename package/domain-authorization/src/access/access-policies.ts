@@ -1,4 +1,4 @@
-import type { Attachment, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, DashboardScopes, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
+import type { Attachment, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, DashboardScopes, HumanIdentifierGroup, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
 import type { SchoolScopedActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { DelegatedGrant } from './grant-administration'
@@ -365,7 +365,7 @@ export class AccessPolicies {
       denied('Teachers may update only their own profile')
     if (after.id !== before.id || after.id !== actor.teacherId || after.schoolId !== actor.schoolId || before.schoolId !== actor.schoolId)
       denied('Teachers may update only their own profile')
-    if (after.code !== before.code
+    if (after.identifier !== before.identifier
       || after.photoUrl !== before.photoUrl
       || after.signatureAttachmentId !== before.signatureAttachmentId
       || after.notificationEmail !== before.notificationEmail
@@ -712,6 +712,8 @@ export class AccessPolicies {
   }
 
   readonly identities = {
+    assertCreateHuman: (group: HumanIdentifierGroup) => this.assertSchool({ students: P.STUDENT_CREATE, teachers: P.ACCESS_CONTROL_MANAGE, guardians: P.PARENT_MANAGE, staff: P.STAFF_MANAGE }[group]),
+    assertCorrectIdentifier: () => this.assertSchool(P.ACCESS_CONTROL_MANAGE),
     assertInitializeFixtureOwner: async (staffId: string, before: CoreEntityMap['schools'], after: CoreEntityMap['schools']) => {
       if (this.actor.kind !== 'system' || this.actor.systemId !== 'fixture-seed'
         || before.id !== after.id || before.pendingOwnerStaffId || !after.ownerSubjectId

@@ -1,19 +1,6 @@
 import type { Attachment, DocumentIssuanceSnapshot, School, SchoolIssuanceAssetPurpose } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
-import {
-  AttachmentOwnerKind,
-  BusinessRuleViolationError,
-  DOCUMENT_FAILURES,
-  DOCUMENT_ISSUANCE_CAPABILITY,
-  SCHOOL_CREST_PURPOSE,
-  SCHOOL_ISSUANCE_ASSET_CAPABILITY,
-  SCHOOL_ISSUANCE_ASSET_TERMINAL_RETAIN_MS,
-  SCHOOL_LOGO_PURPOSE,
-  SCHOOL_SIGNATURE_PURPOSE,
-  SCHOOL_STAMP_PURPOSE,
-  School as SchoolEntity,
-  TEACHER_SIGNATURE_PURPOSE,
-} from '@edaya/core'
+import { AttachmentOwnerKind, BusinessRuleViolationError, DOCUMENT_FAILURES, DOCUMENT_ISSUANCE_CAPABILITY, SCHOOL_CREST_PURPOSE, SCHOOL_ISSUANCE_ASSET_CAPABILITY, SCHOOL_ISSUANCE_ASSET_TERMINAL_RETAIN_MS, SCHOOL_LOGO_PURPOSE, SCHOOL_SIGNATURE_PURPOSE, SCHOOL_STAMP_PURPOSE, School as SchoolEntity, TEACHER_SIGNATURE_PURPOSE, withShortName } from '@edaya/core'
 import { isPublicBrandingPurpose, isSchoolIssuanceAssetPurpose, schoolIssuanceAssetSlot } from './issuance-asset-access'
 
 export async function retainCurrentIssuanceAsset(
@@ -132,12 +119,12 @@ export async function writeSchoolIssuanceSlot(
     throw new BusinessRuleViolationError(DOCUMENT_FAILURES.SOURCE_MISSING, 'School was not found')
   const slot = schoolIssuanceAssetSlot(purpose)
   const previousId = existing[slot]
-  const school = new SchoolEntity({
+  const school = new SchoolEntity(withShortName({
     ...existing.data,
     [slot]: nextAttachment?.id,
     issuanceAssetVersion: existing.issuanceAssetVersion + 1,
     publicBrandingPurposes: nextAttachment ? existing.publicBrandingPurposes : brandingPurposesWithout(existing, purpose),
-  })
+  }))
   await base.repositories.schools.forSchool!(schoolId).save(school)
   if (nextAttachment) {
     await retainCurrentIssuanceAsset(base, schoolId, purpose, nextAttachment)

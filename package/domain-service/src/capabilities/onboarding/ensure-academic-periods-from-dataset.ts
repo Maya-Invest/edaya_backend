@@ -1,8 +1,8 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingDataset } from './onboarding-dataset'
-import { randomUUID } from 'node:crypto'
 import { AcademicPeriodType, BusinessRuleViolationError } from '@edaya/core'
+import { datasetEntityId } from './dataset-bindings'
 
 type CalendarProfile = OnboardingDataset['calendarProfiles'][number]
 
@@ -19,6 +19,7 @@ export function resolveDatasetCalendar(profiles: readonly CalendarProfile[]): Ca
 /** Dataset calendars are a fallback only; an existing school calendar is authoritative. */
 export async function ensureAcademicPeriodsFromDataset(application: OnboardingSchoolApplication, actor: ActorMetadata, input: {
   schoolId: string
+  datasetId?: string
   academicYearId: string
   academicYearStart: Date
   academicYearEnd: Date
@@ -34,7 +35,7 @@ export async function ensureAcademicPeriodsFromDataset(application: OnboardingSc
     throw new BusinessRuleViolationError('STRUCTURE_CALENDAR_INVALID', 'Academic year is too short for the calendar profile')
   for (const [index, period] of profile.periods.entries()) {
     await application.forActor(actor).setupWorkflow.createAcademicPeriod({
-      id: randomUUID(),
+      id: await datasetEntityId(application, input.schoolId, input.datasetId ?? 'local-fixture', 'academicPeriods', [input.academicYearId, profile.code, period.code]),
       schoolId: input.schoolId,
       academicYearId: input.academicYearId,
       name: period.name,

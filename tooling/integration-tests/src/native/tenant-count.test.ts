@@ -1,9 +1,10 @@
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
-import { asStoreDatabase, PostgresSchoolRepositories, PostgresStore } from '@edaya/adaptor-postgres'
+import { asStoreDatabase, PostgresStore } from '@edaya/adaptor-postgres'
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { pgTable, text } from 'drizzle-orm/pg-core'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
+import { createFixtureRepositories } from '../utils/fixture-repositories'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -16,7 +17,7 @@ const repository = new PostgresStore(asStoreDatabase(handle.db), table, (row: { 
 const service = repository.forSchool('school-a')
 
 beforeAll(async () => {
-  await new PostgresSchoolRepositories(db).init({ driver: 'node-postgres' })
+  await createFixtureRepositories(db).init({ driver: 'node-postgres' })
   await db.execute(sql`CREATE TABLE rc_tenant_rows (id text PRIMARY KEY, school_id text NOT NULL)`)
   await repository.batchSave([
     { id: '0-foreign', schoolId: 'school-b' },

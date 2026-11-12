@@ -4,7 +4,7 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity, withShortName } from '@edaya/core'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import { invitationLifecycleLockKey } from '../../capabilities/invitations/invitation-lifecycle'
 import { buildInvitationUrl, generateInvitationToken, hashInvitationToken } from '../../capabilities/invitations/invitation-token'
@@ -13,7 +13,6 @@ import { renderInvitationContent } from '../../capabilities/notifications/templa
 import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
 
-import { validateSchoolOwnership } from '../entities/config/school/validate-school-ownership'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -324,7 +323,6 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       )
     }
 
-    await this.assertPendingOwnerAssignable(invitation, subjectId)
     await this.assertInvitationTargetLinkable(invitation, subjectId)
 
     const result = await linkSubjectToActor(
@@ -463,20 +461,6 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     }
   }
 
-  private async assertPendingOwnerAssignable(
-    invitation: AccountInvitation,
-    subjectId: string,
-  ): Promise<void> {
-    if (invitation.kind !== AccountInvitationKind.Staff) {
-      return
-    }
-    const school = await this.repositories.schools.findById(invitation.schoolId)
-    if (!school || school.pendingOwnerStaffId !== invitation.targetId) {
-      return
-    }
-    await validateSchoolOwnership(new SchoolEntity({ ...school.data, ownerSubjectId: subjectId }), school, this.repositories)
-  }
-
   private async assignPendingOwnerIfNeeded(
     invitation: AccountInvitation,
     subjectId: string,
@@ -488,11 +472,11 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     if (!school || school.pendingOwnerStaffId !== invitation.targetId) {
       return
     }
-    const updated = new SchoolEntity({
+    const updated = new SchoolEntity(withShortName({
       ...school.data,
       ownerSubjectId: subjectId,
       pendingOwnerStaffId: null,
-    })
+    }))
     const scope = await this.baseService.access.identities.assertClaimOwner(invitation, school, updated)
     await this.repositories.schools.forAccess(scope).save(updated)
   }

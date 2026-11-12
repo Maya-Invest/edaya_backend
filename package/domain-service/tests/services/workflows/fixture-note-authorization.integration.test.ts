@@ -1,12 +1,12 @@
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { School, StaffMember, Student, StudentNote } from '@edaya/core'
+import { School, StaffMember, Student, StudentNote, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 
 test('only the fixture seed job can import historical notes with an existing tenant staff author', async () => {
   const { schoolRepositories: repos, forActor } = await createTestApp()
   await repos.students.save(new Student({ id: 'student', schoolId: 'school', firstName: 'A', lastName: 'Student' }))
-  await repos.schools.save(new School({ id: 'foreign', name: 'Foreign', timeZone: 'UTC' }))
+  await repos.schools.save(new School(withShortName({ id: 'foreign', name: 'Foreign', timeZone: 'UTC' })))
   await repos.staffMembers.save(new StaffMember({ id: 'foreign-author', schoolId: 'foreign', firstName: 'Other', lastName: 'Staff' }))
   const fixture = forActor(createSystemActorMetadata({ systemId: 'fixture-seed', schoolId: 'school', requestId: 'fixture-notes', reason: 'Import local fixture history' }))
   const note = new StudentNote({ id: 'note', schoolId: 'school', studentId: 'student', authorStaffId: 'admin', body: 'Historical fixture note' })

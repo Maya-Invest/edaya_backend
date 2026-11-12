@@ -1,6 +1,7 @@
 import { Assessment, AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { buildNotificationDeliveryId } from '../../src/capabilities/notifications'
@@ -20,7 +21,7 @@ describe('scheduled notification runner with native scopes', () => {
     await fixture.db.exec('UPDATE students SET subject_id = \'student-login\' WHERE id = \'student-a\'')
     await fixture.repositories.assessments.save(new Assessment({ id: 'due', classGroupId: 'class-a', classSubjectId: 'math-a', periodId: 'period-a', title: 'Midterm', kind: AssessmentKind.Homework, maxScore: 20, coefficient: 1, dueAt: new Date('2026-06-20') }))
     const gateway = new RecordingNotificationGateway()
-    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
     const summary = await runCronJobs(application, { asOf: new Date('2026-06-17T12:00:00Z'), jobKeys: ['processDueNotifications'] })
     expect(summary.results.map(result => [result.schoolId, result.result.processed])).toEqual([['school-a', 1], ['school-b', 0]])
     expect(gateway.enqueued).toHaveLength(1)

@@ -50,9 +50,9 @@ describe("authorization display serialization", () => {
 
   test("owner display excludes platform authority and a guardian profile retains only its own relationships", async () => {
     await fixture.db.exec(`UPDATE schools SET owner_subject_id = 'person-a' WHERE id = 'school-a';
-      INSERT INTO students (id, school_id, first_name, last_name, status, created_at) VALUES ('student', 'school-a', 'S', 'One', 'active', now());
-      INSERT INTO guardians (id, school_id, first_name, last_name, subject_id, has_access, created_at)
-        VALUES ('guardian', 'school-a', 'G', 'One', 'person-a', true, now());
+      INSERT INTO students (id, identifier, school_id, first_name, last_name, status, created_at) VALUES ('student', 'STUDENT', 'school-a', 'S', 'One', 'active', now());
+      INSERT INTO guardians (id, identifier, school_id, first_name, last_name, subject_id, has_access, created_at)
+        VALUES ('guardian', 'GUARDIAN', 'school-a', 'G', 'One', 'person-a', true, now());
       INSERT INTO guardian_student_links (id, school_id, guardian_id, student_id, relationship, is_primary, created_at)
         VALUES ('link', 'school-a', 'guardian', 'student', 'parent', true, now());`);
     const owner = await serializeActorAuthorization(staff, fixture.repositories);

@@ -45,7 +45,7 @@ describe("service account routes", () => {
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "integration-seeding",
-      displayName: "Integration Seeding",
+      name: "Integration Seeding",
       elevated: true,
     });
 
@@ -90,7 +90,7 @@ describe("service account routes", () => {
 
     const { apiKey, staffMember } = await provisionServiceAccountForTests(application, {
       serviceId: "narrow-teacher",
-      displayName: "Teacher Integration",
+      name: "Teacher Integration",
       permissionAssignments: [
         { permission: Permission.GRADE_READ, scopes: [{ kind: "class_group" as const, classGroupId: "ci-6a" }], academicYearId: TEST_ACADEMIC_YEAR_ID },
       ],
@@ -119,7 +119,7 @@ describe("service account routes", () => {
 
     await provisionServiceAccountForTests(application, {
       serviceId: "listed-bot",
-      displayName: "Listed Bot",
+      name: "Listed Bot",
       elevated: true,
     });
 
@@ -152,7 +152,7 @@ describe("service account routes", () => {
       }),
       body: JSON.stringify({
         serviceId: "http-created",
-        displayName: "HTTP Created Bot",
+        name: "HTTP Created Bot",
         elevated: true,
       }),
     }));
@@ -196,7 +196,7 @@ describe("service account routes", () => {
       }),
       body: JSON.stringify({
         serviceId: "custom-key-bot",
-        displayName: "Custom Key Bot",
+        name: "Custom Key Bot",
         elevated: true,
         apiKey: customApiKey,
       }),
@@ -250,7 +250,7 @@ describe("service account routes", () => {
       }),
       body: JSON.stringify({
         serviceId: "over-privileged-bot",
-        displayName: "Over Privileged Bot",
+        name: "Over Privileged Bot",
         permissionAssignments: buildSchoolWidePermissionAssignments([
           Permission.PAYMENT_RECORD,
           Permission.FINANCIAL_CATALOG_MANAGE,
@@ -267,7 +267,7 @@ describe("service account routes", () => {
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "teacher-command-bot",
-      displayName: "Teacher Command Bot",
+      name: "Teacher Command Bot",
       permissionAssignments: teacherClassSubjectAssignments(),
     });
 
@@ -320,7 +320,7 @@ describe("service account routes", () => {
 
     const { staffMember } = await provisionServiceAccountForTests(application, {
       serviceId: "updatable-bot",
-      displayName: "Updatable Bot",
+      name: "Updatable Bot",
       permissionAssignments: teacherClassSubjectAssignments(),
     });
 
@@ -332,15 +332,15 @@ describe("service account routes", () => {
         "authorization": `Bearer ${accessToken}`,
       }),
       body: JSON.stringify({
-        displayName: "Renamed Integration Bot",
+        name: "Renamed Integration Bot",
       }),
     }));
 
     expect(response.status).toBe(200);
 
-    const body = await response.json() as { displayName: string; serviceId: string };
+    const body = await response.json() as { name: string; serviceId: string };
     expect(body.serviceId).toBe("updatable-bot");
-    expect(body.displayName).toBe("Renamed Integration Bot");
+    expect(body.name).toBe("Renamed Integration Bot");
   }, DATABASE_SETUP_TIMEOUT);
 
   it("rejects a combined first-party and service credential header", async () => {
@@ -349,7 +349,7 @@ describe("service account routes", () => {
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "dual-auth",
-      displayName: "Dual Auth Bot",
+      name: "Dual Auth Bot",
       elevated: true,
     });
 

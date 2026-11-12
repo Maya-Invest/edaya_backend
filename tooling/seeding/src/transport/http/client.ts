@@ -116,6 +116,7 @@ export class HttpSeedClient {
   private readonly appOrigin?: string
   private readonly fetchImpl: HttpFetch
   private readonly cookies = new Map<string, string>()
+  private staffScope?: { schoolId: string, actorId: string }
   private accessToken?: { value: string, expiresAt: number }
   private exchange?: Promise<string | undefined>
   private lastRequestAt = 0
@@ -135,7 +136,12 @@ export class HttpSeedClient {
     return this.authUrl
   }
 
+  selectStaffScope(scope?: { schoolId: string, actorId: string }): void {
+    this.staffScope = scope
+  }
+
   clearCookies(): void {
+    this.staffScope = undefined
     this.cookies.clear()
     this.accessToken = undefined
     this.exchange = undefined
@@ -158,6 +164,7 @@ export class HttpSeedClient {
     // Preserve a usable token before nested account provisioning changes identity.
     // Otherwise each snapshot can restore an empty cache and exhaust the renewal quota.
     await this.getAccessToken()
+    const staffScope = this.staffScope
     const snapshot = new Map(this.cookies)
     const accessToken = this.accessToken
     try {
@@ -168,6 +175,7 @@ export class HttpSeedClient {
       for (const [name, value] of snapshot) {
         this.cookies.set(name, value)
       }
+      this.staffScope = staffScope
       this.accessToken = accessToken
       this.exchange = undefined
     }
@@ -266,8 +274,14 @@ export class HttpSeedClient {
       headers.delete('cookie')
       if (!headers.has('authorization')) {
         const accessToken = await this.getAccessToken()
-        if (accessToken)
+        if (accessToken) {
           headers.set('authorization', `Bearer ${accessToken}`)
+          if (this.staffScope && !['x-school-id', 'x-actor-kind', 'x-actor-id'].some(key => headers.has(key))) {
+            headers.set('x-school-id', this.staffScope.schoolId)
+            headers.set('x-actor-kind', 'staff')
+            headers.set('x-actor-id', this.staffScope.actorId)
+          }
+        }
       }
       if (!headers.has('origin')) {
         headers.set('origin', this.appOrigin ?? new URL(this.baseUrl).origin)

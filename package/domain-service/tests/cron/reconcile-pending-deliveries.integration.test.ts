@@ -2,6 +2,7 @@ import { AuthorizationError, createSystemActorMetadata } from '@edaya/authorizat
 import { MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus, noOpNotificationGateway, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 import { reconcilePendingDeliveries } from '../../src/capabilities/scheduling-jobs/jobs/reconcile-pending-deliveries'
 import { testFileStorage } from '../support/test-file-storage'
@@ -23,7 +24,7 @@ describe('delivery reconciliation uses its explicit job authority', () => {
   test('reconciles only its school and rejects unrelated job identities', async () => {
     const gateway = new RecordingNotificationGateway()
     gateway.setStatusLookup('school-a', 'delivery-a', { status: 'sent', providerMessageId: 'provider-message', occurredAt: asOf })
-    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
     expect(await reconcilePendingDeliveries({ asOf, actor, service: application.forActor(actor) })).toEqual({ processed: 1, skipped: 0 })
     expect(gateway.statusLookups).toEqual([[{ schoolId: 'school-a', deliveryId: 'delivery-a', subjectId: 'person-a' }]])
     expect((await fixture.repositories.messageDeliveries.findById('delivery-a'))?.status).toBe(MessageDeliveryStatus.Sent)
@@ -34,7 +35,7 @@ describe('delivery reconciliation uses its explicit job authority', () => {
   })
 
   test('counts only authorized pending deliveries when the provider has no status lookup', async () => {
-    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    const application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     expect(await reconcilePendingDeliveries({ asOf, actor, service: application.forActor(actor) })).toEqual({ processed: 0, skipped: 1 })
   })
 })

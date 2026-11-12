@@ -1,7 +1,7 @@
-/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { AttendanceRecord, DocumentRendererPort } from '@edaya/core'
+/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import { ActorAssuranceLevel, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, ClassGroup, ClassSubjectMatter, ClassSubjectMatterStatus, DocumentIssuanceStatus, EnrollmentEndReason, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentIncidentInvolvement, StudentSubjectEnrollment, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { AcademicYear, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, ClassGroup, ClassSubjectMatter, ClassSubjectMatterStatus, DocumentIssuanceStatus, EnrollmentEndReason, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentIncidentInvolvement, StudentSubjectEnrollment, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { dispatchDocumentRender } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { createReportCardContext } from './report-card-workflow-context'
@@ -23,7 +23,7 @@ describe('teacher corrections across workflows', () => {
     const now = new Date()
     const year = (await f.repositories.academicYears.findById('ay1'))!
     const endedAt = new Date(now.getTime() + 86400000)
-    await f.repositories.academicYears.save(new AcademicYear({ ...year.data, endDate: endedAt }))
+    await f.repositories.academicYears.save(new AcademicYear(withShortName({ ...year.data, endDate: endedAt })))
     for (const row of await f.repositories.subjectEnrollments.list({ studentClassEnrollmentId: 'enr1' }))
       await f.repositories.subjectEnrollments.save(new StudentSubjectEnrollment({ ...row.data, endedAt }))
     await f.repositories.lessonSessions.save(new LessonSession({ id: 'new-call', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Math', startsAt: new Date(now.getTime() - 60000), endsAt: new Date(now.getTime() + 3600000) }))
@@ -41,7 +41,41 @@ describe('teacher corrections across workflows', () => {
     const state = await f.repositories.teacherCorrections.state('sch1', 'attendance', record.id)
     expect(state?.history.map(h => h.action)).toEqual(['initial_submission', 'arrival'])
     expect((state?.payload['original'] as AttendanceRecord['data']).status).toBe(AttendanceStatus.Absent)
+    const departure = { requestId: 'left', recordId: record.id, expectedVersion: 2, occurredAt: new Date() }
+    await expect(f.teacher.teacherCorrectionsWorkflow.recordDeparture({ ...departure, requestId: 'stale-departure', expectedVersion: 0 })).rejects.toMatchObject({ code: 'ATTENDANCE_VERSION_CONFLICT' })
+    await expect(f.teacher.teacherCorrectionsWorkflow.recordDeparture({ ...departure, requestId: 'outside-window', occurredAt: endedAt })).rejects.toMatchObject({ code: 'ATTENDANCE_DEPARTURE_OUTSIDE_WINDOW' })
+    const other = f.forActor(createTeacherActorMetadata({ schoolId: 'sch1', teacherId: 'other-teacher', subjectId: 'other-subject', academicYearId: 'ay1', requestId: 'unauthorized', authenticatedAt: now, assuranceLevel: ActorAssuranceLevel.Verified }))
+    await expect(other.teacherCorrectionsWorkflow.recordDeparture(departure)).rejects.toThrow()
+    await f.teacher.teacherCorrectionsWorkflow.recordDeparture(departure)
+    await f.teacher.teacherCorrectionsWorkflow.recordDeparture(departure)
+    const call = await f.teacher.teacherCorrectionsWorkflow.getAttendanceCall({ anchor: input.anchor })
+    expect(call.records[0]).toMatchObject({ status: AttendanceStatus.Late, departedAt: departure.occurredAt.toISOString(), workflowVersion: 3 })
+    await expect(f.teacher.teacherCorrectionsWorkflow.recordDeparture({ ...departure, requestId: 'second-departure', expectedVersion: 3 })).rejects.toMatchObject({ code: 'ATTENDANCE_DEPARTURE_NOT_APPLICABLE' })
+    const proposal = { workflow: 'attendance' as const, targetId: record.id, status: 'late' as const, notes: 'Confirmed', teacherExplanation: 'Checked in class' }
+    const correction = await f.teacher.teacherCorrectionsWorkflow.request({ requestId: 'comment-after-departure', expectedVersion: 3, reason: 'Clarify the entry', proposal })
+    await f.reviewer.teacherCorrectionsWorkflow.decide('approve', { requestId: 'approve-comment', correctionId: correction.id, expectedVersion: 0 })
+    const reopened = await f.teacher.getTeacherAttendanceCall({ anchor: input.anchor })
+    expect(reopened.records[0]).toMatchObject({ departedAt: departure.occurredAt.toISOString(), status: AttendanceStatus.Late, justificationStatus: AttendanceJustificationStatus.None })
     await expect(f.teacher.teacherCorrectionsWorkflow.attendanceCall('save', { ...input, requestId: 'late-draft', expectedVersion: 2 })).rejects.toMatchObject({ code: 'CORRECTION_REQUIRED' })
+  })
+
+  test('a daily departure belongs only to that pupil and submitted register', async () => {
+    const f = await fixture()
+    const group = (await f.repositories.classGroups.findById('cg1'))!
+    await f.repositories.classGroups.save(new ClassGroup(withShortName({ ...group.data, attendanceMode: AttendanceMode.Daily })))
+    const now = new Date()
+    await f.repositories.students.save(new Student({ id: 'daily-pupil', schoolId: 'sch1', firstName: 'Daily', lastName: 'Pupil' }))
+    await f.repositories.enrollments.save(new StudentClassEnrollment({ id: 'daily-enrollment', studentId: 'daily-pupil', classGroupId: 'cg1', academicYearId: 'ay1', enrollmentIndex: 2, enrolledAt: new Date(now.getTime() - 86400000) }))
+    const anchor = { kind: 'daily' as const, classGroupId: 'cg1', date: now }
+    const { students } = await f.teacher.getTeacherAttendanceCall({ anchor })
+    await f.teacher.teacherCorrectionsWorkflow.attendanceCall('submit', { requestId: 'daily-finish', expectedVersion: 0, anchor, entries: students.map(s => ({ studentId: s.id, status: 'present' })) })
+    const before = await f.teacher.getTeacherAttendanceCall({ anchor })
+    const record = before.records.find(r => r.studentId === 'daily-pupil')!
+    const time = new Date()
+    await f.teacher.teacherCorrectionsWorkflow.recordDeparture({ requestId: 'daily-left', recordId: record.id, expectedVersion: record.workflowVersion, occurredAt: time })
+    const after = await f.teacher.getTeacherAttendanceCall({ anchor })
+    expect(after.records.filter(r => r.departedAt)).toHaveLength(1)
+    expect(after.records.find(r => r.id === record.id)).toMatchObject({ status: 'present', departedAt: time.toISOString() })
   })
 
   test('reviewed attendance requires consequence confirmation and retains the original decision', async () => {
@@ -70,7 +104,7 @@ describe('teacher corrections across workflows', () => {
 
   test('logbook validation is explicit; approval updates content and progress atomically', async () => {
     const f = await fixture()
-    await f.repositories.subjectMatters.save(new SubjectMatter({ id: 'sm1', subjectId: 'subject-math', name: 'Numbers', sequenceOrder: 1 }))
+    await f.repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'sm1', subjectId: 'subject-math', name: 'Numbers', sequenceOrder: 1 })))
     await f.repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'matter1', classSubjectId: 'cs1', subjectMatterId: 'sm1', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
     const proposal = { workflow: 'logbook' as const, targetId: 'session-0', sessionNote: 'Introduction', progress: [{ matterId: 'matter1', completedPercentage: 80 }] }
     const state = await f.teacher.teacherCorrectionsWorkflow.saveLogbook({ requestId: 'save', expectedVersion: 0, proposal })
@@ -121,7 +155,7 @@ describe('teacher corrections across workflows', () => {
   test('an incomplete daily call cannot publish; a transferred student remains on the submitted roster', async () => {
     const f = await fixture()
     const group = (await f.repositories.classGroups.findById('cg1'))!
-    await f.repositories.classGroups.save(new ClassGroup({ ...group.data, attendanceMode: AttendanceMode.Daily }))
+    await f.repositories.classGroups.save(new ClassGroup(withShortName({ ...group.data, attendanceMode: AttendanceMode.Daily })))
     await f.repositories.students.save(new Student({ id: 'stu2', schoolId: 'sch1', firstName: 'Second', lastName: 'Student' }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ id: 'enr2', studentId: 'stu2', classGroupId: 'cg1', academicYearId: 'ay1', enrollmentIndex: 1, enrolledAt: new Date('2025-09-01') }))
     const anchor = { kind: 'daily' as const, classGroupId: 'cg1', date: new Date('2026-02-05') }
@@ -170,6 +204,10 @@ describe('teacher corrections across workflows', () => {
     const request = await f.teacher.teacherCorrectionsWorkflow.request({ requestId: 'comment-request', expectedVersion: 0, reason: 'Correct student feedback', proposal })
     const reviewed = await f.reviewer.teacherCorrectionsWorkflow.decide('approve', { requestId: 'comment-approve', correctionId: request.id, expectedVersion: 0, confirmConsequences: true })
     expect(reviewed.status).toBe('approved_pending_publication')
+    const teacherView = await f.teacher.teacherCorrectionsWorkflow.detail({ correctionId: request.id })
+    expect(teacherView.correction.revisions).toEqual([])
+    expect(teacherView.history).toEqual([])
+    expect(teacherView.original).not.toHaveProperty('snapshot')
     expect(reviewed.documentIssuanceId).toBeUndefined()
     expect((await f.repositories.results.findById(report.id))?.teacherComment).toBe('Original general comment')
     await expect(f.reviewer.teacherCorrectionsWorkflow.publishReportCorrection({ requestId: 'reviewer-cannot-publish', correctionId: request.id, expectedVersion: reviewed.version })).rejects.toThrow()
@@ -194,6 +232,8 @@ describe('teacher corrections across workflows', () => {
     await dispatchDocumentRender(f.application)
     expect((await f.repositories.documentIssuances.findById(original.id))?.status).toBe(DocumentIssuanceStatus.Superseded)
     expect((await f.repositories.teacherCorrections.state('sch1', 'report_comments', report.id))?.payload['documentStatus']).toBe(DocumentIssuanceStatus.Ready)
+    await expect(f.teacher.teacherCorrectionsWorkflow.detail({ correctionId: request.id })).rejects.toThrow()
+    expect((await f.teacher.teacherCorrectionsWorkflow.getWorkflowState({ proposal })).corrections).toEqual([])
     expect((await f.repositories.results.findById(report.id))?.teacherComment).toBe('Original general comment')
   })
 })

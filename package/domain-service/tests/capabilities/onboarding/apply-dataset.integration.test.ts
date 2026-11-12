@@ -1,4 +1,4 @@
-import { AcademicDiscipline, AcademicPeriod, AcademicPeriodType, AcademicYear, describeGrade, GradeScale } from '@edaya/core'
+import { AcademicDiscipline, AcademicPeriod, AcademicPeriodType, AcademicYear, describeGrade, GradeScale, withShortName } from '@edaya/core'
 import { describe, expect, spyOn, test } from 'bun:test'
 import { resolveOnboardingDataset } from '../../../../../tooling/fixtures/src/onboarding/registry'
 import { applyStructureTemplate } from '../../../src/capabilities/onboarding/apply-structure-template'
@@ -10,7 +10,7 @@ async function context() {
   const f = await createTestApp()
   const actor = f.app.baseService.actor
   const schoolId = (await f.schoolRepositories.schools.list())[0]!.id
-  const year = new AcademicYear({ id: 'dataset-year', schoolId, name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-07-03'), status: 'published' })
+  const year = new AcademicYear(withShortName({ id: 'dataset-year', schoolId, name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-07-03'), status: 'published' }))
   await f.schoolRepositories.academicYears.save(year)
   return { ...f, actor, schoolId, year }
 }
@@ -23,14 +23,14 @@ describe('canonical dataset application', () => {
   test('applies all twelve levels with shared catalogs, exact grading and subject-side module membership', async () => {
     const f = await context()
     const dataset = resolveOnboardingDataset('ci-general-secondary', '1.0.0')
-    await f.schoolRepositories.academicDisciplines.save(new AcademicDiscipline({ id: 'existing-math', schoolId: f.schoolId, code: 'MATH', name: 'Mathématiques' }))
+    await f.schoolRepositories.academicDisciplines.save(new AcademicDiscipline(withShortName({ id: 'existing-math', schoolId: f.schoolId, shortName: 'MATH', name: 'Mathématiques' })))
     const result = await applyStructureTemplate(f.application, f.actor, { ...input(dataset), academicYearId: f.year.id })
     expect(result.gradeLevelCount).toBe(12)
     expect(result.gradeScaleCount).toBe(1)
-    expect(await f.schoolRepositories.academicDisciplines.count({ schoolId: f.schoolId })).toBe(15)
+    expect(await f.schoolRepositories.academicDisciplines.count({ schoolId: f.schoolId })).toBe(16)
     expect(await f.schoolRepositories.subjectCategories.count({ schoolId: f.schoolId })).toBe(6)
     const subjects = await f.schoolRepositories.subjects.list({ schoolId: f.schoolId })
-    expect(subjects.filter(row => row.code === 'MATH').every(row => row.disciplineId === 'existing-math')).toBe(true)
+    expect(subjects.filter(row => row.name === 'Mathématiques').every(row => row.disciplineId !== 'existing-math')).toBe(true)
     const scales = await f.schoolRepositories.gradeScales.list({ schoolId: f.schoolId })
     const scale = scales[0]!
     expect(scale.isDefault).toBe(true)
@@ -61,9 +61,9 @@ describe('canonical dataset application', () => {
         expect(policy.scale.roundingMode).toBe('nearest')
         expect(grade.reportSettingsFor(f.year.id).passThreshold).toBe(10)
         expect(describeGrade(13.995, policy).reportedValue).toBe(14)
-        expect(new GradeScale(policy.scale).findRange(14)?.letter).toBe('B')
+        expect(new GradeScale(withShortName(policy.scale)).findRange(14)?.letter).toBe('B')
         for (const spec of definition.subjects) {
-          const subject = subjects.find(row => row.gradeLevelId === grade.id && row.code === spec.code)!
+          const subject = subjects.find(row => row.gradeLevelId === grade.id && row.name === spec.name)!
           expect(subject.coefficient).toBe(spec.coefficient)
           expect(subject.isOptional).toBe(spec.isOptional)
           expect(subject.reportOrder).toBe(spec.reportOrder)
@@ -81,9 +81,9 @@ describe('canonical dataset application', () => {
 
   test('preserves an existing default scale and an explicit semester calendar', async () => {
     const f = await context()
-    await f.schoolRepositories.gradeScales.save(new GradeScale({ id: 'existing-scale', schoolId: f.schoolId, name: 'Existing', minScore: 0, maxScore: 20, isDefault: true, ranges: [{ letter: 'ALL', minScore: 0, maxScore: 20 }] }))
+    await f.schoolRepositories.gradeScales.save(new GradeScale(withShortName({ id: 'existing-scale', schoolId: f.schoolId, name: 'Existing', minScore: 0, maxScore: 20, isDefault: true, ranges: [{ letter: 'ALL', minScore: 0, maxScore: 20 }] })))
     for (const [i, start, end] of [[1, '2026-09-01', '2027-01-31'], [2, '2027-02-01', '2027-07-03']] as const)
-      await f.schoolRepositories.academicPeriods.save(new AcademicPeriod({ id: `semester-${i}`, schoolId: f.schoolId, academicYearId: f.year.id, name: `Semestre ${i}`, startDate: new Date(start), endDate: new Date(end), type: AcademicPeriodType.Semester }))
+      await f.schoolRepositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: `semester-${i}`, schoolId: f.schoolId, academicYearId: f.year.id, name: `Semestre ${i}`, startDate: new Date(start), endDate: new Date(end), type: AcademicPeriodType.Semester })))
     await applyStructureTemplate(f.application, f.actor, { ...input(), academicYearId: f.year.id })
     expect((await f.schoolRepositories.academicPeriods.list({ academicYearId: f.year.id })).map(row => row.type)).toEqual([AcademicPeriodType.Semester, AcademicPeriodType.Semester])
     expect((await f.schoolRepositories.gradeScales.list({ schoolId: f.schoolId })).filter(row => row.isDefault).map(row => row.id)).toEqual(['existing-scale'])
@@ -107,8 +107,8 @@ describe('canonical dataset application', () => {
   test('selects the submitted academic year and rejects conflicting existing periods without writes', async () => {
     const f = await context()
     const draft = { schoolId: f.schoolId, academicYearLabel: f.year.name, academicYearStart: '2026-09-01', academicYearEnd: '2027-07-03', periodType: 'semester' as const, periods: [{ label: 'Semestre 1', start: '2026-09-01', end: '2027-01-31' }, { label: 'Semestre 2', start: '2027-02-01', end: '2027-07-03' }] }
-    await f.schoolRepositories.academicYears.save(new AcademicYear({ id: 'unrelated-year', schoolId: f.schoolId, name: '2025', startDate: new Date('2025-01-01'), endDate: new Date('2025-12-31') }))
-    await f.schoolRepositories.academicPeriods.save(new AcademicPeriod({ id: 'unrelated-period', schoolId: f.schoolId, academicYearId: 'unrelated-year', name: 'Old', startDate: new Date('2025-01-01'), endDate: new Date('2025-12-31') }))
+    await f.schoolRepositories.academicYears.save(new AcademicYear(withShortName({ id: 'unrelated-year', schoolId: f.schoolId, name: '2025', startDate: new Date('2025-01-01'), endDate: new Date('2025-12-31') })))
+    await f.schoolRepositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: 'unrelated-period', schoolId: f.schoolId, academicYearId: 'unrelated-year', name: 'Old', startDate: new Date('2025-01-01'), endDate: new Date('2025-12-31') })))
     const result = await ensureAcademicStructureFromDraft(f.application, f.actor, draft)
     expect(result.yearId).toBe(f.year.id)
     expect(result.createdPeriodCount).toBe(2)

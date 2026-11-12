@@ -147,7 +147,7 @@ function copyGradeLevel(gradeLevel: GradeLevel | undefined): EdayaSparkGradeLeve
   return {
     id: gradeLevel.id,
     name: gradeLevel.name,
-    label: gradeLevel.label,
+    label: gradeLevel.shortName ?? gradeLevel.name,
     order: gradeLevel.order,
     ...(gradeLevel.cycle ? { cycle: gradeLevel.cycle } : {}),
   }

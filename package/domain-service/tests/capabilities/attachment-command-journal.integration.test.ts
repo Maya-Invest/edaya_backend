@@ -1,7 +1,8 @@
 import { createStaffActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, createInMemoryFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { completeAttachmentUpload, createAttachmentUpload, SchoolApplication } from '@edaya/service'
 import { expect, onTestFinished, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../tooling/test-support/human-fixtures'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 
@@ -14,8 +15,8 @@ async function fixture() {
   const journal = new PostgresCommandJournal()
   const storage = createInMemoryFileStorage()
   const actor = createStaffActorMetadata({ schoolId: 'journal-school', subjectId: 'journal-owner', staffMemberId: 'journal-staff', requestId: 'ephemeral-http-request', authenticatedAt: new Date() })
-  await f.repositories.schools.save(new School({ id: actor.schoolId, ownerSubjectId: actor.subjectId, name: 'Journal', timeZone: 'UTC' }))
-  await f.repositories.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, subjectId: actor.subjectId, firstName: 'Journal', lastName: 'Owner' }))
+  await f.repositories.schools.save(new School(withShortName({ id: actor.schoolId, ownerSubjectId: actor.subjectId, name: 'Journal', timeZone: 'UTC' })))
+  await saveHumanFixture(f.repositories.staffMembers, new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, subjectId: actor.subjectId, firstName: 'Journal', lastName: 'Owner' }))
   const application = new SchoolApplication({ repositories: f.repositories, atomicExecution: f.atomic, commandJournal: journal, fileStorage: storage, notificationGateway: noOpNotificationGateway })
   const service = application.forActor(actor)
   const input = { attachmentId: 'audited-upload', ownerKind: AttachmentOwnerKind.Staff, ownerId: actor.staffMemberId, fileName: 'private-name-not-in-audit.pdf', mimeType: 'application/pdf', sizeBytes: bytes.byteLength }

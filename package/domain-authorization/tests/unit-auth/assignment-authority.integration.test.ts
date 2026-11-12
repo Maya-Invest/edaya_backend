@@ -61,7 +61,7 @@ describe('authority from current staff assignments', () => {
   test('assignment delegation preserves exact scope and cannot produce broader manual grants', async () => {
     await fixture.repositories.staffAssignments.save(assignment({ classSubjectId: 'math-a' }))
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'administrator', schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission: Permission.ACCESS_CONTROL_MANAGE, scopes: [{ kind: 'school' }] }))
-    await fixture.repositories.staffMembers.save(new StaffMember({ id: 'helper', schoolId: 'school-a', firstName: 'Helper', lastName: 'Staff' }))
+    await fixture.repositories.staffMembers.save(new StaffMember({ id: 'helper', identifier: 'HELPER', schoolId: 'school-a', firstName: 'Helper', lastName: 'Staff' }))
     const access = new AccessPolicies(actor, fixture.repositories)
     const same = new StaffAssignment({ ...assignment({ classSubjectId: 'math-a' }).data, permissions: [Permission.GRADE_MANAGE], id: 'delegated', staffId: 'helper' })
     await fixture.atomic.execute(async () => {

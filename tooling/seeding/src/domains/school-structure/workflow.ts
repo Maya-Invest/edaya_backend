@@ -84,7 +84,7 @@ export async function seedDevSchoolStructure(
       id: gradeLevel.id,
       schoolId: dataset.schoolId,
       name: gradeLevel.name,
-      label: gradeLevel.label,
+      shortName: gradeLevel.shortName ?? gradeLevel.name,
       order: gradeLevel.order,
       cycle: gradeLevel.cycle ?? undefined,
     })
@@ -124,7 +124,7 @@ export async function seedDevSchoolStructure(
       id: slot.id,
       schoolId: dataset.schoolId,
       academicYearId: academicYear.id,
-      label: slot.label,
+      name: slot.name,
       dayOfWeek: slot.dayOfWeek,
       order: slot.order,
       startTime: slot.startTime,

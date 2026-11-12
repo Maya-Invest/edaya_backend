@@ -1,5 +1,4 @@
 import type { FixtureDataset } from '../types'
-import { defaultSubjectCategoryId } from '@edaya/core'
 import {
   DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
   DEMO_CI_SCHEDULING_REFERENCE_WEEK_START,
@@ -83,8 +82,8 @@ export const demoCiDataset = {
     enrollments: demoCiEnrollments,
     guardians: demoCiGuardians,
     guardianLinks: demoCiGuardianLinks,
-    subjectCategories: IVORY_COAST_ONBOARDING_DATASET.subjectCategories.map(row => ({ id: defaultSubjectCategoryId(DEMO_CI_SCHOOL_ID, row.name), schoolId: DEMO_CI_SCHOOL_ID, name: row.name })),
-    academicDisciplines: [{ id: 'ci-discipline-demo', schoolId: DEMO_CI_SCHOOL_ID, code: 'DEMO', name: 'Demonstration curriculum' }],
+    subjectCategories: IVORY_COAST_ONBOARDING_DATASET.subjectCategories.map(row => ({ id: `${DEMO_CI_SCHOOL_ID}:subject-category:${row.code}`, schoolId: DEMO_CI_SCHOOL_ID, name: row.name })),
+    academicDisciplines: [{ id: 'ci-discipline-demo', schoolId: DEMO_CI_SCHOOL_ID, shortName: 'DEMO', name: 'Demonstration curriculum' }],
     subjects: demoCiSubjects.map(subject => ({ ...subject, disciplineId: 'ci-discipline-demo' })),
     subjectMatters: demoCiSubjectMatters,
     classSubjects: demoCiClassSubjects,

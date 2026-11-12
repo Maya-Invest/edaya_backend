@@ -1,5 +1,5 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
-import { Activity, ActivityCategory, DomainValidationError } from '@edaya/core'
+import { Activity, ActivityCategory, DomainValidationError, withShortName } from '@edaya/core'
 import { validateActivityDelete } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 
@@ -19,7 +19,7 @@ const baseArgs = {
 
 describe('Activity domain invariants', () => {
   test('accepts valid activity definitions', () => {
-    const activity = new Activity(baseArgs)
+    const activity = new Activity(withShortName(baseArgs))
 
     expect(activity.name).toBe('Chess club')
     expect(activity.participants).toBe(8)
@@ -27,30 +27,30 @@ describe('Activity domain invariants', () => {
   })
 
   test('rejects inverted date ranges and participant counts above capacity', () => {
-    expect(() => new Activity({
+    expect(() => new Activity(withShortName({
       ...baseArgs,
       startDate: new Date('2026-12-01T00:00:00.000Z'),
       endDate: new Date('2026-09-01T00:00:00.000Z'),
-    })).toThrow(DomainValidationError)
+    }))).toThrow(DomainValidationError)
 
-    expect(() => new Activity({
+    expect(() => new Activity(withShortName({
       ...baseArgs,
       participants: 25,
       capacity: 20,
-    })).toThrow(DomainValidationError)
+    }))).toThrow(DomainValidationError)
   })
 })
 
 describe('validateActivityDelete', () => {
   test('allows delete when no enrollments exist', async () => {
-    await validateActivityDelete(new Activity(baseArgs), {
+    await validateActivityDelete(new Activity(withShortName(baseArgs)), {
       activityEnrollments: { list: mock(async () => []) },
       classActivityEnrollments: { list: mock(async () => []) },
     } as never)
   })
 
   test('blocks delete while student or class enrollments remain', async () => {
-    const activity = new Activity(baseArgs)
+    const activity = new Activity(withShortName(baseArgs))
 
     await expect(validateActivityDelete(activity, {
       activityEnrollments: { list: mock(async () => [{ id: 'enr-1' }]) },

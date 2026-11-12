@@ -1,5 +1,5 @@
 import type { TimetableGenerationDefaults } from '../../../src/capabilities/timetable/types'
-import { DayOfWeek, PeriodDefinition, TimetableGenerationMode } from '@edaya/core'
+import { DayOfWeek, PeriodDefinition, TimetableGenerationMode, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { buildWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate } from '../../../src/capabilities/timetable/resolver'
 
@@ -15,16 +15,16 @@ const options: TimetableGenerationDefaults = {
   defaultMaxPeriodSpan: 1,
 }
 const periods = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday]
-  .flatMap(dayOfWeek => [8, 9].map(hour => new PeriodDefinition({
+  .flatMap(dayOfWeek => [8, 9].map(hour => new PeriodDefinition(withShortName({
     id: `${dayOfWeek}-${hour}`,
     schoolId: 'school',
     academicYearId: 'year',
-    label: 'Lesson',
+    name: 'Lesson',
     dayOfWeek,
     order: hour,
     startTime: `${hour.toString().padStart(2, '0')}:00`,
     endTime: `${(hour + 1).toString().padStart(2, '0')}:00`,
-  })))
+  }))))
 const subjects = [{ classSubjectId: 'english', displayLabel: 'English', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher'] }]
 const template = solveTimetable({ classGroupId: 'class', cells: buildWeeklyTemplateSpace(periods), subjects, occupiedIntervals: [], options })
 const input = {

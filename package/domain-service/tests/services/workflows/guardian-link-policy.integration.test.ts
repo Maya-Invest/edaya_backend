@@ -1,6 +1,8 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
 import { Guardian, GuardianStudentLink, noOpNotificationGateway, Permission, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../../tooling/test-support/human-fixtures'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -17,8 +19,8 @@ describe('guardian linking uses its own action and shared enrollment validation'
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
-    await fixture.repositories.guardians.save(new Guardian({ id: 'new-guardian', schoolId: 'school-a', firstName: 'Another', lastName: 'Guardian' }))
-    service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    await saveHumanFixture(fixture.repositories.guardians, new Guardian({ id: 'new-guardian', schoolId: 'school-a', firstName: 'Another', lastName: 'Guardian' }))
+    service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
   afterEach(async () => releaseDatabase(fixture.db))
   async function grant(permission: Permission) {
@@ -48,7 +50,7 @@ describe('guardian linking uses its own action and shared enrollment validation'
 
   test('selected guardians cannot acquire new relationships from the same login’s staff authority', async () => {
     await grant(Permission.PARENT_MANAGE)
-    const guardianService = new SchoolService({ ...service.baseService, actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) })
+    const guardianService = new SchoolService({ ...service.baseService, commandJournal: new PostgresCommandJournal(), actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) })
     await expect(guardianService.studentWorkflow.linkGuardianToStudent({ ...input, guardianId: 'guardian-a', studentId: 'student-other' })).rejects.toBeInstanceOf(AuthorizationError)
   })
 })

@@ -1,11 +1,11 @@
-import { AttendanceRecord, AttendanceStatus, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AttendanceRecord, AttendanceStatus, Student, StudentClassEnrollment, Subject, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { fixture } from './support/marks-fixture'
 
 test('native roster lock rejects concurrent new enrollments using the same participation revision', async () => {
   const f = await fixture('participation-race')
   const subject = (await f.r.subjects.findById(f.id('math')))!
-  await f.r.subjects.save(new Subject({ ...subject.data, isOptional: true }))
+  await f.r.subjects.save(new Subject(withShortName({ ...subject.data, isOptional: true })))
   for (const name of ['first', 'second']) {
     await f.r.students.save(new Student({ id: f.id(name), schoolId: f.id('school'), firstName: name, lastName: 'Student' }))
     await f.r.enrollments.save(new StudentClassEnrollment({ id: f.id(`${name}-placement`), studentId: f.id(name), classGroupId: f.id('class'), academicYearId: f.id('year'), enrollmentIndex: 1, enrolledAt: new Date('2026-01-01') }))
@@ -35,7 +35,7 @@ test('native managed placement writes reconcile compulsory rosters without losin
 test('native attendance saves serialize with optional withdrawal and cannot orphan eligibility', async () => {
   const f = await fixture('attendance-participation-race')
   const subject = (await f.r.subjects.findById(f.id('math')))!
-  await f.r.subjects.save(new Subject({ ...subject.data, isOptional: true }))
+  await f.r.subjects.save(new Subject(withShortName({ ...subject.data, isOptional: true })))
   const attendance = new AttendanceRecord({ id: f.id('attendance'), studentId: f.id('student'), assessmentId: f.id('assessment'), date: new Date('2026-02-01'), status: AttendanceStatus.Present })
   const outcomes = await Promise.allSettled([
     f.editor.baseService.entities.attendance.save(attendance),

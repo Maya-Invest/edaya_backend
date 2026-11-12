@@ -1,4 +1,4 @@
-import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, Schedule, Subject, SubjectMatter } from '@edaya/core'
+import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, Schedule, Subject, SubjectMatter, withShortName } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
@@ -7,14 +7,14 @@ describeWithLightSchool('generic class subject deletion', (getContext) => {
     const { application, app, authHeaders } = getContext()
     const repositories = application.repositories
     const classGroup = (await repositories.classGroups.list({ $limit: 1 }))[0]!
-    await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: 'delete-inherited-subject', schoolId: classGroup.schoolId, name: 'Inherited subject' }))
+    await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: 'delete-inherited-subject', schoolId: classGroup.schoolId, name: 'Inherited subject' })))
     const inherited = new ClassSubject({ id: 'delete-inherited-allocation', classGroupId: classGroup.id, subjectId: 'delete-inherited-subject' })
     await repositories.classSubjects.save(inherited)
     for (const suffix of ['unused', 'used']) {
-      await repositories.subjects.save(new Subject({ categoryId: 'test-category', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: `delete-subject-${suffix}`, schoolId: classGroup!.schoolId, name: `Delete test ${suffix}` }))
+      await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, id: `delete-subject-${suffix}`, schoolId: classGroup!.schoolId, name: `Delete test ${suffix}` })))
       await repositories.classSubjects.save(new ClassSubject({ id: `delete-allocation-${suffix}`, classGroupId: classGroup!.id, subjectId: `delete-subject-${suffix}` }))
     }
-    await repositories.subjectMatters.save(new SubjectMatter({ id: 'delete-matter', subjectId: 'delete-subject-used', name: 'Preserve curriculum', sequenceOrder: 1 }))
+    await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'delete-matter', subjectId: 'delete-subject-used', name: 'Preserve curriculum', sequenceOrder: 1 })))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'delete-allocation-matter', classSubjectId: 'delete-allocation-used', subjectMatterId: 'delete-matter', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
     const headers = await authHeaders()
     const remove = (operation: string, body: unknown) => app.request(`/core/entities/class-subjects/${operation}`, { method: 'POST', headers, body: JSON.stringify(body) })

@@ -2,7 +2,7 @@ import type { AtomicExecutionPort, StaffMember, UserScopeSelection } from '@eday
 import type { StaffActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { randomUUID } from 'node:crypto'
-import { BusinessRuleViolationError, corePermissionDefinition, Permission, permissionScopeSelectionsSchema, scopesForPermission, ServiceApiKey, StaffMember as StaffMemberEntity, StaffPermissionAssignment } from '@edaya/core'
+import { BusinessRuleViolationError, corePermissionDefinition, Permission, permissionScopeSelectionsSchema, scopesForPermission, ServiceApiKey, shortNameSchema, StaffMember as StaffMemberEntity, StaffPermissionAssignment, suggestShortName } from '@edaya/core'
 import { AccessPolicies } from '../access/access-policies'
 import { encodeApiKey, generateApiKey } from './api-key-crypto'
 
@@ -26,7 +26,8 @@ export function materializeServiceAccountGrant(input: ServiceAccountPermissionAs
 
 export interface CreateServiceAccountInput {
   serviceId: string
-  displayName: string
+  name: string
+  shortName?: string
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
   elevated?: boolean
   /** When set, stores this key instead of generating a random one (dev/seeding only). */
@@ -39,7 +40,8 @@ export interface CreateServiceAccountResult {
 }
 
 export interface UpdateServiceAccountInput {
-  displayName?: string
+  name?: string
+  shortName?: string
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
 }
 
@@ -84,12 +86,14 @@ async function performCreateServiceAccount(
     )
   }
 
-  const { firstName, lastName } = splitDisplayName(input.displayName || input.serviceId)
+  const { firstName, lastName } = splitDisplayName(input.name || input.serviceId)
   const staffMember = new StaffMemberEntity({
     id: randomUUID(),
     schoolId,
     firstName,
     lastName,
+    name: input.name || input.serviceId,
+    shortName: input.shortName ? shortNameSchema.parse(input.shortName) : suggestShortName(input.name || input.serviceId),
     accountKind: 'service',
     serviceId: input.serviceId,
     createdBySubjectId: actor.subjectId,
@@ -169,8 +173,8 @@ async function replaceServiceAccountPermissionAssignments(
   )
 }
 
-function splitDisplayName(displayName: string): { firstName: string, lastName: string } {
-  const [firstName, ...rest] = displayName.trim().split(/\s+/)
+function splitDisplayName(name: string): { firstName: string, lastName: string } {
+  const [firstName, ...rest] = name.trim().split(/\s+/)
   return {
     firstName: firstName || 'Service',
     lastName: rest.join(' ') || 'Integration',
@@ -186,7 +190,8 @@ async function performUpdateServiceAccount(
   const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertUpdate(staffMemberId, input.permissionAssignments?.map(materializeServiceAccountGrant))
 
   if (
-    input.displayName === undefined
+    input.name === undefined
+    && input.shortName === undefined
     && input.permissionAssignments === undefined
   ) {
     throw new BusinessRuleViolationError(
@@ -205,13 +210,15 @@ async function performUpdateServiceAccount(
   }
 
   let updatedStaffMember = existing
-  if (input.displayName !== undefined) {
-    const { firstName, lastName } = splitDisplayName(input.displayName)
+  if (input.name !== undefined || input.shortName !== undefined) {
+    const { firstName, lastName } = splitDisplayName(input.name ?? existing.name ?? existing.fullName)
     updatedStaffMember = new StaffMemberEntity({
       id: existing.id,
       schoolId: existing.schoolId,
       firstName,
       lastName,
+      name: input.name ?? existing.name,
+      shortName: input.shortName === undefined ? existing.shortName : shortNameSchema.parse(input.shortName),
       email: existing.email,
       accountKind: existing.accountKind,
       serviceId: existing.serviceId,
@@ -222,7 +229,7 @@ async function performUpdateServiceAccount(
     })
   }
 
-  if (input.displayName !== undefined) {
+  if (input.name !== undefined || input.shortName !== undefined) {
     await repositories.staffMembers.save(updatedStaffMember)
   }
 
@@ -252,6 +259,8 @@ async function performRevokeServiceAccount(
     schoolId: existing.schoolId,
     firstName: existing.firstName,
     lastName: existing.lastName,
+    name: existing.name,
+    shortName: existing.shortName,
     email: existing.email,
     accountKind: existing.accountKind,
     serviceId: existing.serviceId,

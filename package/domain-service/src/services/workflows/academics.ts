@@ -3,7 +3,7 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import type { SyncClassSubjectOptions } from './subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity, withShortName } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { assertTeacherWorkflowWrite } from '../../capabilities/academics/teacher-workflow-boundaries'
 import { assertParticipationRevision, saveSubjectPolicy } from '../../capabilities/subject-enrollment/policy'
@@ -45,7 +45,7 @@ export type ConfigureSubjectInput = SubjectInput & {
   expectedReportConfigurationRevision?: number
   expectedParticipationRevisions?: Record<string, number>
 }
-export type ConfigureSubjectCategoryInput = SubjectCategoryInput & { schoolId?: string }
+export type ConfigureSubjectCategoryInput = Omit<SubjectCategoryInput, 'schoolId'> & { schoolId?: string }
 export type ConfigureSubjectMatterInput = SubjectMatterInput
 
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
@@ -83,7 +83,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         return this.updateSubject({ ...data, subjectId: data.id, expectedReportConfigurationRevision })
       }
       await this.assertReportRevision(data.gradeLevelId, data.academicYearId, expectedReportConfigurationRevision, !!data.reportModuleId)
-      const subject = new SubjectEntity({ ...data, schoolId })
+      const subject = new SubjectEntity(withShortName({ ...data, schoolId }))
       await this.baseService.entities.subjects.save(subject)
       await syncSubjectToAllClassGroups(this.baseService, subject, Object.fromEntries(
         Object.entries(classSubjectIdsByClassGroupId ?? {}).map(([id, classSubjectId]) => [id, { classSubjectId }]),
@@ -96,7 +96,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const schoolId = input.schoolId ?? this.baseService.actor.schoolId
       this.checkActorSchool(schoolId)
-      const category = new SubjectCategoryRecord({ ...input, schoolId })
+      const category = new SubjectCategoryRecord(await this.namedInput('subjectCategories', { ...input, schoolId }))
       await this.baseService.entities.subjectCategories.save(category)
       return category
     })
@@ -104,7 +104,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
 
   async configureSubjectMatter(input: SubjectMatterInput): Promise<SubjectMatter> {
     return this.baseService.atomicExecution.execute(async () => {
-      const chapter = new SubjectMatterEntity(input)
+      const chapter = new SubjectMatterEntity(await this.namedInput('subjectMatters', input))
       await this.baseService.entities.subjectMatters.save(chapter)
       for (const offering of await this.repositories.classSubjects.list({ subjectId: chapter.subjectId }))
         await syncSubjectMatterToClassSubject(this.baseService, offering, chapter)

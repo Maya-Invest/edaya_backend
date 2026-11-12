@@ -1,9 +1,9 @@
 import { EDAYA_SPARK_S2S_CLIENT_ID, encodeS2sApiKey, localEdayaSparkS2sApiKey } from '@edaya/authorization'
 import { noOpFileStorage, noOpNotificationGateway } from '@edaya/core'
-import { SchoolApplication } from '@edaya/service'
+import { registerSchoolWithOwner, SchoolApplication } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { usePooledDatabases } from '../../../../adaptor-postgres/tests/support/pooled-database'
-import { registerSchoolWithOwner } from '../../../src/capabilities/onboarding/register-school-with-owner'
 
 const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 
@@ -14,7 +14,7 @@ describe('school registration with a central identity owner', () => {
   const input = { id: 'new-school', name: 'New school', timeZone: 'UTC', ownerStaffId: 'new-staff', requestId: 'onboarding' }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
-    application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage, accountInvitationsEnabled: false })
+    application = new SchoolApplication({ commandJournal: new PostgresCommandJournal(), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage, accountInvitationsEnabled: false })
   })
   afterEach(async () => {
     await releaseDatabase(fixture.db)
@@ -30,8 +30,24 @@ describe('school registration with a central identity owner', () => {
     expect(s2s?.keyHash).toBe(encodeS2sApiKey(localEdayaSparkS2sApiKey(result.school.id)).hash)
   })
 
+  it('registers another school for its active owner without replacing an existing school or staff profile', async () => {
+    await registerSchoolWithOwner(application, session, input)
+    const selected = { schoolId: input.id, staffMemberId: input.ownerStaffId }
+    const next = { ...input, id: 'second-school', ownerStaffId: 'second-owner-staff' }
+    await expect(registerSchoolWithOwner(application, session, { ...next, id: 'school-b' }, selected)).rejects.toMatchObject({ code: 'ONBOARDING_ID_ALREADY_USED' })
+    await expect(registerSchoolWithOwner(application, session, { ...next, ownerStaffId: input.ownerStaffId }, selected)).rejects.toMatchObject({ code: 'ONBOARDING_ID_ALREADY_USED' })
+    await expect(registerSchoolWithOwner(application, session, next, { ...selected, staffMemberId: 'staff-b' })).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
+    await registerSchoolWithOwner(application, session, next, selected)
+    for (const school of [input, next]) {
+      expect((await fixture.repositories.schools.findById(school.id))?.ownerSubjectId).toBe(session.user.id)
+      expect((await fixture.repositories.staffMembers.findById(school.ownerStaffId))?.subjectId).toBe(session.user.id)
+    }
+  })
+
   it('rejects an identity already linked to a school profile', async () => {
-    await expect(registerSchoolWithOwner(application, { user: { ...session.user, id: 'person-a' } }, input)).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
+    const linked = { user: { ...session.user, id: 'person-a' } }
+    await expect(registerSchoolWithOwner(application, linked, input)).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
+    await expect(registerSchoolWithOwner(application, linked, input, { schoolId: 'school-a', staffMemberId: 'staff-a' })).rejects.toMatchObject({ code: 'SUBJECT_ALREADY_LINKED' })
     expect(await fixture.repositories.schools.findById('new-school')).toBeUndefined()
   })
 

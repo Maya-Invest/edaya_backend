@@ -93,6 +93,10 @@ export const CLEAR_TABLE_ORDER = [
 ] as const
 
 export async function clearAllTables(db: { execute: (query: SQL) => Promise<unknown> }): Promise<void> {
+  // An explicit whole-school reset also discards allocation history. Ordinary
+  // profile deletion never calls this operation and retains retired claims.
+  await db.execute(sql`DELETE FROM human_identifier_claims`)
+  await db.execute(sql`DELETE FROM human_identifier_counters`)
   for (const table of CLEAR_TABLE_ORDER) {
     await db.execute(sql.raw(`DELETE FROM ${table}`))
   }

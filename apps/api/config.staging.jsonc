@@ -3,16 +3,12 @@
 // Apply explicitly: bun repo ops vars push staging
   // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
   // AUTH_PROVIDER_GENERATION. Boolean settings use string values "true" / "false".
-  // Phone auth stays disabled until all provider settings AND secrets are configured.
+  // Upload provider secrets before applying the WhatsApp settings below.
   // SMS requires sms_routes plus AFRICAS_TALKING_USERNAME and API key.
   // Optional sender ID must be registered; qualify default-sender delivery before enabling.
   // "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
   // "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID",
-  // WhatsApp requires sms_only prerequisites as fallback; then use whatsapp_first.
-  // "WHATSAPP_PHONE_NUMBER_ID": "1234567890",
-  // "WHATSAPP_BUSINESS_ACCOUNT_ID": "1234567890",
-  // "WHATSAPP_API_VERSION": "vXX.X", // replace with a supported pinned version
-  // "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"edaya_auth_fr\",\"language\":\"fr\"},\"en\":{\"name\":\"edaya_auth_en\",\"language\":\"en_US\"}}",
+  // WhatsApp uses the live SMS settings below for explicit fallback.
   // Optional rendering: GOTENBERG_URL, DOCS_RENDER_ON_PUBLISH.
   // See docs/reference/api-configuration.md and phone-verification.md.
   "NODE_ENV": "production",
@@ -22,7 +18,11 @@
   "PAUSE_API": "false",
   "PAUSE_SCHEDULER": "false",
   "PAUSE_JOBS": "false",
-  "PHONE_AUTH_MODE": "disabled",
+  "PHONE_AUTH_MODE": "whatsapp_first",
+  "WHATSAPP_PHONE_NUMBER_ID": "1351844414684255",
+  "WHATSAPP_BUSINESS_ACCOUNT_ID": "1418705638002811",
+  "WHATSAPP_API_VERSION": "v26.0",
+  "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"authentification_edaya\",\"language\":\"fr\"},\"en\":{\"name\":\"authentification_edaya_en\",\"language\":\"en\"}}",
   "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
   "AFRICAS_TALKING_USERNAME": "atoumbre",
   "AFRICAS_TALKING_SANDBOX": "false",

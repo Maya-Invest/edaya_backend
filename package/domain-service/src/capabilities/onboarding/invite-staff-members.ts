@@ -1,14 +1,14 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { randomUUID } from 'node:crypto'
 import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
-import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, presetScopeSelections, StaffMember } from '@edaya/core'
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, presetScopeSelections } from '@edaya/core'
 import { ensureSchoolPermissionProfiles } from '../access-control/seed-staff-permission-profiles'
 import { getStaffInvitePermissionPreset } from './default-access-roles'
 import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
 
 export interface InviteStaffMemberInput {
+  identifier?: string | null
   email: string
   role: OnboardingStaffInviteRoleKey
 }
@@ -18,6 +18,7 @@ export interface InviteStaffMembersInput {
 }
 
 export interface InviteStaffMembersOptions {
+  registrationActor?: ActorMetadata
   inviteBaseUrl?: string
 }
 
@@ -58,7 +59,7 @@ function parseInvites(input: InviteStaffMembersInput): InviteStaffMemberInput[] 
     }
 
     seenEmails.add(email)
-    normalized.push({ email, role: invite.role })
+    normalized.push({ email, role: invite.role, identifier: invite.identifier })
   }
 
   return normalized
@@ -186,7 +187,7 @@ export async function inviteStaffMembers(
 
     for (const invite of invites) {
       const { firstName, lastName } = namesFromInviteEmail(invite.email)
-      const staffId = randomUUID()
+      const staffId = crypto.randomUUID()
       const preset = getStaffInvitePermissionPreset(ACCESS_ROLE_ID_BY_INVITE_ROLE[invite.role])
       if (!preset) {
         throw new BusinessRuleViolationError(
@@ -201,7 +202,9 @@ export async function inviteStaffMembers(
         )
       }
 
-      await service.baseService.entities.staffMembers.save(new StaffMember({
+      await application.forActor(options.registrationActor ?? actor).setupWorkflow.registerStaffMember({
+        identifier: invite.identifier,
+        sendAccountInvitation: false,
         id: staffId,
         schoolId,
         firstName,
@@ -210,7 +213,7 @@ export async function inviteStaffMembers(
         isActive: true,
         accountKind: 'human',
         profileRole: invite.role,
-      }))
+      })
 
       for (const sourceKey of [preset.id]) {
         const profile = profilesBySourceKey.get(sourceKey)

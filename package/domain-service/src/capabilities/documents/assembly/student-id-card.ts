@@ -29,7 +29,7 @@ export async function assembleStudentIdCard(
   const year = await requireYear(base, enrollment.academicYearId)
   if (!student.photoAttachmentId)
     fail(input.preview ? DOCUMENT_FAILURES.PREVIEW_REQUIRED : DOCUMENT_FAILURES.ASSET_MISSING, 'An approved portrait is required for a student ID card')
-  const sourceVersion = `${student.photoAttachmentId}:${enrollment.id}`
+  const sourceVersion = `${student.photoAttachmentId}:${enrollment.id}:${student.identifier}`
   return {
     academicYearId: enrollment.academicYearId,
     sourceType: DocumentSourceType.Student,
@@ -46,7 +46,8 @@ export async function assembleStudentIdCard(
         studentName: student.fullName,
         classLabel: classGroup?.name,
         schoolYear: year.name,
-        matricule: student.matricule,
+        // Immutable v1 renderer contract; the live domain uses identifier.
+        matricule: student.identifier,
         schoolCity: school.city,
         schoolCode: school.schoolCode,
         fields: [

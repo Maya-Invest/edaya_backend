@@ -2,7 +2,7 @@ import { boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/p
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const students = pgTable('students', {
-  nationalMatricule: text('national_matricule'),
+  globalIdentifier: text('global_identifier'),
   sourceFullName: text('source_full_name'),
 
   id: text('id').primaryKey(),
@@ -13,7 +13,7 @@ export const students = pgTable('students', {
   birthDate: timestamp('birth_date', { mode: 'date' }),
   placeOfBirth: text('place_of_birth'),
   nationality: text('nationality'),
-  matricule: text('matricule'),
+  identifier: text('identifier'),
   photoUrl: text('photo_url'),
   photoAttachmentId: text('photo_attachment_id'),
   subjectId: text('subject_id'),
@@ -53,7 +53,7 @@ export const guardians = pgTable('guardians', {
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
-  code: text('code'),
+  identifier: text('identifier'),
   photoUrl: text('photo_url'),
   email: text('email'),
   phone: text('phone'),
@@ -158,6 +158,7 @@ export const disciplinaryActions = pgTable('disciplinary_actions', {
   name: text('name').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  shortName: text('short_name').notNull(),
 }, table => definePerformanceIndexes('disciplinary_actions', table))
 
 // 41. Student Incident Involvement Table

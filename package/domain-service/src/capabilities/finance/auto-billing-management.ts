@@ -18,8 +18,8 @@ export async function getAutoBillingOptions(base: BaseSchoolService) {
   catch { /* The picker remains readable without assignment authority. */ }
   return {
     canConfigureAutomatic,
-    gradeLevels: grades.map(row => ({ id: row.id, label: row.label || row.name })),
-    placementStatuses: statuses.map(row => ({ id: row.id, label: row.label, isActive: row.isActive })),
+    gradeLevels: grades.map(row => ({ id: row.id, label: row.shortName || row.name })),
+    placementStatuses: statuses.map(row => ({ id: row.id, label: row.name, isActive: row.isActive })),
   }
 }
 

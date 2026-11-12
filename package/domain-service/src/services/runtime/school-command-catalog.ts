@@ -1,5 +1,6 @@
 export type SchoolCommandKey
   = | 'manageStudentSubjectEnrollments'
+    | 'startTeacherConversation'
     | 'startConversation'
     | 'configureAcademicDiscipline'
     | 'configurePlacementStatus'
@@ -72,6 +73,7 @@ export type SchoolCommandKey
     | 'saveTeacherAttendanceDraft'
     | 'submitTeacherAttendance'
     | 'recordTeacherAttendanceArrival'
+    | 'recordTeacherAttendanceDeparture'
     | 'reviseAssessmentMarksCorrection'
     | 'requestTeacherCorrection'
     | 'reviseTeacherCorrection'
@@ -107,6 +109,7 @@ export type SchoolCommandKey
     | 'createSchoolIssuanceAssetUpload'
     | 'completeSchoolIssuanceAssetUpload'
     | 'clearSchoolIssuanceAsset'
+    | 'correctHumanIdentifier'
     | 'registerStudent'
     | 'enrollStudent'
     | 'linkGuardianToStudent'
@@ -221,6 +224,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'removeStudentAcademicYearProfile',
   'removeTeacherAcademicYearProfile',
 
+  'startTeacherConversation',
   'startConversation',
   'replyConversation',
   'resolveConversation',
@@ -286,6 +290,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'saveTeacherAttendanceDraft',
   'submitTeacherAttendance',
   'recordTeacherAttendanceArrival',
+  'recordTeacherAttendanceDeparture',
   'reviseAssessmentMarksCorrection',
   'requestTeacherCorrection',
   'reviseTeacherCorrection',
@@ -321,6 +326,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'createSchoolIssuanceAssetUpload',
   'completeSchoolIssuanceAssetUpload',
   'clearSchoolIssuanceAsset',
+  'correctHumanIdentifier',
   'registerStudent',
   'enrollStudent',
   'linkGuardianToStudent',

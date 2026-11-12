@@ -2,23 +2,7 @@ import type {
   SCHOOL_SIGNATURE_PURPOSE,
 } from '@edaya/core'
 import { AuthorizationError, createGuardianActorMetadata, createSystemActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import {
-  AttachmentStatus,
-  createInMemoryFileStorage,
-  DocumentAudience,
-  DocumentIssuance,
-  DocumentIssuanceStatus,
-  DocumentSourceType,
-  Guardian,
-  GuardianStudentLink,
-  School,
-  SCHOOL_CREST_PURPOSE,
-  SCHOOL_ISSUANCE_ASSET_TERMINAL_RETAIN_MS,
-  SCHOOL_LOGO_PURPOSE,
-  SCHOOL_STAMP_PURPOSE,
-  Student,
-  Teacher,
-} from '@edaya/core'
+import { AttachmentStatus, createInMemoryFileStorage, DocumentAudience, DocumentIssuance, DocumentIssuanceStatus, DocumentSourceType, Guardian, GuardianStudentLink, School, SCHOOL_CREST_PURPOSE, SCHOOL_ISSUANCE_ASSET_TERMINAL_RETAIN_MS, SCHOOL_LOGO_PURPOSE, SCHOOL_STAMP_PURPOSE, Student, Teacher, withShortName } from '@edaya/core'
 import { grantAttachmentDownload, hydrateDocumentPayload, resolveAttachmentReadPolicy, retainIssuanceSnapshotAssets } from '@edaya/service'
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { createTestApp } from '../support/create-test-app'
@@ -302,11 +286,11 @@ describe('school issuance assets', () => {
   test('generic school save cannot rewrite issuance slots', async () => {
     const logo = await completeAsset(SCHOOL_LOGO_PURPOSE, 'att-locked')
     const existing = (await fixture.schoolRepositories.schools.findById('school'))!
-    await expect(fixture.app.baseService.entities.schools.save(new School({
+    await expect(fixture.app.baseService.entities.schools.save(new School(withShortName({
       ...existing.data,
       logoAttachmentId: 'forged',
       issuanceAssetVersion: 99,
-    }))).rejects.toMatchObject({ code: 'SCHOOL_ISSUANCE_ASSETS_COMMAND_OWNED' })
+    })))).rejects.toMatchObject({ code: 'SCHOOL_ISSUANCE_ASSETS_COMMAND_OWNED' })
     expect((await fixture.schoolRepositories.schools.findById('school'))?.logoAttachmentId).toBe(logo.id)
   })
 

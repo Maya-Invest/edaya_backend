@@ -13,14 +13,7 @@ const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
 async function fixture() {
   const fixture = await createAuthorizationDatabase()
   onTestFinished(() => releaseDatabase(fixture.db))
-  const application = new SchoolApplication({
-    repositories: fixture.repositories,
-    atomicExecution: fixture.atomic,
-    commandJournal: new PostgresCommandJournal(),
-    durableWork: new PostgresDurableWork(fixture.connection),
-    fileStorage: noOpFileStorage,
-    notificationGateway: noOpNotificationGateway,
-  })
+  const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(fixture.connection), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
   await fixture.db.exec(`DELETE FROM cron_job_schedules;
     INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
     VALUES ('fixture', 'expireAccountInvitations', '*/5 * * * *', true, '2026-07-03T12:00:00Z', now(), now())`)

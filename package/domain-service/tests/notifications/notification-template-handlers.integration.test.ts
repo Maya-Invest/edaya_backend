@@ -1,4 +1,4 @@
-import { AcademicPeriod, Announcement, AnnouncementPriority, AnnouncementTarget, AnnouncementTargetKind, ClassGroup, GuardianStudentLink, IncidentInvolvementRole, IncidentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway, SchoolNotificationTemplates, Student, Subject } from '@edaya/core'
+import { AcademicPeriod, Announcement, AnnouncementPriority, AnnouncementTarget, AnnouncementTargetKind, ClassGroup, GuardianStudentLink, IncidentInvolvementRole, IncidentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway, SchoolNotificationTemplates, Student, Subject, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, INCIDENT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../src/capabilities/notifications'
 import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
@@ -11,11 +11,11 @@ async function createContext() {
   const student = (await r.students.findById('stu1'))!
   await r.students.save(new Student({ ...student.data, firstName: 'Noah', lastName: 'Martin' }))
   const group = (await r.classGroups.findById('cg1'))!
-  await r.classGroups.save(new ClassGroup({ ...group.data, name: '6ème A' }))
+  await r.classGroups.save(new ClassGroup(withShortName({ ...group.data, name: '6ème A' })))
   const period = (await r.academicPeriods.findById('per1'))!
-  await r.academicPeriods.save(new AcademicPeriod({ ...period.data, name: 'Term 2' }))
+  await r.academicPeriods.save(new AcademicPeriod(withShortName({ ...period.data, name: 'Term 2' })))
   const subject = (await r.subjects.findById('subject-math'))!
-  await r.subjects.save(new Subject({ ...subject.data, name: 'Mathematics' }))
+  await r.subjects.save(new Subject(withShortName({ ...subject.data, name: 'Mathematics' })))
   await r.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', ...await buildDefaultNotificationTemplateDocument() }))
   return { ...fixture, gateway }
 }

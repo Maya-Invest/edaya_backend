@@ -1,6 +1,7 @@
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
 import { Permission, StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { saveHumanFixture } from '../../../../tooling/test-support/human-fixtures'
 import { usePooledDatabases } from '../../../adaptor-postgres/tests/support/pooled-database'
 
 const { createAuthorizationDatabase, releaseDatabase } = usePooledDatabases()
@@ -11,7 +12,7 @@ describe('staff assignment visibility', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
-    await fixture.repositories.staffMembers.save(new StaffMember({ id: 'other-staff', schoolId: 'school-a', firstName: 'Other', lastName: 'Staff' }))
+    await saveHumanFixture(fixture.repositories.staffMembers, new StaffMember({ id: 'other-staff', schoolId: 'school-a', firstName: 'Other', lastName: 'Staff' }))
     for (const [id, staffId, classGroupId, academicYearId] of [['own', 'staff-a', 'class-a', 'year-a'], ['other', 'other-staff', 'class-a', 'year-a'], ['foreign', 'staff-b', 'class-b', 'year-b']] as const)
       await fixture.repositories.staffAssignments.save(new StaffAssignment({ id, staffId, academicYearId, classGroupId, responsibility: 'Supervision' }))
   })

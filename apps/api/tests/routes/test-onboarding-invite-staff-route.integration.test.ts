@@ -1,3 +1,4 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -16,7 +17,7 @@ describe("onboarding invite-staff-members route", () => {
     });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -48,7 +49,7 @@ describe("onboarding invite-staff-members route", () => {
     }));
     expect(yearResponse.status).toBe(200);
 
-    const response = await app.request(createAppRequest("/core/onboarding/invite-staff-members", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/invite-staff-members", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -85,7 +86,7 @@ describe("onboarding invite-staff-members route", () => {
     await signUpAuthUser(runtime, { email, name: "Owner Invite" });
     const accessToken = await signInWithBearerThroughApp(app, { email });
 
-    const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -99,7 +100,7 @@ describe("onboarding invite-staff-members route", () => {
     }));
     expect(registerResponse.status).toBe(200);
 
-    const response = await app.request(createAppRequest("/core/onboarding/invite-staff-members", {
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/invite-staff-members", {
       method: "POST",
       headers: {
         "content-type": "application/json",

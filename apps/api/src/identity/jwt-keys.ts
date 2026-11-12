@@ -18,6 +18,7 @@ export interface IdentitySigningKeys {
 }
 export interface IdentityAccessTokenClaims {
   sub: string;
+  teacherScope?: { teacherId: string; schoolId: string };
   auth_time?: number;
   mfa_time?: number;
   amr?: string[];
@@ -101,6 +102,7 @@ export async function signIdentityAccessToken(keys: IdentitySigningKeys, claims:
   const accessToken = await new SignJWT({
     ...(claims.auth_time !== undefined ? { auth_time: claims.auth_time } : {}),
     ...(claims.mfa_time !== undefined ? { mfa_time: claims.mfa_time } : {}),
+    ...(claims.teacherScope ? { teacherScope: claims.teacherScope } : {}),
     ...(claims.amr ? { amr: claims.amr } : {}),
     ...(claims.email ? { email: claims.email } : {}),
     ...(claims.phone ? { phone: claims.phone } : {}),

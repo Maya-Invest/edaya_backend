@@ -859,6 +859,100 @@
           }
         ]
       },
+      "AuthTeacherCodeLogin": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "termsAcceptance": {
+            "$ref": "#/components/schemas/AuthTermsAcceptance"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportCandidates": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "shortName": {
+                  "type": "string"
+                },
+                "identifier": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id"
+              ]
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "candidates"
+        ]
+      },
+      "BusinessRuleViolationResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            }
+          }
+        },
+        "required": [
+          "message",
+          "code"
+        ]
+      },
+      "SchoolImportCandidatesRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "rowId": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "batchId",
+          "rowId",
+          "field"
+        ],
+        "additionalProperties": false
+      },
       "SchoolImportBatch": {
         "type": "object",
         "properties": {
@@ -975,80 +1069,6 @@
           "updatedAt"
         ]
       },
-      "BusinessRuleViolationResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "details": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          }
-        },
-        "required": [
-          "message",
-          "code"
-        ]
-      },
-      "CreateSchoolImportRequest": {
-        "type": "object",
-        "properties": {
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "defaultOnExisting": {
-            "type": "string",
-            "enum": [
-              "S",
-              "M",
-              "O"
-            ],
-            "default": "M"
-          },
-          "enrollmentEffectiveDate": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "academicYearId"
-        ],
-        "additionalProperties": false
-      },
-      "UpdateSchoolImportSettingsRequest": {
-        "type": "object",
-        "properties": {
-          "batchId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "defaultOnExisting": {
-            "type": "string",
-            "enum": [
-              "S",
-              "M",
-              "O"
-            ]
-          },
-          "enrollmentEffectiveDate": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "batchId",
-          "defaultOnExisting"
-        ],
-        "additionalProperties": false
-      },
       "SchoolImportFile": {
         "type": "object",
         "properties": {
@@ -1123,58 +1143,28 @@
           "createdAt"
         ]
       },
-      "SubmitSchoolImportFileRequest": {
-        "type": "object",
-        "properties": {
-          "batchId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "fileId": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "academic_disciplines",
-              "placement_statuses",
-              "classes",
-              "subjects",
-              "students",
-              "guardians",
-              "teachers",
-              "staff",
-              "guardian_relationships",
-              "class_offerings",
-              "teacher_assignments",
-              "chapters",
-              "billing",
-              "payments"
-            ]
-          },
-          "fileName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "base64": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 6990508
-          }
-        },
-        "required": [
-          "batchId",
-          "type",
-          "fileName",
-          "base64"
-        ],
-        "additionalProperties": false
-      },
       "SchoolImportRow": {
         "type": "object",
         "properties": {
+          "targetDecision": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update"
+            ]
+          },
+          "resolvedReferences": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "referenceSelections": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "id": {
             "type": "string"
           },
@@ -1269,10 +1259,6 @@
               ]
             }
           },
-          "generatedCode": {
-            "type": "string",
-            "nullable": true
-          },
           "targetId": {
             "type": "string"
           },
@@ -1350,6 +1336,12 @@
             "items": {
               "type": "object",
               "properties": {
+                "replacementColumns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
                 "code": {
                   "type": "string"
                 },
@@ -1406,7 +1398,6 @@
           "source",
           "raw",
           "values",
-          "generatedCode",
           "targetId",
           "sourceKey",
           "effectiveMode",
@@ -1452,6 +1443,230 @@
           "rows",
           "counts"
         ]
+      },
+      "ResolveSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "rowId": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "field": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update"
+            ]
+          }
+        },
+        "required": [
+          "batchId",
+          "rowId",
+          "revision",
+          "field"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportDownload": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "base64": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileName",
+          "contentType",
+          "base64"
+        ]
+      },
+      "SchoolImportExport": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SchoolImportDownload"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "nextCursor": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "nextCursor"
+            ]
+          }
+        ]
+      },
+      "ExportSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "academic_disciplines",
+              "placement_statuses",
+              "classes",
+              "subjects",
+              "students",
+              "guardians",
+              "teachers",
+              "staff",
+              "guardian_relationships",
+              "class_offerings",
+              "teacher_assignments",
+              "chapters",
+              "billing",
+              "payments"
+            ]
+          },
+          "academicYearId": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ],
+            "default": "xlsx"
+          }
+        },
+        "required": [
+          "type",
+          "academicYearId"
+        ],
+        "additionalProperties": false
+      },
+      "CreateSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "defaultOnExisting": {
+            "type": "string",
+            "enum": [
+              "S",
+              "M",
+              "O"
+            ],
+            "default": "M"
+          },
+          "enrollmentEffectiveDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "academicYearId"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateSchoolImportSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "defaultOnExisting": {
+            "type": "string",
+            "enum": [
+              "S",
+              "M",
+              "O"
+            ]
+          },
+          "enrollmentEffectiveDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "batchId",
+          "defaultOnExisting"
+        ],
+        "additionalProperties": false
+      },
+      "SubmitSchoolImportFileRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "academic_disciplines",
+              "placement_statuses",
+              "classes",
+              "subjects",
+              "students",
+              "guardians",
+              "teachers",
+              "staff",
+              "guardian_relationships",
+              "class_offerings",
+              "teacher_assignments",
+              "chapters",
+              "billing",
+              "payments"
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "base64": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6990508
+          }
+        },
+        "required": [
+          "batchId",
+          "type",
+          "fileName",
+          "base64"
+        ],
+        "additionalProperties": false
       },
       "ValidateSchoolImportRequest": {
         "type": "object",
@@ -1603,25 +1818,6 @@
         },
         "additionalProperties": false
       },
-      "SchoolImportDownload": {
-        "type": "object",
-        "properties": {
-          "fileName": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "base64": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fileName",
-          "contentType",
-          "base64"
-        ]
-      },
       "SchoolImportReportRequest": {
         "type": "object",
         "properties": {
@@ -1681,6 +1877,109 @@
         },
         "required": [
           "type"
+        ],
+        "additionalProperties": false
+      },
+      "TeacherQuickCodeOptions": {
+        "type": "object",
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "sms"
+                  ]
+                },
+                "hint": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "hint"
+              ]
+            }
+          },
+          "expiries": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "nullable": true
+            }
+          },
+          "active": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "channel": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "expiry": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "channel",
+              "hint",
+              "expiry"
+            ]
+          }
+        },
+        "required": [
+          "contacts",
+          "expiries",
+          "active"
+        ]
+      },
+      "TeacherQuickCodeDelivery": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "TeacherQuickCodeIssue": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "identifierId": {
+            "type": "string"
+          },
+          "expiry": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month",
+              "period",
+              "year",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "requestId",
+          "identifierId",
+          "expiry"
         ],
         "additionalProperties": false
       },
@@ -3393,8 +3692,7 @@
             "minLength": 1
           },
           "shortName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "timeZone": {
             "type": "string",
@@ -3583,6 +3881,10 @@
           "id": {
             "type": "string",
             "minLength": 1
+          },
+          "ownerIdentifier": {
+            "type": "string",
+            "nullable": true
           },
           "ownerStaffId": {
             "type": "string",
@@ -4376,8 +4678,7 @@
                               "minLength": 1
                             },
                             "shortName": {
-                              "type": "string",
-                              "minLength": 1
+                              "type": "string"
                             },
                             "disciplineCode": {
                               "type": "string",
@@ -4774,6 +5075,10 @@
             "items": {
               "type": "object",
               "properties": {
+                "identifier": {
+                  "type": "string",
+                  "nullable": true
+                },
                 "email": {
                   "type": "string",
                   "format": "email"
@@ -4857,6 +5162,10 @@
       "OnboardingProvisionRequest": {
         "type": "object",
         "properties": {
+          "ownerIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
           "schoolId": {
             "type": "string",
             "format": "uuid"
@@ -4871,6 +5180,9 @@
               "name": {
                 "type": "string",
                 "minLength": 1
+              },
+              "shortName": {
+                "type": "string"
               },
               "timeZone": {
                 "type": "string",
@@ -5022,6 +5334,10 @@
             "items": {
               "type": "object",
               "properties": {
+                "identifier": {
+                  "type": "string",
+                  "nullable": true
+                },
                 "email": {
                   "type": "string",
                   "format": "email"
@@ -5057,7 +5373,10 @@
           "serviceId": {
             "type": "string"
           },
-          "displayName": {
+          "name": {
+            "type": "string"
+          },
+          "shortName": {
             "type": "string"
           },
           "accountKind": {
@@ -5081,7 +5400,8 @@
           "id",
           "schoolId",
           "serviceId",
-          "displayName",
+          "name",
+          "shortName",
           "accountKind",
           "serviceElevated",
           "isActive",
@@ -5366,9 +5686,12 @@
             "type": "string",
             "minLength": 1
           },
-          "displayName": {
+          "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "permissionAssignments": {
             "type": "array",
@@ -5386,15 +5709,18 @@
         },
         "required": [
           "serviceId",
-          "displayName"
+          "name"
         ]
       },
       "UpdateServiceAccountRequest": {
         "type": "object",
         "properties": {
-          "displayName": {
+          "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "permissionAssignments": {
             "type": "array",
@@ -5978,8 +6304,7 @@
             "minLength": 1
           },
           "shortName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "timeZone": {
             "type": "string",
@@ -6142,8 +6467,7 @@
             "minLength": 1
           },
           "shortName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "timeZone": {
             "type": "string",
@@ -6273,6 +6597,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "startDate": {},
           "endDate": {},
           "status": {
@@ -6308,6 +6635,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "startDate": {},
           "endDate": {}
@@ -6363,6 +6693,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "type": {
             "type": "string",
             "enum": [
@@ -6406,6 +6739,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "type": {
             "type": "string",
@@ -6517,6 +6853,9 @@
                     "name": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "shortName": {
+                      "type": "string"
                     },
                     "minScore": {
                       "type": "number",
@@ -6684,9 +7023,8 @@
             "type": "string",
             "minLength": 1
           },
-          "label": {
-            "type": "string",
-            "minLength": 1
+          "shortName": {
+            "type": "string"
           },
           "order": {
             "type": "integer",
@@ -6704,7 +7042,6 @@
           "id",
           "schoolId",
           "name",
-          "label",
           "order"
         ]
       },
@@ -6723,9 +7060,8 @@
             "type": "string",
             "minLength": 1
           },
-          "label": {
-            "type": "string",
-            "minLength": 1
+          "shortName": {
+            "type": "string"
           },
           "order": {
             "type": "integer",
@@ -6743,7 +7079,6 @@
           "id",
           "schoolId",
           "name",
-          "label",
           "order"
         ]
       },
@@ -6762,9 +7097,12 @@
             "type": "string",
             "minLength": 1
           },
-          "label": {
+          "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "dayOfWeek": {
             "type": "string",
@@ -6805,7 +7143,7 @@
           "id",
           "schoolId",
           "academicYearId",
-          "label",
+          "name",
           "dayOfWeek",
           "order",
           "startTime",
@@ -6823,9 +7161,12 @@
             "type": "string",
             "minLength": 1
           },
-          "label": {
+          "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "dayOfWeek": {
             "type": "string",
@@ -6865,7 +7206,7 @@
         "required": [
           "id",
           "academicYearId",
-          "label",
+          "name",
           "dayOfWeek",
           "order",
           "startTime",
@@ -6886,6 +7227,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -6926,6 +7270,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -6969,6 +7316,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "category": {
             "type": "string",
@@ -7029,6 +7379,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "category": {
             "type": "string",
@@ -7165,6 +7518,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "capacity": {
             "type": "integer",
             "nullable": true,
@@ -7217,6 +7573,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "capacity": {
             "type": "integer",
             "nullable": true,
@@ -7253,6 +7612,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "capacity": {
             "type": "integer",
             "nullable": true,
@@ -7281,6 +7643,60 @@
           "classGroupId"
         ]
       },
+      "CorrectedHumanIdentifier": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "identifier": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "identifier"
+        ]
+      },
+      "CorrectHumanIdentifierCommand": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string",
+            "enum": [
+              "students",
+              "teachers",
+              "guardians",
+              "staff"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "identifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "group",
+          "entityId",
+          "expectedIdentifier",
+          "identifier",
+          "requestId"
+        ]
+      },
       "StaffMember": {
         "type": "object",
         "properties": {
@@ -7300,10 +7716,16 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "photoUrl": {
             "type": "string",
@@ -7412,10 +7834,16 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "photoUrl": {
             "type": "string",
@@ -7497,15 +7925,20 @@
             ]
           },
           "createdAt": {},
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "sendAccountInvitation": {
             "type": "boolean"
           }
         },
         "required": [
-          "id",
           "schoolId",
           "firstName",
-          "lastName"
+          "lastName",
+          "requestId"
         ]
       },
       "Teacher": {
@@ -7531,10 +7964,9 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "signatureAttachmentId": {
             "type": "string",
@@ -7607,10 +8039,9 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "signatureAttachmentId": {
             "type": "string",
@@ -7651,13 +8082,18 @@
             "type": "boolean",
             "default": true
           },
-          "createdAt": {}
+          "createdAt": {},
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
         },
         "required": [
-          "id",
           "schoolId",
           "firstName",
-          "lastName"
+          "lastName",
+          "requestId"
         ]
       },
       "UpdateStaffMemberStatusCommand": {
@@ -7687,10 +8123,16 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "photoUrl": {
             "type": "string",
@@ -7791,10 +8233,9 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "photoUrl": {
             "type": "string",
@@ -7857,7 +8298,7 @@
             "type": "string",
             "minLength": 1
           },
-          "nationalMatricule": {
+          "globalIdentifier": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -7892,10 +8333,9 @@
             "nullable": true,
             "minLength": 1
           },
-          "matricule": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "photoUrl": {
             "type": "string",
@@ -10750,6 +11190,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -10900,6 +11343,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -11914,7 +12360,7 @@
             "type": "string",
             "minLength": 1
           },
-          "nationalMatricule": {
+          "globalIdentifier": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -11949,10 +12395,9 @@
             "nullable": true,
             "minLength": 1
           },
-          "matricule": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "photoAttachmentId": {
             "type": "string",
@@ -11963,6 +12408,11 @@
             "nullable": true
           },
           "createdAt": {},
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "sendAccountInvitation": {
             "type": "boolean"
           },
@@ -11971,10 +12421,10 @@
           }
         },
         "required": [
-          "id",
           "schoolId",
           "firstName",
-          "lastName"
+          "lastName",
+          "requestId"
         ]
       },
       "StudentClassEnrollment": {
@@ -12256,10 +12706,9 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "photoUrl": {
             "type": "string",
@@ -12299,15 +12748,20 @@
             "type": "boolean"
           },
           "createdAt": {},
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "sendAccountInvitation": {
             "type": "boolean"
           }
         },
         "required": [
-          "id",
           "schoolId",
           "firstName",
-          "lastName"
+          "lastName",
+          "requestId"
         ],
         "additionalProperties": false
       },
@@ -12459,7 +12913,7 @@
       "UpdateStudentProfileCommand": {
         "type": "object",
         "properties": {
-          "nationalMatricule": {
+          "globalIdentifier": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -12494,10 +12948,9 @@
             "nullable": true,
             "minLength": 1
           },
-          "matricule": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "subjectId": {
             "type": "string",
@@ -12813,10 +13266,9 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "identifier": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "photoUrl": {
             "type": "string",
@@ -12964,14 +13416,7 @@
             "minLength": 1
           },
           "shortName": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "code": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "type": "string"
           },
           "reportModuleId": {
             "type": "string",
@@ -13060,14 +13505,7 @@
             "minLength": 1
           },
           "shortName": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "code": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "type": "string"
           },
           "reportModuleId": {
             "type": "string",
@@ -13161,9 +13599,8 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
-            "type": "string",
-            "minLength": 1
+          "shortName": {
+            "type": "string"
           },
           "name": {
             "type": "string",
@@ -13179,7 +13616,6 @@
         "required": [
           "id",
           "schoolId",
-          "code",
           "name"
         ]
       },
@@ -13190,9 +13626,9 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "shortName": {
             "type": "string",
-            "minLength": 1
+            "nullable": true
           },
           "name": {
             "type": "string",
@@ -13204,7 +13640,6 @@
         },
         "required": [
           "id",
-          "code",
           "name"
         ]
       },
@@ -13219,11 +13654,10 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
-            "type": "string",
-            "minLength": 1
+          "shortName": {
+            "type": "string"
           },
-          "label": {
+          "name": {
             "type": "string",
             "minLength": 1
           },
@@ -13237,8 +13671,7 @@
         "required": [
           "id",
           "schoolId",
-          "code",
-          "label"
+          "name"
         ]
       },
       "ConfigurePlacementStatusCommand": {
@@ -13248,11 +13681,11 @@
             "type": "string",
             "minLength": 1
           },
-          "code": {
+          "shortName": {
             "type": "string",
-            "minLength": 1
+            "nullable": true
           },
-          "label": {
+          "name": {
             "type": "string",
             "minLength": 1
           },
@@ -13262,8 +13695,7 @@
         },
         "required": [
           "id",
-          "code",
-          "label"
+          "name"
         ]
       },
       "StudentAcademicYearProfile": {
@@ -13493,6 +13925,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "createdAt": {}
         },
         "required": [
@@ -13511,6 +13946,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "createdAt": {}
         },
@@ -13533,6 +13971,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -13573,6 +14014,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "description": {
             "type": "string",
@@ -13631,14 +14075,7 @@
             "minLength": 1
           },
           "shortName": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "code": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "type": "string"
           },
           "reportModuleId": {
             "type": "string",
@@ -13923,6 +14360,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "order": {
             "type": "integer",
             "minimum": 0,
@@ -14032,14 +14472,7 @@
                       "minLength": 1
                     },
                     "shortName": {
-                      "type": "string",
-                      "nullable": true,
-                      "minLength": 1
-                    },
-                    "code": {
-                      "type": "string",
-                      "nullable": true,
-                      "minLength": 1
+                      "type": "string"
                     },
                     "reportModuleId": {
                       "type": "string",
@@ -14156,6 +14589,9 @@
                   "name": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "shortName": {
+                    "type": "string"
                   },
                   "order": {
                     "type": "integer",
@@ -14356,6 +14792,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "minScore": {
             "type": "number",
             "minimum": 0
@@ -14481,6 +14920,9 @@
               "name": {
                 "type": "string",
                 "minLength": 1
+              },
+              "shortName": {
+                "type": "string"
               },
               "minScore": {
                 "type": "number",
@@ -14610,6 +15052,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "minScore": {
             "type": "number",
@@ -15242,6 +15687,48 @@
         "additionalProperties": false
       },
       "RecordTeacherAttendanceArrivalCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "recordId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "occurredAt": {},
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "requestId",
+          "recordId",
+          "occurredAt",
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "TeacherAttendanceDepartureResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "departedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "version",
+          "departedAt"
+        ]
+      },
+      "RecordTeacherAttendanceDepartureCommand": {
         "type": "object",
         "properties": {
           "requestId": {
@@ -15929,6 +16416,49 @@
           "createdAt",
           "updatedAt",
           "awaitingSince"
+        ]
+      },
+      "StartTeacherConversationCommand": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "guardianId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "studentId",
+          "classGroupId",
+          "guardianId",
+          "requestId",
+          "subject",
+          "body"
         ]
       },
       "StartConversationCommand": {
@@ -18396,8 +18926,402 @@
           "periodId"
         ]
       },
+      "ReportSubjectResult": {
+        "type": "object",
+        "properties": {
+          "sectionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sectionKind": {
+            "type": "string",
+            "enum": [
+              "module",
+              "subject"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "weightingMode": {
+            "type": "string",
+            "enum": [
+              "subject_coefficients",
+              "explicit"
+            ]
+          },
+          "explicitWeight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "contributingCoefficientSum": {
+            "type": "number",
+            "minimum": 0
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grading": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
+          "average": {
+            "type": "number",
+            "minimum": 0
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "parentSectionId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "participantCount": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "subResults": {
+            "type": "array",
+            "items": {
+              "nullable": true
+            },
+            "maxItems": 0,
+            "default": []
+          }
+        },
+        "required": [
+          "sectionId",
+          "sectionKind",
+          "name",
+          "weight"
+        ]
+      },
       "ReportCardResultSection": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "sectionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sectionKind": {
+            "type": "string",
+            "enum": [
+              "module",
+              "subject"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coefficient": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "weightingMode": {
+            "type": "string",
+            "enum": [
+              "subject_coefficients",
+              "explicit"
+            ]
+          },
+          "explicitWeight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "contributingCoefficientSum": {
+            "type": "number",
+            "minimum": 0
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grading": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
+          "average": {
+            "type": "number",
+            "minimum": 0
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "parentSectionId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "participantCount": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "subResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSubjectResult"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "sectionId",
+          "sectionKind",
+          "name",
+          "weight"
+        ]
       },
       "ReportCardSnapshot": {
         "type": "object",
@@ -20281,6 +21205,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -20324,6 +21251,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "kind": {
             "type": "string",
@@ -21107,6 +22037,9 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string"
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -21337,6 +22270,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "shortName": {
+            "type": "string"
           },
           "description": {
             "type": "string"
@@ -26050,6 +26986,9 @@
                   "type": "string",
                   "minLength": 1
                 },
+                "shortName": {
+                  "type": "string"
+                },
                 "type": {
                   "type": "string",
                   "enum": [
@@ -26229,6 +27168,9 @@
                 "name": {
                   "type": "string",
                   "minLength": 1
+                },
+                "shortName": {
+                  "type": "string"
                 },
                 "type": {
                   "type": "string",
@@ -26503,6 +27445,13 @@
             "type": "array",
             "items": {
               "type": "object",
+              "properties": {
+                "departedAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "format": "date-time"
+                }
+              },
               "additionalProperties": {
                 "nullable": true
               }
@@ -27085,6 +28034,51 @@
         },
         "required": [
           "proposal"
+        ]
+      },
+      "TeacherGuardianRecipientsResponse": {
+        "type": "object",
+        "properties": {
+          "guardians": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "guardians"
+        ]
+      },
+      "TeacherGuardianRecipientsQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "studentId",
+          "classGroupId"
         ]
       },
       "ConversationRecipientsResponse": {
@@ -28034,7 +29028,7 @@
                 "lastName": {
                   "type": "string"
                 },
-                "matricule": {
+                "identifier": {
                   "type": "string"
                 },
                 "classGroupId": {
@@ -28089,6 +29083,176 @@
         },
         "required": [
           "activityId"
+        ]
+      },
+      "TeacherSubjectPeriodSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "periodId": {
+            "type": "string"
+          },
+          "calculationReady": {
+            "type": "boolean"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "average": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "grading": {
+                  "type": "object",
+                  "nullable": true,
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                },
+                "contributions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "assessmentId": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "coefficient": {
+                        "type": "number"
+                      },
+                      "maxScore": {
+                        "type": "number"
+                      },
+                      "score": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "designation": {
+                        "type": "string"
+                      },
+                      "grading": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "required": [
+                      "assessmentId",
+                      "title",
+                      "coefficient",
+                      "maxScore",
+                      "score",
+                      "designation",
+                      "grading"
+                    ]
+                  }
+                },
+                "comment": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "reportId": {
+                      "type": "string"
+                    },
+                    "sectionId": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "number"
+                    },
+                    "calculationStale": {
+                      "type": "boolean"
+                    },
+                    "proposal": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "text": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "status"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "reportId",
+                    "sectionId",
+                    "text",
+                    "status",
+                    "version",
+                    "calculationStale",
+                    "proposal"
+                  ]
+                }
+              },
+              "required": [
+                "studentId",
+                "firstName",
+                "lastName",
+                "average",
+                "grading",
+                "contributions",
+                "comment"
+              ]
+            }
+          }
+        },
+        "required": [
+          "classSubjectId",
+          "classGroupId",
+          "periodId",
+          "calculationReady",
+          "students"
+        ]
+      },
+      "GetTeacherSubjectPeriodSummaryQuery": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "classSubjectId",
+          "periodId"
         ]
       },
       "AssessmentEditorContextResponse": {
@@ -28209,6 +29373,9 @@
                   "name": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "shortName": {
+                    "type": "string"
                   },
                   "minScore": {
                     "type": "number",
@@ -32055,6 +33222,18 @@
           },
           "themes": {
             "type": "string"
+          },
+          "academicYearId": {
+            "type": "string"
+          },
+          "academicPeriodId": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "classSubjectId": {
+            "type": "string"
           }
         },
         "required": [
@@ -34233,6 +35412,77 @@
         }
       }
     },
+    "/auth/edaya/teacher-code": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "operationId": "auth.teacherCode",
+        "x-edaya-kind": "auth",
+        "x-edaya-client-key": "teacherCode",
+        "x-edaya-client-path": "/auth/edaya/teacher-code",
+        "x-edaya-request-schema": "AuthTeacherCodeLogin",
+        "x-edaya-response-schema": "AuthOutcome",
+        "x-edaya-base-path": "root",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthTeacherCodeLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account operation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthOutcome"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or challenge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body too large"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Authentication unavailable"
+          }
+        }
+      }
+    },
     "/auth/edaya/otp/verify": {
       "post": {
         "tags": [
@@ -35265,6 +36515,393 @@
           },
           "403": {
             "description": "Provider verification failed or phone unavailable"
+          }
+        }
+      }
+    },
+    "/core/imports/candidates": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.candidates",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "candidates",
+        "x-edaya-client-path": "imports/candidates",
+        "x-edaya-request-schema": "SchoolImportCandidatesRequest",
+        "x-edaya-response-schema": "SchoolImportCandidates",
+        "requestBody": {
+          "description": "SchoolImportCandidatesRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolImportCandidatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportCandidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportCandidates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/resolve": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.resolve",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "resolve",
+        "x-edaya-client-path": "imports/resolve",
+        "x-edaya-request-schema": "ResolveSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportDetail",
+        "requestBody": {
+          "description": "ResolveSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportDetail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/export": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.export",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "export",
+        "x-edaya-client-path": "imports/export",
+        "x-edaya-request-schema": "ExportSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportExport",
+        "requestBody": {
+          "description": "ExportSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportExport",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportExport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -36810,6 +38447,91 @@
                   "example": {
                     "message": "Hello World"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/teachers/{teacherId}/quick-login-code": {
+      "get": {
+        "tags": [
+          "Teacher quick login"
+        ],
+        "operationId": "authorization.teacherQuickCodeOptions",
+        "x-edaya-kind": "authorization",
+        "x-edaya-client-key": "teacherQuickCodeOptions",
+        "x-edaya-client-path": "teachers/{teacherId}/quick-login-code",
+        "x-edaya-response-schema": "TeacherQuickCodeOptions",
+        "x-edaya-path-params": [
+          "teacherId"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "teacherId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quick login options",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherQuickCodeOptions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Teacher quick login"
+        ],
+        "operationId": "authorization.issueTeacherQuickCode",
+        "x-edaya-kind": "authorization",
+        "x-edaya-client-key": "issueTeacherQuickCode",
+        "x-edaya-client-path": "teachers/{teacherId}/quick-login-code",
+        "x-edaya-request-schema": "TeacherQuickCodeIssue",
+        "x-edaya-response-schema": "TeacherQuickCodeDelivery",
+        "x-edaya-path-params": [
+          "teacherId"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "teacherId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Issue a teacher code",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherQuickCodeIssue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delivery status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherQuickCodeDelivery"
                 }
               }
             }
@@ -43397,6 +45119,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassGroup"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/correct-human-identifier": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "correct-human-identifier",
+        "operationId": "commands.correctHumanIdentifier",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "correctHumanIdentifier",
+        "x-edaya-command-public-name": "correct-human-identifier",
+        "x-edaya-request-schema": "CorrectHumanIdentifierCommand",
+        "x-edaya-response-schema": "CorrectedHumanIdentifier",
+        "requestBody": {
+          "description": "correct-human-identifier payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectHumanIdentifierCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed correct-human-identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectedHumanIdentifier"
                 }
               }
             }
@@ -52468,6 +54320,136 @@
         }
       }
     },
+    "/core/commands/record-teacher-attendance-departure": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "record-teacher-attendance-departure",
+        "operationId": "commands.recordTeacherAttendanceDeparture",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "recordTeacherAttendanceDeparture",
+        "x-edaya-command-public-name": "record-teacher-attendance-departure",
+        "x-edaya-request-schema": "RecordTeacherAttendanceDepartureCommand",
+        "x-edaya-response-schema": "TeacherAttendanceDepartureResponse",
+        "requestBody": {
+          "description": "record-teacher-attendance-departure payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordTeacherAttendanceDepartureCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed record-teacher-attendance-departure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAttendanceDepartureResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/revise-assessment-marks-correction": {
       "post": {
         "tags": [
@@ -52627,6 +54609,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManageStudentSubjectEnrollmentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/start-teacher-conversation": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "start-teacher-conversation",
+        "operationId": "commands.startTeacherConversation",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "startTeacherConversation",
+        "x-edaya-command-public-name": "start-teacher-conversation",
+        "x-edaya-request-schema": "StartTeacherConversationCommand",
+        "x-edaya-response-schema": "ConversationResponse",
+        "requestBody": {
+          "description": "start-teacher-conversation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTeacherConversationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed start-teacher-conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponse"
                 }
               }
             }
@@ -68588,6 +70700,136 @@
         }
       }
     },
+    "/core/queries/list-teacher-guardian-recipients": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-teacher-guardian-recipients",
+        "operationId": "queries.listTeacherGuardianRecipients",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listTeacherGuardianRecipients",
+        "x-edaya-query-public-name": "list-teacher-guardian-recipients",
+        "x-edaya-request-schema": "TeacherGuardianRecipientsQuery",
+        "x-edaya-response-schema": "TeacherGuardianRecipientsResponse",
+        "requestBody": {
+          "description": "list-teacher-guardian-recipients payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherGuardianRecipientsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-teacher-guardian-recipients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherGuardianRecipientsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/queries/list-conversation-recipients": {
       "post": {
         "tags": [
@@ -69267,6 +71509,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityRosterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-teacher-subject-period-summary": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-teacher-subject-period-summary",
+        "operationId": "queries.getTeacherSubjectPeriodSummary",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getTeacherSubjectPeriodSummary",
+        "x-edaya-query-public-name": "get-teacher-subject-period-summary",
+        "x-edaya-request-schema": "GetTeacherSubjectPeriodSummaryQuery",
+        "x-edaya-response-schema": "TeacherSubjectPeriodSummaryResponse",
+        "requestBody": {
+          "description": "get-teacher-subject-period-summary payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTeacherSubjectPeriodSummaryQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-teacher-subject-period-summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherSubjectPeriodSummaryResponse"
                 }
               }
             }
