@@ -31,7 +31,7 @@ Do not introduce the rewrite's `SchoolMembership` model or give guardians generi
 - [x] Inspect current account invitation and subject-link invariants, including disabled access and multi-profile callers.
 - [x] Record the configured first-party link hosts, Android package, and iOS bundle/team from existing configuration. Do not invent a new deployment domain or App Store numeric ID.
 
-Hosts: `https://app.edayaplus.com` and `https://staging.app.edayaplus.com` (legacy `app.school.edayaplus.com` and `staging.app.school.edayaplus.com` remain accepted so leftover invite URLs still open the app). Guardian package `ca.mayainvest.edaya.guardian`, iOS team `ZZRPX6RMZ7`. Android SHA-256 fingerprints are the upload/`guardian` alias (same value as Play Store signing) plus the local debug cert. Do not invent fingerprints or commit keystore passwords.
+Hosts: `https://app.edayaplus.com` and `https://staging.app.edayaplus.com` (legacy `app.school.edayaplus.com` and `staging.app.school.edayaplus.com` remain accepted so leftover invite URLs still open the app). Guardian Android package `ca.mayainvest.edaya.guardian`, iOS bundle `ca.maya-invest.edaya.guardian`, iOS team `ZZRPX6RMZ7`. Android SHA-256 fingerprints are the upload/`guardian` alias (same value as Play Store signing) plus the local debug cert. Do not invent fingerprints or commit keystore passwords.
 
 Start with the [invitation workflow](../../../package/domain-service/src/services/workflows/account-invitation.ts), [public invitation routes](../../../apps/api/src/routes/invitation.routes.ts), [web acceptance page](../../../../edaya_frontend/apps/webapp/src/routes/invite/%5Btoken%5D/+page.svelte), and [guardian router](../../../../edaya_mobile/apps/guardian/lib/app/router.dart).
 

@@ -5177,6 +5177,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/queries/get-guardian-period-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-guardian-period-results */
+        post: operations["queries.getGuardianPeriodResults"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/queries/get-teacher-subject-period-summary": {
         parameters: {
             query?: never;
@@ -19694,6 +19711,52 @@ export interface components {
         };
         GetActivityRosterQuery: {
             activityId: string;
+        };
+        GuardianPeriodResultsResponse: {
+            studentId: string;
+            periodId: string;
+            academicYearId: string;
+            classGroupId: string;
+            /** @enum {string} */
+            state: "published" | "provisional";
+            calculationReady: boolean;
+            reportId: string | null;
+            publishedAt: string | null;
+            average: number | null;
+            grading: {
+                [key: string]: unknown;
+            } | null;
+            teacherComment: string | null;
+            principalComment: string | null;
+            sections: {
+                [key: string]: unknown;
+            }[];
+            marks: {
+                id: string;
+                assessmentId: string;
+                subjectId: string;
+                classSubjectId: string;
+                periodId: string;
+                title: string;
+                description: string | null;
+                kind: string;
+                date: string | null;
+                score: number | null;
+                designation: string;
+                coefficient: number;
+                maxScore: number;
+                notes: string | null;
+                grading: {
+                    [key: string]: unknown;
+                } | null;
+                originalEntry: {
+                    [key: string]: unknown;
+                } | null;
+            }[];
+        };
+        GetGuardianPeriodResultsQuery: {
+            studentId: string;
+            periodId: string;
         };
         TeacherSubjectPeriodSummaryResponse: {
             classSubjectId: string;
@@ -43307,6 +43370,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityRosterResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getGuardianPeriodResults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-guardian-period-results payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetGuardianPeriodResultsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-guardian-period-results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianPeriodResultsResponse"];
                 };
             };
             /** @description Invalid request payload */

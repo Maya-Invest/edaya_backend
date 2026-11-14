@@ -29085,6 +29085,188 @@
           "activityId"
         ]
       },
+      "GuardianPeriodResultsResponse": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string"
+          },
+          "periodId": {
+            "type": "string"
+          },
+          "academicYearId": {
+            "type": "string"
+          },
+          "classGroupId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "published",
+              "provisional"
+            ]
+          },
+          "calculationReady": {
+            "type": "boolean"
+          },
+          "reportId": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "average": {
+            "type": "number",
+            "nullable": true
+          },
+          "grading": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "nullable": true
+            }
+          },
+          "teacherComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "principalComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "nullable": true
+              }
+            }
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "assessmentId": {
+                  "type": "string"
+                },
+                "subjectId": {
+                  "type": "string"
+                },
+                "classSubjectId": {
+                  "type": "string"
+                },
+                "periodId": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "score": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "designation": {
+                  "type": "string"
+                },
+                "coefficient": {
+                  "type": "number"
+                },
+                "maxScore": {
+                  "type": "number"
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "grading": {
+                  "type": "object",
+                  "nullable": true,
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                },
+                "originalEntry": {
+                  "type": "object",
+                  "nullable": true,
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "assessmentId",
+                "subjectId",
+                "classSubjectId",
+                "periodId",
+                "title",
+                "description",
+                "kind",
+                "date",
+                "score",
+                "designation",
+                "coefficient",
+                "maxScore",
+                "notes",
+                "grading",
+                "originalEntry"
+              ]
+            }
+          }
+        },
+        "required": [
+          "studentId",
+          "periodId",
+          "academicYearId",
+          "classGroupId",
+          "state",
+          "calculationReady",
+          "reportId",
+          "publishedAt",
+          "average",
+          "grading",
+          "teacherComment",
+          "principalComment",
+          "sections",
+          "marks"
+        ]
+      },
+      "GetGuardianPeriodResultsQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "studentId",
+          "periodId"
+        ]
+      },
       "TeacherSubjectPeriodSummaryResponse": {
         "type": "object",
         "properties": {
@@ -71509,6 +71691,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityRosterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-guardian-period-results": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-guardian-period-results",
+        "operationId": "queries.getGuardianPeriodResults",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getGuardianPeriodResults",
+        "x-edaya-query-public-name": "get-guardian-period-results",
+        "x-edaya-request-schema": "GetGuardianPeriodResultsQuery",
+        "x-edaya-response-schema": "GuardianPeriodResultsResponse",
+        "requestBody": {
+          "description": "get-guardian-period-results payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGuardianPeriodResultsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-guardian-period-results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianPeriodResultsResponse"
                 }
               }
             }

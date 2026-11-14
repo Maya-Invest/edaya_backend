@@ -63,7 +63,7 @@
   "androidArtifacts": [
     {
       "app": "guardian",
-      "applicationId": "ca.mayainvest.edaya.guardian",
+      "applicationId": "ca.maya-invest.edaya.guardian",
       "certificateSha256": "c7efef9fff9673b6aa087eaea577f9323331c9a36984f2b17ee563ff1fa00d52",
       "sha256": "af726aa34b7a4b7316820ccfeaa9d717498aba3b764ac9e4aedbae8a6f7e45f0"
     },

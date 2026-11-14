@@ -70,7 +70,7 @@
     "signedApks": [
       {
         "app": "guardian",
-        "applicationId": "ca.mayainvest.edaya.guardian",
+        "applicationId": "ca.maya-invest.edaya.guardian",
         "certificateSha256": "c7efef9fff9673b6aa087eaea577f9323331c9a36984f2b17ee563ff1fa00d52",
         "sha256": "91cdabf6a75dd925301c58b80393b421ec963675002e62fa6d89d33db17d1ae0"
       },

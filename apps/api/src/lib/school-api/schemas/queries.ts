@@ -740,3 +740,21 @@ export const teacherSubjectPeriodSummaryResponseSchema = z.object({
   calculationReady: z.boolean(),
   students: z.array(z.object({ studentId: z.string(), firstName: z.string(), lastName: z.string(), average: z.number().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), contributions: z.array(z.object({ assessmentId: z.string(), title: z.string(), coefficient: z.number(), maxScore: z.number(), score: z.number().nullable(), designation: z.string(), grading: z.record(z.string(), z.unknown()).nullable() })), comment: z.object({ reportId: z.string(), sectionId: z.string(), text: z.string(), status: z.string(), version: z.number(), calculationStale: z.boolean(), proposal: z.object({ text: z.string(), status: z.string() }).nullable() }).nullable() })),
 }).openapi("TeacherSubjectPeriodSummaryResponse");
+
+export const getGuardianPeriodResultsQuerySchema = z.object({ studentId: z.string().min(1), periodId: z.string().min(1) }).openapi("GetGuardianPeriodResultsQuery");
+export const guardianPeriodResultsResponseSchema = z.object({
+  studentId: z.string(),
+  periodId: z.string(),
+  academicYearId: z.string(),
+  classGroupId: z.string(),
+  state: z.enum(["published", "provisional"]),
+  calculationReady: z.boolean(),
+  reportId: z.string().nullable(),
+  publishedAt: z.string().nullable(),
+  average: z.number().nullable(),
+  grading: z.record(z.string(), z.unknown()).nullable(),
+  teacherComment: z.string().nullable(),
+  principalComment: z.string().nullable(),
+  sections: z.array(z.record(z.string(), z.unknown())),
+  marks: z.array(z.object({ id: z.string(), assessmentId: z.string(), subjectId: z.string(), classSubjectId: z.string(), periodId: z.string(), title: z.string(), description: z.string().nullable(), kind: z.string(), date: z.string().nullable(), score: z.number().nullable(), designation: z.string(), coefficient: z.number(), maxScore: z.number(), notes: z.string().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), originalEntry: z.record(z.string(), z.unknown()).nullable() })),
+}).openapi("GuardianPeriodResultsResponse");
