@@ -76,7 +76,7 @@
       },
       {
         "app": "teacher",
-        "applicationId": "ca.mayainvest.edaya.staff",
+        "applicationId": "ca.mayainvest.edaya.teacher",
         "certificateSha256": "b4914d6b0aa952ef164c21732b2ba37e5331a551093aeb525aef29954182ef2d",
         "sha256": "e514a0977f7865d31e837be6f1e54d1df84c3d7c87ab360c50dfa0e53e25fc17"
       }
