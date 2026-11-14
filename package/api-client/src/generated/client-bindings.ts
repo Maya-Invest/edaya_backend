@@ -1950,6 +1950,11 @@ export const clientBindings = {
         "requestSchemaName": "GetActivityRosterQuery",
         "responseSchemaName": "ActivityRosterResponse"
       },
+      "getGuardianPeriodResults": {
+        "publicName": "get-guardian-period-results",
+        "requestSchemaName": "GetGuardianPeriodResultsQuery",
+        "responseSchemaName": "GuardianPeriodResultsResponse"
+      },
       "getTeacherSubjectPeriodSummary": {
         "publicName": "get-teacher-subject-period-summary",
         "requestSchemaName": "GetTeacherSubjectPeriodSummaryQuery",

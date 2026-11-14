@@ -20,6 +20,22 @@ export class ReportCardAccessPolicy {
     }
   }
 
+  /** Read-only family preview: authorize relationship, school and requested year first. */
+  async guardianPeriodContext(studentId: string, periodId: string) {
+    if (this.access.actor.kind !== 'guardian')
+      return denied()
+    await this.access.assertResources(Permission.GRADE_READ, 'students', [studentId], 'read')
+    const facts = new AccessFacts(this.access.actor, this.access.repositories)
+    const student = await facts.one('students', studentId)
+    const period = await facts.one('academicPeriods', periodId)
+    if (await facts.academicYear() !== period.academicYearId)
+      return denied('Select the period academic year')
+    const enrollments = await facts.list('enrollments', { studentId, academicYearId: period.academicYearId })
+    if (!enrollments.length)
+      return denied()
+    return { student, period, enrollments, facts }
+  }
+
   assertGenerate(studentId: string) {
     return this.access.assertResources(Permission.REPORT_CARD_GENERATE, 'students', [studentId])
   }

@@ -12,6 +12,7 @@ import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { getActivityRoster } from './queries/activity-roster'
 import { getAssessmentEditorContext } from './queries/assessment-editor-context'
+import { getGuardianPeriodResults } from './queries/guardian-period-results'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
 import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
@@ -119,6 +120,8 @@ export class SchoolService {
   async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
 
   async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
+
+  async getGuardianPeriodResults(input: { studentId: string, periodId: string }) { return getGuardianPeriodResults(this.baseService, input) }
 
   async getTeacherSubjectPeriodSummary(input: { classSubjectId: string, periodId: string }) { return getTeacherSubjectPeriodSummary(this.baseService, input) }
 

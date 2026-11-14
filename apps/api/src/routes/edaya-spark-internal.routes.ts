@@ -12,26 +12,34 @@ import { createMessageObjectSchema } from "stoker/openapi/schemas";
 
 const commandMessageSchema = createMessageObjectSchema();
 
+const resolveGuardianChildSchema = z.object({
+  studentId: z.string(),
+  schoolId: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  classLabel: z.string().min(1).optional(),
+  gradeLevel: z.object({
+    id: z.string(),
+    name: z.string(),
+    label: z.string(),
+    order: z.number().int(),
+    cycle: z.string().optional(),
+  }).optional(),
+});
+
 const resolveGuardianRequestSchema = z.object({
   subjectId: z.string().trim().min(1),
+  email: z.string().trim().min(1).max(320).optional(),
 }).openapi("EdayaSparkResolveGuardianRequest");
 
 const resolveGuardianResponseSchema = z.object({
   schoolId: z.string(),
   displayName: z.string(),
-  children: z.array(z.object({
-    studentId: z.string(),
+  children: z.array(resolveGuardianChildSchema),
+  schools: z.array(z.object({
     schoolId: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-    classLabel: z.string().min(1).optional(),
-    gradeLevel: z.object({
-      id: z.string(),
-      name: z.string(),
-      label: z.string(),
-      order: z.number().int(),
-      cycle: z.string().optional(),
-    }).optional(),
+    schoolName: z.string(),
+    children: z.array(resolveGuardianChildSchema),
   })),
 }).openapi("EdayaSparkResolveGuardianResponse");
 
@@ -56,7 +64,11 @@ export const edayaSparkResolveGuardianHandler: AppRouteHandler<typeof edayaSpark
   }
 
   const body = c.req.valid("json");
-  const listing = await resolveGuardianForEdayaSpark(c.var.schoolApp.repositories, body.subjectId);
+  const listing = await resolveGuardianForEdayaSpark(
+    c.var.schoolApp.repositories,
+    body.subjectId,
+    body.email,
+  );
   return c.json(listing, HttpStatusCodes.OK);
 };
 
