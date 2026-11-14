@@ -393,6 +393,13 @@
       "when": 1793404800000,
       "tag": "0055_optional_human_identifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1793491200000,
+      "tag": "0056_subject_legacy_code",
+      "breakpoints": true
     }
   ]
 }

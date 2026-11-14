@@ -70,6 +70,7 @@ export const subjectCategories = pgTable('subject_categories', {
 }, table => definePerformanceIndexes('subject_categories', table))
 
 export const subjects = pgTable('subjects', {
+  legacyCode: text('legacy_code'),
   disciplineId: text('discipline_id'),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),

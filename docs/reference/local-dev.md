@@ -139,21 +139,13 @@ Opens automatically at `http://127.0.0.1:8192`.
 |---------|-----|
 | School browser fails to open PGlite | Stop `bun run repo dev` first — the API holds the lock on `.data/school` |
 
-## Identifier and import-reference local cutover
+## Upgrading school identifiers on existing data
 
-Migration `0054_visible_identification.sql` requires all affected school tables to be empty. It rejects existing records before changing their schema. Do not edit historical migrations or apply this cutover to populated production data.
+The ordinary school migration upgrades a populated pre-0054 database in place. For local development run `bun repo ops db migrate school local` with the local API stopped. Staging and production use the same SQL through the deploy workflow.
 
-After backend, client and integration verification, stop the local API and back up the configured school store (normally `.data/school`). Retain the separate identity store (`.data/identity`) and record its existing account IDs before the reset. Use the school-only reset owned by the seed command; do not remove the whole `.data` directory.
+Migration 0054 keeps person IDs, relationships, and national identifiers. It maps existing matricules and human staff, teacher, and guardian codes to optional identifiers using the same canonical format as new writes. Leading zeroes are preserved. Missing values remain empty. If a legacy identifier is invalid or two people in the same school and profile group would receive the same identifier, the transaction rolls back and reports the affected row IDs. Correct those records in the pre-upgrade schema and retry.
 
-For the documented local fixture authentication mode, run:
-
-```sh
-AUTH_TERMS_MODE=off bun repo ops seed local --clean --yes
-```
-
-The command refuses an already running local API, resets only the school database, starts a temporary matching API with OTP capture, seeds through HTTP and stops its owned services. The identity database is retained. `AUTH_TERMS_MODE=off` is restricted to this local fixture run; ordinary development uses the configured terms mode. Alternatively use explicitly authenticated fixture sessions as described in the seeding README.
-
-Restart the matching API and clients. Verify people directories, creation with omitted and supplied identifiers, onboarding, ambiguous import selection and export/re-import. Run the seed again without `--clean` and compare entity/source bindings to confirm replay preserves internal identities. Keep the backup until the cutover smoke checks pass.
+The migration carries existing short names, grade labels, discipline codes and placement codes forward. Missing abbreviations are generated from the display name. Subjects retain their original code in `subjects.legacy_code`, including when they have a different curated short name. Service accounts keep their service ID and key bindings and acquire display fields from their existing name and code.
 
 ## Dev database seed
 

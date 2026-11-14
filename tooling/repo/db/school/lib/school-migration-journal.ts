@@ -12,6 +12,7 @@ export interface SchoolMigrationJournalEntry {
   tag: string
   when: number
   hash: string
+  previousHashes: string[]
 }
 
 export function readSchoolMigrationJournal(): SchoolMigrationJournalEntry[] {
@@ -30,6 +31,11 @@ export function readSchoolMigrationJournal(): SchoolMigrationJournalEntry[] {
       tag: entry.tag,
       when: entry.when,
       hash: createHash('sha256').update(query).digest('hex'),
+      // The original 0054 could only succeed on empty tables. Its journal entry
+      // remains valid for databases that already ran it.
+      previousHashes: entry.tag === '0054_visible_identification'
+        ? ['f5754ac6e7bec08e20a456e4a3e80474edc0895346bbd6d5889a95fc2ef06281']
+        : [],
     }
   })
 }
@@ -55,11 +61,14 @@ export async function applyPendingSchoolMigrationsUntil(
   stopTag: string,
 ): Promise<string[]> {
   const journal = readSchoolMigrationJournal()
+  const stopIndex = journal.findIndex(entry => entry.tag === stopTag)
+  if (stopIndex < 0)
+    throw new Error(`Unknown school migration: ${stopTag}`)
   const applied = await readAppliedMigrationHashes(sql)
   const appliedTags: string[] = []
 
-  for (const entry of journal) {
-    if (applied.has(entry.hash)) {
+  for (const entry of journal.slice(0, stopIndex + 1)) {
+    if (applied.has(entry.hash) || entry.previousHashes.some(hash => applied.has(hash))) {
       continue
     }
 
@@ -68,20 +77,17 @@ export async function applyPendingSchoolMigrationsUntil(
       'utf8',
     )
 
-    for (const statement of splitMigrationStatements(migrationSql)) {
-      await sql.unsafe(statement)
-    }
-
-    await sql.unsafe(
-      `INSERT INTO ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`,
-      [entry.hash, entry.when],
-    )
+    await sql.begin(async (tx) => {
+      for (const statement of splitMigrationStatements(migrationSql)) {
+        await tx.unsafe(statement)
+      }
+      await tx.unsafe(
+        `INSERT INTO ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`,
+        [entry.hash, entry.when],
+      )
+    })
 
     appliedTags.push(entry.tag)
-
-    if (entry.tag === stopTag) {
-      break
-    }
   }
 
   return appliedTags

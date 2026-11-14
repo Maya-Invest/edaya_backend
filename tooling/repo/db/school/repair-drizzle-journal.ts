@@ -1,45 +1,12 @@
-import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
-import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 import { MIGRATIONS_SCHEMA, SCHOOL_MIGRATIONS_TABLE } from '@edaya/adaptor-postgres'
 import postgres from 'postgres'
-
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
-const migrationsFolder = path.resolve(repoRoot, 'package/adaptor-postgres/drizzle')
-
-interface JournalEntry {
-  tag: string
-  when: number
-}
+import { readSchoolMigrationJournal } from './lib/school-migration-journal'
 
 interface JournalRow {
   id: number
   hash: string
   created_at: string
-}
-
-interface MigrationFile {
-  hash: string
-  folderMillis: number
-}
-
-function readMigrationHashes(): MigrationFile[] {
-  const journalPath = path.join(migrationsFolder, 'meta/_journal.json')
-  if (!existsSync(journalPath)) {
-    throw new Error(`Missing migration journal at ${journalPath}`)
-  }
-
-  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as { entries: JournalEntry[] }
-
-  return journal.entries.map((entry) => {
-    const query = readFileSync(path.join(migrationsFolder, `${entry.tag}.sql`), 'utf8')
-    return {
-      folderMillis: entry.when,
-      hash: createHash('sha256').update(query).digest('hex'),
-    }
-  })
 }
 
 /**
@@ -48,8 +15,8 @@ function readMigrationHashes(): MigrationFile[] {
  * timestamp) can block pending migrations without failing the migrate command.
  */
 export async function repairDrizzleMigrationJournal(databaseUrl: string): Promise<void> {
-  const migrations = readMigrationHashes()
-  const knownHashes = new Set(migrations.map(migration => migration.hash))
+  const migrations = readSchoolMigrationJournal()
+  const knownHashes = new Set(migrations.flatMap(entry => [entry.hash, ...entry.previousHashes]))
   const sql = postgres(databaseUrl)
 
   try {
@@ -72,7 +39,7 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
     )
 
     const appliedHashes = new Set(rows.map(row => row.hash))
-    const pending = migrations.filter(migration => !appliedHashes.has(migration.hash))
+    const pending = migrations.filter(entry => !appliedHashes.has(entry.hash) && !entry.previousHashes.some(hash => appliedHashes.has(hash)))
 
     if (pending.length === 0) {
       return
@@ -81,7 +48,7 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
     const lastCreatedAt = rows.length > 0
       ? Math.max(...rows.map(row => Number(row.created_at)))
       : 0
-    const earliestPendingMillis = Math.min(...pending.map(migration => migration.folderMillis))
+    const earliestPendingMillis = Math.min(...pending.map(entry => entry.when))
 
     if (lastCreatedAt < earliestPendingMillis) {
       return
@@ -114,7 +81,8 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
 }
 
 if (import.meta.main) {
-  const databaseUrl = process.env['STAGING_DATABASE_URL'] ?? process.env['DATABASE_URL']
+  const { STAGING_DATABASE_URL, DATABASE_URL } = process.env
+  const databaseUrl = STAGING_DATABASE_URL ?? DATABASE_URL
 
   if (!databaseUrl || databaseUrl === 'pglite' || databaseUrl === 'memory') {
     throw new Error('Set STAGING_DATABASE_URL (or DATABASE_URL) before repairing the drizzle journal.')
