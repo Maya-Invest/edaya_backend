@@ -13,7 +13,15 @@ const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
   throw new Error('Use the disposable native test runner')
 interface SqlExecutor { execute: (statement: SQL) => Promise<{ rows: unknown[] }> }
-const handles = await Promise.all([createPostgresSchoolDatabase(url), createPostgresSchoolDatabase(url)])
+// The heartbeat scans every school. Give this suite its own database in the runner's disposable cluster.
+const databaseName = `cron_${crypto.randomUUID()}`
+const cronUrl = new URL(url)
+cronUrl.pathname = `/${databaseName}`
+const control = await createPostgresSchoolDatabase(url)
+const handles = await Promise.all([
+  createPostgresSchoolDatabase(cronUrl.href, { max: 1 }),
+  createPostgresSchoolDatabase(cronUrl.href, { max: 1 }),
+])
 const query = (statement: string) => (handles[0]!.db as SqlExecutor).execute(sql.raw(statement))
 let rollbackAfterEffects = false
 const applications = handles.map((handle) => {
@@ -49,24 +57,27 @@ function tick(index: number, dispatch = async (message: { jobId: string }) => {
 }
 
 beforeAll(async () => {
+  await (control.db as SqlExecutor).execute(sql`CREATE DATABASE ${sql.identifier(databaseName)}`)
   await runMigrations(handles[0]!.db, { driver: 'node-postgres' })
   await query(`CREATE TABLE cron_fixture_effects (id bigserial PRIMARY KEY);
     DELETE FROM cron_job_schedules;
     INSERT INTO schools (id, name, short_name, time_zone, created_at) VALUES
-      ('cron-native-a', 'Cron A', 'Cron A', 'UTC', now()), ('cron-native-b', 'Cron B', 'Cron B', 'UTC', now());
+      ('cron-native-a', 'Cron A', 'Cron A', 'UTC', now()), ('cron-native-b', 'Cron B', 'Cron B', 'UTC', now()),
+      ('cron-native-idle', 'Cron Idle', 'Cron Idle', 'UTC', now());
     INSERT INTO message_deliveries (id, school_id, subject_id, title, body, event_key, status, created_at, updated_at)
       SELECT 'cron-test-' || id, id, 'test-subject', 'Title', 'Body', 'test.event', 'pending', now(), now()
       FROM schools WHERE id IN ('cron-native-a','cron-native-b');
     INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
     VALUES ('cron-native', 'reconcilePendingDeliveries', '*/5 * * * *', true, '2026-09-14T12:00:00Z', now(), now())`)
-})
+}, 30000)
 afterAll(async () => {
-  await Promise.all(handles.map(handle => handle.dispose()))
+  await Promise.all([control, ...handles].map(handle => handle.dispose()))
 })
 
 test('competing pool-size-one heartbeats commit one occurrence per school before sending', async () => {
   await Promise.all(Array.from({ length: 6 }, (_, index) => tick(index % 2)))
-  expect((await query('SELECT * FROM cron_occurrences WHERE schedule_id = \'cron-native\'')).rows).toHaveLength(2)
+  const occurrences = await query(`SELECT school_id FROM cron_occurrences WHERE schedule_id = 'cron-native' ORDER BY school_id`)
+  expect(occurrences.rows).toEqual([{ school_id: 'cron-native-a' }, { school_id: 'cron-native-b' }])
   expect((await query('SELECT * FROM command_receipts WHERE command = \'cron.occurrence\'')).rows).toHaveLength(2)
   expect((await query('SELECT * FROM command_outbox WHERE kind IN (\'cron.dispatch\', \'cron.execute\')')).rows).toHaveLength(4)
   expect(messages).toHaveLength(2)
