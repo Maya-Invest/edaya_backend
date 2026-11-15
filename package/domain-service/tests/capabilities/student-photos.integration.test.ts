@@ -519,6 +519,9 @@ describe('student portrait review', () => {
     const abandonedKey = abandoned.storageKey!
     expect(await remainingProtectionMs(abandonedKey)).toBeGreaterThan(STUDENT_PHOTO_ABANDONED_MS - 15_000)
     expect(await remainingProtectionMs(abandonedKey)).toBeLessThanOrEqual(STUDENT_PHOTO_ABANDONED_MS + 5_000)
+    const cleanupSchools = (at: Date) => fixture.schoolRepositories.cronJobSchedules.listDueSchoolIds('preparePrivateFileCleanup', at)
+    expect(await cleanupSchools(new Date())).toEqual([])
+    expect(await cleanupSchools(new Date(Date.now() + STUDENT_PHOTO_ABANDONED_MS + 1000))).toEqual(['school'])
     expect(await sweepPortraits(new Date())).toMatchObject({ processed: 0 })
     expect(await fixture.schoolRepositories.attachments.findById(abandoned.id)).toBeDefined()
 

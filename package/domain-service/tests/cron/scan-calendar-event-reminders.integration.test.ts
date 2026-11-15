@@ -33,7 +33,10 @@ describe('scanCalendarEventReminders', () => {
       calendarEvents: [classGroupEvent()],
     })
 
+    const schedules = context.service.baseService.repositories.cronJobSchedules
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
     const result = await scanCalendarEventReminders(context)
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual([])
 
     expect(result).toEqual({ processed: 1, skipped: 0 })
     expect(gateway.enqueued.length).toBeGreaterThan(0)
@@ -76,6 +79,7 @@ describe('scanCalendarEventReminders', () => {
       ],
     })
 
+    expect(await context.service.baseService.repositories.cronJobSchedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual([])
     const result = await scanCalendarEventReminders(context)
 
     expect(result).toEqual({ processed: 0, skipped: 4 })

@@ -64,7 +64,7 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
   const handle = await createAuthDatabase(env);
   try {
     const keys = options.keys ?? await ensureIdentitySigningKeys(handle.db);
-    const { repository, db } = createAccountRepository(handle.db);
+    const { repository, db } = createAccountRepository(handle.db, options.now);
     if (env.NODE_ENV === "production" && !env.ACCOUNT_SECURITY_KEYS)
       throw new Error("ACCOUNT_SECURITY_KEYS is required in production");
     const keyring = env.ACCOUNT_SECURITY_KEYS
@@ -88,7 +88,7 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
     const auth = {
       handler: createAccountAuthHandler(accounts, env, keys),
       async purgeExpiredCredentials() {
-        const now = Date.now();
+        const now = (options.now ?? Date.now)();
         for (const table of ["session", "pending", "quota", "otp_cooldown", "otp_request", "otp_receipt"])
           await db.execute(sql`DELETE FROM ${sql.identifier("identity")}.${sql.identifier(table)} WHERE expires_at<=${now}`);
         await db.execute(sql`DELETE FROM identity.challenge WHERE expires_at<=${now - 3600000}`);

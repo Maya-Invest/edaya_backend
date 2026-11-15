@@ -34,7 +34,10 @@ describe('scanActivityReminders', () => {
       activities: [schoolActivity()],
     })
 
+    const schedules = context.service.baseService.repositories.cronJobSchedules
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
     const result = await scanActivityReminders(context)
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual([])
 
     expect(result).toEqual({ processed: 1, skipped: 0 })
     expect(gateway.enqueued.length).toBeGreaterThan(0)
@@ -46,6 +49,10 @@ describe('scanActivityReminders', () => {
       },
     })
     expect(gateway.enqueued[0]?.title).toContain('Basketball club')
+    const guardians = context.service.baseService.repositories.guardians
+    const guardian = await guardians.findById('gua1')
+    await guardians.save(guardian!.copyWith({ subjectId: 'new-guardian-login' }))
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
   })
 
   test('skips expired activities, other schools, and activities outside the reminder window', async () => {
@@ -69,6 +76,7 @@ describe('scanActivityReminders', () => {
       ],
     })
 
+    expect(await context.service.baseService.repositories.cronJobSchedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual([])
     const result = await scanActivityReminders(context)
 
     expect(result).toEqual({ processed: 0, skipped: 2 })

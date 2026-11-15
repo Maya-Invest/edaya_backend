@@ -2,6 +2,7 @@ import type { CronJobKey, CronJobSchedule, CronJobSchedulePort, CronOccurrence }
 import { and, eq, lte, sql } from 'drizzle-orm'
 import { transactionContext } from '../lib/transaction'
 import * as schema from '../postgres-schema'
+import { dueSchoolQuery } from './cron-due-schools'
 
 type CronJobScheduleRow = typeof schema.cronJobSchedules.$inferSelect
 
@@ -71,16 +72,22 @@ export class PostgresCronJobScheduleStore implements CronJobSchedulePort {
     return rows.map(mapRow)
   }
 
-  async markDispatched(
+  async listDueSchoolIds(jobKey: CronJobKey, asOf: Date): Promise<readonly string[]> {
+    const result = await this.getClient().execute(sql`SELECT id FROM schools WHERE id IN (${dueSchoolQuery(jobKey, asOf)}) ORDER BY id`)
+    const rows: { id: string }[] = Array.isArray(result) ? result : result.rows
+    return rows.map(row => row.id)
+  }
+
+  async advanceSchedule(
     id: string,
-    input: { nextRunAt: Date, dispatchedAt: Date },
+    input: { nextRunAt: Date, checkedAt: Date, createdOccurrences: boolean },
   ): Promise<void> {
     await this.getClient()
       .update(schema.cronJobSchedules)
       .set({
         nextRunAt: input.nextRunAt,
-        lastDispatchedAt: input.dispatchedAt,
-        updatedAt: input.dispatchedAt,
+        lastDispatchedAt: input.createdOccurrences ? input.checkedAt : undefined,
+        updatedAt: input.checkedAt,
       })
       .where(eq(schema.cronJobSchedules.id, id))
   }

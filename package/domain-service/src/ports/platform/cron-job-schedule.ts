@@ -27,8 +27,9 @@ export interface CronJobSchedulePort {
   saveOccurrence: (occurrence: CronOccurrence) => Promise<void>
   findOccurrence: (id: string) => Promise<CronOccurrence | null>
   listDue: (asOf: Date) => Promise<readonly CronJobSchedule[]>
-  markDispatched: (
+  listDueSchoolIds: (jobKey: CronJobKey, asOf: Date) => Promise<readonly string[]>
+  advanceSchedule: (
     id: string,
-    input: { nextRunAt: Date, dispatchedAt: Date },
+    input: { nextRunAt: Date, checkedAt: Date, createdOccurrences: boolean },
   ) => Promise<void>
 }

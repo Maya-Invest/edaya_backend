@@ -14,7 +14,8 @@ import { phoneTestEnv } from "./support/phone-env";
 
 const database = new PGlite();
 const db = drizzle(database);
-const { repository, db: providerDb } = createAccountRepository(db);
+let now = Date.now();
+const { repository, db: providerDb } = createAccountRepository(db, () => now);
 const security = createAccountSecurity({ v1: Buffer.alloc(32, 7).toString("base64") }, "v1");
 const sends: { channel: string; destination: string; code: string; attemptId?: string }[] = [];
 let deliveryResult: DeliveryResult = { status: "accepted", messageId: "message" };
@@ -34,7 +35,6 @@ const delivery: OtpDeliveryPort = { async send(input) {
   return { ...deliveryResult, messageId: `${deliveryResult.messageId ?? "message"}-${input.attemptId}` };
 } };
 const provider = createBetterAuthAdapter(providerDb, { generation: "phone-test", secret: "test-secret-with-at-least-32-characters", baseUrl: "http://localhost:9999", delivery });
-let now = Date.now();
 const service = new AccountService(transactional, provider, security, { requiresTotp: async () => false }, () => now, false, { mode: "whatsapp_first", supports: phone => phone.startsWith("+225"), delivery });
 const begin = (value: string, requestId = security.token()) => service.begin({ kind: "phone", value, ip: value, requestId });
 const resend = (challenge: string, action: "resend" | "sms" = "resend", requestId = security.token()) => service.resend({ challenge, action, ip: "resend", requestId });
@@ -58,6 +58,17 @@ test("simultaneous retries reserve one challenge and send once", async () => {
   const [first, second] = await Promise.all([concurrent.begin(input), concurrent.begin(input)]);
   expect(first.challenge).toBe(second.challenge);
   expect(sendCount).toBe(1);
+});
+
+test("expired OTP requests and receipts can be reused before hourly cleanup", async () => {
+  const requestId = security.token();
+  const first = await begin("+2250700000077", requestId);
+  const receipt = { id: security.token(), messageId: security.token(), destination: "+2250700000077", timestamp: now, status: "delivered" as const };
+  await repository.saveReceipt(receipt, now + 3600000);
+  now = first.expiresAt + 3600000;
+  expect(await repository.receipts(receipt.messageId)).toEqual([]);
+  expect(await repository.saveReceipt(receipt, now + 3600000)).toBe(true);
+  expect((await begin("+2250700000077", requestId)).challenge).not.toBe(first.challenge);
 });
 
 test("linking shares login cooldown and retains its session and recovery context on SMS replacement", async () => {

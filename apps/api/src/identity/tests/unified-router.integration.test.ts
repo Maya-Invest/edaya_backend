@@ -6,7 +6,7 @@ import { parseRuntimeEnv } from "@/runtime/shared/env";
 import { composeIdentity } from "../composition";
 import { createAccountDirectory } from "../directory";
 import { parseEnv } from "../env";
-import { runIndependentJobs } from "../jobs";
+import { runHeartbeatJobs, runIndependentJobs } from "../jobs";
 import { ensureIdentitySigningKeys, signIdentityAccessToken } from "../jwt-keys";
 import { createIdentityRuntime } from "../runtime";
 import { verifyIdentityToken } from "../server";
@@ -84,6 +84,20 @@ test("old/foreign issuer and audience fail while persistent signing keys survive
     await expect(verifyIdentityToken(accessToken, { issuer: origin, audience: origin, jwks: retained.jwks })).rejects.toThrow();
   }
 });
+test("the school heartbeat runs every five minutes and only the hourly tick opens identity", async () => {
+  const school: number[] = [];
+  const identity: number[] = [];
+  for (let minute = 0; minute <= 60; minute += 5) {
+    await runHeartbeatJobs(
+      new Date(Date.UTC(2026, 0, 1, 23, minute)),
+      async () => { school.push(minute); },
+      async () => { identity.push(minute); },
+    );
+  }
+  expect(school).toHaveLength(13);
+  expect(identity).toEqual([0, 60]);
+});
+
 test("both scheduled jobs run and either failure is reported after both settle", async () => {
   for (const failed of [0, 1]) {
     const ran: number[] = [];

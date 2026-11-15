@@ -15,8 +15,11 @@ async function fixture() {
   onTestFinished(() => releaseDatabase(fixture.db))
   const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(fixture.connection), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
   await fixture.db.exec(`DELETE FROM cron_job_schedules;
+    INSERT INTO message_deliveries (id, school_id, subject_id, title, body, event_key, status, created_at, updated_at)
+      SELECT 'cron-test-' || id, id, 'test-subject', 'Title', 'Body', 'test.event', 'pending', now(), now()
+      FROM schools WHERE id IN ('school-a','school-b');
     INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
-    VALUES ('fixture', 'expireAccountInvitations', '*/5 * * * *', true, '2026-07-03T12:00:00Z', now(), now())`)
+    VALUES ('fixture', 'reconcilePendingDeliveries', '*/5 * * * *', true, '2026-07-03T12:00:00Z', now(), now())`)
   const messages: CronJobDispatchMessage[] = []
   const tick = (dispatch = async (message: CronJobDispatchMessage) => {
     messages.push(message)
@@ -27,6 +30,17 @@ async function fixture() {
   }, { asOf: new Date('2026-07-03T12:00:00Z'), requestIdPrefix: crypto.randomUUID() })
   return { ...fixture, application, messages, tick }
 }
+
+test('idle schedules advance without creating queue or journal records', async () => {
+  const { tick, db, messages, application } = await fixture()
+  await db.exec('UPDATE message_deliveries SET status = \'read\'')
+  await tick()
+  for (const table of ['cron_occurrences', 'command_receipts', 'command_audit', 'command_outbox'])
+    expect((await db.query(`SELECT * FROM ${table}`)).rows).toEqual([])
+  expect(messages).toEqual([])
+  expect((await application.repositories.cronJobSchedules.findById('fixture'))?.lastDispatchedAt).toBeNull()
+  expect((await application.repositories.cronJobSchedules.findById('fixture'))?.nextRunAt.toISOString()).toBe('2026-07-03T12:05:00.000Z')
+}, 30000)
 
 test('heartbeats persist school-bound occurrences and advance schedules before transport; replay executes once', async () => {
   const { tick, application, db, messages } = await fixture()
@@ -85,7 +99,7 @@ test('unsupported versions and school substitutions cannot execute a persisted o
 
 test('failed schedule advancement rolls back occurrences, receipts, audit and outbox before any send', async () => {
   const { tick, application, db, messages } = await fixture()
-  application.repositories.cronJobSchedules.markDispatched = async () => {
+  application.repositories.cronJobSchedules.advanceSchedule = async () => {
     throw new Error('injected schedule write failure')
   }
   await expect(tick()).rejects.toThrow('injected schedule write failure')

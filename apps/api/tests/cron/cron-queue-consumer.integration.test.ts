@@ -19,8 +19,11 @@ function logger() {
 test("queue consumer discards injected authority and continues through duplicate or unknown references", async () => {
   const { school, db } = await createNativePolicyApp();
   await db.exec(`DELETE FROM cron_job_schedules;
+    INSERT INTO message_deliveries (id, school_id, subject_id, title, body, event_key, status, created_at, updated_at)
+      SELECT 'cron-test-' || id, id, 'test-subject', 'Title', 'Body', 'test.event', 'pending', now(), now()
+      FROM schools WHERE id = 'school-a';
     INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
-    VALUES ('queue-fixture', 'expireAccountInvitations', '*/5 * * * *', true, '2026-07-07T12:00:00Z', now(), now())`);
+    VALUES ('queue-fixture', 'reconcilePendingDeliveries', '*/5 * * * *', true, '2026-07-07T12:00:00Z', now(), now())`);
   const sent: { jobId: string }[] = [];
   await runCronHeartbeat(school, {
     asOf: new Date("2026-07-07T12:00:00Z"),

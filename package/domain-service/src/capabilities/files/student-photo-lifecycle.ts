@@ -113,23 +113,11 @@ export async function sweepExpiredStudentPortraitAttachments(
   asOf: Date,
 ): Promise<{ processed: number, skipped: number }> {
   await base.access.attachments.assertCleanup()
-  const portraits = await base.repositories.attachments.forSchool!(base.actor.schoolId).list({
-    ownerKind: AttachmentOwnerKind.Student,
-    purpose: STUDENT_PORTRAIT_PURPOSE,
-    $limit: 100,
-  })
+  const portraits = await base.repositories.privateFiles.listAbandonedPortraitIds(base.actor.schoolId, asOf)
   let processed = 0
   let skipped = 0
-  for (const attachment of portraits) {
-    const submissions = await base.repositories.studentPhotoSubmissions.forSchool!(base.actor.schoolId).list({
-      attachmentId: attachment.id,
-      $limit: 1,
-    })
-    if (submissions.length || attachment.createdAt.getTime() + STUDENT_PHOTO_ABANDONED_MS > asOf.getTime()) {
-      skipped++
-      continue
-    }
-    if (await detachUnreferencedStudentPortrait(base, attachment.id))
+  for (const attachmentId of portraits) {
+    if (await detachUnreferencedStudentPortrait(base, attachmentId))
       processed++
     else
       skipped++

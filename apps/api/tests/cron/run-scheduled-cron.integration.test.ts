@@ -28,12 +28,15 @@ describe("parseCronJobKeysFilter", () => {
 });
 
 describe("runCronHeartbeat", () => {
-  test("dispatches due schedules for every school and logs the tick summary", async () => {
+  test("dispatches only for schools with pending deliveries and logs the tick summary", async () => {
     const dispatch = mock(async () => undefined);
     const { school: application, db } = await createNativePolicyApp();
     await db.exec(`DELETE FROM cron_job_schedules;
-      INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
-      VALUES ('sched-1', 'processDueNotifications', '*/5 * * * *', true, '2026-07-07T12:00:00Z', now(), now())`);
+      INSERT INTO message_deliveries (id, school_id, subject_id, title, body, event_key, status, created_at, updated_at)
+      SELECT 'cron-test-' || id, id, 'test-subject', 'Title', 'Body', 'test.event', 'pending', now(), now()
+      FROM schools WHERE id = 'school-a';
+    INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
+      VALUES ('sched-1', 'reconcilePendingDeliveries', '*/5 * * * *', true, '2026-07-07T12:00:00Z', now(), now())`);
     const info = mock(() => undefined);
     const logger = { info } as unknown as LoggerPort;
     const asOf = new Date("2026-07-07T12:00:00.000Z");
@@ -44,14 +47,14 @@ describe("runCronHeartbeat", () => {
       dispatcher: { dispatch },
     }, logger);
 
-    expect(summary.dispatches).toHaveLength(2);
+    expect(summary.dispatches).toHaveLength(1);
     expect(summary.dispatches[0]?.jobId).toStartWith("cron-execute:");
-    expect(dispatch).toHaveBeenCalledTimes(2);
+    expect(dispatch).toHaveBeenCalledTimes(1);
 
     expect(info).toHaveBeenCalledWith(
       expect.objectContaining({
         event: "cron.tick",
-        dispatchCount: 2,
+        dispatchCount: 1,
       }),
       "cron heartbeat tick completed",
     );

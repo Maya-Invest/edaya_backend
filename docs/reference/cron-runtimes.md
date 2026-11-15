@@ -47,7 +47,7 @@ A single heartbeat trigger is declared per deploy profile in `apps/api/wrangler.
 
 | Cron expression | Role |
 |-----------------|------|
-| `* * * * *` | Heartbeat — loads due schedules from Postgres and enqueues work |
+| `*/5 * * * *` | Checks school work every five minutes and runs identity credential cleanup on the top-of-hour UTC tick |
 
 Job schedules live in the `cron_job_schedules` table (seeded after school migrations via `seedCronJobSchedules`):
 
@@ -56,6 +56,8 @@ Job schedules live in the `cron_job_schedules` table (seeded after school migrat
 | `expireAccountInvitations` | `0 2 * * *` |
 | `processDueNotifications` | `0 6 * * *` |
 | `reconcilePendingDeliveries` | `*/5 * * * *` |
+| `advanceFamilyFeedbackCampaigns` | `*/5 * * * *` |
+| `preparePrivateFileCleanup` | `*/15 * * * *` |
 
 Queue names per deploy profile:
 
@@ -76,7 +78,7 @@ bun repo ops emergency-deploy production # production
 ```text
 heartbeat (scheduled) or cron-local
   ├─ transaction + schedule lock
-  │    ├─ reload due schedule; create unique school/schedule/time occurrence
+  │    ├─ select schools with work due for this job and create one occurrence per match
   │    ├─ command receipt + audit + execution/dispatch outbox rows
   │    └─ advance next_run_at; commit
   └─ dispatch committed work by { jobId }
@@ -86,15 +88,17 @@ heartbeat (scheduled) or cron-local
             └─ transaction: run existing handler + guarded work completion
 ```
 
+A schedule advances even when no school has eligible work. Empty ticks still retry outstanding dispatches and drain previously committed work. Notification eligibility is checked per recipient, so an existing delivery for one profile does not suppress a newly eligible profile.
+
 Migration `0015_cron_occurrences` adds immutable occurrence authority; `0014_command_journal` supplies receipts, audit and durable work. Occurrences are unique by school, schedule and the scheduled time that was due. A delayed heartbeat coalesces missed schedule ticks into one occurrence, with the winning heartbeat's persisted `asOf` window. Request tracing does not change occurrence identity. Competing heartbeats re-read the schedule under its transaction lock.
 
-Only `{ jobId }` crosses the queue boundary. The consumer rejects legacy/full-authority payloads, acknowledges malformed/unknown/terminal references, and retries pending or transiently failed work with a 60-second queue delay. School/job/version authority comes from storage. Job effects and execution completion use one transaction; expiry or failure rolls both back. The three existing handlers use transactional school/notification persistence; future handlers must preserve that contract or implement their own durable external-effect protocol.
+Only `{ jobId }` crosses the queue boundary. The consumer rejects legacy/full-authority payloads, acknowledges malformed/unknown/terminal references, and retries pending or transiently failed work with a 60-second queue delay. School/job/version authority comes from storage. Job effects and execution completion use one transaction; expiry or failure rolls both back. The scheduled handlers use transactional school/notification persistence; future handlers must preserve that contract or implement their own durable external-effect protocol.
 
 Execution and transport each retain an eight-claim budget. Transport failures back off through the shared work adapter. After an accepted send, a later heartbeat can re-arm delivery if execution is still due and the last acceptance is at least 60 seconds old. It resends the same reference, preserves attempts and never resets a terminal budget. This also recovers a lost queue message. Worker queue retries are configured to 20 with a 60-second delay; these transport redeliveries do not bypass database claim/backoff rules. Missing `CRON_JOBS` fails closed in Worker mode. See [command execution](command-execution.md) for lease and failure semantics.
 
 Structured log events: `cron.tick`, `cron.dispatch`, `cron.execute`.
 
-Job catalog: `package/domain-service/src/capabilities/scheduling-jobs/cron-job-catalog.ts`. Add new jobs in service, register in `cron-job-runner.ts`, and insert a row into `cron_job_schedules`.
+Job catalog: `package/domain-service/src/capabilities/scheduling-jobs/cron-job-catalog.ts`. Add new jobs in service, register its handler in `cron-job-runner.ts` and its school eligibility query in `cron-due-schools.ts`, and insert a row into `cron_job_schedules`.
 
 ## Operations
 
@@ -103,7 +107,7 @@ Job catalog: `package/domain-service/src/capabilities/scheduling-jobs/cron-job-c
 After deploying the merged API worker with heartbeat + queue:
 
 1. In the Cloudflare dashboard, delete standalone Workers named `edaya-cron` / `edaya-cron-staging` if they still exist.
-2. Confirm only `edaya-api-staging` / `edaya-api-prod` have a `* * * * *` cron trigger.
+2. Confirm only `edaya-api-staging` / `edaya-api-prod` have a `*/5 * * * *` cron trigger.
 3. Verify queue consumers are attached to the API worker (Queues → `edaya-cron-jobs-*`).
 
 `bun repo check doctor` enforces a single heartbeat cron and `CRON_JOBS` queue binding in `wrangler.jsonc`.

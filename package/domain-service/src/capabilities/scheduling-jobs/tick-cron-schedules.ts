@@ -30,11 +30,12 @@ export async function tickCronSchedules(
       const nextRunAt = deps.computeNextRunAt(schedule.cronExpression, options.asOf)
       if (!(nextRunAt > options.asOf))
         throw new Error('Cron schedules must advance beyond the heartbeat')
-      for (const school of await application.repositories.schools.list()) {
+      const schoolIds = await schedules.listDueSchoolIds(schedule.jobKey, options.asOf)
+      for (const schoolId of schoolIds) {
         const requestId = `${schedule.id}:${schedule.nextRunAt.toISOString()}`
         const occurrence: CronOccurrence = {
           id: crypto.randomUUID(),
-          schoolId: school.id,
+          schoolId,
           scheduleId: schedule.id,
           jobKey: schedule.jobKey,
           version: 1,
@@ -43,11 +44,11 @@ export async function tickCronSchedules(
           requestId,
         }
         await application.commandExecution.execute({
-          scope: { schoolId: school.id, command: 'cron.occurrence', callerId: 'system:cron', requestId },
+          scope: { schoolId, command: 'cron.occurrence', callerId: 'system:cron', requestId },
           input: { scheduleId: schedule.id, jobKey: schedule.jobKey, scheduledFor: schedule.nextRunAt, asOf: options.asOf },
           resultMode: 'ordinary',
           authorize: async () => {
-            if (!await application.repositories.schools.findById(school.id))
+            if (!await application.repositories.schools.findById(schoolId))
               throw new Error('Cron school unavailable')
           },
           execute: async () => {
@@ -63,7 +64,7 @@ export async function tickCronSchedules(
           ],
         })
       }
-      await schedules.markDispatched(schedule.id, { nextRunAt, dispatchedAt: options.asOf })
+      await schedules.advanceSchedule(schedule.id, { nextRunAt, checkedAt: options.asOf, createdOccurrences: schoolIds.length > 0 })
     }, { lockKeys: [`cron-schedule:${candidate.id}`] })
   }
   // Run even when no schedule is due: a prior process may have died after commit.

@@ -226,7 +226,7 @@ export class AccountService {
       if (!await this.repository.saveReceipt(receipt, this.now() + 3600000))
         return
       const challenge = receipt.attemptId ? await this.repository.challenge(receipt.attemptId) : await this.repository.challengeByMessage(receipt.messageId)
-      if (!challenge)
+      if (!challenge || this.now() >= challenge.expiresAt + 3600000)
         return
       this.applyReceipt(challenge, receipt)
       await this.repository.saveChallenge(challenge)

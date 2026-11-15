@@ -275,12 +275,22 @@ describe('FamilyFeedbackServiceWorkflow', () => {
       closesAt: new Date('2026-04-10T08:00:00Z'),
     })
     await staff.scheduleFamilyFeedbackCampaign({ requestId: 'ff-sched', id: 'camp-cron' })
+    const eligible = (at: string) => fixture.schoolRepositories.cronJobSchedules.listDueSchoolIds('advanceFamilyFeedbackCampaigns', new Date(at))
+    expect(await eligible('2026-04-01T07:59:59Z')).toEqual([])
+    expect(await eligible('2026-04-01T08:00:00Z')).toEqual([SCHOOL])
     await runCronJobs(fixture.application, {
       asOf: new Date('2026-04-01T09:00:00Z'),
       jobKeys: ['advanceFamilyFeedbackCampaigns'],
     })
     expect((await fixture.schoolRepositories.familyFeedbackCampaigns.findById('camp-cron'))?.status)
       .toBe(FamilyFeedbackCampaignStatus.Open)
+    expect(await eligible('2026-04-01T09:05:00Z')).toEqual([])
+    for (const at of ['2026-04-06T08:00:00Z', '2026-04-08T08:00:00Z']) {
+      expect(await eligible(at)).toEqual([SCHOOL])
+      await runCronJobs(fixture.application, { asOf: new Date(at), jobKeys: ['advanceFamilyFeedbackCampaigns'] })
+      expect(await eligible(at)).toEqual([])
+    }
+    expect(await eligible('2026-04-10T08:00:00Z')).toEqual([SCHOOL])
     await runCronJobs(fixture.application, {
       asOf: new Date('2026-04-10T08:00:00Z'),
       jobKeys: ['advanceFamilyFeedbackCampaigns'],
@@ -495,11 +505,17 @@ describe('FamilyFeedbackServiceWorkflow', () => {
     await staff.saveFamilyFeedbackThemeDraft({ requestId: 'ff-purge-theme', id: 'camp-purge', themes: 'Families want clearer messages.' })
     await staff.publishFamilyFeedbackCampaign({ requestId: 'ff-purge-publish', id: 'camp-purge' })
 
+    const dueAt = (msAfterClosing: number) => fixture.schoolRepositories.cronJobSchedules.listDueSchoolIds('advanceFamilyFeedbackCampaigns', new Date(closedAt.getTime() + msAfterClosing))
+    const warningTime = FAMILY_FEEDBACK_RETENTION_MS - 24 * 60 * 60 * 1000
+    expect(await dueAt(0)).toEqual([])
+    expect(await dueAt(warningTime)).toEqual([SCHOOL])
     await runCronJobs(fixture.application, {
-      asOf: new Date(closedAt.getTime() + FAMILY_FEEDBACK_RETENTION_MS - 24 * 60 * 60 * 1000),
+      asOf: new Date(closedAt.getTime() + warningTime),
       jobKeys: ['advanceFamilyFeedbackCampaigns'],
     })
     expect((await fixture.schoolRepositories.familyFeedbackResponses.list({ campaignId: 'camp-purge' })).length).toBe(1)
+    expect(await dueAt(warningTime)).toEqual([])
+    expect(await dueAt(FAMILY_FEEDBACK_RETENTION_MS)).toEqual([SCHOOL])
 
     await runCronJobs(fixture.application, {
       asOf: new Date(closedAt.getTime() + FAMILY_FEEDBACK_RETENTION_MS),

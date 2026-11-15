@@ -14,9 +14,9 @@ import { verifyFixture } from "./register-fixture";
 
 const database = new PGlite();
 const db = drizzle(database);
-const { repository } = createAccountRepository(db);
-const security = createAccountSecurity({ v1: Buffer.alloc(32, 7).toString("base64") }, "v1");
 let now = Date.now();
+const { repository } = createAccountRepository(db, () => now);
+const security = createAccountSecurity({ v1: Buffer.alloc(32, 7).toString("base64") }, "v1");
 let version = "v1";
 let sends = 0;
 const policy: TermsPolicyPort = { current: locale => ({ enforced: true, document: { version, locale, documentHash: `${version}-${locale}-hash`, title: "Test terms", status: "published", sections: [{ heading: "Use", paragraphs: ["Test terms content"] }] } }) };

@@ -15,7 +15,7 @@ export function rows<T>(result: unknown): T[] {
   throw new Error('Unsupported account database result')
 }
 /** Shares the provider transaction so OTP consumption and identity resolution commit together. */
-export function createAccountRepository(database: unknown): {
+export function createAccountRepository(database: unknown, clock: () => number = Date.now): {
   repository: AccountRepositoryPort
   db: AccountDatabase
 } {
@@ -99,7 +99,7 @@ export function createAccountRepository(database: unknown): {
       return Math.max(0, ...records.map(r => r.data.attempts))
     },
     async challengeByMessage(messageId) {
-      return (await query<{ data: AuthChallenge }>(sql`SELECT data FROM identity.challenge WHERE data->>'messageId'=${messageId} LIMIT 1`))[0]?.data ?? null
+      return (await query<{ data: AuthChallenge }>(sql`SELECT data FROM identity.challenge WHERE data->>'messageId'=${messageId} AND expires_at > ${clock() - 3600000} LIMIT 1`))[0]?.data ?? null
     },
     async supersede(kind, value, now = Date.now()) {
       const records = await query<{
@@ -113,22 +113,28 @@ export function createAccountRepository(database: unknown): {
       return Math.max(0, ...records.filter(r => r.data.expiresAt > now).map(r => r.data.attempts))
     },
     async cooldown(value) {
-      return (await query<{ data: RecipientCooldown }>(sql`SELECT data FROM identity.otp_cooldown WHERE value=${value}`))[0]?.data ?? null
+      return (await query<{ data: RecipientCooldown }>(sql`SELECT data FROM identity.otp_cooldown WHERE value=${value} AND expires_at > ${clock()}`))[0]?.data ?? null
     },
     async saveCooldown(value, data) {
       await db.execute(sql`INSERT INTO identity.otp_cooldown (value,expires_at,data) VALUES (${value},${data.lastSentAt + 3600000},${JSON.stringify(data)}::jsonb) ON CONFLICT (value) DO UPDATE SET expires_at=excluded.expires_at,data=excluded.data`)
     },
     async deliveryRequest(id) {
-      return (await query<{ fingerprint: string, challenge: string }>(sql`SELECT fingerprint,challenge FROM identity.otp_request WHERE id=${id}`))[0] ?? null
+      return (await query<{ fingerprint: string, challenge: string }>(sql`SELECT fingerprint,challenge FROM identity.otp_request WHERE id=${id} AND expires_at > ${clock()}`))[0] ?? null
     },
     async saveDeliveryRequest(id, fingerprint, challenge, expiresAt) {
-      await db.execute(sql`INSERT INTO identity.otp_request (id,fingerprint,challenge,expires_at) VALUES (${id},${fingerprint},${challenge},${expiresAt})`)
+      const saved = await query(sql`INSERT INTO identity.otp_request (id,fingerprint,challenge,expires_at)
+        VALUES (${id},${fingerprint},${challenge},${expiresAt})
+        ON CONFLICT (id) DO UPDATE SET fingerprint=excluded.fingerprint, challenge=excluded.challenge, expires_at=excluded.expires_at
+        WHERE identity.otp_request.expires_at <= ${clock()} RETURNING id`)
+      if (!saved.length)
+        throw new Error('OTP delivery request already exists')
     },
     async receipts(messageId) {
-      return (await query<{ data: DeliveryReceipt }>(sql`SELECT data FROM identity.otp_receipt WHERE message_id=${messageId}`)).map(r => r.data)
+      return (await query<{ data: DeliveryReceipt }>(sql`SELECT data FROM identity.otp_receipt WHERE message_id=${messageId} AND expires_at > ${clock()}`)).map(r => r.data)
     },
     async saveReceipt(receipt, expiresAt) {
-      return (await query(sql`INSERT INTO identity.otp_receipt (id,message_id,expires_at,data) VALUES (${receipt.id},${receipt.messageId},${expiresAt},${JSON.stringify(receipt)}::jsonb) ON CONFLICT (id) DO NOTHING RETURNING id`)).length > 0
+      return (await query(sql`INSERT INTO identity.otp_receipt (id,message_id,expires_at,data) VALUES (${receipt.id},${receipt.messageId},${expiresAt},${JSON.stringify(receipt)}::jsonb) ON CONFLICT (id) DO UPDATE SET message_id=excluded.message_id, expires_at=excluded.expires_at, data=excluded.data
+        WHERE identity.otp_receipt.expires_at <= ${clock()} RETURNING id`)).length > 0
     },
     async reserveSendQuota(ip, recipient, now, fixtures) {
       const limits = [{ key: `send:ip:${ip}`, maximum: fixtures ? 10000 : 20, seconds: 600 }, { key: `send:recipient:phone:${recipient}`, maximum: fixtures ? 10000 : 5, seconds: 3600 }]

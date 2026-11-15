@@ -32,8 +32,6 @@ const applications = handles.map((handle) => {
     }, options),
   }
   const repositories = createFixtureRepositories(handle.db)
-  const listSchools = repositories.schools.list.bind(repositories.schools)
-  repositories.schools.list = async () => (await listSchools()).filter(school => school.id.startsWith('cron-native-'))
   return new SchoolApplication({ repositories, atomicExecution: probedAtomic, commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(handle.db as SqlExecutor), fileStorage: noOpFileStorage, notificationGateway: noOpNotificationGateway })
 })
 const messages: { jobId: string }[] = []
@@ -56,8 +54,11 @@ beforeAll(async () => {
     DELETE FROM cron_job_schedules;
     INSERT INTO schools (id, name, short_name, time_zone, created_at) VALUES
       ('cron-native-a', 'Cron A', 'Cron A', 'UTC', now()), ('cron-native-b', 'Cron B', 'Cron B', 'UTC', now());
+    INSERT INTO message_deliveries (id, school_id, subject_id, title, body, event_key, status, created_at, updated_at)
+      SELECT 'cron-test-' || id, id, 'test-subject', 'Title', 'Body', 'test.event', 'pending', now(), now()
+      FROM schools WHERE id IN ('cron-native-a','cron-native-b');
     INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
-    VALUES ('cron-native', 'expireAccountInvitations', '*/5 * * * *', true, '2026-09-14T12:00:00Z', now(), now())`)
+    VALUES ('cron-native', 'reconcilePendingDeliveries', '*/5 * * * *', true, '2026-09-14T12:00:00Z', now(), now())`)
 })
 afterAll(async () => {
   await Promise.all(handles.map(handle => handle.dispose()))

@@ -3,6 +3,8 @@ import { resolve } from 'node:path'
 import { parseJsonc, readConfig, validateSecrets } from '../../../apps/api/configuration/index.ts'
 import { findWorkerParityViolations } from './worker-parity'
 
+const HEARTBEAT_CRON = '*/5 * * * *'
+
 export interface RuntimeBoundaryViolation {
   label: string
   message: string
@@ -166,7 +168,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (/0 2 \* \* \*/.test(wrangler) || /0 6 \* \* \*/.test(wrangler)) {
       violations.push({
         label: 'wrangler cron',
-        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (* * * * *), not per-job triggers',
+        message: `apps/api/wrangler.jsonc must use a single heartbeat cron (${HEARTBEAT_CRON}) for all jobs`,
       })
     }
 
@@ -180,10 +182,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     else {
       for (const [, block] of cronBlocks) {
         const expressions = [...block.matchAll(/"([^"]+)"/g)].map(match => match[1])
-        if (expressions.length !== 1 || expressions[0] !== '* * * * *') {
+        if (expressions.length !== 1 || expressions[0] !== HEARTBEAT_CRON) {
           violations.push({
             label: 'wrangler cron',
-            message: `each wrangler triggers.crons must contain only "* * * * *" (found: ${expressions.join(', ') || 'none'})`,
+            message: `each wrangler triggers.crons must contain only "${HEARTBEAT_CRON}" (found: ${expressions.join(', ') || 'none'})`,
           })
           break
         }

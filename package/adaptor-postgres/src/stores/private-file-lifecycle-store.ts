@@ -3,6 +3,7 @@ import type { SQL } from 'drizzle-orm'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { sql } from 'drizzle-orm'
 import { transactionContext } from '../lib/transaction'
+import { duePrivateFileObject, isAbandonedPortrait } from './private-file-cleanup-queries'
 
 interface Executor { execute: (query: SQL) => Promise<unknown> }
 
@@ -81,13 +82,18 @@ export class PostgresPrivateFileLifecycleStore implements PrivateFileLifecycleSt
       WHERE school_id = ${schoolId} AND storage_key = ${storageKey} AND status = 'reserved' AND NOT legacy_alias_held`, true)
   }
 
+  async listAbandonedPortraitIds(schoolId: string, asOf: Date): Promise<string[]> {
+    const rows = await this.query<{ id: string }>(sql`SELECT a.id FROM attachments a WHERE ${isAbandonedPortrait(asOf)}
+      AND a.school_id = ${schoolId} ORDER BY a.created_at, a.id LIMIT 100`)
+    return rows.map(row => row.id)
+  }
+
   async listDue(schoolId: string, limit: number): Promise<PrivateFileObject[]> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100)
       throw new Error('Private file cleanup batches must be bounded by 100')
     const rows = await this.query<PrivateFileObject>(sql`SELECT id, school_id AS "schoolId", storage_key AS "storageKey", status,
       CASE WHEN isfinite(protected_until) THEN protected_until END AS "protectedUntil", delete_job_id AS "deleteJobId" FROM private_file_objects
-      WHERE school_id = ${schoolId} AND status IN ('reserved', 'deleted') AND protected_until <= clock_timestamp()
-        AND NOT private_file_object_is_referenced(storage_key)
+      WHERE school_id = ${schoolId} AND ${duePrivateFileObject}
       ORDER BY protected_until, id LIMIT ${limit}`)
     return rows.map(row => this.map(row))
   }

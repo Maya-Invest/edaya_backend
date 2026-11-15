@@ -28,6 +28,7 @@ export interface PrivateFileLifecycleStore {
   reserve: (input: { schoolId: string, storageKey: string, protectedUntil: Date }) => Promise<PrivateFileObject>
   /** Persist cleanup eligibility with metadata removal; referenced objects stay protected. */
   expedite: (schoolId: string, storageKey: string) => Promise<void>
+  listAbandonedPortraitIds: (schoolId: string, asOf: Date) => Promise<string[]>
   listDue: (schoolId: string, limit: number) => Promise<PrivateFileObject[]>
   /** Lock the object and forbid future references before emitting durable deletion work. */
   prepareDeletion: (schoolId: string, id: string, jobId: string) => Promise<boolean>

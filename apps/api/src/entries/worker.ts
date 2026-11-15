@@ -24,7 +24,7 @@ export default {
   async scheduled(controller: ScheduledController, bindings: Record<string, unknown>, ctx: ExecutionContext) {
     if (isPaused(bindings, "PAUSE_SCHEDULER"))
       return;
-    const [{ parseRuntimeEnv }, { createAppLogger }, { buildWorkerApiRuntime }, { runIndependentJobs }, { runCronHeartbeatWithRuntime }] = await Promise.all([
+    const [{ parseRuntimeEnv }, { createAppLogger }, { buildWorkerApiRuntime }, { runHeartbeatJobs }, { runCronHeartbeatWithRuntime }] = await Promise.all([
       import("@/runtime/shared/env"),
       import("@/runtime/shared/adapters/pino-logger"),
       import("@/runtime/worker/build-runtime"),
@@ -38,14 +38,11 @@ export default {
     ctx.waitUntil((async () => {
       try {
         const asOf = new Date(controller.scheduledTime);
-        await runIndependentJobs([
-          async () => (await runtime.getIdentityRuntime!()).auth.purgeExpiredCredentials(),
-          async () => {
-            await runtime.getSchoolApplication();
-            await runtime.drainNotifications?.();
-            await runCronHeartbeatWithRuntime(runtime, { asOf, requestIdPrefix: `worker-cron:${asOf.toISOString()}` }, logger);
-          },
-        ]);
+        await runHeartbeatJobs(asOf, async () => {
+          await runtime.getSchoolApplication();
+          await runtime.drainNotifications?.();
+          await runCronHeartbeatWithRuntime(runtime, { asOf, requestIdPrefix: `worker-cron:${asOf.toISOString()}` }, logger);
+        }, async () => (await runtime.getIdentityRuntime!()).auth.purgeExpiredCredentials());
       }
       catch (error) {
         logger.error({ event: "cron.tick", err: error, cron: controller.cron }, "cron heartbeat failed");

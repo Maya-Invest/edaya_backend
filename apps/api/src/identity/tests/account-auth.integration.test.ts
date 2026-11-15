@@ -11,14 +11,14 @@ import { verifyFixture } from "./register-fixture";
 
 const database = new PGlite();
 const db = drizzle(database);
-const { repository, db: transactionalDb } = createAccountRepository(db);
+let now = Date.now();
+const { repository, db: transactionalDb } = createAccountRepository(db, () => now);
 const security = createAccountSecurity({ v1: Buffer.alloc(32, 7).toString("base64") }, "v1");
 const delivered = new Map<string, string>();
 const delivery = { async send(input: { destination: string; code: string }) {
   delivered.set(input.destination, input.code);
 } };
 const adapter = createBetterAuthAdapter(transactionalDb, { secret: "test-only-secret-with-at-least-32-characters", baseUrl: "http://localhost:9999", generation: "better-auth:test", delivery });
-let now = Date.now();
 const service = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, false, { mode: "whatsapp_first", supports: phone => phone.startsWith("+225"), delivery }, undefined, async () => ({ eligible: true }));
 beforeAll(async () => {
   await runMigrations(db, { driver: "pglite" });
