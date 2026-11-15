@@ -8,7 +8,7 @@ import { root } from '../runtime'
 /* eslint-disable no-template-curly-in-string */
 const workflow = (name: string) => Bun.YAML.parse(readFileSync(resolve(root, '.github/workflows', name), 'utf8')) as Record<string, any>
 const preparation = 'source'
-const entries = ['branche_check.yml', 'pr_validation.yml', 'deploy.yml', 'staging_maintenance.yml']
+const entries = ['branch_check.yml', 'pr_validation.yml', 'deploy.yml', 'staging_maintenance.yml']
 const mandatory = [preparation, 'quality', 'unit', 'build', 'integration']
 
 // These routing expressions use the common GitHub/JavaScript subset: property
@@ -54,7 +54,7 @@ test('entry workflows contain only reusable callers and every reusable workflow 
 })
 
 test('branch checks prepare immutable inputs then run only parallel quality and unit jobs', () => {
-  const branch = workflow('branche_check.yml')
+  const branch = workflow('branch_check.yml')
   expect(branch.on.push['branches-ignore']).toEqual(['main', 'staging'])
   expect(Object.keys(branch.jobs)).toEqual([preparation, 'quality', 'unit'])
   expect(branch.concurrency['cancel-in-progress']).toBe(true)

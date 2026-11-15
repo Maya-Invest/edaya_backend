@@ -220,7 +220,7 @@ bun run repo check              # repo hygiene only (doctor + repo check *)
 bun run test:integration     # integration slices alone
 ```
 
-Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**. CI entry points are `branche_check.yml`, `pr_validation.yml` (PR and manual validation), `deploy.yml` (both destinations) and `staging_maintenance.yml`. Each calls reusable stages directly. Manual deployment selects its destination from workflow branch `staging` or `main`, independently of source overrides. Workflow details: **[docs/reference/ci-setup.md](./docs/reference/ci-setup.md)**.
+Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**. CI entry points are `branch_check.yml`, `pr_validation.yml` (PR and manual validation), `deploy.yml` (both destinations) and `staging_maintenance.yml`. Each calls reusable stages directly. Manual deployment selects its destination from workflow branch `staging` or `main`, independently of source overrides. Workflow details: **[docs/reference/ci-setup.md](./docs/reference/ci-setup.md)**.
 
 ### Per-package iteration
 

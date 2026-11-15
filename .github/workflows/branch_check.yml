@@ -1,4 +1,4 @@
-name: branche_check
+name: branch_check
 on:
   push:
     branches-ignore: [main, staging]

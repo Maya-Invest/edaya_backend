@@ -104,7 +104,7 @@ Every entry-point job calls a reusable workflow directly; entry points contain n
 
 | File / workflow name | Triggers | Reusable jobs |
 | --- | --- | --- |
-| `branche_check.yml` / `branche_check` | Branch pushes outside `main`/`staging` | `_prepare` → `_quality_check` + `_unit_test` |
+| `branch_check.yml` / `branch_check` | Branch pushes outside `main`/`staging` | `_prepare` → `_quality_check` + `_unit_test` |
 | `pr_validation.yml` / `pr_validation` | PRs into `main`/`staging`, manual dispatch | `_prepare` → quality + unit + build → integration → `_finalize` |
 | `deploy.yml` / `deploy` | Pushes to `main`/`staging`, manual dispatch | Full qualification → `_migration` → `_deployment` |
 | `staging_maintenance.yml` / `staging maintenance` | Manual dispatch only | `_maintenance` |
