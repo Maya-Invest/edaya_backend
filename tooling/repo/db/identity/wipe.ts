@@ -128,7 +128,7 @@ async function wipeStaging(): Promise<void> {
     await sql.end({ timeout: 5 })
   }
 
-  console.log('Staging Accounts and provider credentials wiped; Edaya signing keys kept.')
+  console.log('Staging Accounts and provider credentials wiped; EDaya signing keys kept.')
 }
 
 async function main(): Promise<void> {

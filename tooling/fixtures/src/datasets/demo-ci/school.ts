@@ -7,13 +7,13 @@ import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../..
 
 export const demoCiSchool = {
   id: DEMO_CI_SCHOOL_ID,
-  name: 'École Edaya — Cocody',
+  name: 'École EDaya — Cocody',
   financeCurrency: 'XOF',
   timeZone: 'Africa/Abidjan',
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',
   timetableMinDayGapSameSubject: 1,
-  issuingName: 'École Edaya — Cocody',
+  issuingName: 'École EDaya — Cocody',
   postalAddress: 'Boulevard Latrille, Cocody, Abidjan',
   phone: '+225 27 22 44 00 00',
   email: 'secretariat@edaya-ci.test',

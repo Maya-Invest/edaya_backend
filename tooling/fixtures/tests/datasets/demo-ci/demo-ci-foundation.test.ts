@@ -24,7 +24,7 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.entities.school?.country).toBe('Côte d\'Ivoire')
     expect(demoCiDataset.entities.school?.city).toBe('Abidjan')
     expect(demoCiDataset.entities.school?.timeZone).toBe('Africa/Abidjan')
-    expect(demoCiDataset.entities.school?.issuingName).toBe('École Edaya — Cocody')
+    expect(demoCiDataset.entities.school?.issuingName).toBe('École EDaya — Cocody')
     expect(demoCiDataset.entities.school?.schoolCode).toBe('EDAYA-CI')
     expect(demoCiGradeLevels).toHaveLength(4)
     expect(demoCiClassGroups).toHaveLength(5)
@@ -68,7 +68,7 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
   })
 
   it('names the school in French', () => {
-    expect(demoCiSchool.name).toBe('École Edaya — Cocody')
+    expect(demoCiSchool.name).toBe('École EDaya — Cocody')
   })
 
   it('names classes exactly like onboarding does from the level short name', () => {

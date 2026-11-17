@@ -92,7 +92,7 @@ BEGIN
       ),
       account_invitation = school_notification_migrate_invitation(
         templates->'account_invitation',
-        '{"rich_message":{"subject":"You''re invited to join {{schoolName}} on Edaya","body":"<p>Hello {{inviteeName}},</p><p>You have been invited to connect your account to {{schoolName}} on Edaya.</p><p><a href=\"{{inviteUrl}}\">Accept invitation</a></p><p>This link expires on {{expiresAt}}.</p>"},"simple_message":{"body":"{{schoolName}} invited you to Edaya. Accept: {{inviteUrl}}"}}'::jsonb
+        '{"rich_message":{"subject":"You''re invited to join {{schoolName}} on EDaya","body":"<p>Hello {{inviteeName}},</p><p>You have been invited to connect your account to {{schoolName}} on EDaya.</p><p><a href=\"{{inviteUrl}}\">Accept invitation</a></p><p>This link expires on {{expiresAt}}.</p>"},"simple_message":{"body":"{{schoolName}} invited you to EDaya. Accept: {{inviteUrl}}"}}'::jsonb
       ),
       invitation_sms_enabled = false;
 

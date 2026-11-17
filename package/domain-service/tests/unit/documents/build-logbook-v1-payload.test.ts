@@ -5,7 +5,7 @@ import { buildLogbookV1Payload } from '../../../src/capabilities/documents/build
 describe('buildLogbookV1Payload', () => {
   test('groups by subject, sorts chronologically, and skips empty sessions', () => {
     const payload = buildLogbookV1Payload({
-      schoolName: 'Collège Edaya',
+      schoolName: 'Collège EDaya',
       classLabel: '6ème A',
       schoolYear: '2025-2026',
       periodLabel: '1er Trimestre',
@@ -94,7 +94,7 @@ describe('buildLogbookV1Payload', () => {
 
   test('throws when no session has logbook content', () => {
     expect(() => buildLogbookV1Payload({
-      schoolName: 'Collège Edaya',
+      schoolName: 'Collège EDaya',
       classLabel: '6ème A',
       subjects: [{ classSubjectId: 'cs-math', name: 'Mathématiques' }],
       sessions: [{

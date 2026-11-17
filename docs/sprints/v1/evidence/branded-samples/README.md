@@ -1,6 +1,6 @@
 # Branded official-document samples
 
-Handlebars compiles of every Plan 04 template with École Edaya — Cocody issuing identity and catalog asset slots (logo / crest / stamp / signature / portrait). Gotenberg was not running here; PDFs are Chromium `--print-to-pdf` of the compiled HTML.
+Handlebars compiles of every Plan 04 template with École EDaya — Cocody issuing identity and catalog asset slots (logo / crest / stamp / signature / portrait). Gotenberg was not running here; PDFs are Chromium `--print-to-pdf` of the compiled HTML.
 
 | PDF | Assets on this sample |
 |---|---|

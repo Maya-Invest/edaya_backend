@@ -1,8 +1,8 @@
-# Edaya API
+# EDaya API
 
 See [API configuration and secrets](../../docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo ops vars` commands.
 
-Hono API for Edaya Core (`@edaya/api`).
+Hono API for EDaya Core (`@edaya/api`).
 
 ## Local development
 

@@ -17,11 +17,11 @@ describe("release-candidate runtime invariants", () => {
     expect(parseEnv({ DATABASE_URL: "pglite" }).PLATFORM_BOOTSTRAP_EMAILS).toBe("");
     expect(parseEnv({
       DATABASE_URL: "pglite",
-      PLATFORM_BOOTSTRAP_EMAILS: "Op@Edaya.test, other@edaya.test",
-    }).PLATFORM_BOOTSTRAP_EMAILS).toBe("Op@Edaya.test, other@edaya.test");
+      PLATFORM_BOOTSTRAP_EMAILS: "Op@EDaya.test, other@edaya.test",
+    }).PLATFORM_BOOTSTRAP_EMAILS).toBe("Op@EDaya.test, other@edaya.test");
     expect(platformBootstrapEmails(parseEnv({
       DATABASE_URL: "pglite",
-      PLATFORM_BOOTSTRAP_EMAILS: "Op@Edaya.test, other@edaya.test",
+      PLATFORM_BOOTSTRAP_EMAILS: "Op@EDaya.test, other@edaya.test",
     }))).toEqual(["op@edaya.test", "other@edaya.test"]);
   });
 });

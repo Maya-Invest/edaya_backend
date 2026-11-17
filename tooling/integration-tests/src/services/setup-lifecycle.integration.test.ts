@@ -17,16 +17,16 @@ import { createTestApp } from '../utils/test-adapter'
 describeIntegration('setup lifecycle journey', () => {
   it('updates school and class configuration, active year, periods, and staff status', async () => {
     const { app, repositories } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'EDaya', timeZone: 'UTC' })
     const school = await updateSchool(app, {
       schoolId: 'school',
-      name: 'Edaya International School',
-      shortName: 'Edaya',
+      name: 'EDaya International School',
+      shortName: 'EDaya',
       country: 'CM',
       city: 'Douala',
     })
-    expect(school.name).toBe('Edaya International School')
-    expect(school.shortName).toBe('Edaya')
+    expect(school.name).toBe('EDaya International School')
+    expect(school.shortName).toBe('EDaya')
 
     await app.setupWorkflow.createAcademicYear({
       id: 'year-1',

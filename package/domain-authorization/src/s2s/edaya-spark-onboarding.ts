@@ -11,7 +11,7 @@ export function resolveEdayaSparkS2sKeyMode(nodeEnv: string): EdayaSparkS2sKeyMo
   return nodeEnv === 'production' ? 'random' : 'deterministic'
 }
 
-/** Local/dev plaintext; Edaya Spark derives the same string from `schoolId`. */
+/** Local/dev plaintext; EDaya Spark derives the same string from `schoolId`. */
 export function localEdayaSparkS2sApiKey(schoolId: string): string {
   return `s2s_live_local_${schoolId.replaceAll('-', '')}_edaya_spark01`
 }

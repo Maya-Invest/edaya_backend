@@ -15,7 +15,7 @@ function dataUri(fileName: string): string {
 }
 
 const identity = {
-  schoolName: "École Edaya — Cocody",
+  schoolName: "École EDaya — Cocody",
   schoolCity: "Abidjan",
   schoolAddress: "Boulevard Latrille, Cocody, Abidjan",
   schoolPhone: "+225 27 22 44 00 00",

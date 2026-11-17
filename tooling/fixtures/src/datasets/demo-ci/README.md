@@ -29,7 +29,7 @@ demo-ci/
 
 | Élément | Valeur |
 |---------|--------|
-| École | École Edaya — Cocody |
+| École | École EDaya — Cocody |
 | Ville / pays | Abidjan, Côte d'Ivoire |
 | Fuseau | `Africa/Abidjan` |
 | Niveaux | 6ème → 3ème (Collège) |

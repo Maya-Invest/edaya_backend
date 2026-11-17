@@ -35,7 +35,7 @@ export function createIdentityApp(configure?: (app: Hono<IdentityAppEnv>) => voi
     c.set("runtime", runtime);
     await next();
   });
-  app.get("/", c => c.json({ message: "Edaya Identity" }));
+  app.get("/", c => c.json({ message: "EDaya Identity" }));
   app.get("/.well-known/jwks.json", (c) => {
     return c.json(c.var.runtime.keys.jwks, 200, { "cache-control": "public, max-age=60" });
   });

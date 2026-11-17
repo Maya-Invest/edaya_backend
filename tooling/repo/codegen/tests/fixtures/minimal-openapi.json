@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "version": "0.0.1",
-    "title": "Edaya Core API"
+    "title": "EDaya Core API"
   },
   "paths": {
     "/core/entities/schools/list": {

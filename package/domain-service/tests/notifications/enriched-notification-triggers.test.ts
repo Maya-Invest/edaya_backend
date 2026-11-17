@@ -27,7 +27,7 @@ const schoolRepositories = {
   schools: {
     findById: async () => ({
       id: 'sch1',
-      name: 'Edaya School',
+      name: 'EDaya School',
       timeZone: 'Africa/Douala',
     }),
   },

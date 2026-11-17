@@ -2,7 +2,7 @@
   "name": "@maya-invest/edaya-api-client",
   "type": "module",
   "version": "0.0.0",
-  "description": "Generated Edaya authentication and school API client",
+  "description": "Generated EDaya authentication and school API client",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",

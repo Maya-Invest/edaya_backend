@@ -199,7 +199,7 @@ export const EXAMPLE_LOGBOOK_RENDER_REQUEST: RenderDocumentRequest = {
   templateKey: "logbook.v1",
   locale: "fr",
   payload: {
-    schoolName: "Collège Edaya Cocody",
+    schoolName: "Collège EDaya Cocody",
     schoolCity: "Abidjan",
     schoolYear: "2025-2026",
     classLabel: "6ème A",

@@ -100,7 +100,7 @@ describe('actor metadata', () => {
       requestId: 'request-platform',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Verified,
-      email: 'Op@Edaya.test',
+      email: 'Op@EDaya.test',
     })
     const s2s = createS2sActorMetadata({
       actorId: 's2s-1',

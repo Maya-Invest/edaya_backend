@@ -3,11 +3,11 @@
 > **Status:** Phase 0 — proposal draft  
 > **Created:** 2026-06-30  
 > **Last updated:** 2026-06-30 (§7.1 single `UsageCounter`; no `UsageSnapshot` / nightly cron in v1)  
-> **Scope:** Edaya **SaaS** entitlements per school — feature flags, numeric quotas, usage metering, enforcement in API/workflows, `webadmin` plan management  
+> **Scope:** EDaya **SaaS** entitlements per school — feature flags, numeric quotas, usage metering, enforcement in API/workflows, `webadmin` plan management  
 > **Out of scope:** School → family billing (`Fee` / `CatalogService`, `StudentCharge`, etc.) — separate domain  
 > **Related:** `edaya_web/apps/webadmin`, school API `ServiceArgs`, Cloudflare KV (rate limits), R2/storage metering
 
-This plan defines how Edaya bills and constrains **its own customers** (schools on the platform): which modules they can use, how much they can scale, and when operations are blocked vs metered for overage.
+This plan defines how EDaya bills and constrains **its own customers** (schools on the platform): which modules they can use, how much they can scale, and when operations are blocked vs metered for overage.
 
 ---
 
@@ -32,7 +32,7 @@ This plan defines how Edaya bills and constrains **its own customers** (schools 
 5. **Mobile inherits school features** — `guardian_app` / `staff_app` gate portals; screens follow resolved features + base.
 6. **Platform scope** — Plan data lives in **platform storage**, resolved before tenant workflows run.
 7. **Enforcement layers** — Hard block on exceed (default); optional soft warn in UI before hard cap.
-8. **School finance is separate** — `finance` feature gates the school’s fee module; unrelated to Edaya invoicing schools.
+8. **School finance is separate** — `finance` feature gates the school’s fee module; unrelated to EDaya invoicing schools.
 
 ---
 
@@ -224,7 +224,7 @@ Push delivery: `push_notifications` + relevant portal feature.
 
 ## 5. Scale & usage limits (SaaS cost)
 
-Only limits that affect **Edaya operational cost** or **abuse surface**. School business rules (max guardians per student, grade scale bounds) stay in domain validation — not plan limits.
+Only limits that affect **EDaya operational cost** or **abuse surface**. School business rules (max guardians per student, grade scale bounds) stay in domain validation — not plan limits.
 
 ### 5.1 Tier 1 — cap on every plan (hard)
 
@@ -697,14 +697,14 @@ GET /core/school/entitlements   // { features, limits } — resolved effective v
 ## 11. Guardrails
 
 - Platform limits never stored on `School` row as source of truth — always via `SchoolSubscription`.
-- Do not conflate `feature.finance` with Edaya invoicing; platform billing is operator-managed (manual v1; Stripe etc. post-v1).
+- Do not conflate `feature.finance` with EDaya invoicing; platform billing is operator-managed (manual v1; Stripe etc. post-v1).
 - Abuse floors (auth rate, max page size) are not plan-marketed — same all tiers.
 - `LIMIT_EXCEEDED` responses include `limitKey`, `current`, `max`, `upgradePlan` hint for UI.
 - Cache resolved entitlements; invalidate on subscription / feature or limit override change.
 
 ### Non-goals (v1)
 
-- Automated Edaya → school invoicing (Stripe Billing)
+- Automated EDaya → school invoicing (Stripe Billing)
 - Overage charging / `OverageCharge` entity
 - `UsageSnapshot` table / nightly capacity cron (v1 uses `UsageCounter` + incremental `recordUsage` only)
 - Per-school custom plans (use overrides only)

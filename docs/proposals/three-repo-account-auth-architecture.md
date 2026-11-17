@@ -5,11 +5,11 @@ Status: implemented locally; deployment and initial data cutover remain explicit
 ## Decisions
 
 - Product source lives in `edaya_backend` (TypeScript), `edaya_frontend` (SvelteKit), and `edaya_mobile` (Flutter). Identity remains a separate service and database, maintained in the backend workspace.
-- Immutable Edaya Account IDs own human identity. Existing business `subjectId` fields carry Account IDs, never provider IDs. Academic subject IDs and machine identities retain their separate meanings.
+- Immutable EDaya Account IDs own human identity. Existing business `subjectId` fields carry Account IDs, never provider IDs. Academic subject IDs and machine identities retain their separate meanings.
 - Accounts own multiple normalized email and E.164 phone identifiers, unique among active login identifiers. First identifier is recovery eligible; additional identifiers opt in explicitly. Notification contacts are independent.
 - Email OTP and phone OTP are required provider capabilities. Phone delivery uses Meta WhatsApp authentication templates first, with user-selected Africa’s Talking SMS after cooldown. Launch is limited to Côte d’Ivoire. Telegram, Twilio, passwords, Apple and Google are outside this release.
 - Account use cases enforce linking, account status, MFA, recovery, and identity continuity. Better Auth owns only primary credential verification and its disposable implementation data. Delivery is a separate port.
-- Durable `identity` storage holds Accounts, identifiers, security events, encrypted TOTP secrets and hashed recovery codes. Ephemeral challenges and Edaya session metadata also live there, separately from disposable provider users in `auth`. Signing keys belong to Edaya.
+- Durable `identity` storage holds Accounts, identifiers, security events, encrypted TOTP secrets and hashed recovery codes. Ephemeral challenges and EDaya session metadata also live there, separately from disposable provider users in `auth`. Signing keys belong to EDaya.
 - No usable session is issued before required factors complete. Six-digit OTP expires after five minutes, at most five guesses, and recipient-wide phone resend cooldowns of 60, 120 and then 300 seconds (reset after an hour without an accepted request). Email retains its 60-second cooldown. Delivery channel switching supersedes old challenges and preserves the attempt budget. No automatic retry of ambiguous sends or simultaneous channel delivery.
 - TOTP is account-wide and optional for ordinary accounts. `REQUIRE_PRIVILEGED_TOTP` defaults off; when enabled it gates owners, platform operators and staff with access-management/lifecycle grants from authoritative business data. Voluntarily enabled TOTP is always enforced.
 - TOTP uses six digits, 30-second periods, one-step clock tolerance, and atomic replay prevention. Ten single-use recovery codes are displayed once. Recovery requires fresh eligible-contact OTP plus a recovery code, revokes sessions, and permits only authenticator replacement until enrollment is confirmed.
@@ -23,7 +23,7 @@ Status: implemented locally; deployment and initial data cutover remain explicit
 
 1. Validate the pinned Better Auth implementation with real email and phone OTP, multiple identifiers, concurrent consumption, MFA and replacement tests.
 2. Consolidate source, tooling and CI; retain the old checkout until the replacement is verified.
-3. Introduce Account/security persistence and public Edaya contracts, then migrate both clients and business identity resolution.
+3. Introduce Account/security persistence and public EDaya contracts, then migrate both clients and business identity resolution.
 4. Validate invitations, authorization across all actor kinds, recovery, transport failures, and independent builds. Update generated/released client artifacts and contract fingerprints together.
 5. Use an explicit initial clean-reset cutover; no legacy backfill. Do not reset or deploy an environment as part of local implementation. Once customer data exists, all changes require additive migrations.
 6. Production launch requires configured email delivery, Telegram Gateway credentials, WhatsApp sender/template approval, a pinned Graph API version, durable encryption-key backups, and successful privileged MFA enrollment/recovery checks.

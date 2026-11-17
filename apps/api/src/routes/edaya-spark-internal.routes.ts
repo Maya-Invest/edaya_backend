@@ -47,7 +47,7 @@ export const edayaSparkResolveGuardianRoute = createRoute({
   method: "post",
   path: "/internal/edaya-spark/resolve-guardian",
   tags: ["Internal"],
-  summary: "Resolve a guardian and linked students for Edaya Spark (sibling secret)",
+  summary: "Resolve a guardian and linked students for EDaya Spark (sibling secret)",
   request: {
     body: jsonContent(resolveGuardianRequestSchema, "Identity subject to resolve"),
   },

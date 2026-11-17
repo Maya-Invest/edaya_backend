@@ -28,7 +28,7 @@ flowchart LR
     SchoolRoutes["/core entity routes"]
   end
   subgraph machines [Machines]
-    Sibling[Edaya Spark backend]
+    Sibling[EDaya Spark backend]
   end
   Op -->|Bearer JWT + X-Actor-Kind platform| Identity
   Identity --> PlatformUsers

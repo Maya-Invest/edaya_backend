@@ -1,4 +1,4 @@
-# Edaya release candidate — coding-agent implementation handoff
+# EDaya release candidate — coding-agent implementation handoff
 
 > **Superseded for identity (2026-09-11):** Better Auth, opaque `edaya_at_` tokens, and in-process `/auth` now live in sibling `edaya_identity`. School authenticates users with identity JWTs. Ignore in-process auth instructions below.
 
@@ -91,7 +91,7 @@ This handoff supersedes the audit's tentative assumption that external access co
 1. Improve the existing backend incrementally. No replacement backend, new finance ledger, general policy language, or platform-wide membership remodel.
 2. Keep existing first-party password and email-OTP login experiences.
 3. First-party business APIs use `Authorization: Bearer …`. The browser may retain a secure cookie for authentication/session renewal and the hosted authorization flow. Cookie-only business API access ends at the coordinated RC cutover.
-4. Trusted external applications use Edaya-hosted parent login and explicit consent. They never receive the parent's password, OTP, first-party session credential, or unrestricted first-party access token.
+4. Trusted external applications use EDaya-hosted parent login and explicit consent. They never receive the parent's password, OTP, first-party session credential, or unrestricted first-party access token.
 5. External consent can cover **all data the parent is currently authorized to read**, divided into granular scopes and selected children. External access is read-only for this RC. It does not expand existing parent permissions.
 6. Deliver one coordinated backend/web/mobile cutover. A short, operator-controlled rollback switch is acceptable; there is no planned month-long old-client compatibility program. Mobile users may need to sign in again.
 
@@ -109,7 +109,7 @@ All exposed list, count, find, aggregate, attachment, and write paths apply immu
 
 ### First-party access and renewal
 
-Keep Better Auth as the authentication/session authority. Add a small Edaya-owned opaque access-token adapter rather than exposing provider sessions as business tokens:
+Keep Better Auth as the authentication/session authority. Add a small EDaya-owned opaque access-token adapter rather than exposing provider sessions as business tokens:
 
 | Contract | Required behavior |
 |---|---|
@@ -121,11 +121,11 @@ Keep Better Auth as the authentication/session authority. Add a small Edaya-owne
 | Session duration | Configure an explicit seven-day absolute first-party renewal lifetime for this RC; no indefinite sliding extension; preserve password/OTP reauthentication when expired |
 | Logout | Revoke the current provider session and its access credentials; clear browser/native state; offer an authenticated logout-all operation that also invalidates all first-party sessions |
 
-Expose Edaya facade endpoints `POST /auth/edaya/native/sign-in/email`, `POST /auth/edaya/native/sign-in/email-otp`, `POST /auth/edaya/sign-out`, and `POST /auth/edaya/sign-out-all`. Native sign-in returns `{ renewalCredential, renewalExpiresAt, user }` after provider credential verification; reuse existing provider validation and rate limits. Renewal is supplied as Bearer only to the exchange/lifecycle boundary. Sign-out accepts a first-party access token or its own renewal session under that boundary's admission/CSRF rules; sign-out-all requires recent password/OTP authentication. Keep existing browser login endpoint paths through the sanitized facade where compatible, and document any necessary client-path changes.
+Expose EDaya facade endpoints `POST /auth/edaya/native/sign-in/email`, `POST /auth/edaya/native/sign-in/email-otp`, `POST /auth/edaya/sign-out`, and `POST /auth/edaya/sign-out-all`. Native sign-in returns `{ renewalCredential, renewalExpiresAt, user }` after provider credential verification; reuse existing provider validation and rate limits. Renewal is supplied as Bearer only to the exchange/lifecycle boundary. Sign-out accepts a first-party access token or its own renewal session under that boundary's admission/CSRF rules; sign-out-all requires recent password/OTP authentication. Keep existing browser login endpoint paths through the sanitized facade where compatible, and document any necessary client-path changes.
 
 The web applications are static SPAs. Implement exchange/session protection on the backend; do not assume a Svelte server or introduce a BFF deployment. Deploy API and first-party browser origins on the same site for the SameSite=Lax design. Fail configuration checks with an actionable message if production topology does not support this; do not silently loosen cookies to fix cross-site deployment.
 
-Use the provider's signed Bearer-session support only at the native auth boundary, with signature verification required. Audit both response bodies and headers: browser sign-in and session responses must not expose the raw renewal token or `set-auth-token`. Native credential issuance must follow successful password/OTP proof on an explicit native login flow. A cookie-authenticated caller adding a `native` flag must not obtain a readable long-lived credential. These are Edaya-specific boundary requirements; the [Better Auth Bearer plugin](https://better-auth.com/docs/plugins/bearer) supplies the signed session transport, not this complete access-token design.
+Use the provider's signed Bearer-session support only at the native auth boundary, with signature verification required. Audit both response bodies and headers: browser sign-in and session responses must not expose the raw renewal token or `set-auth-token`. Native credential issuance must follow successful password/OTP proof on an explicit native login flow. A cookie-authenticated caller adding a `native` flag must not obtain a readable long-lived credential. These are EDaya-specific boundary requirements; the [Better Auth Bearer plugin](https://better-auth.com/docs/plugins/bearer) supplies the signed session transport, not this complete access-token design.
 
 Use a browser-safe auth facade where necessary, preserving the existing login UI. Document the exact allowed provider endpoints instead of forwarding every new plugin/admin endpoint indiscriminately. Disable auth KV/secondary-cache authority for the RC; request-local memoization is fine. Access revocation must not depend on a Worker isolate's cache expiring. Purge expired access-token records in bounded scheduled batches.
 
@@ -137,14 +137,14 @@ The provider supplies authorization-code flow, S256 PKCE, discovery, token/revoc
 
 Apply exact redirect URI matching, issuer/audience validation, short-lived access tokens, rotating refresh tokens with reuse detection, and no implicit or password grant for partners. Require PKCE for all external authorization-code clients. Public clients have no embedded secret; confidential clients authenticate at token exchange. These choices follow [OAuth security best current practice, RFC 9700](https://datatracker.ietf.org/doc/html/rfc9700).
 
-Edaya's additional delegation contract is:
+EDaya's additional delegation contract is:
 
 - Operator-managed client registry only, with exact redirect URIs, allowed scopes, client type, status, and optional confidential-client credentials. No marketplace, self-service registration, or consent bypass. Add CLI commands to register, disable, and rotate credentials without logging secrets.
 - Access lifetime five minutes; rotating refresh family absolute lifetime thirty days. Consent cannot outlive its refresh family; renewal after expiry requires consent again. Refresh replay revokes the family atomically. Use provider lifecycle hooks/storage integration; do not implement a second OAuth protocol stack.
-- Persist an Edaya delegation grant bound to subject, guardian actor, exactly one school, registered client, selected children, scopes, creation/expiry/revocation, and provider authorization/refresh-family association. Link it to the authorization transaction and code server-side. A client-supplied grant ID is never proof of consent.
+- Persist an EDaya delegation grant bound to subject, guardian actor, exactly one school, registered client, selected children, scopes, creation/expiry/revocation, and provider authorization/refresh-family association. Link it to the authorization transaction and code server-side. A client-supplied grant ID is never proof of consent.
 - Every external request and refresh checks current grant/client status and guardian relationships from authoritative storage. Never trust an access token's old relationship snapshot. Revocation applies to requests beginning after revocation commits; already transferred data cannot be recalled.
 - Allow external tokens only on `/integrations/v1/*` and the provider's appropriate identity/lifecycle endpoints. Reject them on `/core/*`, GraphQL, internal auth exchange, admin routes, and business mutations, even if the same subject has staff permissions.
-- Support `openid` with minimum identity claims so the study app can identify the signed-in Edaya account without maintaining passwords. Keep student data out of ID tokens. An external app may keep its own local login session keyed by issuer and subject; it does not become a new password authority.
+- Support `openid` with minimum identity claims so the study app can identify the signed-in EDaya account without maintaining passwords. Keep student data out of ID tokens. An external app may keep its own local login session keyed by issuer and subject; it does not become a new password authority.
 - Ordinary first-party logout leaves explicitly granted partner access intact. Connected-app revoke stops that grant; account disable/security logout-all revokes all sessions and delegations. Clearly distinguish these actions in the UI.
 
 Before building the full consent UI, prove provider hook support with one real code-exchange/refresh/revoke integration slice. In particular, demonstrate atomic grant-to-code association and refresh-family reuse handling. If a provider limitation prevents the required security properties, record the exact limitation and finish independent work; do not weaken consent or substitute shared parent tokens.
@@ -178,7 +178,7 @@ Health, discipline, unpublished grades, private staff notes, and other parents' 
 
 ### Persistence boundaries
 
-Keep provider migrations and Edaya access/delegation tables in the authoritative auth database so code/grant/family association can commit atomically. Suggested Edaya tables are `auth.edaya_access_tokens` (unique token digest, session/subject references, expiry index), `auth.edaya_delegation_grants`, and normalized grant-child/scope relations. Use provider-owned tables for OAuth clients, keys and protocol tokens instead of duplicate registries. School/guardian/child references must be revalidated against the school database; do not invent cross-database foreign keys or distributed transactions. Grant activation must follow authoritative scope validation and resource access must recheck it.
+Keep provider migrations and EDaya access/delegation tables in the authoritative auth database so code/grant/family association can commit atomically. Suggested EDaya tables are `auth.edaya_access_tokens` (unique token digest, session/subject references, expiry index), `auth.edaya_delegation_grants`, and normalized grant-child/scope relations. Use provider-owned tables for OAuth clients, keys and protocol tokens instead of duplicate registries. School/guardian/child references must be revalidated against the school database; do not invent cross-database foreign keys or distributed transactions. Grant activation must follow authoritative scope validation and resource access must recheck it.
 
 Put command idempotency, business audit and outbox records in the same database/transaction as school mutations. Require unique `(school_id, command_type, idempotency_key)` and unique schedule-occurrence keys. Job records include status, attempts, next-attempt time, lease owner/expiry and last error classification. Use migration-managed tables; replace notification runtime table creation with schema migrations. Keep persisted payloads versioned and validate them when consuming older jobs during deployment.
 
@@ -251,13 +251,13 @@ Return consistent 401/403 errors and a `WWW-Authenticate` Bearer challenge on pr
 
 **Cancelled / out of v1 (2026-09-15).** Do not implement this slice. The following historical instructions are retained for context only.
 
-**Backend:** implement the OAuth/registry/grant contracts and all fourteen scope mappings above. Add `GET /auth/edaya/connected-apps` and `POST /auth/edaya/connected-apps/:grantId/revoke` for first-party authenticated users, with ownership checks and immediate durable revocation. Business access tokens authorize these Edaya management endpoints; external tokens do not. Use provider endpoints for protocol authorization/consent, augmented server-side with Edaya's selected-school/child grant binding.
+**Backend:** implement the OAuth/registry/grant contracts and all fourteen scope mappings above. Add `GET /auth/edaya/connected-apps` and `POST /auth/edaya/connected-apps/:grantId/revoke` for first-party authenticated users, with ownership checks and immediate durable revocation. Business access tokens authorize these EDaya management endpoints; external tokens do not. Use provider endpoints for protocol authorization/consent, augmented server-side with EDaya's selected-school/child grant binding.
 
 **Web:** add standalone `/authorize` and `/connected-apps` pages in an auth-only layout outside the existing staff-workspace guard. Guardians can log in there without gaining access to staff routes. Preserve existing staff login behavior. Update the relevant frontend specification narrowly to describe this authorized new surface; reuse its shared components/design tokens.
 
 The consent page shows verified client name, purpose, requested data categories, selected school, explicitly selected children, expiry, and allow/deny. Do not preselect all scopes or children. Allow only the intersection of requested scopes, registered client scopes, and current parent permissions. Recheck at submission to prevent stale consent. Connected apps shows active grants and a revoke action; the guardian mobile app exposes the same management capability or an authenticated route to it.
 
-**Partner example:** provide a local runnable example using synthetic data that redirects to Edaya login/consent, receives a code, exchanges it with PKCE, reads consented student data, refreshes, and handles revocation. Document integration setup, scope meanings, errors, pagination, rate limits, and secure credential handling. Real partner URLs/client type are deployment inputs; do not invent production credentials or deploy an external application.
+**Partner example:** provide a local runnable example using synthetic data that redirects to EDaya login/consent, receives a code, exchanges it with PKCE, reads consented student data, refreshes, and handles revocation. Document integration setup, scope meanings, errors, pagination, rate limits, and secure credential handling. Real partner URLs/client type are deployment inputs; do not invent production credentials or deploy an external application.
 
 **Exit tests:** happy-path real provider flow; denial; wrong redirect/issuer/audience; missing/wrong PKCE; code replay; refresh replay revokes family; expired/disabled client; forged grant ID; guardian acting as staff cannot broaden the grant; unselected child; removed relationship; cross-school IDs; consent to one scope cannot read another; unpublished/private fields excluded; attachment requires both file and owner scope; external token cannot mutate or reach core/GraphQL; account disable and explicit revoke deny next requests across runtime instances. Exercise every scope with both allowed and denied data.
 

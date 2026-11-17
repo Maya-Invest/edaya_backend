@@ -4,7 +4,7 @@ import { describe, expect, test } from 'bun:test'
 describe('School entity', () => {
   const baseArgs = {
     id: 'sch1',
-    name: 'Edaya High School',
+    name: 'EDaya High School',
     timeZone: 'Africa/Douala',
   }
 
@@ -18,7 +18,7 @@ describe('School entity', () => {
     })
 
     expect(school.id).toBe('sch1')
-    expect(school.name).toBe('Edaya High School')
+    expect(school.name).toBe('EDaya High School')
     expect(school.timeZone).toBe('Africa/Douala')
     expect(school.ownerSubjectId).toBe('staff-owner')
     expect(school.shortName).toBe('School')

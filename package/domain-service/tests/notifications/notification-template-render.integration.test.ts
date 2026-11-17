@@ -55,7 +55,7 @@ describe('notification template render', () => {
       channel: 'email',
       variables: {
         inviteeName: 'Paul Martin',
-        schoolName: 'Edaya Central',
+        schoolName: 'EDaya Central',
         inviteUrl: 'https://app.edaya.test/invite/token',
         expiresAt: '2026-07-01T00:00:00.000Z',
         actorKind: 'staff',

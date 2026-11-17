@@ -112,7 +112,7 @@ export const edayaAuthRateBucket = authPgSchema.table('edaya_auth_rate_buckets',
   expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
 }, table => [index('edaya_auth_rate_buckets_expiry_idx').on(table.expiresAt)])
 
-// Provider-owned JWKS from auth@1.7.3 jwt(); retain Edaya tables above.
+// Provider-owned JWKS from auth@1.7.3 jwt(); retain EDaya tables above.
 export const jwks = authPgSchema.table('jwks', {
   id: text('id').primaryKey(),
   publicKey: text('public_key').notNull(),

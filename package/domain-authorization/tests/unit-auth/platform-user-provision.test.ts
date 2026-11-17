@@ -64,7 +64,7 @@ describe('platform user provision', () => {
     const { repository, users } = createPlatformUserRepository()
     const created = await bootstrapPlatformUserIfAbsent(repository as never, {
       subjectId: 'sub-1',
-      email: 'Op@Edaya.test',
+      email: 'Op@EDaya.test',
       emailVerified: true,
     })
 

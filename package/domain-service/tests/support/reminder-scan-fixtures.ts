@@ -8,7 +8,7 @@ export async function createReminderCronContext(options: { asOf: Date, calendarE
   const actor = createSystemActorMetadata({ systemId: 'processDueNotifications', schoolId: 'school-1', requestId: 'reminder', reason: 'Reminder scan' })
   const fixture = await createTestApp(actor, { notificationGateway: gateway })
   const repositories = fixture.schoolRepositories
-  await repositories.schools.save(new School(withShortName({ id: 'school-1', name: 'Edaya School', timeZone: 'Africa/Douala' })))
+  await repositories.schools.save(new School(withShortName({ id: 'school-1', name: 'EDaya School', timeZone: 'Africa/Douala' })))
   await repositories.schools.save(new School(withShortName({ id: 'school-2', name: 'Other School', timeZone: 'UTC' })))
   await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'y1', schoolId: 'school-1', name: '2026', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
   await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'gl1', schoolId: 'school-1', name: '6', shortName: '6', order: 1 })))

@@ -33,7 +33,7 @@ async function checkHealth(client: HttpSeedClient): Promise<SmokeCheckResult> {
     }
   }
 
-  if (body?.message !== 'Edaya Core API') {
+  if (body?.message !== 'EDaya Core API') {
     return {
       id: 'S1',
       label: 'API health',

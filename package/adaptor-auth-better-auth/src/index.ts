@@ -85,7 +85,7 @@ export function createBetterAuthAdapter(database: unknown, options: {
           : 'phoneNumber' in user && user.phoneNumber === input.value && 'phoneNumberVerified' in user && user.phoneNumberVerified === true
         if (!valid)
           return null
-        // These are implementation sessions, never usable Edaya renewal credentials.
+        // These are implementation sessions, never usable EDaya renewal credentials.
         await (await auth.$context).internalAdapter.deleteSession(result.token!)
         return { provider: options.generation, subject: user.id, kind: input.kind, value: input.value }
       }

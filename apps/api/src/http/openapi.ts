@@ -11,14 +11,14 @@ export default function configureOpenAPI(app: AppOpenAPI) {
     openapi: "3.0.0",
     info: {
       version: packageJSON.version,
-      title: "Edaya API",
+      title: "EDaya API",
     },
   });
 
   app.get(
     "/reference",
     Scalar({
-      pageTitle: "Edaya API Reference",
+      pageTitle: "EDaya API Reference",
       theme: "laserwave",
       layout: "classic",
       sources: [

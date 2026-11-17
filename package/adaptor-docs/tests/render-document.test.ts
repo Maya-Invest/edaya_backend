@@ -111,7 +111,7 @@ describe("renderDocument", () => {
     const template = getTemplateDefinition("logbook.v1");
     expect(template).not.toBeNull();
     const html = template!.compileHtml("fr", EXAMPLE_LOGBOOK_RENDER_REQUEST.payload);
-    expect(html).toContain("Collège Edaya Cocody");
+    expect(html).toContain("Collège EDaya Cocody");
     expect(html).toContain("6ème A");
     expect(html).toContain("Mathématiques");
     expect(html).toContain("Nombres entiers");

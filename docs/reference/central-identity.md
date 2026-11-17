@@ -1,4 +1,4 @@
-# Account authentication in the Edaya API
+# Account authentication in the EDaya API
 
 One API owns authentication and school HTTP operations. Production uses `https://api.edayaplus.com`, staging `https://staging.api.edayaplus.com`, and local development `http://localhost:9999`. Updated clients and fresh login are required at cutover. There are no compatibility aliases for old issuers or audiences.
 

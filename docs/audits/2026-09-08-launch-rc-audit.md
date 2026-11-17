@@ -1,4 +1,4 @@
-# Edaya backend: launch audit and release-candidate plan
+# EDaya backend: launch audit and release-candidate plan
 
 > Historical; partner OAuth later cancelled (2026-09-15). First-party identity JWTs remain.
 
@@ -173,19 +173,19 @@ School schema/migration files inspected contain no foreign-key/RLS declarations.
 
 Bearer is a way to present a credential. It does not by itself add consent, restrict an application, or establish a refresh-token protocol. Better Auth supports Bearer-backed sessions, while its OAuth provider is a separate capability. Verify compatibility against the locally pinned release before adopting current examples. [Bearer documentation](https://better-auth.com/docs/plugins/bearer), [OAuth provider documentation](https://better-auth.com/docs/plugins/oauth-provider).
 
-Use two explicit credential classes behind the same Edaya authentication boundary:
+Use two explicit credential classes behind the same EDaya authentication boundary:
 
 | Consumer | Credential and authority |
 |---|---|
-| Edaya web/mobile | Bearer session for the existing user, resolved through Better Auth and current school/profile authorization |
+| EDaya web/mobile | Bearer session for the existing user, resolved through Better Auth and current school/profile authorization |
 | Approved external app | OAuth access token issued for that registered client, parent subject, API audience, consent grant, school, selected children, and permitted actions |
 | Existing automation | Namespaced service credential and existing scoped machine authority; no parent identity impersonation |
 
 Suggested flow for the study app:
 
-1. The app redirects the parent to Edaya sign-in using Authorization Code with S256 PKCE, exact registered redirects, and state. It never collects the parent's Edaya password.
-2. Edaya identifies the parent and asks them to approve the app, school, selected children, and specific data uses.
-3. Edaya issues an authorization code bound to that client and PKCE challenge; the app exchanges it for its own limited token.
+1. The app redirects the parent to EDaya sign-in using Authorization Code with S256 PKCE, exact registered redirects, and state. It never collects the parent's EDaya password.
+2. EDaya identifies the parent and asks them to approve the app, school, selected children, and specific data uses.
+3. EDaya issues an authorization code bound to that client and PKCE challenge; the app exchanges it for its own limited token.
 4. The study app calls an allowlisted read API. The backend resolves the parent and current guardian links on each authorized operation.
 5. The parent can disconnect the app. Consent revocation, account disablement, or guardian-link removal stops access within a documented and tested bound.
 
@@ -197,7 +197,7 @@ Start with manually registered approved clients and one pilot. Do not enable dyn
 
 Use Authorization Code + PKCE; avoid implicit/password grants. For public clients, protect refresh tokens with rotation/reuse detection or sender constraint; validate issuer, audience, expiry, client/grant state, and the intended resource. These recommendations follow [OAuth security BCP, RFC 9700](https://www.rfc-editor.org/rfc/rfc9700.html). Proposed initial delegated access-token lifetime: 5–10 minutes, with refresh lifetime and consent retention explicitly decided rather than inherited accidentally.
 
-For launch, favor authoritative grant/revocation checks instead of relying solely on JWT expiry. Store long-lived credentials in platform Keychain/Keystore on native clients. The current mobile code persists cookie material in SharedPreferences; do not carry that storage approach over to Bearer tokens. In browsers, prefer in-memory access tokens with a carefully designed renewal path. If persistent browser sessions are required, use a protected same-origin session/renewal mechanism; do not casually persist broad long-lived tokens in localStorage. Bearer-authenticated business APIs can coexist with a secure Edaya login cookie for browser sign-in/SSO. A completely cookie-free browser requirement needs an explicit persistence/reauthentication decision.
+For launch, favor authoritative grant/revocation checks instead of relying solely on JWT expiry. Store long-lived credentials in platform Keychain/Keystore on native clients. The current mobile code persists cookie material in SharedPreferences; do not carry that storage approach over to Bearer tokens. In browsers, prefer in-memory access tokens with a carefully designed renewal path. If persistent browser sessions are required, use a protected same-origin session/renewal mechanism; do not casually persist broad long-lived tokens in localStorage. Bearer-authenticated business APIs can coexist with a secure EDaya login cookie for browser sign-in/SSO. A completely cookie-free browser requirement needs an explicit persistence/reauthentication decision.
 
 Cloudflare KV is eventually consistent; it cannot by itself guarantee immediate global token revocation. Hyperdrive also does not invalidate cached query results on writes. Use a fresh authoritative path for session/grant/relationship revocation checks, and separately verify the actual deployed cache settings. [KV consistency](https://developers.cloudflare.com/kv/concepts/how-kv-works/), [Hyperdrive caching](https://developers.cloudflare.com/hyperdrive/concepts/how-hyperdrive-works/).
 

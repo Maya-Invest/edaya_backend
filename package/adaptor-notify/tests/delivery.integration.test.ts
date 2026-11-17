@@ -19,7 +19,7 @@ describe("in-process invitation delivery", () => {
         actorKind: AccountInvitationKind.Staff,
         inviteUrl: "https://app.test/invite/inv_phone",
         expiresAt: new Date(),
-        smsBody: "Join Edaya",
+        smsBody: "Join EDaya",
       })).rejects.toBeInstanceOf(NotifySendError);
       expect(harness.sentSms).toHaveLength(0);
       expect(await harness.runtime.sql.query("SELECT idempotency_key FROM notify.jobs")).toEqual([]);
@@ -45,12 +45,12 @@ describe("in-process invitation delivery", () => {
         actorKind: AccountInvitationKind.Staff,
         inviteUrl: "https://app.test/invite/inv_sms",
         expiresAt: new Date(),
-        smsBody: "Join Edaya",
+        smsBody: "Join EDaya",
       });
       expect(harness.sentSms).toHaveLength(0);
       await drainPendingSchoolNotifications(harness.runtime);
       expect(harness.sent).toHaveLength(0);
-      expect(harness.sentSms).toEqual([{ to: "+15145550123", body: "Join Edaya" }]);
+      expect(harness.sentSms).toEqual([{ to: "+15145550123", body: "Join EDaya" }]);
     }
     finally { await harness.close(); }
   });

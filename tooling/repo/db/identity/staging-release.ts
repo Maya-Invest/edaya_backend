@@ -16,7 +16,7 @@ try {
       throw new Error('Identity reset requires confirmed maintenance')
     }
     await sql.begin(async (tx) => {
-      // Explicit initial reset: retain Edaya signing keys, remove Accounts and sessions.
+      // Explicit initial reset: retain EDaya signing keys, remove Accounts and sessions.
       await tx`TRUNCATE identity.account CASCADE`
       await tx`TRUNCATE identity.challenge, identity.quota`
       await tx`DELETE FROM auth."user"`

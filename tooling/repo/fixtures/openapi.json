@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "version": "0.0.1",
-    "title": "Edaya API"
+    "title": "EDaya API"
   },
   "components": {
     "securitySchemes": {
@@ -38809,7 +38809,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Edaya Core API Index",
+            "description": "EDaya Core API Index",
             "content": {
               "application/json": {
                 "schema": {
@@ -39371,7 +39371,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Resolve a guardian and linked students for Edaya Spark (sibling secret)",
+        "summary": "Resolve a guardian and linked students for EDaya Spark (sibling secret)",
         "requestBody": {
           "description": "Identity subject to resolve",
           "content": {

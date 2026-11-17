@@ -62,7 +62,7 @@ export const EXAMPLE_ANNUAL_RENDER_REQUEST = {
     documentTitle: "Bulletin annuel",
     schoolYear: "2025-2026",
     periodLabel: "Année complète",
-    schoolName: "École Edaya — Cocody",
+    schoolName: "École EDaya — Cocody",
     schoolCity: "Abidjan",
     primaryColor: "#1f4b7a",
     studentName: "Yao Marie-Claire",

@@ -9,7 +9,7 @@ describe('Setup owner workflow', () => {
 
     await app.setupWorkflow.registerSchool({
       id: 'school',
-      name: 'Edaya',
+      name: 'EDaya',
       timeZone: 'UTC',
       ownerSubjectId: 'subject-owner',
     })
@@ -23,7 +23,7 @@ describe('Setup owner workflow', () => {
 
     await app.setupWorkflow.registerSchool({
       id: 'school',
-      name: 'Edaya',
+      name: 'EDaya',
       timeZone: 'UTC',
     })
 

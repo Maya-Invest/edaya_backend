@@ -2,7 +2,7 @@
 
 See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo ops vars` commands.
 
-Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_frontend](../../edaya_frontend/README.MD)** repo.
+Run the **EDaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_frontend](../../edaya_frontend/README.MD)** repo.
 
 The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@maya-invest/edaya-api-client`. Identity login targets the backend’s separate identity service; school requests carry its access JWT as a Bearer token.
 
@@ -252,7 +252,7 @@ Before opening a pull request, run `bun run verify`. For integration coverage (p
 Quick health checks:
 
 ```sh
-curl -s http://localhost:9999/            # expect {"message":"Edaya Core API"}
+curl -s http://localhost:9999/            # expect {"message":"EDaya Core API"}
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 200
 bun repo ops seed --scope doctor                                                    # health check (sign-in + grants + data)
 ```

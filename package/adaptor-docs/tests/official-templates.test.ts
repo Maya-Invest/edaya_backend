@@ -4,7 +4,7 @@ import { getTemplateDefinition, listTemplateDefinitions } from "../src/templates
 import { createRecordingPdfRenderer } from "./recording-renderer";
 
 const LETTER_PAYLOAD = {
-  schoolName: "Collège Edaya Cocody",
+  schoolName: "Collège EDaya Cocody",
   studentName: "Yao Marie-Claire",
   classLabel: "6ème A",
   schoolYear: "2025-2026",
@@ -72,7 +72,7 @@ describe("official template catalog A–E", () => {
       const template = getTemplateDefinition(key);
       expect(template).not.toBeNull();
       const html = template!.compileHtml("fr", LETTER_PAYLOAD);
-      expect(html).toContain("Collège Edaya Cocody");
+      expect(html).toContain("Collège EDaya Cocody");
       expect(html).toContain("Yao Marie-Claire");
     }
   });

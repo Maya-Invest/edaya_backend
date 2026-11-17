@@ -10,7 +10,7 @@ async function createStubPdfBytes(paper: "A4" | "Letter", orientation: "portrait
   const doc = await PDFDocument.create();
   const page = doc.addPage([size[0], size[1]]);
   const font = await doc.embedFont(StandardFonts.Helvetica);
-  page.drawText("Edaya Docs stub PDF", {
+  page.drawText("EDaya Docs stub PDF", {
     x: 48,
     y: size[1] - 64,
     size: 14,

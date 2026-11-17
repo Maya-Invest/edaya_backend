@@ -16,7 +16,7 @@ bun run auth:generate-schema   # Generate a review file using auth@1.7.3; does n
 bun run auth:db:generate       # Generate SQL migration from schema changes (requires DATABASE_URL)
 ```
 
-Review `generated-provider-schema.ts`, merge provider model changes into `src/schema.ts`, preserve Edaya tables and timezone-aware timestamps, then generate an additive migration. The CLI package was renamed to `auth` in Better Auth 1.7 ([CLI documentation](https://better-auth.com/docs/concepts/cli)). Never apply the generated provider file directly over the maintained schema.
+Review `generated-provider-schema.ts`, merge provider model changes into `src/schema.ts`, preserve EDaya tables and timezone-aware timestamps, then generate an additive migration. The CLI package was renamed to `auth` in Better Auth 1.7 ([CLI documentation](https://better-auth.com/docs/concepts/cli)). Never apply the generated provider file directly over the maintained schema.
 
 `src/adapters/access-tokens.ts` stores rate-limit buckets and session revocation helpers. First-party access tokens are compact JWTs signed in `apps/api/src/identity`. `auth-transactions.ts` gives protocol mutations a database transaction and cross-instance lock separate from school transactions.
 

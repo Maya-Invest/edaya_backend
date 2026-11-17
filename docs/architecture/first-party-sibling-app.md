@@ -2,14 +2,14 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Implemented (Edaya Spark bootstrap notes) |
+| Status | Implemented (EDaya Spark bootstrap notes) |
 | Date | 12 September 2026 |
 | Repo | `edaya_backend` |
 | Owner | Platform |
 
 ## Summary
 
-A first-party sibling API (Edaya Spark today) is an audience on identity (`FIRST_PARTY_API_ORIGINS`) and a **machine caller** of the school API. It does not import school packages. School never treats a parent or staff JWT as a sibling-app credential.
+A first-party sibling API (EDaya Spark today) is an audience on identity (`FIRST_PARTY_API_ORIGINS`) and a **machine caller** of the school API. It does not import school packages. School never treats a parent or staff JWT as a sibling-app credential.
 
 ## School API access
 
@@ -27,4 +27,4 @@ Mint keys with `POST /core/s2s-clients` (`schoolId`, `clientId` such as `edaya-s
 
 ## Identity
 
-Access JWTs use the durable Account ID as `sub` and the canonical Edaya API origin as both issuer and audience. Auth session transport and school token transport share that origin. Adding a sibling machine integration uses existing S2S keys and explicit grants, not a second authentication origin. School JWT verification and Account directory resolution run in process; provider dependencies stay inside API Identity composition.
+Access JWTs use the durable Account ID as `sub` and the canonical EDaya API origin as both issuer and audience. Auth session transport and school token transport share that origin. Adding a sibling machine integration uses existing S2S keys and explicit grants, not a second authentication origin. School JWT verification and Account directory resolution run in process; provider dependencies stay inside API Identity composition.

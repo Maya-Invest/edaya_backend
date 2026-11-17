@@ -688,7 +688,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Edaya Core API Index */
+                /** @description EDaya Core API Index */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -803,7 +803,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Resolve a guardian and linked students for Edaya Spark (sibling secret) */
+        /** Resolve a guardian and linked students for EDaya Spark (sibling secret) */
         post: {
             parameters: {
                 query?: never;

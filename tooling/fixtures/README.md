@@ -1,6 +1,6 @@
 # @edaya/fixtures
 
-Reference data and dev seed scenarios for Edaya backend tooling.
+Reference data and dev seed scenarios for EDaya backend tooling.
 
 Orchestration (HTTP seed CLI, ports, workflows) lives in `@edaya/seeding`. This package owns **data only**.
 

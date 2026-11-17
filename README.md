@@ -1,8 +1,8 @@
-# Edaya Core
+# EDaya Core
 
 See [API configuration and secrets](docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo ops vars` commands.
 
-Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
+Monorepo for the EDaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
 
 Web frontends live in the separate **[edaya_frontend](../edaya_frontend)** repo (`@edaya/webapp`, `@edaya/webadmin`).
 

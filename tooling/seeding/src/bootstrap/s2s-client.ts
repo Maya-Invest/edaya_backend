@@ -106,9 +106,9 @@ export async function provisionEdayaSparkS2sClientHttp(
 export function logProvisionedEdayaSparkS2sClient(result: ProvisionEdayaSparkS2sClientResult): void {
   if (result.status === 'skipped') {
     // eslint-disable-next-line no-console -- CLI provisioning status contains no credentials.
-    console.log(`Edaya Spark S2S: skipped (${result.reason ?? 'no fixture key'})`)
+    console.log(`EDaya Spark S2S: skipped (${result.reason ?? 'no fixture key'})`)
     return
   }
   // eslint-disable-next-line no-console -- CLI provisioning status contains no credentials.
-  console.log(`Edaya Spark S2S: ${result.status} clientId=${result.clientId} school=${result.schoolId}`)
+  console.log(`EDaya Spark S2S: ${result.status} clientId=${result.clientId} school=${result.schoolId}`)
 }

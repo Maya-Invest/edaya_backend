@@ -63,7 +63,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
   test('persists and reads schools through PostgresStore', async () => {
     const school = new School(withShortName({
       id: 'school-1',
-      name: 'Edaya Academy',
+      name: 'EDaya Academy',
       timeZone: 'Africa/Douala',
       timetableEnforceWorkloadFulfillment: false,
       timetableExcludeBreakSlots: false,
@@ -78,7 +78,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
 
     await expect(repos.schoolsStore.findById('school-1')).resolves.toMatchObject({
       id: 'school-1',
-      name: 'Edaya Academy',
+      name: 'EDaya Academy',
       timeZone: 'Africa/Douala',
       timetableEnforceWorkloadFulfillment: false,
       timetableExcludeBreakSlots: false,

@@ -2,7 +2,7 @@
 export const SEED_SCHOOL_PROFILES = [
   {
     id: 'sch-edaya-ci-cocody',
-    name: 'École Edaya — Cocody',
+    name: 'École EDaya — Cocody',
     shortName: 'Cocody',
     city: 'Abidjan',
     timeZone: 'Africa/Abidjan',

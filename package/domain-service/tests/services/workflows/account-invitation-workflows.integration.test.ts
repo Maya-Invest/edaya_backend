@@ -20,7 +20,7 @@ async function createInvitationContext(options: { guardians?: Guardian[], teache
   const fixture = await createTestApp(actor)
   const repositories = fixture.schoolRepositories
   const invitationDelivery = new RecordingInvitationDeliveryPort()
-  await repositories.schools.save(new School(withShortName({ id: 'sch1', name: 'Edaya School', timeZone: 'Europe/Paris', pendingOwnerStaffId: options.pendingOwnerStaffId, ownerSubjectId: options.ownerSubjectId })))
+  await repositories.schools.save(new School(withShortName({ id: 'sch1', name: 'EDaya School', timeZone: 'Europe/Paris', pendingOwnerStaffId: options.pendingOwnerStaffId, ownerSubjectId: options.ownerSubjectId })))
   for (const school of options.extraSchools ?? []) await repositories.schools.save(school)
   await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
   await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'assign', schoolId: 'sch1', academicYearId: 'ay1', staffId: actor.staffMemberId, permission: Permission.ACCESS_CONTROL_MANAGE, scopes: [{ kind: 'school' }] }))
@@ -110,8 +110,8 @@ describe('AccountInvitationServiceWorkflow', () => {
 
     expect(invitationDelivery.deliveries).toHaveLength(1)
     expect(invitationDelivery.deliveries[0]).toMatchObject({
-      emailSubject: 'Join Edaya School — Paul Martin',
-      emailBody: '<p>Custom invite for Paul Martin at Edaya School</p>',
+      emailSubject: 'Join EDaya School — Paul Martin',
+      emailBody: '<p>Custom invite for Paul Martin at EDaya School</p>',
     })
   })
 

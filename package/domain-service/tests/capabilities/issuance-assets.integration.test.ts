@@ -90,13 +90,13 @@ describe('school issuance assets', () => {
   test('updateSchoolConfiguration persists and clears issuing identity', async () => {
     const updated = await fixture.app.setupWorkflow.updateSchoolConfiguration({
       schoolId: 'school',
-      issuingName: 'Collège Edaya Cocody',
+      issuingName: 'Collège EDaya Cocody',
       postalAddress: 'Cocody, Abidjan',
       phone: '+225 01 02 03 04',
       email: 'secretariat@edaya.test',
       schoolCode: 'EDAYA-CI',
     })
-    expect(updated.issuingName).toBe('Collège Edaya Cocody')
+    expect(updated.issuingName).toBe('Collège EDaya Cocody')
     expect(updated.postalAddress).toBe('Cocody, Abidjan')
     expect(updated.phone).toBe('+225 01 02 03 04')
     expect(updated.email).toBe('secretariat@edaya.test')

@@ -104,13 +104,13 @@ const router = createRouter()
       responses: {
         [HttpStatusCodes.OK]: jsonContent(
           createMessageObjectSchema(),
-          "Edaya Core API Index",
+          "EDaya Core API Index",
         ),
       },
     }),
     async (c) => {
       return c.json({
-        message: "Edaya Core API",
+        message: "EDaya Core API",
       }, HttpStatusCodes.OK);
     },
   );

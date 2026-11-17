@@ -60,7 +60,7 @@ describe('runSmokeStaging', () => {
       const method = init?.method ?? 'GET'
 
       if (url.endsWith('/') && method === 'GET') {
-        return new Response(JSON.stringify({ message: 'Edaya Core API' }), { status: 200 })
+        return new Response(JSON.stringify({ message: 'EDaya Core API' }), { status: 200 })
       }
 
       if (url.endsWith('/doc') && method === 'GET') {

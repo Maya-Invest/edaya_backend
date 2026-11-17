@@ -12,7 +12,7 @@ describeIntegration('timetable generation lifecycle', () => {
     const { app, schoolRepositories } = await createTestApp()
     await saveSchool(app, {
       id: 'school',
-      name: 'Edaya',
+      name: 'EDaya',
       timeZone: 'UTC',
       timetableMinDayGapSameSubject: 1,
       timetableGenerationMode: TimetableGenerationMode.Free,
