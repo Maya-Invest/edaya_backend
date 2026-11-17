@@ -76,7 +76,7 @@ describe('Entity config tenant and access gates', () => {
       id: 'progress-unassigned-1',
       classSubjectMatterId: 'class-subject-matter-unassigned-1',
       lessonSessionId: 'session-unassigned-1',
-      completedPercentage: 10,
+      completed: false,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 

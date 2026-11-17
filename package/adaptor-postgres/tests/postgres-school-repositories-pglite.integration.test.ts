@@ -227,13 +227,13 @@ describe('PostgresSchoolRepositories with PGlite', () => {
     const first = await repos.classSubjectMatters.findById('csm-0')
     const last = await repos.classSubjectMatters.findById(`csm-${batchSize - 1}`)
     expect(first).toMatchObject({
-      status: ClassSubjectMatterStatus.InProgress,
-      completedPercentage: 25,
+      status: ClassSubjectMatterStatus.NotStarted,
+      completedPercentage: 0,
       notes: 'progress-0',
     })
     expect(last).toMatchObject({
-      status: ClassSubjectMatterStatus.InProgress,
-      completedPercentage: 25,
+      status: ClassSubjectMatterStatus.NotStarted,
+      completedPercentage: 0,
       notes: `progress-${batchSize - 1}`,
     })
   })

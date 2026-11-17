@@ -10600,23 +10600,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/entities/class-subject-matters/save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Save Class Subject Matters */
-        post: operations["entities.classSubjectMatters.save"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/core/entities/class-subject-matters/delete": {
         parameters: {
             query?: never;
@@ -10628,23 +10611,6 @@ export interface paths {
         put?: never;
         /** Delete Class Subject Matters */
         post: operations["entities.classSubjectMatters.delete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/class-subject-matters/batch-save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch save Class Subject Matters */
-        post: operations["entities.classSubjectMatters.batchSave"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10730,74 +10696,6 @@ export interface paths {
         get: operations["entities.classSubjectProgress.get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/class-subject-progress/save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Save Class Subject Progress */
-        post: operations["entities.classSubjectProgress.save"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/class-subject-progress/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Delete Class Subject Progress */
-        post: operations["entities.classSubjectProgress.delete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/class-subject-progress/batch-save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch save Class Subject Progress */
-        post: operations["entities.classSubjectProgress.batchSave"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/class-subject-progress/batch-delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch delete Class Subject Progress */
-        post: operations["entities.classSubjectProgress.batchDelete"];
         delete?: never;
         options?: never;
         head?: never;
@@ -16146,6 +16044,7 @@ export interface components {
             shortName?: string;
             description?: string | null;
             sequenceOrder: number;
+            progressWeight?: number;
             estimatedHours?: number | null;
             createdAt?: unknown;
         };
@@ -16156,6 +16055,7 @@ export interface components {
             shortName?: string;
             description?: string | null;
             sequenceOrder: number;
+            progressWeight?: number;
             estimatedHours?: number | null;
             createdAt?: unknown;
         };
@@ -16196,6 +16096,12 @@ export interface components {
             /** @default 0 */
             completedPercentage: number | null;
             /** @default 0 */
+            chapterCount: number;
+            /** @default 0 */
+            ongoingChapterCount: number;
+            /** @default 0 */
+            completedChapterCount: number;
+            /** @default 0 */
             participationRevision: number;
             /** @default true */
             isOffered: boolean;
@@ -16216,7 +16122,8 @@ export interface components {
             id: string;
             classSubjectMatterId: string;
             lessonSessionId: string;
-            completedPercentage: number;
+            completed: boolean | null;
+            legacyPercentage?: number | null;
             recordedByStaffId?: string | null;
             notes?: string | null;
             recordedAt?: unknown;
@@ -16225,7 +16132,7 @@ export interface components {
             id: string;
             classSubjectMatterId: string;
             lessonSessionId: string;
-            completedPercentage: number;
+            completed: boolean;
             notes?: string | null;
             recordedAt?: unknown;
         };
@@ -16783,6 +16690,8 @@ export interface components {
             /** @enum {string} */
             status: "pending" | "approved_pending_publication" | "published" | "approved" | "rejected" | "withdrawn";
             version: number;
+            legacySourceConflict?: boolean;
+            legacyNeedsReview?: boolean;
             baseVersion: number;
             authorSubjectId: string;
             reason: string;
@@ -16806,11 +16715,14 @@ export interface components {
             } | {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             } | {
                 /** @enum {string} */
@@ -16842,11 +16754,14 @@ export interface components {
             } | {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             } | {
                 /** @enum {string} */
@@ -16888,11 +16803,14 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     workflow: "logbook";
+                    /** @enum {number} */
+                    formatVersion: 2;
                     targetId: string;
                     sessionNote: string | null;
                     progress: {
                         matterId: string;
-                        completedPercentage: number;
+                        completed: boolean;
+                        notes?: string | null;
                     }[];
                 } | {
                     /** @enum {string} */
@@ -16924,11 +16842,14 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     workflow: "logbook";
+                    /** @enum {number} */
+                    formatVersion: 2;
                     targetId: string;
                     sessionNote: string | null;
                     progress: {
                         matterId: string;
-                        completedPercentage: number;
+                        completed: boolean;
+                        notes?: string | null;
                     }[];
                 } | {
                     /** @enum {string} */
@@ -16969,11 +16890,14 @@ export interface components {
             } | {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             } | {
                 /** @enum {string} */
@@ -17010,11 +16934,14 @@ export interface components {
             } | {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             } | {
                 /** @enum {string} */
@@ -17063,11 +16990,14 @@ export interface components {
             proposal: {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             };
         };
@@ -19273,6 +19203,12 @@ export interface components {
                 /** @default 0 */
                 completedPercentage: number | null;
                 /** @default 0 */
+                chapterCount: number;
+                /** @default 0 */
+                ongoingChapterCount: number;
+                /** @default 0 */
+                completedChapterCount: number;
+                /** @default 0 */
                 participationRevision: number;
                 /** @default true */
                 isOffered: boolean;
@@ -19388,6 +19324,11 @@ export interface components {
             };
         };
         TeacherWorkflowEligibilityResponse: {
+            historicalReferences?: {
+                matterId: string;
+                notes: string | null;
+            }[];
+            delivered?: boolean;
             version: number;
             locked: boolean;
             official: {
@@ -19410,11 +19351,14 @@ export interface components {
             } | {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             } | {
                 /** @enum {string} */
@@ -19466,11 +19410,14 @@ export interface components {
             } | {
                 /** @enum {string} */
                 workflow: "logbook";
+                /** @enum {number} */
+                formatVersion: 2;
                 targetId: string;
                 sessionNote: string | null;
                 progress: {
                     matterId: string;
-                    completedPercentage: number;
+                    completed: boolean;
+                    notes?: string | null;
                 }[];
             } | {
                 /** @enum {string} */
@@ -19481,6 +19428,13 @@ export interface components {
                 /** @enum {string} */
                 kind: "positive" | "minor_infraction" | "major_infraction" | "emergency";
                 studentIds: string[];
+            };
+            legacyReceipt?: {
+                /** @enum {string} */
+                command: "saveTeacherLogbook" | "requestTeacherCorrection" | "reviseTeacherCorrection";
+                body: {
+                    [key: string]: unknown;
+                };
             };
         };
         TeacherGuardianRecipientsResponse: {
@@ -21008,13 +20962,7 @@ export interface components {
             updatedAt?: unknown;
         };
         Filter_38: Record<string, never>;
-        ClassSubjectMattersBatchSave: {
-            entities: components["schemas"]["ClassSubjectMatter"][];
-        };
         Filter_39: Record<string, never>;
-        ClassSubjectProgressBatchSave: {
-            entities: components["schemas"]["ClassSubjectProgress"][];
-        };
         Filter_40: Record<string, never>;
         ActivitiesBatchSave: {
             entities: components["schemas"]["Activity"][];
@@ -70968,95 +70916,6 @@ export interface operations {
             };
         };
     };
-    "entities.classSubjectMatters.save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Class Subject Matters entity */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ClassSubjectMatter"];
-            };
-        };
-        responses: {
-            /** @description Saved Class Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassSubjectMatter"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
     "entities.classSubjectMatters.delete": {
         parameters: {
             query?: never;
@@ -71106,97 +70965,6 @@ export interface operations {
             };
             /** @description Access denied due to authorization policies */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.classSubjectMatters.batchSave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Class Subject Matters batch save request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ClassSubjectMattersBatchSave"];
-            };
-        };
-        responses: {
-            /** @description Batch saved Class Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        ids: string[];
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -71634,346 +71402,6 @@ export interface operations {
             };
             /** @description Class Subject Progress not found */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.classSubjectProgress.save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Class Subject Progress entity */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ClassSubjectProgress"];
-            };
-        };
-        responses: {
-            /** @description Saved Class Subject Progress */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassSubjectProgress"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.classSubjectProgress.delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Class Subject Progress delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityDelete"];
-            };
-        };
-        responses: {
-            /** @description Deleted Class Subject Progress */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.classSubjectProgress.batchSave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Class Subject Progress batch save request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ClassSubjectProgressBatchSave"];
-            };
-        };
-        responses: {
-            /** @description Batch saved Class Subject Progress */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        ids: string[];
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.classSubjectProgress.batchDelete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Class Subject Progress batch delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityBatchDelete"];
-            };
-        };
-        responses: {
-            /** @description Batch deleted Class Subject Progress */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };

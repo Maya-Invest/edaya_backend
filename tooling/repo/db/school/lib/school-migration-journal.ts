@@ -15,6 +15,15 @@ export interface SchoolMigrationJournalEntry {
   previousHashes: string[]
 }
 
+const previousMigrationHashes: Record<string, string[]> = {
+  // Commit 64981b650dff used "Edaya" in invitation copy; f29e6a7f changed
+  // its spelling to "EDaya". Existing journal entries remain valid.
+  '0020_notification_copy_types': ['4907673f03f977cec0d0c11722fc8ab5c2c41c198beef8c2da9fd89813420f4a'],
+  // The original 0054 could only succeed on empty tables. Its journal entry
+  // remains valid for databases that already ran it.
+  '0054_visible_identification': ['f5754ac6e7bec08e20a456e4a3e80474edc0895346bbd6d5889a95fc2ef06281'],
+}
+
 export function readSchoolMigrationJournal(): SchoolMigrationJournalEntry[] {
   const journalPath = path.join(schoolMigrationsFolder, 'meta/_journal.json')
   if (!existsSync(journalPath)) {
@@ -31,11 +40,7 @@ export function readSchoolMigrationJournal(): SchoolMigrationJournalEntry[] {
       tag: entry.tag,
       when: entry.when,
       hash: createHash('sha256').update(query).digest('hex'),
-      // The original 0054 could only succeed on empty tables. Its journal entry
-      // remains valid for databases that already ran it.
-      previousHashes: entry.tag === '0054_visible_identification'
-        ? ['f5754ac6e7bec08e20a456e4a3e80474edc0895346bbd6d5889a95fc2ef06281']
-        : [],
+      previousHashes: previousMigrationHashes[entry.tag] ?? [],
     }
   })
 }

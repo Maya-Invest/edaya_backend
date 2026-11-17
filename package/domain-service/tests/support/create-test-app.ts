@@ -108,6 +108,7 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
 }
 
 const failureResources = {
+  classSubjectProgressRepository: 'classSubjectProgress',
   classSubjectMatterRepository: 'classSubjectMatters',
   messageDeliveryRepository: 'messageDeliveries',
   reportCardResultRepository: 'results',

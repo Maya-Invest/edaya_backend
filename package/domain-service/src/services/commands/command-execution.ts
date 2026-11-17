@@ -53,6 +53,15 @@ export interface ExecuteCommandInput<Result, Stored extends CommandJson> {
 export class CommandExecution {
   constructor(private readonly atomic: AtomicExecutionPort, private readonly journal: CommandJournalPort) {}
 
+  async wasDelivered(scope: CommandReceiptScope, input: unknown) {
+    const receipt = await this.atomic.execute(() => this.journal.find(scope))
+    if (!receipt)
+      return false
+    if (receipt.requestDigest !== await digestCommandRequest(input) || receipt.status !== 'completed')
+      throw new BusinessRuleViolationError('COMMAND_REPLAY_CONFLICT', 'The queued request needs review')
+    return true
+  }
+
   async execute<Result, Stored extends CommandJson>(options: ExecuteCommandInput<Result, Stored>): Promise<Result> {
     for (const value of [options.scope.schoolId, options.scope.command, options.scope.callerId, options.scope.requestId]) {
       if (typeof value !== 'string' || !value.trim() || value.length > 200)

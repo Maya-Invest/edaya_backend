@@ -13,7 +13,8 @@ export interface LogbookSessionSource {
 export interface LogbookProgressSource {
   lessonSessionId: string
   classSubjectMatterId: string
-  completedPercentage: number
+  completed?: boolean | null
+  completedPercentage?: number
   notes?: string
 }
 
@@ -54,6 +55,7 @@ export interface BuildLogbookV1PayloadInput {
 }
 
 export interface LogbookV1Chapter {
+  coverageLabel?: string
   name: string
   completedPercentage?: number
   notes?: string
@@ -198,7 +200,15 @@ export function buildLogbookV1Payload(input: BuildLogbookV1PayloadInput): Logboo
         }
         return [{
           name,
-          completedPercentage: progress.completedPercentage,
+          ...(progress.completed === undefined
+            ? { completedPercentage: progress.completedPercentage }
+            : {
+                coverageLabel: progress.completed === null
+                  ? (locale.startsWith('fr') ? 'Référence historique' : 'Historical reference')
+                  : progress.completed
+                    ? (locale.startsWith('fr') ? 'Chapitre terminé pendant cette séance' : 'Completed in this session')
+                    : (locale.startsWith('fr') ? 'Abordé' : 'Covered'),
+              }),
           ...(progress.notes ? { notes: progress.notes } : {}),
         }]
       })

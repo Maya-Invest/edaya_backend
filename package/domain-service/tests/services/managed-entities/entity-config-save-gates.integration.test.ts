@@ -14,7 +14,7 @@ import { createCurriculumTestApp as createTestApp } from '../../support/create-t
 import { createAcademicTestApp } from './academic-test-app'
 
 describe('Entity config save gates', () => {
-  test('allows progress-only updates on inherited class subjects with periodsPerWeek', async () => {
+  test('preserves derived coverage when a caller submits a percentage on an inherited subject', async () => {
     const { app, repositories } = await createAcademicTestApp()
     await repositories.classGroupRepository.save(new ClassGroup(withShortName({
       id: 'class-1',
@@ -42,7 +42,7 @@ describe('Entity config save gates', () => {
       completedPercentage: 25,
     }))
     expect(updated).toBeUndefined()
-    expect((await repositories.classSubjectRepository.findById('class-subject-1'))?.completedPercentage).toBe(25)
+    expect((await repositories.classSubjectRepository.findById('class-subject-1'))?.completedPercentage).toBe(0)
   })
 
   test('assessment config preSave rejects duplicate default grade scales', async () => {

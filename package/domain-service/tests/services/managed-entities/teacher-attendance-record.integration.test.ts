@@ -49,12 +49,14 @@ describe('teacher attendance and logbook writes use current subject and homeroom
 
   test('subject teacher edits logbook content, while timing, placement and revocation remain protected', async () => {
     const updated = lesson.copyWith({ sessionNote: 'Covered fractions', displayLabel: 'Math recap' })
-    await service.baseService.entities.lessonSessions.save(updated)
+    await expect(service.baseService.entities.lessonSessions.save(updated)).rejects.toMatchObject({ code: 'LOGBOOK_COMMAND_REQUIRED' })
+    const save = (requestId: string, expectedVersion: number, sessionNote: string) => service.teacherCorrectionsWorkflow.saveLogbook({ requestId, expectedVersion, proposal: { workflow: 'logbook', formatVersion: 2, targetId: lesson.id, sessionNote, progress: [] } })
+    await save('note', 0, 'Covered fractions')
     expect((await fixture.repositories.lessonSessions.findById('lesson'))?.sessionNote).toBe('Covered fractions')
     await expect(service.baseService.entities.lessonSessions.save(updated.copyWith({ startsAt: new Date('2026-06-01T09:30:00Z'), endsAt: new Date('2026-06-01T10:30:00Z') }))).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.baseService.entities.lessonSessions.save(updated.copyWith({ classSubjectId: 'french-a' }))).rejects.toBeInstanceOf(AuthorizationError)
     await fixture.repositories.teacherAssignments.delete('teaching')
-    await expect(service.baseService.entities.lessonSessions.save(updated.copyWith({ sessionNote: 'Revoked edit' }))).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(save('revoked', 1, 'Revoked edit')).rejects.toBeInstanceOf(AuthorizationError)
     expect((await fixture.repositories.lessonSessions.findById('lesson'))?.sessionNote).toBe('Covered fractions')
   })
 })

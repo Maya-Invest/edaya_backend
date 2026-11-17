@@ -7,7 +7,7 @@ export const correctionWorkflowSchema = z.enum(['attendance', 'report_comments',
 export const correctionProposalSchema = z.discriminatedUnion('workflow', [
   z.object({ workflow: z.literal('attendance'), targetId: id, status: z.enum(['present', 'absent', 'late']), notes: text, teacherExplanation: text }).strict(),
   z.object({ workflow: z.literal('report_comments'), targetId: id, teacherComment: text.optional(), sections: z.array(z.object({ sectionId: id, comment: text }).strict()).max(100) }).strict(),
-  z.object({ workflow: z.literal('logbook'), targetId: id, sessionNote: text, progress: z.array(z.object({ matterId: id, completedPercentage: z.number().min(0).max(100) }).strict()).max(100) }).strict(),
+  z.object({ workflow: z.literal('logbook'), formatVersion: z.literal(2), targetId: id, sessionNote: text, progress: z.array(z.object({ matterId: id, completed: z.boolean(), notes: text.optional() }).strict()).max(100) }).strict(),
   z.object({ workflow: z.literal('discipline'), targetId: id, title: id.max(500), description: text, kind: z.enum(['positive', 'minor_infraction', 'major_infraction', 'emergency']), studentIds: z.array(id).max(500) }).strict(),
 ])
 export type CorrectionProposal = z.infer<typeof correctionProposalSchema>
@@ -26,6 +26,8 @@ export const teacherCorrectionSchema = z.object({
   targetId: id,
   status: z.enum(['pending', 'approved_pending_publication', 'published', 'approved', 'rejected', 'withdrawn']),
   version: z.number().int().nonnegative(),
+  legacySourceConflict: z.boolean().optional(),
+  legacyNeedsReview: z.boolean().optional(),
   baseVersion: z.number().int().nonnegative(),
   authorSubjectId: id,
   reason: id,

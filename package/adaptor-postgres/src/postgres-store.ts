@@ -251,7 +251,7 @@ implements BaseRepositoryInterface<T> {
     const rows = entities.map(entity => this.toRow(entity))
     const columnCount = Object.keys(getTableColumns(this.table)).length
     const chunks = chunkArray(rows, batchSaveChunkSize(columnCount))
-    const conflictSet = buildConflictUpdateSet(this.table)
+    const conflictSet = buildConflictUpdateSet(this.table, Object.keys(rows[0]!))
 
     for (const chunk of chunks) {
       await withPrivateFileConstraintErrors(() => client

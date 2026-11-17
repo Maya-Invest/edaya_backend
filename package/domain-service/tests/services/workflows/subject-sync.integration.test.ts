@@ -1,4 +1,4 @@
-import { AcademicDiscipline, AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectColor, withShortName } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, ClassGroup, ClassSubject, ClassSubjectProgress, GradeLevel, LessonSession, Subject, SubjectColor, withShortName } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -41,7 +41,7 @@ describe('subject inheritance through native policies', () => {
       expect(row?.periodsPerWeek).toBe(5)
       expect(row?.minPeriodSpan).toBe(2)
       expect(row?.maxPeriodSpan).toBe(3)
-      expect(row?.completedPercentage).toBe(25)
+      expect(row?.completedPercentage).toBe(0)
       expect(row?.isOffered).toBe(id === '6a')
     }
     await service.setupWorkflow.createClassGroup({ id: '6c', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6C' })
@@ -96,12 +96,13 @@ describe('subject inheritance through native policies', () => {
     expect(offerings).toHaveLength(2)
     expect(offerings.every(row => row.coefficient === 2.5 && row.periodsPerWeek === 5 && row.isOffered)).toBe(true)
     const chapterA = (await repositories.classSubjectMatters.findOne({ classSubjectId: offerings[0]!.id }))!
-    await repositories.classSubjectMatters.save(new ClassSubjectMatter({ ...chapterA.data, completedPercentage: 40, status: ClassSubjectMatterStatus.InProgress }))
+    await repositories.lessonSessions.save(new LessonSession({ id: 'algebra-lesson', schoolId: 'sch1', classGroupId: offerings[0]!.classGroupId, classSubjectId: chapterA.classSubjectId, displayLabel: 'Math', startsAt: new Date('2026-02-12T09:00:00Z'), endsAt: new Date('2026-02-12T10:00:00Z') }))
+    await repositories.classSubjectProgress.save(new ClassSubjectProgress({ id: 'covered', lessonSessionId: 'algebra-lesson', classSubjectMatterId: chapterA.id, completed: false }))
     await service.academicsWorkflow.configureSubjectMatter({ id: 'chapter', subjectId: 'subj-math', name: 'Algebra updated', sequenceOrder: 2 })
     await service.academicsWorkflow.syncSubjectsToClassGroup('6a')
     expect(await repositories.classSubjects.count()).toBe(2)
     expect(await repositories.classSubjectMatters.count()).toBe(2)
-    expect((await repositories.classSubjectMatters.findById(chapterA.id))?.completedPercentage).toBe(40)
+    expect((await repositories.classSubjectMatters.findById(chapterA.id))?.completedPercentage).toBe(50)
     expect((await repositories.classSubjectMatters.findOne({ classSubjectId: offerings[1]!.id }))?.completedPercentage).toBe(0)
   })
 

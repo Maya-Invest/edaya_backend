@@ -95,6 +95,30 @@ describe("official template catalog A–E", () => {
     expect(html).toContain(".letter-header");
   });
 
+  test("renders lesson facts and preserves queued percentage exports", () => {
+    const template = getTemplateDefinition("logbook.v1")!;
+    const payload = (chapters: Record<string, unknown>[]) => ({
+      crestUrl: "data:image/png;base64,AAAA",
+      schoolName: "School",
+      classLabel: "Class A",
+      subjects: [{
+        name: "Math",
+        entries: [{ date: "2026-11-16", chapters }],
+      }],
+    });
+    const render = (chapters: Record<string, unknown>[]) => {
+      const input = payload(chapters);
+      expect(template.validatePayload(input)).toBeNull();
+      return template.compileHtml("en", input);
+    };
+    const current = render([{ name: "Fractions", coverageLabel: "Completed in this session" }, { name: "Addition", coverageLabel: "Covered" }]);
+    expect(current).toContain("Completed in this session");
+    expect(current).toContain("Covered");
+    const queued = render([{ name: "Fractions", completedPercentage: 35 }]);
+    expect(queued).toContain("35%");
+    expect(queued).not.toContain("Completed in this session");
+  });
+
   test("renders a receipt through the stub PDF path", async () => {
     const result = await renderDocument({
       templateKey: "receipt.v1",

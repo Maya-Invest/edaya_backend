@@ -472,7 +472,9 @@ export const configureClassSubjectTimetableCommandSchema = z.object({
 }).openapi("ConfigureClassSubjectTimetableCommand");
 
 export const recordLessonSessionProgressCommandSchema = objectFromSchema(classSubjectProgressSchema)
-  .omit({ recordedByStaffId: true })
+  .omit({ recordedByStaffId: true, legacyPercentage: true })
+  .extend({ completed: z.boolean() })
+  .strict()
   .openapi("RecordLessonSessionProgressCommand");
 
 export const createScheduleCommandSchema = objectFromSchema(scheduleSchema)

@@ -106,6 +106,7 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         shortName: entity.shortName,
         description: entity.description ?? null,
         sequenceOrder: entity.sequenceOrder,
+        progressWeight: entity.progressWeight,
         estimatedHours: entity.estimatedHours ?? null,
         createdAt: entity.createdAt,
       }),
@@ -116,6 +117,7 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         shortName: row.shortName ?? undefined,
         description: row.description,
         sequenceOrder: row.sequenceOrder,
+        progressWeight: row.progressWeight,
         estimatedHours: row.estimatedHours,
         createdAt: row.createdAt,
       }),
@@ -126,7 +128,7 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
     classSubjects: customStore(
       db,
       schema.classSubjects,
-      (entity: ClassSubject) => ({
+      (entity: ClassSubject): typeof schema.classSubjects.$inferInsert => ({
         id: entity.id,
         classGroupId: entity.classGroupId,
         subjectId: entity.subjectId,
@@ -134,7 +136,6 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         periodsPerWeek: entity.periodsPerWeek ?? null,
         minPeriodSpan: entity.minPeriodSpan ?? null,
         maxPeriodSpan: entity.maxPeriodSpan ?? null,
-        completedPercentage: entity.completedPercentage,
         participationRevision: entity.participationRevision,
         isOffered: entity.isOffered,
         createdAt: entity.createdAt,
@@ -148,6 +149,9 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         minPeriodSpan: row.minPeriodSpan,
         maxPeriodSpan: row.maxPeriodSpan,
         completedPercentage: row.completedPercentage,
+        chapterCount: row.chapterCount,
+        ongoingChapterCount: row.ongoingChapterCount,
+        completedChapterCount: row.completedChapterCount,
         participationRevision: row.participationRevision,
         isOffered: row.isOffered,
         createdAt: row.createdAt,
@@ -157,15 +161,11 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
     classSubjectMatters: customStore(
       db,
       schema.classSubjectMatters,
-      (entity: ClassSubjectMatter) => ({
+      (entity: ClassSubjectMatter): typeof schema.classSubjectMatters.$inferInsert => ({
         id: entity.id,
         classSubjectId: entity.classSubjectId,
         subjectMatterId: entity.subjectMatterId,
-        status: entity.status,
-        completedPercentage: entity.completedPercentage,
         updatedByStaffId: entity.updatedByStaffId ?? null,
-        startedAt: entity.startedAt ?? null,
-        completedAt: entity.completedAt ?? null,
         notes: entity.notes ?? null,
         updatedAt: entity.updatedAt,
       }),
@@ -173,7 +173,7 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         id: row.id,
         classSubjectId: row.classSubjectId,
         subjectMatterId: row.subjectMatterId,
-        status: enumValue(ClassSubjectMatterStatus, row.status, 'classSubjectMatters.status'),
+        status: enumValue(ClassSubjectMatterStatus, row.status!, 'classSubjectMatters.status'),
         completedPercentage: row.completedPercentage,
         updatedByStaffId: row.updatedByStaffId,
         startedAt: row.startedAt,
@@ -186,11 +186,11 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
     classSubjectProgress: customStore(
       db,
       schema.classSubjectProgress,
-      (entity: ClassSubjectProgress) => ({
+      (entity: ClassSubjectProgress): typeof schema.classSubjectProgress.$inferInsert => ({
         id: entity.id,
         classSubjectMatterId: entity.classSubjectMatterId,
         lessonSessionId: entity.lessonSessionId,
-        completedPercentage: entity.completedPercentage,
+        completed: entity.completed,
         recordedByStaffId: entity.recordedByStaffId ?? null,
         notes: entity.notes ?? null,
         recordedAt: entity.recordedAt,
@@ -199,7 +199,8 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         id: row.id,
         classSubjectMatterId: row.classSubjectMatterId,
         lessonSessionId: row.lessonSessionId,
-        completedPercentage: row.completedPercentage,
+        completed: row.completed ?? null,
+        legacyPercentage: row.legacyPercentage,
         recordedByStaffId: row.recordedByStaffId,
         notes: row.notes,
         recordedAt: row.recordedAt,
