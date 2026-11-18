@@ -155,6 +155,23 @@ describe('delayed notification dispatch uses current business facts', () => {
     expect(await resolve(input)).toBeUndefined()
   })
 
+  test.each([
+    'DELETE FROM class_activity_enrollments WHERE id = \'class-placement\'',
+    'UPDATE student_class_enrollments SET status = \'closed\', ended_at = now() WHERE id = \'enrollment-a\'',
+    'UPDATE academic_years SET status = \'archived\' WHERE id = \'year-a\'',
+  ])('class activity reminders revoke access after %s', async (mutation) => {
+    await sourceRecords()
+    await fixture.db.exec(`
+      DELETE FROM activity_enrollments WHERE id = 'activity-enrollment';
+      INSERT INTO class_activity_enrollments (id, activity_id, class_group_id, created_at)
+        VALUES ('class-placement', 'activity', 'class-a', NOW());
+    `)
+    const input = await request(guardian, 'activity.reminder', { activityId: 'activity' }, 'activity.reminder:activity')
+    expect((await resolve(input))?.recipient.id).toBe('guardian-a')
+    await fixture.db.exec(mutation)
+    expect(await resolve(input)).toBeUndefined()
+  })
+
   test('attendance notices honor the exact link opt-out and corrected source', async () => {
     await sourceRecords()
     const row = await fixture.repositories.attendance.findById('attendance')

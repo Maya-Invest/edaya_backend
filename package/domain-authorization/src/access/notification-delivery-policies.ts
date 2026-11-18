@@ -1,6 +1,7 @@
 import type { CoreEntityKey, MessageDelivery, NotificationDispatchRequest } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
-import { ActivityEnrollmentStatus, AssessmentKind, CalendarEventKind, MessageDeliveryStatus, Permission, resourceAccessScope } from '@edaya/core'
+import { AssessmentKind, CalendarEventKind, MessageDeliveryStatus, Permission, resourceAccessScope } from '@edaya/core'
+import { activityReminderStudentIds } from './activity-reminder-students'
 import { AccessFacts, denied } from './facts'
 
 /** Durable dispatch binds personal communications to the exact persisted recipient and source. */
@@ -105,8 +106,9 @@ export class NotificationDeliveryAccessPolicy {
         const activity = await facts.one('activities', activityId!)
         if (activity.endDate < facts.now)
           return denied('Activity has ended')
-        const enrollments = await facts.list('activityEnrollments', { activityId: activity.id, status: ActivityEnrollmentStatus.Approved })
-        await this.assertAnyStudent(facts, delivery, enrollments.map(row => row.studentId))
+        const students = await this.linkedRecipientStudents(facts, delivery)
+        if (!(await activityReminderStudentIds(facts, activity.id, students)).length)
+          return denied('Recipient is no longer enrolled or linked to an enrolled student')
         return
       }
       case 'calendar.event_reminder': {
@@ -146,18 +148,12 @@ export class NotificationDeliveryAccessPolicy {
     }
   }
 
-  private async assertAnyStudent(facts: AccessFacts, delivery: MessageDelivery, studentIds: string[]) {
-    if (delivery.recipientKind === 'student' && studentIds.includes(delivery.recipientId!))
-      return this.assertStudentSource(facts, delivery, delivery.recipientId!, 'general')
-    if (delivery.recipientKind === 'guardian') {
-      const links = await facts.list('guardianLinks', { guardianId: delivery.recipientId!, studentId: { $in: studentIds } })
-      for (const link of links) {
-        const student = await facts.one('students', link.studentId)
-        if (student.status === 'active')
-          return
-      }
-    }
-    return denied('Recipient is no longer enrolled or linked to an enrolled student')
+  private async linkedRecipientStudents(facts: AccessFacts, delivery: MessageDelivery): Promise<string[]> {
+    if (delivery.recipientKind === 'student')
+      return [delivery.recipientId!]
+    if (delivery.recipientKind === 'guardian')
+      return (await facts.list('guardianLinks', { guardianId: delivery.recipientId! })).map(link => link.studentId)
+    return []
   }
 
   private async assertStudentSource(facts: AccessFacts, delivery: MessageDelivery, studentId: string, kind: 'academic' | 'attendance' | 'general') {

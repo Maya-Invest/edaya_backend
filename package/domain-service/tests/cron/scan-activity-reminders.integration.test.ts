@@ -1,8 +1,7 @@
-import { Activity, ActivityCategory, withShortName } from '@edaya/core'
+import { Activity, ActivityCategory, ClassActivityEnrollment, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import {
-  ACTIVITY_REMINDER_EVENT_KEY,
-} from '../../src/capabilities/notifications/triggers/activity-reminder'
+import { createNotificationPostSaveHook } from '../../src/capabilities/notifications'
+import { ACTIVITY_REMINDER_EVENT_KEY, activityReminderDeliverAfter } from '../../src/capabilities/notifications/triggers/activity-reminder'
 import { scanActivityReminders } from '../../src/capabilities/scheduling-jobs/jobs/scan-activity-reminders'
 import { createReminderCronContext } from '../support/reminder-scan-fixtures'
 
@@ -53,6 +52,48 @@ describe('scanActivityReminders', () => {
     const guardian = await guardians.findById('gua1')
     await guardians.save(guardian!.copyWith({ subjectId: 'new-guardian-login' }))
     expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
+  })
+
+  test.each([false, true])('finds class-assigned recipients once (individual enrollment: %s)', async (hasIndividualEnrollment) => {
+    const { context, gateway } = await createReminderCronContext({
+      asOf: asOfInWindow,
+      activities: [schoolActivity()],
+    })
+    const repositories = context.service.baseService.repositories
+    if (!hasIndividualEnrollment)
+      await repositories.activityEnrollments.delete('enrollment-act1')
+    await repositories.classActivityEnrollments.save(new ClassActivityEnrollment({
+      id: 'class-placement',
+      activityId: 'act1',
+      classGroupId: 'cg1',
+    }))
+
+    const schedules = repositories.cronJobSchedules
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
+    expect(await scanActivityReminders(context)).toEqual({ processed: 1, skipped: 0 })
+    expect(gateway.enqueued.flatMap(job => job.recipients.map(row => row.id)).sort()).toEqual(['gua1', 'stu1'])
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual([])
+  })
+
+  test('queues a reminder when a class is assigned after the activity is saved', async () => {
+    const startDate = new Date(Date.now() + 2 * 60 * 60 * 1000)
+    const activity = schoolActivity({ startDate, endDate: startDate })
+    const { context, gateway } = await createReminderCronContext({ asOf: new Date(), activities: [activity] })
+    const { repositories, templateService } = context.service.baseService
+    await repositories.activityEnrollments.delete('enrollment-act1')
+    const placement = new ClassActivityEnrollment({
+      id: 'class-placement',
+      activityId: activity.id,
+      classGroupId: 'cg1',
+    })
+    await repositories.classActivityEnrollments.save(placement)
+
+    const afterSave = createNotificationPostSaveHook('classActivityEnrollments', gateway, templateService)
+    await afterSave(placement, undefined, repositories, context.actor)
+    await afterSave(placement, placement, repositories, context.actor)
+
+    expect(gateway.enqueued.flatMap(job => job.recipients.map(row => row.id)).sort()).toEqual(['gua1', 'stu1'])
+    expect(gateway.enqueued.every(job => job.deliverAfter?.getTime() === activityReminderDeliverAfter(startDate).getTime())).toBe(true)
   })
 
   test('skips expired activities, other schools, and activities outside the reminder window', async () => {

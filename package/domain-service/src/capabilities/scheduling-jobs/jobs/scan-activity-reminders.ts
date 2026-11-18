@@ -30,7 +30,7 @@ export async function scanActivityReminders(
 
     const recipients = await resolveActivityEnrollmentRecipients(
       context.service.baseService.repositories,
-      activity.schoolId,
+      context.actor,
       activity.id,
     )
     if (recipients.length === 0) {

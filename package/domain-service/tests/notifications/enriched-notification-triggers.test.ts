@@ -79,12 +79,18 @@ const schoolRepositories = {
     }),
   },
   activityEnrollments: {
-    list: async () => [{
-      studentId: 'stu1',
-      status: 'approved',
-    }],
+    forSchool: () => ({
+      list: async () => [{
+        studentId: 'stu1',
+        status: 'approved',
+      }],
+    }),
+  },
+  classActivityEnrollments: {
+    forSchool: () => ({ list: async () => [] }),
   },
   students: {
+    forSchool: () => ({ list: async () => [{ id: 'stu1' }] }),
     findById: async () => ({
       id: 'stu1',
       schoolId: 'sch1',
