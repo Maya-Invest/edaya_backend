@@ -5347,6 +5347,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/queries/get-student-session-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-student-session-history */
+        post: operations["queries.getStudentSessionHistory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-teacher-session-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-teacher-session-history */
+        post: operations["queries.getTeacherSessionHistory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/queries/get-teacher-timetable": {
         parameters: {
             query?: never;
@@ -20025,13 +20059,51 @@ export interface components {
             /** Format: date */
             endDate: string;
         };
-        TeacherTimetableResponse: {
-            teacherId: string;
+        SessionHistoryResponse: {
             /** Format: date */
             startDate: string;
             /** Format: date */
             endDate: string;
-            events: components["schemas"]["TimetableEvent"][];
+            timeZone: string;
+            hasMore: boolean;
+            entries: {
+                id: string;
+                classSubjectId?: string;
+                activityId?: string;
+                subjectLabel?: string;
+                teacherName?: string;
+                timetableTeacherIds?: string[];
+                /** Format: date-time */
+                startsAt: string;
+                /** Format: date-time */
+                endsAt: string;
+                lessonSessionId?: string;
+                activitySessionId?: string;
+                assessmentId?: string;
+                /** @enum {string} */
+                status?: "pending" | "completed" | "cancelled";
+                /** @enum {string} */
+                kind: "lesson" | "activity" | "assessment" | "daily";
+                classGroupId?: string;
+                title: string;
+                attendance: {
+                    /** @enum {string} */
+                    status: "present" | "absent" | "late";
+                    /** @enum {string} */
+                    justificationStatus: "none" | "pending" | "excused" | "rejected";
+                    reason: string | null;
+                } | null;
+                attendanceComplete: boolean | null;
+                logbookComplete: boolean | null;
+            }[];
+        };
+        StudentSessionHistoryQuery: {
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
+            studentId: string;
+            academicYearId: string;
         };
         GetTeacherTimetableQuery: {
             teacherId: string;
@@ -20039,6 +20111,19 @@ export interface components {
             startDate: string;
             /** Format: date */
             endDate: string;
+        };
+        TeacherSessionHistoryQuery: components["schemas"]["GetTeacherTimetableQuery"] & {
+            academicYearId: string;
+            classGroupId?: string;
+            classSubjectId?: string;
+        };
+        TeacherTimetableResponse: {
+            teacherId: string;
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
+            events: components["schemas"]["TimetableEvent"][];
         };
         ResolvedTimetableCell: {
             /** Format: date */
@@ -44117,6 +44202,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassGroupTimetableResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getStudentSessionHistory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-student-session-history payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StudentSessionHistoryQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-student-session-history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionHistoryResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getTeacherSessionHistory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-teacher-session-history payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TeacherSessionHistoryQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-teacher-session-history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionHistoryResponse"];
                 };
             };
             /** @description Invalid request payload */

@@ -45,7 +45,7 @@ export async function getClassSubjectRoster(base: BaseSchoolService, input: { cl
   return { classSubjectId: offering.id, at: input.at, revision: offering.participationRevision, count: students.length, basis: 'current_selection' as const, periods, students: students.map(row => ({ id: row.id, firstName: row.firstName, lastName: row.lastName })), enrollments: rows.filter(row => row.effectiveAt(input.at)).map(row => row.data) }
 }
 
-export async function getStudentTimetable(base: BaseSchoolService, input: { studentId: string, startDate: Date, endDate: Date }) {
+export async function getStudentTimetable(base: BaseSchoolService, input: { studentId: string, startDate: Date, endDate: Date }, includeUnrecordedHistory = false) {
   const eventRepositories = await base.access.timetable.studentEventRepositories(input.studentId)
   const student = await base.repositories.students.findById(input.studentId)
   if (!student)
@@ -85,8 +85,10 @@ export async function getStudentTimetable(base: BaseSchoolService, input: { stud
   const events = candidates.filter((event) => {
     if (!event.classSubjectId)
       return placements.some(row => row.classGroupId === event.classGroupId && placementEffectiveAt(row, event.startsAt))
-    if (event.startsAt < now)
-      return event.kind === 'assessment' ? savedAssessments.has(event.id) : savedLessons.has(event.id)
+    if (event.startsAt < now) {
+      const saved = event.kind === 'assessment' ? savedAssessments.has(event.id) : savedLessons.has(event.id)
+      return saved || (includeUnrecordedHistory && subjectRoster(context, event.classSubjectId, assessmentDates.get(event.id) ?? event.startsAt).includes(student.id))
+    }
     return subjectRoster(context, event.classSubjectId, assessmentDates.get(event.id) ?? event.startsAt).includes(student.id)
   })
   events.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())

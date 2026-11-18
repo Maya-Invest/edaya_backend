@@ -39,6 +39,13 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
       const payload = validatedJson(c) as Record<string, unknown>;
 
       try {
+        if (queryConfig.methodName === "getStudentSessionHistory" || queryConfig.methodName === "getTeacherSessionHistory") {
+          const dates = { academicYearId: payload.academicYearId as string, startDate: new Date(payload.startDate as string), endDate: new Date(payload.endDate as string) };
+          const result = queryConfig.methodName === "getStudentSessionHistory"
+            ? await service.getStudentSessionHistory({ ...dates, studentId: payload.studentId as string })
+            : await service.getTeacherSessionHistory({ ...dates, teacherId: payload.teacherId as string, classGroupId: payload.classGroupId as string | undefined, classSubjectId: payload.classSubjectId as string | undefined });
+          return c.json(result, HttpStatusCodes.OK);
+        }
         if (queryConfig.methodName === "getAssessmentMarksReview")
           return c.json(await service.getAssessmentMarksReview({ assessmentId: payload.assessmentId as string }), HttpStatusCodes.OK);
         if (queryConfig.methodName === "listAssessmentMarksReviews")

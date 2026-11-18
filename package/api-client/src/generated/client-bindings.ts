@@ -2000,6 +2000,16 @@ export const clientBindings = {
         "requestSchemaName": "GetClassGroupTimetableQuery",
         "responseSchemaName": "ClassGroupTimetableResponse"
       },
+      "getStudentSessionHistory": {
+        "publicName": "get-student-session-history",
+        "requestSchemaName": "StudentSessionHistoryQuery",
+        "responseSchemaName": "SessionHistoryResponse"
+      },
+      "getTeacherSessionHistory": {
+        "publicName": "get-teacher-session-history",
+        "requestSchemaName": "TeacherSessionHistoryQuery",
+        "responseSchemaName": "SessionHistoryResponse"
+      },
       "getTeacherTimetable": {
         "publicName": "get-teacher-timetable",
         "requestSchemaName": "GetTeacherTimetableQuery",

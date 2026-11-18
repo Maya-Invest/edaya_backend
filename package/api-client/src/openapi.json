@@ -30735,6 +30735,236 @@
           "endDate"
         ]
       },
+      "SessionHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classSubjectId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "activityId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "subjectLabel": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "teacherName": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timetableTeacherIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "lessonSessionId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "activitySessionId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "assessmentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "completed",
+                    "cancelled"
+                  ]
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "lesson",
+                    "activity",
+                    "assessment",
+                    "daily"
+                  ]
+                },
+                "classGroupId": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "attendance": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "present",
+                        "absent",
+                        "late"
+                      ]
+                    },
+                    "justificationStatus": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "pending",
+                        "excused",
+                        "rejected"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "justificationStatus",
+                    "reason"
+                  ]
+                },
+                "attendanceComplete": {
+                  "type": "boolean",
+                  "nullable": true
+                },
+                "logbookComplete": {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id",
+                "startsAt",
+                "endsAt",
+                "kind",
+                "title",
+                "attendance",
+                "attendanceComplete",
+                "logbookComplete"
+              ]
+            }
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "timeZone",
+          "hasMore",
+          "entries"
+        ]
+      },
+      "StudentSessionHistoryQuery": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "studentId",
+          "academicYearId"
+        ]
+      },
+      "GetTeacherTimetableQuery": {
+        "type": "object",
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "teacherId",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "TeacherSessionHistoryQuery": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GetTeacherTimetableQuery"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "academicYearId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "classGroupId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "classSubjectId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "academicYearId"
+            ]
+          }
+        ]
+      },
       "TeacherTimetableResponse": {
         "type": "object",
         "properties": {
@@ -30762,28 +30992,6 @@
           "startDate",
           "endDate",
           "events"
-        ]
-      },
-      "GetTeacherTimetableQuery": {
-        "type": "object",
-        "properties": {
-          "teacherId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date"
-          }
-        },
-        "required": [
-          "teacherId",
-          "startDate",
-          "endDate"
         ]
       },
       "ResolvedTimetableCell": {
@@ -73227,6 +73435,266 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassGroupTimetableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-student-session-history": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-student-session-history",
+        "operationId": "queries.getStudentSessionHistory",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getStudentSessionHistory",
+        "x-edaya-query-public-name": "get-student-session-history",
+        "x-edaya-request-schema": "StudentSessionHistoryQuery",
+        "x-edaya-response-schema": "SessionHistoryResponse",
+        "requestBody": {
+          "description": "get-student-session-history payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentSessionHistoryQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-student-session-history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-teacher-session-history": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-teacher-session-history",
+        "operationId": "queries.getTeacherSessionHistory",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getTeacherSessionHistory",
+        "x-edaya-query-public-name": "get-teacher-session-history",
+        "x-edaya-request-schema": "TeacherSessionHistoryQuery",
+        "x-edaya-response-schema": "SessionHistoryResponse",
+        "requestBody": {
+          "description": "get-teacher-session-history payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherSessionHistoryQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-teacher-session-history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionHistoryResponse"
                 }
               }
             }

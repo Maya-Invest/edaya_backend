@@ -758,3 +758,20 @@ export const guardianPeriodResultsResponseSchema = z.object({
   sections: z.array(z.record(z.string(), z.unknown())),
   marks: z.array(z.object({ id: z.string(), assessmentId: z.string(), subjectId: z.string(), classSubjectId: z.string(), periodId: z.string(), title: z.string(), description: z.string().nullable(), kind: z.string(), date: z.string().nullable(), score: z.number().nullable(), designation: z.string(), coefficient: z.number(), maxScore: z.number(), notes: z.string().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), originalEntry: z.record(z.string(), z.unknown()).nullable() })),
 }).openapi("GuardianPeriodResultsResponse");
+
+export const studentSessionHistoryQuerySchema = getTeacherTimetableQuerySchema.omit({ teacherId: true }).extend({ studentId: z.string().min(1), academicYearId: z.string().min(1) }).openapi("StudentSessionHistoryQuery");
+export const teacherSessionHistoryQuerySchema = getTeacherTimetableQuerySchema.extend({ academicYearId: z.string().min(1), classGroupId: z.string().min(1).optional(), classSubjectId: z.string().min(1).optional() }).openapi("TeacherSessionHistoryQuery");
+export const sessionHistoryResponseSchema = z.object({
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+  timeZone: z.string(),
+  hasMore: z.boolean(),
+  entries: z.array(timetableEventSchema.omit({ kind: true, classGroupId: true, title: true }).extend({
+    kind: z.enum(["lesson", "activity", "assessment", "daily"]),
+    classGroupId: z.string().optional(),
+    title: z.string(),
+    attendance: z.object({ status: z.enum(["present", "absent", "late"]), justificationStatus: z.enum(["none", "pending", "excused", "rejected"]), reason: z.string().nullable() }).nullable(),
+    attendanceComplete: z.boolean().nullable(),
+    logbookComplete: z.boolean().nullable(),
+  })),
+}).openapi("SessionHistoryResponse");

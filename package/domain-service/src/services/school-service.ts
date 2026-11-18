@@ -2,6 +2,7 @@ import type { SchoolCommandHandlerMap } from './commands/school-command-handlers
 import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
 import type { MarksQueueInput } from './queries/marks-review'
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
+import type { SessionHistoryInput } from './queries/session-history'
 import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetTeacherTimetableInput, TeacherTimetable } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
@@ -15,6 +16,7 @@ import { getAssessmentEditorContext } from './queries/assessment-editor-context'
 import { getGuardianPeriodResults } from './queries/guardian-period-results'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
+import { getStudentSessionHistory, getTeacherSessionHistory } from './queries/session-history'
 import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
 import { getTeacherSubjectPeriodSummary } from './queries/teacher-subject-period-summary'
 
@@ -284,6 +286,14 @@ export class SchoolService {
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {
     const repositories = await this.baseService.access.timetable.eventRepositories(input.classGroupId)
     return buildClassGroupTimetable(repositories, input)
+  }
+
+  getStudentSessionHistory(input: SessionHistoryInput & { studentId: string }) {
+    return getStudentSessionHistory(this.baseService, input)
+  }
+
+  getTeacherSessionHistory(input: SessionHistoryInput & { teacherId: string, classGroupId?: string, classSubjectId?: string }) {
+    return getTeacherSessionHistory(this.baseService, input)
   }
 
   async getTeacherTimetable(input: GetTeacherTimetableInput): Promise<TeacherTimetable> {
