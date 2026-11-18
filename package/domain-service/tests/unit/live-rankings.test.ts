@@ -26,8 +26,8 @@ test('mention points tie at captured school precision and scale revisions form s
   const ids = scores.map((_, i) => String(i))
   const assessment = new Assessment({ id: 'mention', classGroupId: 'class', classSubjectId: 'music', periodId: 'term', title: 'Performance', kind: AssessmentKind.Quiz, lessonSessionId: 'lesson', coefficient: 1, maxScore: 4, marksStatus: 'submitted', marksReview: { rosterStudentIds: ids, submittedBy: 'teacher' } })
   const results = scores.map((value, i) => new AssessmentResult({
-    id: ids[i],
-    studentId: ids[i],
+    id: String(i),
+    studentId: String(i),
     assessmentId: assessment.id,
     calculation: { mode: 'mention-first', value, reportedValue: Math.trunc(10 * value) / 10, policyRevision: 2, scaleId: 'mentions', scaleRevision: i === 2 ? 1 : 2, maximum: 4, units: 'points', decimalPlaces: 1, roundingMode: 'truncate', mention: { id: 'A', code: 'A', label: 'Mastery' }, provenance: 'mention-points' },
   }))
