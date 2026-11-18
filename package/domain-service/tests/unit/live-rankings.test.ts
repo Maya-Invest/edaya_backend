@@ -20,3 +20,21 @@ test('submitted ranks compare captured reporting precision and count eligible sc
   })
   expect(evaluationRankings([new Assessment({ ...assessment.data, marksStatus: 'draft', marksReview: {} })], marks).size).toBe(0)
 })
+
+test('mention points tie at captured school precision and scale revisions form separate cohorts', () => {
+  const scores = [3.25, 3.21, 1, 0]
+  const ids = scores.map((_, i) => String(i))
+  const assessment = new Assessment({ id: 'mention', classGroupId: 'class', classSubjectId: 'music', periodId: 'term', title: 'Performance', kind: AssessmentKind.Quiz, lessonSessionId: 'lesson', coefficient: 1, maxScore: 4, marksStatus: 'submitted', marksReview: { rosterStudentIds: ids, submittedBy: 'teacher' } })
+  const results = scores.map((value, i) => new AssessmentResult({
+    id: ids[i],
+    studentId: ids[i],
+    assessmentId: assessment.id,
+    calculation: { mode: 'mention-first', value, reportedValue: Math.trunc(10 * value) / 10, policyRevision: 2, scaleId: 'mentions', scaleRevision: i === 2 ? 1 : 2, maximum: 4, units: 'points', decimalPlaces: 1, roundingMode: 'truncate', mention: { id: 'A', code: 'A', label: 'Mastery' }, provenance: 'mention-points' },
+  }))
+  expect([...evaluationRankings([assessment], results).values()]).toEqual([
+    { rank: 1, participantCount: 3 },
+    { rank: 1, participantCount: 3 },
+    { rank: 3, participantCount: 3 },
+    { rank: 1, participantCount: 1 },
+  ])
+})
