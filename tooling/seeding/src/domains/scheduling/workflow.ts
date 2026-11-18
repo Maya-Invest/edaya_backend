@@ -123,7 +123,7 @@ export async function seedDevScheduling(
       id: progressAnchor.progress.id,
       classSubjectMatterId: progressAnchor.progress.classSubjectMatterId,
       lessonSessionId: progressLessonSessionId,
-      completedPercentage: progressAnchor.progress.completedPercentage,
+      completed: progressAnchor.progress.completed,
       notes: progressAnchor.progress.notes,
       recordedAt: seedDateAndTime(
         planningSessionDateForDayOfWeek(progressAnchor.dayOfWeek, weekStart),

@@ -565,27 +565,27 @@ export const clientBindings = {
       "classSubjectMatters": {
         "publicName": "class-subject-matters",
         "schemaName": "ClassSubjectMatter",
-        "allowDirectSave": true,
+        "allowDirectSave": false,
         "publicOperations": {
-          "create": true,
-          "update": true,
+          "create": false,
+          "update": false,
           "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
+          "batchCreate": false,
+          "batchUpdate": false,
           "batchDelete": true
         }
       },
       "classSubjectProgress": {
         "publicName": "class-subject-progress",
         "schemaName": "ClassSubjectProgress",
-        "allowDirectSave": true,
+        "allowDirectSave": false,
         "publicOperations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
         }
       },
       "activities": {

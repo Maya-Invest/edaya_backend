@@ -22,11 +22,12 @@ export function batchSaveChunkSize(columnCount: number): number {
  */
 export function buildConflictUpdateSet(
   table: PgTable,
+  writableKeys = Object.keys(getTableColumns(table)),
 ): Record<string, SQL> {
   const columns = getTableColumns(table)
   const set: Record<string, SQL> = {}
   for (const [key, column] of Object.entries(columns)) {
-    if (key === 'id') {
+    if (key === 'id' || !writableKeys.includes(key)) {
       continue
     }
     set[key] = sql.raw(`excluded."${column.name}"`)

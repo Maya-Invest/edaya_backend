@@ -30,7 +30,7 @@ function classSubjectProgressTenant(): EntityTenantResolver<ClassSubjectProgress
 
 export async function validateClassSubjectProgressSave(
   progress: ClassSubjectProgress,
-  existing: ClassSubjectProgress | undefined,
+  _existing: ClassSubjectProgress | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
   const [matter, lessonSession] = await Promise.all([
@@ -50,9 +50,5 @@ export async function validateClassSubjectProgressSave(
   })
   if (duplicate && duplicate.id !== progress.id) {
     throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${progress.classSubjectMatterId} and lesson session ${progress.lessonSessionId}`)
-  }
-  const previousPercentage = existing?.completedPercentage ?? matter.completedPercentage
-  if (progress.completedPercentage < previousPercentage) {
-    throw new BusinessRuleViolationError('PROGRESS_PERCENTAGE_DECREASED', 'completedPercentage must not decrease cumulative class subject matter progress')
   }
 }

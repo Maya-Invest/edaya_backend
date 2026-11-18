@@ -106,18 +106,32 @@ describe('teacher corrections across workflows', () => {
     const f = await fixture()
     await f.repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'sm1', subjectId: 'subject-math', name: 'Numbers', sequenceOrder: 1 })))
     await f.repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'matter1', classSubjectId: 'cs1', subjectMatterId: 'sm1', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
-    const proposal = { workflow: 'logbook' as const, targetId: 'session-0', sessionNote: 'Introduction', progress: [{ matterId: 'matter1', completedPercentage: 80 }] }
+    for (const [id, name] of [['sm2', 'Addition'], ['sm3', 'Fractions']] as const) {
+      await f.repositories.subjectMatters.save(new SubjectMatter(withShortName({ id, subjectId: 'subject-math', name, sequenceOrder: 2 })))
+      await f.repositories.classSubjectMatters.save(new ClassSubjectMatter({ id, classSubjectId: 'cs1', subjectMatterId: id, status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
+    }
+    await f.repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'sm1', subjectId: 'subject-math', name: 'Numbers', progressWeight: 2, sequenceOrder: 1 })))
+    const sibling = { matterId: 'sm2', completed: false, notes: 'Practice sums' }
+    const proposal = { workflow: 'logbook' as const, formatVersion: 2 as const, targetId: 'session-0', sessionNote: 'Introduction', progress: [{ matterId: 'matter1', completed: true }, sibling] }
+    await expect(f.teacher.teacherCorrectionsWorkflow.saveLogbook({ requestId: 'invalid', expectedVersion: 0, proposal: { ...proposal, progress: [...proposal.progress, { matterId: 'foreign', completed: true }] } })).rejects.toThrow()
+    expect(await f.repositories.classSubjectProgress.count({ lessonSessionId: 'session-0' })).toBe(0)
     const state = await f.teacher.teacherCorrectionsWorkflow.saveLogbook({ requestId: 'save', expectedVersion: 0, proposal })
     expect(state.locked).toBe(false)
+    expect((await f.repositories.classSubjects.findById('cs1'))?.completedPercentage).toBe(63)
+    const originalSibling = (await f.repositories.classSubjectProgress.findOne({ lessonSessionId: 'session-0', classSubjectMatterId: 'sm2' }))!.data
+    const command = { requestId: 'save', expectedVersion: 0, proposal }
+    expect((await f.teacher.getTeacherWorkflowState({ proposal, legacyReceipt: { command: 'saveTeacherLogbook', body: command } })).delivered).toBe(true)
+    await f.teacher.teacherCorrectionsWorkflow.saveLogbook(command)
     await f.teacher.getTeacherWorkflowState({ proposal })
     expect((await f.repositories.teacherCorrections.state('sch1', 'logbook', 'session-0'))?.locked).toBe(false)
     await f.reviewer.teacherCorrectionsWorkflow.validateLogbook({ requestId: 'validate', lessonSessionIds: ['session-0'] })
     await expect(f.teacher.teacherCorrectionsWorkflow.saveLogbook({ requestId: 'bypass', expectedVersion: 2, proposal })).rejects.toMatchObject({ code: 'CORRECTION_REQUIRED' })
-    const row = await f.teacher.teacherCorrectionsWorkflow.request({ requestId: 'correction', expectedVersion: 2, reason: 'Wrong progress', proposal: { ...proposal, sessionNote: 'Revised introduction', progress: [{ matterId: 'matter1', completedPercentage: 40 }] } })
+    const row = await f.teacher.teacherCorrectionsWorkflow.request({ requestId: 'correction', expectedVersion: 2, reason: 'Wrong progress', proposal: { ...proposal, sessionNote: 'Revised introduction', progress: [{ matterId: 'matter1', completed: false }, { matterId: 'sm2', completed: false }] } })
     await f.reviewer.teacherCorrectionsWorkflow.decide('approve', { requestId: 'approve', correctionId: row.id, expectedVersion: 0 })
     expect((await f.repositories.lessonSessions.findById('session-0'))?.sessionNote).toBe('Revised introduction')
-    expect((await f.repositories.classSubjectMatters.findById('matter1'))?.completedPercentage).toBe(40)
-    expect((await f.repositories.classSubjects.findById('cs1'))?.completedPercentage).toBe(40)
+    expect((await f.repositories.classSubjectMatters.findById('matter1'))?.completedPercentage).toBe(50)
+    expect((await f.repositories.classSubjects.findById('cs1'))?.completedPercentage).toBe(38)
+    expect((await f.repositories.classSubjectProgress.findById(originalSibling.id))!.data).toEqual(originalSibling)
   })
 
   test('incident authors edit until takeover; follow-ups retain immutable original facts', async () => {

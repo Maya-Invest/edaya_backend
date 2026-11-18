@@ -1,9 +1,9 @@
-import type { Subject, SubjectCategoryEntity, SubjectCategoryInput, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
+import type { ClassSubjectMatter, Subject, SubjectCategoryEntity, SubjectCategoryInput, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import type { SyncClassSubjectOptions } from './subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity, withShortName } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity, withShortName } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { assertTeacherWorkflowWrite } from '../../capabilities/academics/teacher-workflow-boundaries'
 import { assertParticipationRevision, saveSubjectPolicy } from '../../capabilities/subject-enrollment/policy'
@@ -18,7 +18,7 @@ export interface RecordLessonSessionProgressInput {
   id: string
   classSubjectMatterId: string
   lessonSessionId: string
-  completedPercentage: number
+  completed: boolean
   notes?: string
   recordedAt?: Date
 }
@@ -104,7 +104,8 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
 
   async configureSubjectMatter(input: SubjectMatterInput): Promise<SubjectMatter> {
     return this.baseService.atomicExecution.execute(async () => {
-      const chapter = new SubjectMatterEntity(await this.namedInput('subjectMatters', input))
+      const existing = await this.repositories.subjectMatters.findById(input.id)
+      const chapter = new SubjectMatterEntity(await this.namedInput('subjectMatters', { ...input, progressWeight: input.progressWeight ?? existing?.progressWeight ?? 1 }))
       await this.baseService.entities.subjectMatters.save(chapter)
       for (const offering of await this.repositories.classSubjects.list({ subjectId: chapter.subjectId }))
         await syncSubjectMatterToClassSubject(this.baseService, offering, chapter)
@@ -232,7 +233,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     id,
     classSubjectMatterId,
     lessonSessionId,
-    completedPercentage,
+    completed,
     notes,
     recordedAt,
   }: RecordLessonSessionProgressInput): Promise<ClassSubjectProgress> {
@@ -254,40 +255,34 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.access.logbook.assertRecordSession(lessonSessionId)
 
       const existing = await this.repositories.classSubjectProgress.findOne({ classSubjectMatterId, lessonSessionId })
-      if (existing) {
+      if (existing || await this.repositories.classSubjectProgress.findById(id)) {
         throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and lesson session ${lessonSessionId}`)
       }
-      if (completedPercentage < matter.completedPercentage) {
-        throw new BusinessRuleViolationError('PROGRESS_PERCENTAGE_DECREASED', 'completedPercentage must not decrease cumulative class subject matter progress')
-      }
-
       const snapshot = new ClassSubjectProgress({
         id,
         classSubjectMatterId,
         lessonSessionId,
-        completedPercentage,
+        completed,
         recordedByStaffId: resolveAuditActorId(this.baseService.actor),
         notes,
         recordedAt,
       })
-      const updatedMatter = new ClassSubjectMatter({
-        id: matter.id,
-        classSubjectId: matter.classSubjectId,
-        subjectMatterId: matter.subjectMatterId,
-        status: snapshot.status,
-        completedPercentage: snapshot.completedPercentage,
-        updatedByStaffId: snapshot.recordedByStaffId,
-        startedAt: matter.startedAt ?? (snapshot.completedPercentage > 0 ? snapshot.recordedAt : undefined),
-        completedAt: snapshot.status === ClassSubjectMatterStatus.Completed ? snapshot.recordedAt : undefined,
-        notes: snapshot.notes ?? matter.notes,
-        updatedAt: snapshot.recordedAt,
-      })
-
-      const updatedSubject = await this.buildClassSubjectAggregate(classSubject, updatedMatter)
-      const scopes = await this.baseService.access.logbook.assertProgress({ snapshot, previousMatter: matter, matter: updatedMatter, previousSubject: classSubject, subject: updatedSubject })
+      const state = await this.baseService.repositories.teacherCorrections.state(this.baseService.actor.schoolId, 'logbook', lessonSessionId)
+      if (state?.locked)
+        throw new BusinessRuleViolationError('CORRECTION_REQUIRED', 'Request a correction to change a validated logbook')
+      const scopes = await this.baseService.access.logbook.assertProgress({ snapshot, previousMatter: matter, matter, previousSubject: classSubject, subject: classSubject })
       await this.repositories.classSubjectProgress.forAccess(scopes.snapshot).save(snapshot)
-      await this.repositories.classSubjectMatters.forAccess(scopes.matter).save(updatedMatter)
-      await this.repositories.classSubjects.forAccess(scopes.subject).save(updatedSubject)
+      const version = (state?.version ?? 0) + 1
+      const actorId = resolveAuditActorId(this.baseService.actor)
+      await this.baseService.repositories.teacherCorrections.saveState({
+        schoolId: this.baseService.actor.schoolId,
+        workflow: 'logbook',
+        targetId: lessonSessionId,
+        version,
+        locked: false,
+        payload: { chapterId: matter.id },
+        history: [...state?.history ?? [], { at: new Date().toISOString(), subjectId: actorId ?? this.baseService.actor.schoolId, action: 'chapter_recorded', payload: { chapterId: matter.id, completed } }],
+      })
       return snapshot
     }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
@@ -325,19 +320,5 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     return classSubject
-  }
-
-  private async buildClassSubjectAggregate(
-    classSubject: ClassSubject,
-    updatedMatter: ClassSubjectMatter,
-  ): Promise<ClassSubject> {
-    const matters = await this.repositories.classSubjectMatters.list({ classSubjectId: classSubject.id })
-    const normalizedMatters = matters.map(matter => matter.id === updatedMatter.id ? updatedMatter : matter)
-    if (!normalizedMatters.some(matter => matter.id === updatedMatter.id)) {
-      normalizedMatters.push(updatedMatter)
-    }
-    const total = normalizedMatters.reduce((sum, matter) => sum + matter.completedPercentage, 0)
-    const completedPercentage = Math.round(total / normalizedMatters.length)
-    return new ClassSubject({ ...classSubject.data, completedPercentage })
   }
 }

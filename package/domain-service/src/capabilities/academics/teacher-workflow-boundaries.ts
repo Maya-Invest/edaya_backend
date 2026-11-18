@@ -5,6 +5,10 @@ import { BusinessRuleViolationError } from '@edaya/core'
 
 /** Shared by single, batch and delete paths. Named commands own lifecycle transitions. */
 export async function assertTeacherWorkflowWrite(actor: SchoolScopedActorMetadata, resource: CoreEntityKey, value: unknown, existing: unknown, repositories: SchoolRepositories) {
+  if (resource === 'lessonSessions' && existing && value && 'sessionNote' in (value as object)
+    && (value as CoreEntityMap['lessonSessions']).sessionNote !== (existing as CoreEntityMap['lessonSessions']).sessionNote) {
+    throw new BusinessRuleViolationError('LOGBOOK_COMMAND_REQUIRED', 'Update the app and use the logbook editor to change lesson notes')
+  }
   if (actor.kind !== 'teacher')
     return
   if (resource === 'incidents' && existing) {

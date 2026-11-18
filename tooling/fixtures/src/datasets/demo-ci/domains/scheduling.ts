@@ -149,7 +149,7 @@ export const demoCiSchedulingSessionProgressAnchors = [
     progress: {
       id: 'ci-csp-6a-math-fractions',
       classSubjectMatterId: 'csm-ci-cs-6a-math-ci-sm-math-fractions',
-      completedPercentage: 60,
+      completed: false,
       notes: 'Exercices sur les fractions irréductibles et les pourcentages.',
     },
     scheduleId: 'sch-ci-6a-math-mon',
@@ -160,7 +160,7 @@ export const demoCiSchedulingSessionProgressAnchors = [
     progress: {
       id: 'ci-csp-6a-math-geometrie',
       classSubjectMatterId: 'csm-ci-cs-6a-math-ci-sm-math-geometrie',
-      completedPercentage: 25,
+      completed: false,
       notes: 'Construction de triangles avec règle et compas.',
     },
     scheduleId: 'sch-ci-6a-math-wed',
@@ -171,7 +171,7 @@ export const demoCiSchedulingSessionProgressAnchors = [
     progress: {
       id: 'ci-csp-6b-fr-lecture',
       classSubjectMatterId: 'csm-ci-cs-6b-fr-ci-sm-fr-lecture',
-      completedPercentage: 40,
+      completed: false,
       notes: 'Analyse d\'un texte narratif — repérage des personnages.',
     },
     scheduleId: 'sch-ci-6b-fr-mon',

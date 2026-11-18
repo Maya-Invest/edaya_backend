@@ -748,12 +748,15 @@ describe('authorization policies against native repository scopes', () => {
     const session = new LessonSession({ id: 'logbook', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z'), displayLabel: 'Math', sessionNote: 'First lesson' })
     await repositories.lessonSessions.save(session)
     const lessons = schoolService(teacher).baseService.entities.lessonSessions
-    await lessons.save(session.copyWith({ sessionNote: 'Fractions', displayLabel: 'Math review' }))
+    await expect(lessons.save(session.copyWith({ sessionNote: 'Fractions' }))).rejects.toMatchObject({ code: 'LOGBOOK_COMMAND_REQUIRED' })
+    const proposal = { workflow: 'logbook' as const, formatVersion: 2 as const, targetId: session.id, sessionNote: 'Fractions', progress: [] }
+    const workflow = schoolService(teacher).teacherCorrectionsWorkflow
+    await workflow.saveLogbook({ requestId: 'teacher-logbook', expectedVersion: 0, proposal })
     expect((await repositories.lessonSessions.findById(session.id))?.sessionNote).toBe('Fractions')
     await expect(lessons.save(session.copyWith({ startsAt: new Date('2026-05-01T08:00:00Z') }))).rejects.toThrow()
     await expect(lessons.save(session.copyWith({ classSubjectId: 'french-a' }))).rejects.toThrow()
     await db.exec('DELETE FROM teacher_assignments')
-    await expect(lessons.save(session.copyWith({ sessionNote: 'Removed teacher' }))).rejects.toThrow()
+    await expect(workflow.saveLogbook({ requestId: 'removed-teacher-logbook', expectedVersion: 1, proposal: { ...proposal, sessionNote: 'Removed teacher' } })).rejects.toThrow()
     expect((await repositories.lessonSessions.findById(session.id))?.sessionNote).toBe('Fractions')
   })
 
@@ -763,11 +766,11 @@ describe('authorization policies against native repository scopes', () => {
     const lesson = new LessonSession({ id: 'progress-lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z'), displayLabel: 'Math' })
     await repositories.lessonSessions.save(lesson)
     const service = schoolService(teacher)
-    const progress = await service.academicsWorkflow.recordLessonSessionProgress({ id: 'snapshot', classSubjectMatterId: 'chapter-a', lessonSessionId: lesson.id, completedPercentage: 40, notes: 'Worked examples' })
-    expect(progress.completedPercentage).toBe(40)
-    expect((await repositories.classSubjectMatters.findById('chapter-a'))?.completedPercentage).toBe(40)
-    expect((await repositories.classSubjects.findById('math-a'))?.completedPercentage).toBe(40)
-    await expect(service.academicsWorkflow.recordLessonSessionProgress({ id: 'another-snapshot', classSubjectMatterId: 'chapter-a', lessonSessionId: lesson.id, completedPercentage: 60 })).rejects.toThrow()
+    const progress = await service.academicsWorkflow.recordLessonSessionProgress({ id: 'snapshot', classSubjectMatterId: 'chapter-a', lessonSessionId: lesson.id, completed: false, notes: 'Worked examples' })
+    expect(progress.completed).toBe(false)
+    expect((await repositories.classSubjectMatters.findById('chapter-a'))?.completedPercentage).toBe(50)
+    expect((await repositories.classSubjects.findById('math-a'))?.completedPercentage).toBe(50)
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({ id: 'another-snapshot', classSubjectMatterId: 'chapter-a', lessonSessionId: lesson.id, completed: false })).rejects.toThrow()
     expect(await repositories.classSubjectProgress.count()).toBe(1)
   })
 
@@ -839,7 +842,7 @@ describe('authorization policies against native repository scopes', () => {
     await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 })))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'allocation-delete', classSubjectId: 'math-a', subjectMatterId: 'topic-delete', status: ClassSubjectMatterStatus.InProgress, completedPercentage: 30 }))
     await repositories.lessonSessions.save(new LessonSession({ id: 'progress-lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z'), displayLabel: 'Math' }))
-    await repositories.classSubjectProgress.save(new ClassSubjectProgress({ id: 'saved-progress', classSubjectMatterId: 'allocation-delete', lessonSessionId: 'progress-lesson', completedPercentage: 30 }))
+    await repositories.classSubjectProgress.save(new ClassSubjectProgress({ id: 'saved-progress', classSubjectMatterId: 'allocation-delete', lessonSessionId: 'progress-lesson', completed: false }))
     await expect(schoolService().baseService.entities.classSubjectMatters.delete('allocation-delete')).rejects.toMatchObject({ code: 'CLASS_SUBJECT_MATTER_HAS_PROGRESS' })
     expect(await repositories.classSubjectProgress.findById('saved-progress')).toBeDefined()
     expect(await repositories.classSubjectMatters.findById('allocation-delete')).toBeDefined()

@@ -36,7 +36,7 @@ export interface FixtureSchedulingSessionProgressAnchor {
   progress: {
     id: string
     classSubjectMatterId: string
-    completedPercentage: number
+    completed: boolean
     notes: string
   }
   scheduleId: string

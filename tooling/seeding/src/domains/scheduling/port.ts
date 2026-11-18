@@ -47,7 +47,7 @@ export interface LessonSessionProgressSeedRecord {
   id: string
   classSubjectMatterId: string
   lessonSessionId: string
-  completedPercentage: number
+  completed: boolean
   notes?: string
   recordedAt: string
 }

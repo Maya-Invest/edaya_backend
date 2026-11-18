@@ -78,6 +78,7 @@
                 {{#each chapters}}
                   <li class="chapter">
                     <p class="chapter-name">{{name}}</p>
+                    {{#if coverageLabel}}<p class="chapter-meta">{{coverageLabel}}</p>{{/if}}
                     {{#if completedPercentage}}
                       <p class="chapter-meta">{{completedPercentage}}%</p>
                     {{/if}}

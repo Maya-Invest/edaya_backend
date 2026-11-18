@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, doublePrecision, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { boolean, check, doublePrecision, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const academicYears = pgTable('academic_years', {
@@ -98,10 +98,11 @@ export const subjectMatters = pgTable('subject_matters', {
   name: text('name').notNull(),
   description: text('description'),
   sequenceOrder: integer('sequence_order').notNull(),
+  progressWeight: doublePrecision('progress_weight').notNull().default(1),
   estimatedHours: integer('estimated_hours'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   shortName: text('short_name').notNull(),
-}, table => definePerformanceIndexes('subject_matters', table))
+}, table => [...definePerformanceIndexes('subject_matters', table), check('subject_matters_progress_weight_check', sql`${table.progressWeight} > 0 AND ${table.progressWeight} < 'Infinity'::double precision`)])
 
 // 23. Class Group Table
 
@@ -128,10 +129,13 @@ export const classSubjects = pgTable('class_subjects', {
   periodsPerWeek: integer('periods_per_week'),
   minPeriodSpan: integer('min_period_span'),
   maxPeriodSpan: integer('max_period_span'),
+  chapterCount: integer('chapter_count').notNull().default(0),
+  ongoingChapterCount: integer('ongoing_chapter_count').notNull().default(0),
+  completedChapterCount: integer('completed_chapter_count').notNull().default(0),
   participationRevision: integer('participation_revision').notNull().default(0),
   isOffered: boolean('is_offered').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
-  completedPercentage: integer('completed_percentage').notNull(),
+  completedPercentage: integer('completed_percentage').notNull().default(0),
 }, table => [...definePerformanceIndexes('class_subjects', table), uniqueIndex('class_subjects_class_subject_uidx').on(table.classGroupId, table.subjectId)])
 
 // 28. Activity Table (school program / club)
@@ -140,14 +144,14 @@ export const classSubjectMatters = pgTable('class_subject_matters', {
   id: text('id').primaryKey(),
   classSubjectId: text('class_subject_id').notNull(),
   subjectMatterId: text('subject_matter_id').notNull(),
-  status: text('status').notNull(),
-  completedPercentage: integer('completed_percentage').notNull(),
+  status: text('status').notNull().default('not_started'),
+  completedPercentage: integer('completed_percentage').notNull().default(0),
   updatedByStaffId: text('updated_by_staff_id'),
   startedAt: timestamp('started_at', { mode: 'date' }),
   completedAt: timestamp('completed_at', { mode: 'date' }),
   notes: text('notes'),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
-}, table => definePerformanceIndexes('class_subject_matters', table))
+}, table => [...definePerformanceIndexes('class_subject_matters', table), uniqueIndex('logbook_class_chapter_uidx').on(table.classSubjectId, table.subjectMatterId)])
 
 // 26. Class Subject Progress Table
 
@@ -155,11 +159,16 @@ export const classSubjectProgress = pgTable('class_subject_progress', {
   id: text('id').primaryKey(),
   classSubjectMatterId: text('class_subject_matter_id').notNull(),
   lessonSessionId: text('lesson_session_id').notNull(),
-  completedPercentage: integer('completed_percentage').notNull(),
+  completed: boolean('completed'),
+  legacyPercentage: integer('completed_percentage'),
   recordedByStaffId: text('recorded_by_staff_id'),
   notes: text('notes'),
   recordedAt: timestamp('recorded_at', { mode: 'date' }).notNull(),
-})
+}, table => [
+  uniqueIndex('logbook_lesson_chapter_uidx').on(table.lessonSessionId, table.classSubjectMatterId),
+  index('logbook_chapter_idx').on(table.classSubjectMatterId),
+  check('logbook_counted_or_legacy_zero', sql`${table.completed} IS NOT NULL OR ${table.legacyPercentage} IS NOT DISTINCT FROM 0`),
+])
 
 // 27. Assessment Table
 

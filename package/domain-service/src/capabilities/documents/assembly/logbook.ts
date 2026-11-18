@@ -5,6 +5,7 @@ import {
   DocumentSourceType,
   OccurrenceStatus,
 } from '@edaya/core'
+import { digestCommandRequest } from '../../../services/commands/command-execution'
 import { buildLogbookV1Payload as composeLogbook } from '../build-logbook-v1-payload'
 
 import { catalogClassName, catalogLangFromLocale, catalogMatter, catalogPeriodLabel, catalogSubjectName } from '../catalog-label'
@@ -63,7 +64,7 @@ export async function assembleLogbook(
       progress: context.progressRecords.map(progress => ({
         lessonSessionId: progress.lessonSessionId,
         classSubjectMatterId: progress.classSubjectMatterId,
-        completedPercentage: progress.completedPercentage,
+        completed: progress.completed,
         notes: progress.notes,
       })),
       chapters: [...chapterNameByMatterLinkId.entries()].map(([classSubjectMatterId, name]) => ({ classSubjectMatterId, name })),
@@ -82,17 +83,17 @@ export async function assembleLogbook(
       fail(DOCUMENT_FAILURES.SOURCE_MISSING, `No logbook content for class ${context.classGroup.name}`)
     throw error
   }
-  const sessionStamp = context.lessonSessions.map(session => session.id).sort().join(',')
+  const sourceVersion = await digestCommandRequest({ formatVersion: 2, payload, periodId: context.period?.id, classSubjectId: input.classSubjectId })
   return {
     academicYearId: context.academicYear?.id ?? context.classGroup.academicYearId,
     sourceType: DocumentSourceType.ClassLogbook,
     sourceId: context.classGroup.id,
-    sourceVersion: `${sessionStamp}:${context.period?.id ?? ''}`,
+    sourceVersion,
     classGroupId: context.classGroup.id,
     portraitRequired: false,
     snapshot: {
       facts: { kind: 'logbook.v1', ...payload },
-      sourceVersion: `${sessionStamp}:${context.period?.id ?? ''}`,
+      sourceVersion,
       locale: input.locale,
       timeZone,
       ...(context.period ? { academicPeriodId: context.period.id } : {}),

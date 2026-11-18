@@ -14066,6 +14066,11 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
+          "progressWeight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
           "estimatedHours": {
             "type": "number",
             "nullable": true,
@@ -14105,6 +14110,11 @@
             "minLength": 1
           },
           "sequenceOrder": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "progressWeight": {
             "type": "number",
             "minimum": 0,
             "exclusiveMinimum": true
@@ -14277,6 +14287,21 @@
             "maximum": 100,
             "default": 0
           },
+          "chapterCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "ongoingChapterCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "completedChapterCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
           "participationRevision": {
             "type": "integer",
             "minimum": 0,
@@ -14360,8 +14385,13 @@
             "type": "string",
             "minLength": 1
           },
-          "completedPercentage": {
-            "type": "number",
+          "completed": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "legacyPercentage": {
+            "type": "integer",
+            "nullable": true,
             "minimum": 0,
             "maximum": 100
           },
@@ -14381,7 +14411,7 @@
           "id",
           "classSubjectMatterId",
           "lessonSessionId",
-          "completedPercentage"
+          "completed"
         ]
       },
       "RecordLessonSessionProgressCommand": {
@@ -14399,10 +14429,8 @@
             "type": "string",
             "minLength": 1
           },
-          "completedPercentage": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100
+          "completed": {
+            "type": "boolean"
           },
           "notes": {
             "type": "string",
@@ -14415,8 +14443,9 @@
           "id",
           "classSubjectMatterId",
           "lessonSessionId",
-          "completedPercentage"
-        ]
+          "completed"
+        ],
+        "additionalProperties": false
       },
       "ReportModule": {
         "type": "object",
@@ -16728,6 +16757,12 @@
             "type": "integer",
             "minimum": 0
           },
+          "legacySourceConflict": {
+            "type": "boolean"
+          },
+          "legacyNeedsReview": {
+            "type": "boolean"
+          },
           "baseVersion": {
             "type": "integer",
             "minimum": 0
@@ -16841,6 +16876,12 @@
                       "logbook"
                     ]
                   },
+                  "formatVersion": {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
                   "targetId": {
                     "type": "string",
                     "minLength": 1
@@ -16859,15 +16900,18 @@
                           "type": "string",
                           "minLength": 1
                         },
-                        "completedPercentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
+                        "completed": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 20000
                         }
                       },
                       "required": [
                         "matterId",
-                        "completedPercentage"
+                        "completed"
                       ],
                       "additionalProperties": false
                     },
@@ -16876,6 +16920,7 @@
                 },
                 "required": [
                   "workflow",
+                  "formatVersion",
                   "targetId",
                   "sessionNote",
                   "progress"
@@ -17036,6 +17081,12 @@
                       "logbook"
                     ]
                   },
+                  "formatVersion": {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
                   "targetId": {
                     "type": "string",
                     "minLength": 1
@@ -17054,15 +17105,18 @@
                           "type": "string",
                           "minLength": 1
                         },
-                        "completedPercentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
+                        "completed": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 20000
                         }
                       },
                       "required": [
                         "matterId",
-                        "completedPercentage"
+                        "completed"
                       ],
                       "additionalProperties": false
                     },
@@ -17071,6 +17125,7 @@
                 },
                 "required": [
                   "workflow",
+                  "formatVersion",
                   "targetId",
                   "sessionNote",
                   "progress"
@@ -17264,6 +17319,12 @@
                             "logbook"
                           ]
                         },
+                        "formatVersion": {
+                          "type": "number",
+                          "enum": [
+                            2
+                          ]
+                        },
                         "targetId": {
                           "type": "string",
                           "minLength": 1
@@ -17282,15 +17343,18 @@
                                 "type": "string",
                                 "minLength": 1
                               },
-                              "completedPercentage": {
-                                "type": "number",
-                                "minimum": 0,
-                                "maximum": 100
+                              "completed": {
+                                "type": "boolean"
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true,
+                                "maxLength": 20000
                               }
                             },
                             "required": [
                               "matterId",
-                              "completedPercentage"
+                              "completed"
                             ],
                             "additionalProperties": false
                           },
@@ -17299,6 +17363,7 @@
                       },
                       "required": [
                         "workflow",
+                        "formatVersion",
                         "targetId",
                         "sessionNote",
                         "progress"
@@ -17459,6 +17524,12 @@
                             "logbook"
                           ]
                         },
+                        "formatVersion": {
+                          "type": "number",
+                          "enum": [
+                            2
+                          ]
+                        },
                         "targetId": {
                           "type": "string",
                           "minLength": 1
@@ -17477,15 +17548,18 @@
                                 "type": "string",
                                 "minLength": 1
                               },
-                              "completedPercentage": {
-                                "type": "number",
-                                "minimum": 0,
-                                "maximum": 100
+                              "completed": {
+                                "type": "boolean"
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true,
+                                "maxLength": 20000
                               }
                             },
                             "required": [
                               "matterId",
-                              "completedPercentage"
+                              "completed"
                             ],
                             "additionalProperties": false
                           },
@@ -17494,6 +17568,7 @@
                       },
                       "required": [
                         "workflow",
+                        "formatVersion",
                         "targetId",
                         "sessionNote",
                         "progress"
@@ -17708,6 +17783,12 @@
                       "logbook"
                     ]
                   },
+                  "formatVersion": {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
                   "targetId": {
                     "type": "string",
                     "minLength": 1
@@ -17726,15 +17807,18 @@
                           "type": "string",
                           "minLength": 1
                         },
-                        "completedPercentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
+                        "completed": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 20000
                         }
                       },
                       "required": [
                         "matterId",
-                        "completedPercentage"
+                        "completed"
                       ],
                       "additionalProperties": false
                     },
@@ -17743,6 +17827,7 @@
                 },
                 "required": [
                   "workflow",
+                  "formatVersion",
                   "targetId",
                   "sessionNote",
                   "progress"
@@ -17929,6 +18014,12 @@
                       "logbook"
                     ]
                   },
+                  "formatVersion": {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
                   "targetId": {
                     "type": "string",
                     "minLength": 1
@@ -17947,15 +18038,18 @@
                           "type": "string",
                           "minLength": 1
                         },
-                        "completedPercentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
+                        "completed": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 20000
                         }
                       },
                       "required": [
                         "matterId",
-                        "completedPercentage"
+                        "completed"
                       ],
                       "additionalProperties": false
                     },
@@ -17964,6 +18058,7 @@
                 },
                 "required": [
                   "workflow",
+                  "formatVersion",
                   "targetId",
                   "sessionNote",
                   "progress"
@@ -18176,6 +18271,12 @@
                   "logbook"
                 ]
               },
+              "formatVersion": {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
               "targetId": {
                 "type": "string",
                 "minLength": 1
@@ -18194,15 +18295,18 @@
                       "type": "string",
                       "minLength": 1
                     },
-                    "completedPercentage": {
-                      "type": "number",
-                      "minimum": 0,
-                      "maximum": 100
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 20000
                     }
                   },
                   "required": [
                     "matterId",
-                    "completedPercentage"
+                    "completed"
                   ],
                   "additionalProperties": false
                 },
@@ -18211,6 +18315,7 @@
             },
             "required": [
               "workflow",
+              "formatVersion",
               "targetId",
               "sessionNote",
               "progress"
@@ -27153,6 +27258,21 @@
                   "maximum": 100,
                   "default": 0
                 },
+                "chapterCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "ongoingChapterCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "completedChapterCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0
+                },
                 "participationRevision": {
                   "type": "integer",
                   "minimum": 0,
@@ -27627,6 +27747,28 @@
       "TeacherWorkflowEligibilityResponse": {
         "type": "object",
         "properties": {
+          "historicalReferences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matterId": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "matterId",
+                "notes"
+              ]
+            }
+          },
+          "delivered": {
+            "type": "boolean"
+          },
           "version": {
             "type": "number"
           },
@@ -27734,6 +27876,12 @@
                       "logbook"
                     ]
                   },
+                  "formatVersion": {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
                   "targetId": {
                     "type": "string",
                     "minLength": 1
@@ -27752,15 +27900,18 @@
                           "type": "string",
                           "minLength": 1
                         },
-                        "completedPercentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
+                        "completed": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 20000
                         }
                       },
                       "required": [
                         "matterId",
-                        "completedPercentage"
+                        "completed"
                       ],
                       "additionalProperties": false
                     },
@@ -27769,6 +27920,7 @@
                 },
                 "required": [
                   "workflow",
+                  "formatVersion",
                   "targetId",
                   "sessionNote",
                   "progress"
@@ -28018,6 +28170,12 @@
                       "logbook"
                     ]
                   },
+                  "formatVersion": {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
                   "targetId": {
                     "type": "string",
                     "minLength": 1
@@ -28036,15 +28194,18 @@
                           "type": "string",
                           "minLength": 1
                         },
-                        "completedPercentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
+                        "completed": {
+                          "type": "boolean"
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true,
+                          "maxLength": 20000
                         }
                       },
                       "required": [
                         "matterId",
-                        "completedPercentage"
+                        "completed"
                       ],
                       "additionalProperties": false
                     },
@@ -28053,6 +28214,7 @@
                 },
                 "required": [
                   "workflow",
+                  "formatVersion",
                   "targetId",
                   "sessionNote",
                   "progress"
@@ -28110,6 +28272,29 @@
                 ],
                 "additionalProperties": false
               }
+            ]
+          },
+          "legacyReceipt": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "string",
+                "enum": [
+                  "saveTeacherLogbook",
+                  "requestTeacherCorrection",
+                  "reviseTeacherCorrection"
+                ]
+              },
+              "body": {
+                "type": "object",
+                "additionalProperties": {
+                  "nullable": true
+                }
+              }
+            },
+            "required": [
+              "command",
+              "body"
             ]
           }
         },
@@ -34619,38 +34804,8 @@
       "Filter_38": {
         "type": "object"
       },
-      "ClassSubjectMattersBatchSave": {
-        "type": "object",
-        "properties": {
-          "entities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClassSubjectMatter"
-            },
-            "maxItems": 100
-          }
-        },
-        "required": [
-          "entities"
-        ]
-      },
       "Filter_39": {
         "type": "object"
-      },
-      "ClassSubjectProgressBatchSave": {
-        "type": "object",
-        "properties": {
-          "entities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClassSubjectProgress"
-            },
-            "maxItems": 100
-          }
-        },
-        "required": [
-          "entities"
-        ]
       },
       "Filter_40": {
         "type": "object"
@@ -121328,13 +121483,13 @@
         "x-edaya-entity-key": "classSubjectMatters",
         "x-edaya-entity-public-name": "class-subject-matters",
         "x-edaya-response-schema": "ClassSubjectMatter",
-        "x-edaya-allow-direct-save": true,
+        "x-edaya-allow-direct-save": false,
         "x-edaya-public-operations": {
-          "create": true,
-          "update": true,
+          "create": false,
+          "update": false,
           "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
+          "batchCreate": false,
+          "batchUpdate": false,
           "batchDelete": true
         },
         "requestBody": {
@@ -122004,152 +122159,6 @@
         }
       }
     },
-    "/core/entities/class-subject-matters/save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Save Class Subject Matters",
-        "operationId": "entities.classSubjectMatters.save",
-        "requestBody": {
-          "description": "Class Subject Matters entity",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassSubjectMatter"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Saved Class Subject Matters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassSubjectMatter"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/core/entities/class-subject-matters/delete": {
       "post": {
         "tags": [
@@ -122233,163 +122242,6 @@
           },
           "403": {
             "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/class-subject-matters/batch-save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch save Class Subject Matters",
-        "operationId": "entities.classSubjectMatters.batchSave",
-        "requestBody": {
-          "description": "Class Subject Matters batch save request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassSubjectMattersBatchSave"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch saved Class Subject Matters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ids": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "ids"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -122590,14 +122442,14 @@
         "x-edaya-entity-key": "classSubjectProgress",
         "x-edaya-entity-public-name": "class-subject-progress",
         "x-edaya-response-schema": "ClassSubjectProgress",
-        "x-edaya-allow-direct-save": true,
+        "x-edaya-allow-direct-save": false,
         "x-edaya-public-operations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
         },
         "requestBody": {
           "description": "Class Subject Progress query",
@@ -123213,581 +123065,6 @@
           },
           "404": {
             "description": "Class Subject Progress not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/class-subject-progress/save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Save Class Subject Progress",
-        "operationId": "entities.classSubjectProgress.save",
-        "requestBody": {
-          "description": "Class Subject Progress entity",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassSubjectProgress"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Saved Class Subject Progress",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassSubjectProgress"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/class-subject-progress/delete": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Delete Class Subject Progress",
-        "operationId": "entities.classSubjectProgress.delete",
-        "requestBody": {
-          "description": "Class Subject Progress delete request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CoreEntityDelete"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Deleted Class Subject Progress",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/class-subject-progress/batch-save": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch save Class Subject Progress",
-        "operationId": "entities.classSubjectProgress.batchSave",
-        "requestBody": {
-          "description": "Class Subject Progress batch save request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassSubjectProgressBatchSave"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch saved Class Subject Progress",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ids": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "ids"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Use a domain command for this entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/entities/class-subject-progress/batch-delete": {
-      "post": {
-        "tags": [
-          "Core Entities"
-        ],
-        "summary": "Batch delete Class Subject Progress",
-        "operationId": "entities.classSubjectProgress.batchDelete",
-        "requestBody": {
-          "description": "Class Subject Progress batch delete request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CoreEntityBatchDelete"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch deleted Class Subject Progress",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
             "content": {
               "application/json": {
                 "schema": {

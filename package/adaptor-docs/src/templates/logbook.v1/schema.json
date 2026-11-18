@@ -18,6 +18,7 @@
       "type": "string",
       "pattern": "^#[0-9A-Fa-f]{6}$"
     },
+    "crestUrl": { "type": "string", "minLength": 1 },
     "logoUrl": { "type": "string", "minLength": 1 },
     "subjects": {
       "type": "array",
@@ -54,6 +55,7 @@
                     "additionalProperties": false,
                     "properties": {
                       "name": { "type": "string", "minLength": 1 },
+                      "coverageLabel": { "type": "string" },
                       "completedPercentage": { "type": "number" },
                       "notes": { "type": "string" }
                     }
