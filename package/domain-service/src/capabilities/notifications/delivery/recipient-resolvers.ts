@@ -1,7 +1,8 @@
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { CalendarEvent, Guardian, GuardianStudentLink, NotificationRecipient } from '@edaya/core'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
+import { AccessFacts, activityReminderStudentIds } from '@edaya/authorization'
 import {
-  ActivityEnrollmentStatus,
   CalendarEventScopeKind,
   MessageDeliveryRecipientKind,
   StudentClassEnrollmentStatus,
@@ -82,23 +83,16 @@ export async function resolveClassGroupStudentAndGuardianRecipients(
 
 export async function resolveActivityEnrollmentRecipients(
   repositories: SchoolRepositories,
-  schoolId: string,
+  actor: SchoolScopedActorMetadata,
   activityId: string,
 ): Promise<NotificationRecipient[]> {
-  const enrollments = await repositories.activityEnrollments.list({ activityId })
-  const approvedStudentIds = enrollments
-    .filter(enrollment => enrollment.status === ActivityEnrollmentStatus.Approved)
-    .map(enrollment => enrollment.studentId)
-
-  if (approvedStudentIds.length === 0) {
-    return []
-  }
-
-  const studentRecipients = await resolveStudentRecipients(repositories, schoolId, approvedStudentIds)
+  const { schoolId } = actor
+  const studentIds = await activityReminderStudentIds(new AccessFacts(actor, repositories), activityId)
+  const studentRecipients = await resolveStudentRecipients(repositories, schoolId, studentIds)
   const guardianRecipients = await resolveGuardiansForStudents(
     repositories,
     schoolId,
-    approvedStudentIds,
+    studentIds,
     () => true,
     guardian => guardian.hasAccess,
   )

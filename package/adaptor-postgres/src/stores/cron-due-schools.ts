@@ -15,7 +15,10 @@ const missingDelivery = sql`NOT EXISTS (
 function notificationSchools(asOf: Date): SQL {
   const now = asOf.toISOString()
   const hoursFromNow = (hours: number) => new Date(asOf.getTime() + hours * 3600000).toISOString()
-  return sql`WITH sources AS (
+  return sql`WITH due_activities AS (
+    SELECT id, school_id FROM activities
+    WHERE start_date BETWEEN ${now} AND ${hoursFromNow(ACTIVITY_REMINDER_LEAD_HOURS)} AND end_date >= ${now}
+  ), sources AS (
     SELECT c.school_id, ${ASSESSMENT_DUE_SOON_EVENT_KEY} || ':' || a.id AS source_key,
            e.student_id, false AS include_guardians
     FROM assessments a
@@ -25,8 +28,16 @@ function notificationSchools(asOf: Date): SQL {
       AND a.due_at BETWEEN ${now} AND ${hoursFromNow(24 * ASSESSMENT_DUE_SOON_LEAD_DAYS)}
     UNION ALL
     SELECT a.school_id, ${ACTIVITY_REMINDER_EVENT_KEY} || ':' || a.id, e.student_id, true
-    FROM activities a JOIN activity_enrollments e ON e.activity_id = a.id AND e.status = 'approved'
-    WHERE a.start_date BETWEEN ${now} AND ${hoursFromNow(ACTIVITY_REMINDER_LEAD_HOURS)} AND a.end_date >= ${now}
+    FROM due_activities a JOIN activity_enrollments e ON e.activity_id = a.id AND e.status = 'approved'
+    JOIN students t ON t.id = e.student_id AND t.school_id = a.school_id AND t.status = 'active'
+    UNION ALL
+    SELECT a.school_id, ${ACTIVITY_REMINDER_EVENT_KEY} || ':' || a.id, e.student_id, true
+    FROM due_activities a
+    JOIN class_activity_enrollments p ON p.activity_id = a.id
+    JOIN class_groups c ON c.id = p.class_group_id AND c.school_id = a.school_id
+    JOIN academic_years y ON y.id = c.academic_year_id AND y.school_id = a.school_id AND y.status = 'published'
+    JOIN student_class_enrollments e ON e.class_group_id = c.id AND e.academic_year_id = y.id AND e.status = 'active'
+    JOIN students t ON t.id = e.student_id AND t.school_id = a.school_id AND t.status = 'active'
     UNION ALL
     SELECT c.school_id, ${CALENDAR_EVENT_REMINDER_EVENT_KEY} || ':' || v.id, e.student_id, true
     FROM calendar_events v JOIN class_groups c ON c.school_id = v.school_id AND (

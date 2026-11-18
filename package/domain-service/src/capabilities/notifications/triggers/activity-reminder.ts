@@ -57,7 +57,7 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Activity> 
 
     const recipients = await resolveActivityEnrollmentRecipients(
       context.repositories,
-      entity.schoolId,
+      context.actor,
       entity.id,
     )
     if (recipients.length === 0) {

@@ -1,5 +1,6 @@
 export * from './access/access-policies'
 export * from './access/action-grants'
+export * from './access/activity-reminder-students'
 export * from './access/facts'
 export * from './access/grant-administration'
 export * from './access/identity'

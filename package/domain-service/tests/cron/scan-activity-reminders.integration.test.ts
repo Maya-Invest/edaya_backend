@@ -1,4 +1,4 @@
-import { Activity, ActivityCategory, withShortName } from '@edaya/core'
+import { Activity, ActivityCategory, ClassActivityEnrollment, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import {
   ACTIVITY_REMINDER_EVENT_KEY,
@@ -53,6 +53,27 @@ describe('scanActivityReminders', () => {
     const guardian = await guardians.findById('gua1')
     await guardians.save(guardian!.copyWith({ subjectId: 'new-guardian-login' }))
     expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
+  })
+
+  test.each([false, true])('finds class-assigned recipients once (individual enrollment: %s)', async (hasIndividualEnrollment) => {
+    const { context, gateway } = await createReminderCronContext({
+      asOf: asOfInWindow,
+      activities: [schoolActivity()],
+    })
+    const repositories = context.service.baseService.repositories
+    if (!hasIndividualEnrollment)
+      await repositories.activityEnrollments.delete('enrollment-act1')
+    await repositories.classActivityEnrollments.save(new ClassActivityEnrollment({
+      id: 'class-placement',
+      activityId: 'act1',
+      classGroupId: 'cg1',
+    }))
+
+    const schedules = repositories.cronJobSchedules
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual(['school-1'])
+    expect(await scanActivityReminders(context)).toEqual({ processed: 1, skipped: 0 })
+    expect(gateway.enqueued.flatMap(job => job.recipients.map(row => row.id)).sort()).toEqual(['gua1', 'stu1'])
+    expect(await schedules.listDueSchoolIds('processDueNotifications', context.asOf)).toEqual([])
   })
 
   test('skips expired activities, other schools, and activities outside the reminder window', async () => {
