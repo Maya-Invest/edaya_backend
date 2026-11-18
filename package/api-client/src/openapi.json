@@ -29351,6 +29351,82 @@
           "activityId"
         ]
       },
+      "GuardianAssessmentResultResponse": {
+        "type": "object",
+        "properties": {
+          "mark": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "rank": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "participantCount": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "assessmentId": {
+                "type": "string"
+              },
+              "score": {
+                "type": "number",
+                "nullable": true
+              },
+              "maxScore": {
+                "type": "number"
+              },
+              "designation": {
+                "type": "string"
+              },
+              "grading": {
+                "type": "object",
+                "nullable": true,
+                "additionalProperties": {
+                  "nullable": true
+                }
+              },
+              "originalEntry": {
+                "type": "object",
+                "nullable": true,
+                "additionalProperties": {
+                  "nullable": true
+                }
+              }
+            },
+            "required": [
+              "assessmentId",
+              "score",
+              "maxScore",
+              "designation",
+              "grading",
+              "originalEntry"
+            ]
+          }
+        },
+        "required": [
+          "mark"
+        ]
+      },
+      "GetGuardianAssessmentResultQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assessmentId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "studentId",
+          "assessmentId"
+        ]
+      },
       "GuardianPeriodResultsResponse": {
         "type": "object",
         "properties": {
@@ -29417,6 +29493,16 @@
             "items": {
               "type": "object",
               "properties": {
+                "rank": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "participantCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
                 "id": {
                   "type": "string"
                 },
@@ -29536,6 +29622,9 @@
       "TeacherSubjectPeriodSummaryResponse": {
         "type": "object",
         "properties": {
+          "cohortComplete": {
+            "type": "boolean"
+          },
           "classSubjectId": {
             "type": "string"
           },
@@ -29553,6 +29642,16 @@
             "items": {
               "type": "object",
               "properties": {
+                "rank": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "participantCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
                 "studentId": {
                   "type": "string"
                 },
@@ -29578,6 +29677,16 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "rank": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "participantCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
                       "assessmentId": {
                         "type": "string"
                       },
@@ -30009,7 +30118,26 @@
           "results": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AssessmentResult"
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AssessmentResult"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "rank": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true
+                    },
+                    "participantCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true
+                    }
+                  }
+                }
+              ]
             }
           },
           "missingStudentIds": {
@@ -72135,6 +72263,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityRosterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-guardian-assessment-result": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-guardian-assessment-result",
+        "operationId": "queries.getGuardianAssessmentResult",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getGuardianAssessmentResult",
+        "x-edaya-query-public-name": "get-guardian-assessment-result",
+        "x-edaya-request-schema": "GetGuardianAssessmentResultQuery",
+        "x-edaya-response-schema": "GuardianAssessmentResultResponse",
+        "requestBody": {
+          "description": "get-guardian-assessment-result payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGuardianAssessmentResultQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-guardian-assessment-result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianAssessmentResultResponse"
                 }
               }
             }

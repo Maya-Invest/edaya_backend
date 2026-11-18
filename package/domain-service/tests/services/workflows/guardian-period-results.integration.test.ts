@@ -16,7 +16,12 @@ describe('guardian period results', () => {
     expect(response.state).toBe('provisional')
     expect(response.average).toBe(16)
     expect(response.marks.map(row => row.id)).toEqual(['ar1'])
-    expect(response.sections[0]).toMatchObject({ sectionKind: 'module', subResults: [expect.objectContaining({ subjectId: 'subject-math', average: 16 })] })
+    expect(response.marks[0]).toMatchObject({ rank: 1, participantCount: 1 })
+    const { mark } = await f.guardian.getGuardianAssessmentResult({ studentId: 'stu1', assessmentId: 'ass1' })
+    expect(mark).not.toBeNull()
+    expect(response.marks[0]).toMatchObject(mark!)
+    expect((await f.guardian.getGuardianAssessmentResult({ studentId: 'other', assessmentId: 'ass1' })).mark).toBeNull()
+    expect(response.sections[0]).toMatchObject({ sectionKind: 'module', subResults: [expect.objectContaining({ subjectId: 'subject-math', average: 16, rank: 1, participantCount: 1 })] })
     expect(await f.repositories.results.list({ studentId: 'stu1' })).toHaveLength(0)
   }, 60000)
 

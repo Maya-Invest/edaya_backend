@@ -1,7 +1,10 @@
 import type { BaseSchoolService } from '../base-school-service'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, calculateModuleReport, describeGrade, ReportCardAggregationSource, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus } from '@edaya/core'
+import { evaluationRankings, subjectStandings, subjectStandingsFromReports } from '../../capabilities/academics/live-rankings'
 import { enrollmentEffectiveAt } from '../../capabilities/academics/marks-state'
 import { loadReportAssessmentContext, scopeReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
+import { loadInBatches } from '../../capabilities/shared/bounded-reads'
 import { buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, loadReportAggregationContext } from '../workflows/report-card-aggregation'
 
 /** Never calls report generation or reads a revised draft into the family response. */
@@ -74,7 +77,31 @@ export async function getGuardianPeriodResults(base: BaseSchoolService, input: {
       }), ...leaves.filter(row => !row.moduleId)]
     }
   }
-  const serialize = (section: ReportCardResultSection): Record<string, unknown> => ({ ...section.data, subjectId: section.subjectId ?? context.classSubjects.find(row => row.id === section.classSubjectId)?.subjectId, subResults: section.subResults.map(serialize) })
+  // Cohort reads are internal. Only the authorized child's aggregate leaves this query.
+  const visibleSheets = new Map(marks.map(({ assessment }) => [assessment.id, assessment]))
+  const liveSubjects = !report && ready && aggregation?.source !== ReportCardAggregationSource.ReportCards
+  const offerings = context.classSubjects.filter(row => row.classGroupId === group.id)
+  const classSheets = liveSubjects
+    ? await loadInBatches(offerings.map(row => row.id), ids =>
+        base.repositories.assessments.list({ classGroupId: group.id, periodId: { $in: periodIds }, classSubjectId: { $in: ids }, marksStatus: 'submitted' }))
+    : []
+  const sheets = new Map([...visibleSheets, ...classSheets.map(row => [row.id, row] as const)])
+  const cohort = await loadInBatches([...sheets.keys()], ids => base.repositories.assessmentResults.list({ assessmentId: { $in: ids } }))
+  const ranks = evaluationRankings([...visibleSheets.values()], cohort)
+  let standings = subjectStandings(classSheets, cohort, policy)
+  if (!report && ready && policy && aggregation?.source === ReportCardAggregationSource.ReportCards) {
+    const enrollment = await base.repositories.enrollments.list({ classGroupId: group.id })
+    const members = enrollment.filter(row => enrollmentEffectiveAt(row, period.endDate)).map(row => row.studentId)
+    const sources = await loadInBatches(members, ids => base.repositories.results.list({ studentId: { $in: ids }, classGroupId: group.id, periodId: { $in: periodIds }, status: ReportCardResultStatus.Published }))
+    standings = subjectStandingsFromReports(sources, offerings, aggregation, policy)
+  }
+  function liveRank(section: ReportCardResultSection) {
+    const standing = section.classSubjectId && standings.get(section.classSubjectId)?.get(input.studentId)
+    if (section.sectionKind === 'subject' && standing && standing.value === (section.grading?.reportedValue ?? section.average))
+      return { rank: standing.rank, participantCount: standing.participantCount }
+    return {}
+  }
+  const serialize = (section: ReportCardResultSection): Record<string, unknown> => ({ ...section.data, ...liveRank(section), subjectId: section.subjectId ?? context.classSubjects.find(row => row.id === section.classSubjectId)?.subjectId, subResults: section.subResults.map(serialize) })
   return {
     studentId: input.studentId,
     periodId: period.id,
@@ -90,6 +117,7 @@ export async function getGuardianPeriodResults(base: BaseSchoolService, input: {
     principalComment: report?.principalComment ?? null,
     sections: sections.map(serialize),
     marks: marks.map(({ assessment, result }) => ({
+      ...ranks.get(result.id),
       id: result.id,
       assessmentId: assessment.id,
       subjectId: context.subjectByClassSubject.get(assessment.classSubjectId) ?? '',
@@ -108,4 +136,19 @@ export async function getGuardianPeriodResults(base: BaseSchoolService, input: {
       originalEntry: result.data.originalEntry ?? null,
     })),
   }
+}
+
+/** Agenda may show assessments from a historical placement without a period report. */
+export async function getGuardianAssessmentResult(base: BaseSchoolService, input: { studentId: string, assessmentId: string }) {
+  if (base.actor.kind !== 'guardian')
+    denyResourceAccess()
+  const [result] = await base.entities.assessmentResults.list(input)
+  if (!result)
+    return { mark: null }
+  const assessment = await base.entities.assessments.findById(input.assessmentId)
+  if (!assessment || assessment.marksStatus !== 'submitted')
+    return { mark: null }
+  const cohort = await base.repositories.assessmentResults.list({ assessmentId: assessment.id })
+  const ranks = evaluationRankings([assessment], cohort)
+  return { mark: { ...ranks.get(result.id), assessmentId: assessment.id, score: result.score ?? null, maxScore: assessment.maxScore, designation: result.designation, grading: result.calculation ?? null, originalEntry: result.originalEntry ?? null } }
 }

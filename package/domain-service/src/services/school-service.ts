@@ -13,7 +13,7 @@ import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { getActivityRoster } from './queries/activity-roster'
 import { getAssessmentEditorContext } from './queries/assessment-editor-context'
-import { getGuardianPeriodResults } from './queries/guardian-period-results'
+import { getGuardianAssessmentResult, getGuardianPeriodResults } from './queries/guardian-period-results'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
 import { getStudentSessionHistory, getTeacherSessionHistory } from './queries/session-history'
@@ -123,6 +123,7 @@ export class SchoolService {
 
   async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
 
+  async getGuardianAssessmentResult(input: { studentId: string, assessmentId: string }) { return getGuardianAssessmentResult(this.baseService, input) }
   async getGuardianPeriodResults(input: { studentId: string, periodId: string }) { return getGuardianPeriodResults(this.baseService, input) }
 
   async getTeacherSubjectPeriodSummary(input: { classSubjectId: string, periodId: string }) { return getTeacherSubjectPeriodSummary(this.baseService, input) }

@@ -2,6 +2,7 @@ import type { MarksCorrection } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
 import { assessmentGradingPolicy } from '../../capabilities/academics/grading'
+import { evaluationRankings } from '../../capabilities/academics/live-rankings'
 import { assessmentRoster } from '../../capabilities/academics/marks-state'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 
@@ -69,12 +70,13 @@ export async function getAssessmentMarksReview(base: BaseSchoolService, input: {
       continue
     corrections.push({ ...row, revisions: base.actor.kind === 'teacher' ? [] : row.revisions, allowedActions: await correctionActions(base, row, assessment.classGroupId) })
   }
+  const ranks = evaluationRankings([assessment], results)
   const editable = await base.access.marksReview.can('submit', assessment)
   return {
     assessment: assessment.data,
     gradingPolicy: await assessmentGradingPolicy(repositories, assessment),
     students: students.map(student => ({ id: student.id, firstName: student.firstName, lastName: student.lastName })),
-    results: results.map(result => result.data),
+    results: results.map(result => ({ ...result.data, ...ranks.get(result.id) })),
     missingStudentIds,
     publishedResultIds: [...published],
     corrections,

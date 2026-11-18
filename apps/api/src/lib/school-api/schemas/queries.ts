@@ -604,11 +604,15 @@ export const listAssessmentMarksReviewsQuerySchema = z.object({
   offset: z.number().int().nonnegative().optional(),
   limit: z.number().int().min(1).max(100).optional(),
 }).openapi("ListAssessmentMarksReviewsQuery");
+const liveRankFields = {
+  rank: z.number().int().positive().optional(),
+  participantCount: z.number().int().positive().optional(),
+};
 export const assessmentMarksReviewResponseSchema = z.object({
   gradingPolicy: gradingPolicySchema.optional(),
   assessment: assessmentResponseSchema,
   students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string() })),
-  results: z.array(assessmentResultResponseSchema),
+  results: z.array(assessmentResultResponseSchema.and(z.object(liveRankFields))),
   missingStudentIds: z.array(z.string()),
   publishedResultIds: z.array(z.string()),
   corrections: z.array(marksCorrectionResponseSchema.extend({ allowedActions: z.object({ approve: z.boolean(), reject: z.boolean(), withdraw: z.boolean() }) })),
@@ -734,12 +738,18 @@ export const financePaymentsPageResponseSchema = z.object({ rows: z.array(financ
 
 export const getTeacherSubjectPeriodSummaryQuerySchema = z.object({ classSubjectId: z.string().min(1), periodId: z.string().min(1) }).openapi("GetTeacherSubjectPeriodSummaryQuery");
 export const teacherSubjectPeriodSummaryResponseSchema = z.object({
+  cohortComplete: z.boolean().optional(),
   classSubjectId: z.string(),
   classGroupId: z.string(),
   periodId: z.string(),
   calculationReady: z.boolean(),
-  students: z.array(z.object({ studentId: z.string(), firstName: z.string(), lastName: z.string(), average: z.number().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), contributions: z.array(z.object({ assessmentId: z.string(), title: z.string(), coefficient: z.number(), maxScore: z.number(), score: z.number().nullable(), designation: z.string(), grading: z.record(z.string(), z.unknown()).nullable() })), comment: z.object({ reportId: z.string(), sectionId: z.string(), text: z.string(), status: z.string(), version: z.number(), calculationStale: z.boolean(), proposal: z.object({ text: z.string(), status: z.string() }).nullable() }).nullable() })),
+  students: z.array(z.object({ ...liveRankFields, studentId: z.string(), firstName: z.string(), lastName: z.string(), average: z.number().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), contributions: z.array(z.object({ ...liveRankFields, assessmentId: z.string(), title: z.string(), coefficient: z.number(), maxScore: z.number(), score: z.number().nullable(), designation: z.string(), grading: z.record(z.string(), z.unknown()).nullable() })), comment: z.object({ reportId: z.string(), sectionId: z.string(), text: z.string(), status: z.string(), version: z.number(), calculationStale: z.boolean(), proposal: z.object({ text: z.string(), status: z.string() }).nullable() }).nullable() })),
 }).openapi("TeacherSubjectPeriodSummaryResponse");
+
+export const getGuardianAssessmentResultQuerySchema = z.object({ studentId: z.string().min(1), assessmentId: z.string().min(1) }).openapi("GetGuardianAssessmentResultQuery");
+export const guardianAssessmentResultResponseSchema = z.object({
+  mark: z.object({ ...liveRankFields, assessmentId: z.string(), score: z.number().nullable(), maxScore: z.number(), designation: z.string(), grading: z.record(z.string(), z.unknown()).nullable(), originalEntry: z.record(z.string(), z.unknown()).nullable() }).nullable(),
+}).openapi("GuardianAssessmentResultResponse");
 
 export const getGuardianPeriodResultsQuerySchema = z.object({ studentId: z.string().min(1), periodId: z.string().min(1) }).openapi("GetGuardianPeriodResultsQuery");
 export const guardianPeriodResultsResponseSchema = z.object({
@@ -756,7 +766,7 @@ export const guardianPeriodResultsResponseSchema = z.object({
   teacherComment: z.string().nullable(),
   principalComment: z.string().nullable(),
   sections: z.array(z.record(z.string(), z.unknown())),
-  marks: z.array(z.object({ id: z.string(), assessmentId: z.string(), subjectId: z.string(), classSubjectId: z.string(), periodId: z.string(), title: z.string(), description: z.string().nullable(), kind: z.string(), date: z.string().nullable(), score: z.number().nullable(), designation: z.string(), coefficient: z.number(), maxScore: z.number(), notes: z.string().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), originalEntry: z.record(z.string(), z.unknown()).nullable() })),
+  marks: z.array(z.object({ ...liveRankFields, id: z.string(), assessmentId: z.string(), subjectId: z.string(), classSubjectId: z.string(), periodId: z.string(), title: z.string(), description: z.string().nullable(), kind: z.string(), date: z.string().nullable(), score: z.number().nullable(), designation: z.string(), coefficient: z.number(), maxScore: z.number(), notes: z.string().nullable(), grading: z.record(z.string(), z.unknown()).nullable(), originalEntry: z.record(z.string(), z.unknown()).nullable() })),
 }).openapi("GuardianPeriodResultsResponse");
 
 export const studentSessionHistoryQuerySchema = getTeacherTimetableQuerySchema.omit({ teacherId: true }).extend({ studentId: z.string().min(1), academicYearId: z.string().min(1) }).openapi("StudentSessionHistoryQuery");

@@ -5177,6 +5177,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/queries/get-guardian-assessment-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-guardian-assessment-result */
+        post: operations["queries.getGuardianAssessmentResult"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/queries/get-guardian-period-results": {
         parameters: {
             query?: never;
@@ -19719,6 +19736,26 @@ export interface components {
         GetActivityRosterQuery: {
             activityId: string;
         };
+        GuardianAssessmentResultResponse: {
+            mark: {
+                rank?: number;
+                participantCount?: number;
+                assessmentId: string;
+                score: number | null;
+                maxScore: number;
+                designation: string;
+                grading: {
+                    [key: string]: unknown;
+                } | null;
+                originalEntry: {
+                    [key: string]: unknown;
+                } | null;
+            } | null;
+        };
+        GetGuardianAssessmentResultQuery: {
+            studentId: string;
+            assessmentId: string;
+        };
         GuardianPeriodResultsResponse: {
             studentId: string;
             periodId: string;
@@ -19739,6 +19776,8 @@ export interface components {
                 [key: string]: unknown;
             }[];
             marks: {
+                rank?: number;
+                participantCount?: number;
                 id: string;
                 assessmentId: string;
                 subjectId: string;
@@ -19766,11 +19805,14 @@ export interface components {
             periodId: string;
         };
         TeacherSubjectPeriodSummaryResponse: {
+            cohortComplete?: boolean;
             classSubjectId: string;
             classGroupId: string;
             periodId: string;
             calculationReady: boolean;
             students: {
+                rank?: number;
+                participantCount?: number;
                 studentId: string;
                 firstName: string;
                 lastName: string;
@@ -19779,6 +19821,8 @@ export interface components {
                     [key: string]: unknown;
                 } | null;
                 contributions: {
+                    rank?: number;
+                    participantCount?: number;
                     assessmentId: string;
                     title: string;
                     coefficient: number;
@@ -19891,7 +19935,10 @@ export interface components {
                 firstName: string;
                 lastName: string;
             }[];
-            results: components["schemas"]["AssessmentResult"][];
+            results: (components["schemas"]["AssessmentResult"] & {
+                rank?: number;
+                participantCount?: number;
+            })[];
             missingStudentIds: string[];
             publishedResultIds: string[];
             corrections: (components["schemas"]["AssessmentMarksCorrectionResponse"] & {
@@ -43422,6 +43469,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityRosterResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getGuardianAssessmentResult": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-guardian-assessment-result payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetGuardianAssessmentResultQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-guardian-assessment-result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianAssessmentResultResponse"];
                 };
             };
             /** @description Invalid request payload */

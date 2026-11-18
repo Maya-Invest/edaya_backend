@@ -2,6 +2,7 @@ import type { ReportCardResultSection } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
 import { describeGrade, TeacherAssignmentStatus } from '@edaya/core'
+import { evaluationRankings, subjectStandings } from '../../capabilities/academics/live-rankings'
 import { loadParticipation, subjectRoster } from '../../capabilities/subject-enrollment/participation'
 import { buildSubjectAverageFromAssessments } from '../workflows/report-card-aggregation'
 import { TeacherCorrectionsWorkflow } from '../workflows/teacher-corrections'
@@ -32,6 +33,8 @@ export async function getTeacherSubjectPeriodSummary(base: BaseSchoolService, in
   const byStudent = new Map(reports.map(row => [row.studentId, row]))
   const level = await base.repositories.gradeLevels.findById(context.group.gradeLevelId)
   const policy = level?.gradingPolicyFor(period.academicYearId)
+  const ranks = evaluationRankings(assessments, results)
+  const standings = subjectStandings(assessments, results, policy).get(offering.id)
   const ready = !policy || policy.status === 'completed'
   const findSection = (sections: readonly ReportCardResultSection[]): ReportCardResultSection | undefined => {
     for (const section of sections) {
@@ -48,6 +51,7 @@ export async function getTeacherSubjectPeriodSummary(base: BaseSchoolService, in
     classGroupId: context.group.id,
     periodId: period.id,
     calculationReady: ready,
+    cohortComplete: students.length === ids.length,
     students: await Promise.all(students.sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`)).map(async (student) => {
       const contributions = results.filter(row => row.studentId === student.id).map(result => ({ result, assessment: byAssessment.get(result.assessmentId)! }))
       const compatible = ready && contributions.every(({ result }) => !policy || !result.calculation || result.calculation.policyRevision === policy.revision)
@@ -59,13 +63,15 @@ export async function getTeacherSubjectPeriodSummary(base: BaseSchoolService, in
         : undefined
       const active = state?.corrections.find(row => row.proposal.workflow === 'report_comments' && row.proposal.sections.some(change => change.sectionId === section?.sectionId))
       const proposal = active?.proposal.workflow === 'report_comments' ? active.proposal.sections.find(change => change.sectionId === section?.sectionId) : undefined
+      const standing = standings?.get(student.id)
       return {
+        ...(standing && average !== undefined ? { rank: standing.rank, participantCount: standing.participantCount } : {}),
         studentId: student.id,
         firstName: student.firstName,
         lastName: student.lastName,
         average: average ?? null,
         grading: average !== undefined && policy ? describeGrade(average, policy) : null,
-        contributions: contributions.map(({ assessment, result }) => ({ assessmentId: assessment.id, title: assessment.title, coefficient: assessment.coefficient, maxScore: assessment.maxScore, score: result.score ?? null, designation: result.designation, grading: result.calculation ?? null })),
+        contributions: contributions.map(({ assessment, result }) => ({ ...ranks.get(result.id), assessmentId: assessment.id, title: assessment.title, coefficient: assessment.coefficient, maxScore: assessment.maxScore, score: result.score ?? null, designation: result.designation, grading: result.calculation ?? null })),
         comment: section && report ? { reportId: report.id, sectionId: section.sectionId, text: section.comment ?? '', status: report.status, version: report.version, calculationStale: report.calculationStale, proposal: proposal && active ? { text: proposal.comment ?? '', status: active.status } : null } : null,
       }
     })),
