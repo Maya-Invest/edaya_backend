@@ -90,11 +90,11 @@
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "4a24601d0a32497a82da4b00be086faa"
+          "id": "579fd58a69774e838c7060c13bcfa0a8"
         },
         {
           "binding": "HYPERDRIVE_AUTH",
-          "id": "4ba7953d5b8e4f398134b995d92d8596"
+          "id": "551d31cd34964614b1f5b974ac2b0e4e"
         }
       ],
       "send_email": [

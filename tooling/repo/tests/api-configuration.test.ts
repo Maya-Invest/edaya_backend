@@ -23,10 +23,11 @@ describe('API configuration ownership', () => {
     expect(() => validateConfig({ AUTH_TERMS_MODE: 'enabled' })).toThrow('unsupported setting')
     expect(() => validateSecrets({ AUTH_TERMS_MODE: 'preview' })).toThrow('non-secret')
   })
-  test('rejects retired GraphQL settings and development credentials', () => {
+  test('rejects retired GraphQL settings and credentials from removed services', () => {
     for (const key of ['ENABLE_GRAPHQL', 'GRAPHQL_GRAPHIQL', 'GRAPHIQL_WEBAPP_ORIGIN', 'GRAPHIQL_DEFAULT_EMAIL'])
       expect(() => validateConfig({ [key]: 'true' })).toThrow()
     expect(() => validateSecrets({ GRAPHQL_DEV_API_KEY: 'retired-key' })).toThrow('unknown')
+    expect(() => validateSecrets({ IDENTITY_DIRECTORY_SECRET: 'retired-key' })).toThrow('unknown')
   })
   test('reads commented string values and rejects malformed JSON, duplicates, and nonstrings', () => {
     expect(validateConfig(parseJsonc('{ // comment\n"PORT": "9999", }'))).toEqual({ PORT: '9999' })

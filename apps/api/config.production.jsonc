@@ -22,7 +22,11 @@
   "PAUSE_API": "false",
   "PAUSE_SCHEDULER": "false",
   "PAUSE_JOBS": "false",
-  "PHONE_AUTH_MODE": "disabled",
+  "PHONE_AUTH_MODE": "whatsapp_first",
+  "WHATSAPP_PHONE_NUMBER_ID": "1351844414684255",
+  "WHATSAPP_BUSINESS_ACCOUNT_ID": "1418705638002811",
+  "WHATSAPP_API_VERSION": "v26.0",
+  "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"authentification_edaya\",\"language\":\"fr\"},\"en\":{\"name\":\"authentification_edaya_en\",\"language\":\"en\"}}",
   "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
   "AFRICAS_TALKING_USERNAME": "atoumbre",
   "AFRICAS_TALKING_SANDBOX": "false",
@@ -36,7 +40,7 @@
   "ACCOUNT_INVITATIONS_ENABLED": "true",
   "PROFILE_PHOTO_MAX_BYTES": "1048576",
   "PLATFORM_BOOTSTRAP_EMAILS": "",
-  "R2_BUCKET_NAME": "edaya-files-production",
+  "R2_BUCKET_NAME": "edaya-production",
   "ACCOUNT_SECURITY_KEY_VERSION": "v1",
-  "R2_ENDPOINT": "https://ca013c820d015639e8769dc09e2566ec.r2.cloudflarestorage.com"
+  "R2_ENDPOINT": "https://909d0c6bd332023be902a0e432d2bed7.r2.cloudflarestorage.com"
 }
