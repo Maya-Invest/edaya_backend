@@ -62,7 +62,7 @@ describe('API configuration ownership', () => {
     for (const target of ['staging', 'production']) {
       const config = readConfig(target)
       expect(config.RUNTIME).toBe('worker')
-      expect(config.PHONE_AUTH_MODE).toBe(target === 'staging' ? 'whatsapp_first' : 'disabled')
+      expect(config.PHONE_AUTH_MODE).toBe('whatsapp_first')
       expect(config.DATABASE_URL).toBeUndefined()
       expect(config.R2_ENDPOINT).toStartWith('https://')
     }
