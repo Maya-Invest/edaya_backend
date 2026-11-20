@@ -1,6 +1,7 @@
 // @edaya/client-codegen runtime
 export interface TransportRequestOptions {
 	body?: unknown
+	signal?: AbortSignal
 }
 
 export interface Transport {

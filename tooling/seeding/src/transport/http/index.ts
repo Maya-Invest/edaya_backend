@@ -4,6 +4,7 @@ export {
   seedCommandPublicName,
   type SeedEntityKey,
   seedEntityPublicName,
+  type SeedQueryKey,
 } from './catalog'
 export {
   type HttpFetch,
@@ -16,6 +17,7 @@ export { executeCoreCommand, type ExecuteCoreCommandOptions } from './core-comma
 export {
   type CoreHttpRequestOptions,
   postCoreCommand,
+  postCoreQuery,
   postEntityCount,
   postEntityFindById,
   postEntityFindOne,

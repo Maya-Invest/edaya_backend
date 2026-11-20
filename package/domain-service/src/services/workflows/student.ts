@@ -1,47 +1,34 @@
+import type { Attachment, AttachmentInput, ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, ManageStudentSubjectEnrollmentsInput, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput, StudentPhotoSubmission } from '@edaya/core'
 import type {
-  ClassGroup,
-  GuardianInput,
-  GuardianStudentLink as GuardianStudentLinkType,
-  StudentHealthProfile,
-  StudentHealthProfileInput,
-  StudentInput,
-  StudentNote,
-  StudentNoteInput,
-} from '@edaya/core'
+  CreateProfilePhotoUploadInput,
+} from '../../capabilities/files/profile-photo-uploads'
+import type {
+  PublishStudentPhotoInput,
+  ReviewStudentPhotoInput,
+  SubmitStudentPhotoInput,
+  WithdrawStudentPhotoSubmissionInput,
+} from '../../capabilities/files/student-photos'
 import type { BaseSchoolService } from '../base-school-service'
+import type { StudentWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
+import { AccountInvitationKind, AttachmentOwnerKind, BusinessRuleViolationError, EnrollmentEndReason, Guardian, GuardianStudentLink, ProgressionDecision, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity, StudentStatus } from '@edaya/core'
 import {
-  CommunicationsOperations,
-  denyResourceAccess,
-  EnrollmentOperations,
-  GuardianOperations,
-  resolveAuditActorId,
-} from '@edaya/authorization'
-import {
-  AccountInvitationKind,
-  BusinessRuleViolationError,
-  EnrollmentEndReason,
-  Guardian,
-  GuardianStudentLink,
-  ProgressionDecision,
-  Student,
-  StudentClassEnrollment,
-  StudentClassEnrollmentStatus,
-  StudentHealthProfile as StudentHealthProfileEntity,
-  StudentNote as StudentNoteEntity,
-  StudentStatus,
-} from '@edaya/core'
-import {
-  resolveStudentInvitationEmail,
-  scheduleAccountInvitationIfEligible,
-} from '../../capabilities/invitations'
-import {
-  buildGuardianRecipientProfile,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { operationModule } from '../entities/entity-config'
+  completeProfilePhotoUpload,
+  createProfilePhotoUpload,
+  publishStudentPhoto,
+  reviewStudentPhoto,
+  submitStudentPhoto,
+  withdrawStudentPhotoSubmission,
+} from '../../capabilities/files'
+import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
+import { resolveStudentInvitationEmail, scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
+import { carrySubjectChoices, subjectTransferImpact } from '../../capabilities/subject-enrollment/transfer'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import { manageSubjectEnrollments } from './subject-enrollment'
 
 export interface EnrollStudentInput {
+  enrolledAt?: Date
   id: string
   studentId: string
   classGroupId: string
@@ -75,6 +62,7 @@ export interface PromoteStudentInput {
 }
 
 export interface TransferStudentInput {
+  acknowledgedDroppedSubjectIds?: string[]
   enrollmentId: string
   nextEnrollmentId: string
   nextClassGroupId: string
@@ -88,11 +76,15 @@ export interface GraduateStudentInput {
   notes?: string
 }
 
-export type RegisterStudentInput = StudentInput & {
+export type RegisterStudentInput = Omit<StudentInput, 'id'> & {
+  requestId?: string
+  id?: string
   sendAccountInvitation?: boolean
   inviteEmail?: string
 }
-export type RegisterGuardianInput = GuardianInput & {
+export type RegisterGuardianInput = Omit<GuardianInput, 'id'> & {
+  requestId?: string
+  id?: string
   sendAccountInvitation?: boolean
 }
 
@@ -109,7 +101,7 @@ export interface RecordProgressionDecisionInput {
   notes?: string
 }
 
-export interface UpdateStudentProfileInput extends Partial<StudentInput> {
+export interface UpdateStudentProfileInput extends Partial<Omit<StudentInput, 'photoUrl' | 'photoAttachmentId'>> {
   studentId: string
 }
 
@@ -131,7 +123,8 @@ export interface UpdateStudentNoteInput extends Partial<StudentNoteInput> {
   noteId: string
 }
 
-export interface UpdateGuardianContactMethodsInput extends Partial<GuardianInput> {
+export interface UpdateGuardianProfileInput extends Partial<Omit<GuardianInput, 'id' | 'schoolId' | 'subjectId' | 'createdAt'>> {
+  studentNotificationPreferences?: Array<{ studentId: string, receivesAcademicReports?: boolean, receivesAttendanceAlerts?: boolean }>
   guardianId: string
 }
 
@@ -140,52 +133,82 @@ export interface UpdateGuardianStudentLinkInput extends Partial<ConstructorParam
   studentId: string
 }
 
+export type {
+  CreateProfilePhotoUploadInput,
+} from '../../capabilities/files/profile-photo-uploads'
+export type {
+  PublishStudentPhotoInput,
+  ReviewStudentPhotoInput,
+  SubmitStudentPhotoInput,
+  WithdrawStudentPhotoSubmissionInput,
+} from '../../capabilities/files/student-photos'
+
 export class StudentServiceWorkflow extends BaseServiceWorkflow {
+  manageStudentSubjectEnrollments(input: ManageStudentSubjectEnrollmentsInput) { return manageSubjectEnrollments(this.baseService, input) }
+  private readonly repositories: StudentWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('student', base.repositories)
   }
 
   async registerStudent(input: RegisterStudentInput): Promise<Student> {
-    const { sendAccountInvitation, inviteEmail, ...entityInput } = input
-    const autoInviteEnabled = sendAccountInvitation !== false
-      && this.baseService.accountInvitationsEnabled !== false
-      && Boolean(this.baseService.inviteBaseUrl)
-    if (autoInviteEnabled && !resolveStudentInvitationEmail(inviteEmail)) {
-      throw new BusinessRuleViolationError(
-        'INVITATION_CONTACT_REQUIRED',
-        'inviteEmail is required when auto-invite is enabled for student registration',
-      )
-    }
+    return this.createHuman('students', input, async (input) => {
+      const { sendAccountInvitation, inviteEmail, ...entityInput } = input
+      const autoInviteEnabled = sendAccountInvitation !== false
+        && this.baseService.accountInvitationsEnabled !== false
+        && Boolean(this.baseService.inviteBaseUrl)
+      if (autoInviteEnabled && !resolveStudentInvitationEmail(inviteEmail)) {
+        throw new BusinessRuleViolationError(
+          'INVITATION_CONTACT_REQUIRED',
+          'inviteEmail is required when auto-invite is enabled for student registration',
+        )
+      }
 
-    const student = new Student(entityInput)
-    await this.baseService.entities.students.save(student)
-    scheduleAccountInvitationIfEligible(
-      this.baseService,
-      {
-        kind: AccountInvitationKind.Student,
-        targetId: student.id,
-        sendAccountInvitation,
-        inviteEmail,
-      },
-      student,
-    )
-    return student
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.students.findById(candidate),
+        entityInput.id,
+        'STUDENT_ID_ALREADY_EXISTS',
+        'Student',
+      )
+      const student = new Student({ ...entityInput, id })
+      await this.baseService.entities.students.save(student)
+      await scheduleAccountInvitationIfEligible(
+        this.baseService,
+        {
+          kind: AccountInvitationKind.Student,
+          targetId: student.id,
+          sendAccountInvitation,
+          inviteEmail,
+        },
+        student,
+      )
+      return student
+    })
   }
 
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
-    const { sendAccountInvitation, ...entityInput } = input
-    const guardian = new Guardian(entityInput)
-    await this.baseService.entities.guardians.save(guardian)
-    scheduleAccountInvitationIfEligible(
-      this.baseService,
-      {
-        kind: AccountInvitationKind.Guardian,
-        targetId: guardian.id,
-        sendAccountInvitation,
-      },
-      guardian,
-    )
-    return guardian
+    return this.createHuman('guardians', input, async (input) => {
+      const { sendAccountInvitation, ...entityInput } = input
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.guardians.findById(candidate),
+        entityInput.id,
+        'GUARDIAN_ID_ALREADY_EXISTS',
+        'Guardian',
+      )
+      const guardian = new Guardian({ ...entityInput, id })
+      await this.baseService.entities.guardians.save(guardian)
+      await scheduleAccountInvitationIfEligible(
+        this.baseService,
+        {
+          kind: AccountInvitationKind.Guardian,
+          targetId: guardian.id,
+          sendAccountInvitation,
+        },
+        guardian,
+      )
+      return guardian
+    })
   }
 
   async enrollStudent({
@@ -193,45 +216,48 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     classGroupId,
     createdAt,
+    enrolledAt,
   }: EnrollStudentInput): Promise<StudentClassEnrollment> {
-    const [student, classGroup] = await Promise.all([
-      this.requireStudent(studentId),
-      this.requireClassGroup(classGroupId),
-    ])
-    if (student.status !== StudentStatus.Active) {
-      throw new BusinessRuleViolationError('STUDENT_NOT_ACTIVE', `Student ${studentId} is not active and cannot be enrolled`)
-    }
-    if (student.schoolId !== classGroup.schoolId) {
-      denyResourceAccess()
-    }
-    this.checkActorSchool(classGroup.schoolId)
-    await operationModule(EnrollmentOperations.create)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    return this.baseService.atomicExecution.execute(async () => {
+      const [student, classGroup] = await Promise.all([
+        this.requireStudent(studentId),
+        this.requireClassGroup(classGroupId),
+      ])
+      if (student.status !== StudentStatus.Active) {
+        throw new BusinessRuleViolationError('STUDENT_NOT_ACTIVE', `Student ${studentId} is not active and cannot be enrolled`)
+      }
+      if (student.schoolId !== classGroup.schoolId) {
+        denyResourceAccess()
+      }
+      this.checkActorSchool(classGroup.schoolId)
 
-    const existingEnrollments = await this.baseService.repositories.enrollments.list({ studentId })
-    const activeEnrollment = existingEnrollments.find(
-      enrollment => enrollment.status === StudentClassEnrollmentStatus.Active,
-    )
-    if (activeEnrollment && activeEnrollment.classGroupId !== classGroupId) {
-      throw new BusinessRuleViolationError('STUDENT_ALREADY_ENROLLED', `Student ${studentId} already has an active class enrollment`)
-    }
-    if (activeEnrollment) {
-      return activeEnrollment
-    }
+      await this.baseService.access.enrollments.assertCreate({ studentId: student.id, classGroupId: classGroup.id })
 
-    await this.requireAvailableCapacity(classGroup)
-    const nextEnrollmentIndex = Math.max(0, ...existingEnrollments.map(enrollment => enrollment.enrollmentIndex)) + 1
-    const enrollment = new StudentClassEnrollment({
-      id,
-      studentId,
-      classGroupId,
-      academicYearId: classGroup.academicYearId,
-      enrollmentIndex: nextEnrollmentIndex,
-      createdAt,
-    })
-    await this.baseService.entities.enrollments.save(enrollment, { moduleChecked: true })
-    return enrollment
+      const existingEnrollments = await this.repositories.enrollments.list({ studentId })
+      const activeEnrollment = existingEnrollments.find(
+        enrollment => enrollment.status === StudentClassEnrollmentStatus.Active,
+      )
+      if (activeEnrollment && activeEnrollment.classGroupId !== classGroupId) {
+        throw new BusinessRuleViolationError('STUDENT_ALREADY_ENROLLED', `Student ${studentId} already has an active class enrollment`)
+      }
+      if (activeEnrollment) {
+        return activeEnrollment
+      }
+
+      await this.requireAvailableCapacity(classGroup)
+      const nextEnrollmentIndex = Math.max(0, ...existingEnrollments.map(enrollment => enrollment.enrollmentIndex)) + 1
+      const enrollment = new StudentClassEnrollment({
+        id,
+        studentId,
+        classGroupId,
+        academicYearId: classGroup.academicYearId,
+        enrollmentIndex: nextEnrollmentIndex,
+        enrolledAt,
+        createdAt,
+      })
+      await this.baseService.entities.enrollments.save(enrollment)
+      return enrollment
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async linkGuardianToStudent({
@@ -250,40 +276,34 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     notes,
     createdAt,
   }: LinkGuardianToStudentInput): Promise<GuardianStudentLinkType> {
-    const [guardian, student] = await Promise.all([
-      this.requireGuardian(guardianId),
-      this.requireStudent(studentId),
-    ])
-    if (guardian.schoolId !== student.schoolId) {
-      denyResourceAccess()
-    }
-    this.checkActorSchool(guardian.schoolId)
-    await operationModule(GuardianOperations.update)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkGuardianAccess(this.baseService.actor, [guardian.id])
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    return this.baseService.atomicExecution.execute(async () => {
+      const { guardian, student } = await this.baseService.access.guardians.assertLinkStudent({ guardianId, studentId })
+      if (guardian.schoolId !== student.schoolId) {
+        denyResourceAccess()
+      }
+      this.checkActorSchool(guardian.schoolId)
 
-    await this.requireStudentEnrolledInSchool(student.id, guardian.schoolId)
-
-    const existing = await this.baseService.repositories.guardianLinks.findOne({ guardianId, studentId })
-    const link = new GuardianStudentLink({
-      id: existing?.id ?? id,
-      schoolId: guardian.schoolId,
-      guardianId,
-      studentId,
-      relationship,
-      isPrimary,
-      isBillingContact,
-      legalGuardian,
-      canPickup,
-      emergencyContactPriority,
-      receivesAcademicReports,
-      receivesAttendanceAlerts,
-      contactRestrictions,
-      notes,
-      createdAt: existing?.createdAt ?? createdAt,
+      const existing = await this.repositories.guardianLinks.findOne({ guardianId, studentId })
+      const link = new GuardianStudentLink({
+        id: existing?.id ?? id,
+        schoolId: guardian.schoolId,
+        guardianId,
+        studentId,
+        relationship,
+        isPrimary,
+        isBillingContact,
+        legalGuardian,
+        canPickup,
+        emergencyContactPriority,
+        receivesAcademicReports,
+        receivesAttendanceAlerts,
+        contactRestrictions,
+        notes,
+        createdAt: existing?.createdAt ?? createdAt,
+      })
+      await this.baseService.entities.guardianLinks.save(link)
+      return link
     })
-    await this.baseService.entities.guardianLinks.save(link, { moduleChecked: true })
-    return link
   }
 
   async promoteStudent({
@@ -300,8 +320,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       const sourceClassGroup = await this.requireClassGroup(enrollment.classGroupId)
       const nextClassGroup = await this.requireTransitionTarget(enrollment, nextClassGroupId)
       const [sourceGradeLevel, nextGradeLevel] = await Promise.all([
-        this.baseService.repositories.gradeLevels.findById(sourceClassGroup.gradeLevelId),
-        this.baseService.repositories.gradeLevels.findById(nextClassGroup.gradeLevelId),
+        this.repositories.gradeLevels.findById(sourceClassGroup.gradeLevelId),
+        this.repositories.gradeLevels.findById(nextClassGroup.gradeLevelId),
       ])
       if (!sourceGradeLevel || !nextGradeLevel || nextGradeLevel.order <= sourceGradeLevel.order) {
         throw new BusinessRuleViolationError('INVALID_PROMOTION_TARGET', 'Promotion target must belong to a higher grade level')
@@ -323,10 +343,10 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.baseService.entities.enrollments.save(completed, { moduleChecked: true })
-      await this.baseService.entities.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(completed)
+      await this.baseService.entities.enrollments.save(successor)
       return successor
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async transferStudent({
@@ -334,11 +354,16 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     nextEnrollmentId,
     nextClassGroupId,
     effectiveAt,
+    acknowledgedDroppedSubjectIds = [],
   }: TransferStudentInput): Promise<StudentClassEnrollment> {
     return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
       const nextClassGroup = await this.requireTransitionTarget(enrollment, nextClassGroupId)
+      const impact = await subjectTransferImpact(this.baseService.repositories, enrollment, nextClassGroupId, effectiveAt)
+      const unsupported = impact.filter(choice => !choice.destinationClassSubjectId)
+      if (unsupported.some(choice => !acknowledgedDroppedSubjectIds.includes(choice.subjectId)))
+        throw new BusinessRuleViolationError('TRANSFER_OPTIONAL_CHOICES_ACKNOWLEDGMENT_REQUIRED', 'Confirm the optional subjects unavailable in the destination class', { unsupportedChoices: unsupported.map(choice => ({ subjectId: choice.subjectId, subjectName: choice.subjectName, enrollmentId: choice.enrollment.id })) })
       const transferred = enrollment.close({
         endedAt: effectiveAt,
         endReason: EnrollmentEndReason.Transferred,
@@ -350,10 +375,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.baseService.entities.enrollments.save(transferred, { moduleChecked: true })
-      await this.baseService.entities.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(transferred)
+      await this.baseService.entities.enrollments.save(successor)
+      await carrySubjectChoices(this.baseService.repositories, impact, successor, this.baseService.actor)
       return successor
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async graduateStudent({
@@ -377,6 +403,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         notes,
       })
       const graduatedStudent = new Student({
+        ...student.data,
         id: student.id,
         schoolId: student.schoolId,
         firstName: student.firstName,
@@ -385,28 +412,30 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         birthDate: student.birthDate,
         placeOfBirth: student.placeOfBirth,
         nationality: student.nationality,
-        matricule: student.matricule,
+        identifier: student.identifier,
         photoUrl: student.photoUrl,
         subjectId: student.subjectId,
         status: StudentStatus.Graduated,
         enrollmentDate: student.enrollmentDate,
         createdAt: student.createdAt,
       })
-      await this.baseService.entities.enrollments.save(graduatedEnrollment, { moduleChecked: true })
-      await this.baseService.entities.students.save(graduatedStudent, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(graduatedEnrollment)
+      await this.baseService.entities.students.save(graduatedStudent)
       return graduatedEnrollment
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async closeEnrollment({ enrollmentId, endReason, endedAt }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
-    const existing = await this.requireManagedEnrollment(enrollmentId)
-    const closed = existing.close({
-      endedAt: endedAt ?? new Date(),
-      endReason,
-      closedBy: resolveAuditActorId(this.baseService.actor),
-    })
-    await this.baseService.entities.enrollments.save(closed)
-    return closed
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireManagedEnrollment(enrollmentId)
+      const closed = existing.close({
+        endedAt: endedAt ?? new Date(),
+        endReason,
+        closedBy: resolveAuditActorId(this.baseService.actor),
+      })
+      await this.baseService.entities.enrollments.save(closed)
+      return closed
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async recordProgressionDecision({
@@ -415,116 +444,109 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     decidedAt,
     notes,
   }: RecordProgressionDecisionInput): Promise<StudentClassEnrollment> {
-    const existing = await this.requireManagedEnrollment(enrollmentId)
-    const decided = existing.recordProgressionDecision({
-      decision,
-      decidedAt: decidedAt ?? new Date(),
-      decidedBy: resolveAuditActorId(this.baseService.actor),
-      notes,
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireManagedEnrollment(enrollmentId)
+      const decided = existing.recordProgressionDecision({
+        decision,
+        decidedAt: decidedAt ?? new Date(),
+        decidedBy: resolveAuditActorId(this.baseService.actor),
+        notes,
+      })
+      await this.baseService.entities.enrollments.save(decided)
+      return decided
     })
-    await this.baseService.entities.enrollments.save(decided)
-    return decided
   }
 
   async updateStudentProfile({ studentId, ...changes }: UpdateStudentProfileInput): Promise<Student> {
-    const existing = await this.requireEntity(this.baseService.entities.students, studentId)
-    const student = existing.copyWith(changes)
-    await this.baseService.entities.students.save(student)
-    return student
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.students, studentId)
+      const { photoUrl: _photoUrl, photoAttachmentId: _photoAttachmentId, ...profile } = changes as Partial<StudentInput>
+      const student = existing.copyWith(profile)
+      await this.baseService.entities.students.save(student)
+      return student
+    })
   }
 
   async updateStudentStatus({ studentId, status }: UpdateStudentStatusInput): Promise<Student> {
-    const existing = await this.requireEntity(this.baseService.entities.students, studentId)
-    const student = existing.copyWith({ status })
-    await this.baseService.entities.students.save(student)
-    return student
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.students, studentId)
+      const student = existing.copyWith({ status })
+      await this.baseService.entities.students.save(student)
+      return student
+    })
   }
 
   async upsertStudentHealthProfile(input: UpsertStudentHealthProfileInput): Promise<StudentHealthProfile> {
-    const student = await this.requireEntity(this.baseService.entities.students, input.studentId)
-    const healthProfile = new StudentHealthProfileEntity({
-      ...input,
-      schoolId: input.schoolId ?? student.schoolId,
+    return this.baseService.atomicExecution.execute(async () => {
+      const student = await this.requireEntity(this.baseService.entities.students, input.studentId)
+      const healthProfile = new StudentHealthProfileEntity({
+        ...input,
+        schoolId: input.schoolId ?? student.schoolId,
+      })
+      await this.baseService.entities.studentHealthProfiles.save(healthProfile)
+      return healthProfile
     })
-    await this.baseService.entities.studentHealthProfiles.save(healthProfile)
-    return healthProfile
   }
 
   async createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote> {
-    const student = await this.requireEntity(this.baseService.entities.students, input.studentId)
-    const note = new StudentNoteEntity({
-      ...input,
-      schoolId: input.schoolId ?? student.schoolId,
-      authorStaffId: input.authorStaffId ?? resolveAuditActorId(this.baseService.actor),
+    return this.baseService.atomicExecution.execute(async () => {
+      const student = await this.requireEntity(this.baseService.entities.students, input.studentId)
+      const note = new StudentNoteEntity({
+        ...input,
+        schoolId: input.schoolId ?? student.schoolId,
+        authorStaffId: input.authorStaffId ?? resolveAuditActorId(this.baseService.actor),
+      })
+      await this.baseService.entities.studentNotes.save(note)
+      return note
     })
-    await this.baseService.entities.studentNotes.save(note)
-    return note
   }
 
   async updateStudentNote({ noteId, ...changes }: UpdateStudentNoteInput): Promise<StudentNote> {
-    const existing = await this.requireEntity(this.baseService.entities.studentNotes, noteId)
-    const note = new StudentNoteEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      studentId: existing.studentId,
-      authorStaffId: existing.authorStaffId,
-      title: changes.title === undefined ? existing.title : changes.title,
-      body: changes.body ?? existing.body,
-      visibility: changes.visibility ?? existing.visibility,
-      createdAt: existing.createdAt,
-      updatedAt: new Date(),
-    })
-    await this.baseService.entities.studentNotes.save(note)
-    return note
-  }
-
-  async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
-    const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
-    const actor = this.baseService.actor
-    const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
-
-    if (isSelfGuardian) {
-      operationModule(CommunicationsOperations.read)(actor)
-      const guardian = new Guardian({
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.studentNotes, noteId)
+      const note = new StudentNoteEntity({
         id: existing.id,
         schoolId: existing.schoolId,
-        firstName: existing.firstName,
-        lastName: existing.lastName,
-        photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
-        contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
+        studentId: existing.studentId,
+        authorStaffId: existing.authorStaffId,
+        title: changes.title === undefined ? existing.title : changes.title,
+        body: changes.body ?? existing.body,
+        visibility: changes.visibility ?? existing.visibility,
+        createdAt: existing.createdAt,
+        updatedAt: new Date(),
+      })
+      await this.baseService.entities.studentNotes.save(note)
+      return note
+    })
+  }
+
+  async updateGuardianProfile({ guardianId, studentNotificationPreferences, ...changes }: UpdateGuardianProfileInput): Promise<Guardian> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
+      await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Guardian, guardianId, changes.photoUrl)
+      const guardian = new Guardian({
+        ...existing.data,
+        ...Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined)),
+        identifier: Object.hasOwn(changes, 'identifier') ? changes.identifier : existing.identifier,
+        occupation: Object.hasOwn(changes, 'occupation') ? changes.occupation : existing.occupation,
+        sourceFullName: Object.hasOwn(changes, 'sourceFullName') ? changes.sourceFullName : existing.sourceFullName,
+        photoUrl: Object.hasOwn(changes, 'photoUrl') ? changes.photoUrl : existing.photoUrl,
+        id: existing.id,
+        schoolId: existing.schoolId,
         subjectId: existing.subjectId,
-        hasAccess: existing.hasAccess,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
-      const links = await this.baseService.repositories.guardianLinks.list({ guardianId: guardian.id })
-      scheduleNotificationRecipientUpsert(
-        this.baseService,
-        buildGuardianRecipientProfile(guardian, links),
-      )
-      return guardian
-    }
+      await this.baseService.entities.guardians.save(guardian)
+      const seen = new Set<string>()
+      for (const preference of studentNotificationPreferences ?? []) {
+        if (seen.has(preference.studentId))
+          throw new BusinessRuleViolationError('DUPLICATE_GUARDIAN_STUDENT_PREFERENCE', 'Each student must appear once')
+        seen.add(preference.studentId)
+        await this.updateGuardianStudentLink({ guardianId, studentId: preference.studentId, receivesAcademicReports: preference.receivesAcademicReports, receivesAttendanceAlerts: preference.receivesAttendanceAlerts })
+      }
 
-    await operationModule(GuardianOperations.update)(actor)
-    await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
-    const guardian = new Guardian({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: changes.firstName ?? existing.firstName,
-      lastName: changes.lastName ?? existing.lastName,
-      photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
-      contactMethods: [...(changes.contactMethods ?? existing.contactMethods)],
-      subjectId: existing.subjectId,
-      hasAccess: changes.hasAccess ?? existing.hasAccess,
-      createdAt: existing.createdAt,
+      return guardian
     })
-    await this.baseService.entities.guardians.save(guardian)
-    const links = await this.baseService.repositories.guardianLinks.list({ guardianId: guardian.id })
-    scheduleNotificationRecipientUpsert(
-      this.baseService,
-      buildGuardianRecipientProfile(guardian, links),
-    )
-    return guardian
   }
 
   async updateGuardianStudentLink({
@@ -532,72 +554,33 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     ...changes
   }: UpdateGuardianStudentLinkInput): Promise<GuardianStudentLinkType> {
-    const existing = await this.requireOne(this.baseService.entities.guardianLinks, { guardianId, studentId })
-    const actor = this.baseService.actor
-    const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
-
-    if (isSelfGuardian) {
-      operationModule(CommunicationsOperations.read)(actor)
-      await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireOne(this.baseService.entities.guardianLinks, { guardianId, studentId })
       const link = new GuardianStudentLink({
         id: existing.id,
         schoolId: existing.schoolId,
         guardianId: existing.guardianId,
         studentId: existing.studentId,
-        relationship: existing.relationship,
-        isPrimary: existing.isPrimary,
-        isBillingContact: existing.isBillingContact,
-        legalGuardian: existing.legalGuardian,
-        canPickup: existing.canPickup,
-        emergencyContactPriority: existing.emergencyContactPriority,
+        relationship: changes.relationship ?? existing.relationship,
+        isPrimary: changes.isPrimary ?? existing.isPrimary,
+        isBillingContact: changes.isBillingContact ?? existing.isBillingContact,
+        legalGuardian: changes.legalGuardian ?? existing.legalGuardian,
+        canPickup: changes.canPickup ?? existing.canPickup,
+        emergencyContactPriority: Object.hasOwn(changes, 'emergencyContactPriority') ? changes.emergencyContactPriority : existing.emergencyContactPriority,
         receivesAcademicReports: changes.receivesAcademicReports ?? existing.receivesAcademicReports,
         receivesAttendanceAlerts: changes.receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
-        contactRestrictions: existing.contactRestrictions,
-        notes: existing.notes,
+        contactRestrictions: Object.hasOwn(changes, 'contactRestrictions') ? changes.contactRestrictions : existing.contactRestrictions,
+        notes: Object.hasOwn(changes, 'notes') ? changes.notes : existing.notes,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.guardianLinks.save(link, { moduleChecked: true })
-      const guardian = await this.requireEntity(this.baseService.entities.guardians, guardianId)
-      const links = await this.baseService.repositories.guardianLinks.list({ guardianId })
-      scheduleNotificationRecipientUpsert(
-        this.baseService,
-        buildGuardianRecipientProfile(guardian, links),
-      )
-      return link
-    }
+      await this.baseService.entities.guardianLinks.save(link)
 
-    await operationModule(GuardianOperations.update)(actor)
-    await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
-    await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
-    const link = new GuardianStudentLink({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      guardianId: existing.guardianId,
-      studentId: existing.studentId,
-      relationship: changes.relationship ?? existing.relationship,
-      isPrimary: changes.isPrimary ?? existing.isPrimary,
-      isBillingContact: changes.isBillingContact ?? existing.isBillingContact,
-      legalGuardian: changes.legalGuardian ?? existing.legalGuardian,
-      canPickup: changes.canPickup ?? existing.canPickup,
-      emergencyContactPriority: changes.emergencyContactPriority ?? existing.emergencyContactPriority,
-      receivesAcademicReports: changes.receivesAcademicReports ?? existing.receivesAcademicReports,
-      receivesAttendanceAlerts: changes.receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
-      contactRestrictions: changes.contactRestrictions ?? existing.contactRestrictions,
-      notes: changes.notes ?? existing.notes,
-      createdAt: existing.createdAt,
+      return link
     })
-    await this.baseService.entities.guardianLinks.save(link)
-    const guardian = await this.requireEntity(this.baseService.entities.guardians, guardianId)
-    const links = await this.baseService.repositories.guardianLinks.list({ guardianId })
-    scheduleNotificationRecipientUpsert(
-      this.baseService,
-      buildGuardianRecipientProfile(guardian, links),
-    )
-    return link
   }
 
   private async requireManagedEnrollment(enrollmentId: string): Promise<StudentClassEnrollment> {
-    const enrollment = await this.baseService.repositories.enrollments.findById(enrollmentId)
+    const enrollment = await this.repositories.enrollments.findById(enrollmentId)
     if (!enrollment) {
       denyResourceAccess()
     }
@@ -609,14 +592,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(EnrollmentOperations.create)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+
+    await this.baseService.access.enrollments.assertUpdate({ studentId: student.id, classGroupId: classGroup.id })
     return enrollment
   }
 
   private async requireCurrentActiveEnrollment(enrollment: StudentClassEnrollment): Promise<void> {
-    const activeEnrollment = await this.baseService.repositories.enrollments.findOne({
+    const activeEnrollment = await this.repositories.enrollments.findOne({
       studentId: enrollment.studentId,
       status: StudentClassEnrollmentStatus.Active,
     })
@@ -637,8 +619,32 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (nextClassGroup.schoolId !== sourceClassGroup.schoolId) {
       denyResourceAccess()
     }
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [nextClassGroup.id])
+    await this.baseService.access.enrollments.assertUpdate({ studentId: enrollment.studentId, classGroupId: nextClassGroup.id })
     return nextClassGroup
+  }
+
+  async createProfilePhotoUpload(input: CreateProfilePhotoUploadInput) {
+    return createProfilePhotoUpload(this.baseService, input)
+  }
+
+  async completeProfilePhotoUpload(input: AttachmentInput): Promise<Attachment> {
+    return completeProfilePhotoUpload(this.baseService, input)
+  }
+
+  async submitStudentPhoto(input: SubmitStudentPhotoInput): Promise<StudentPhotoSubmission> {
+    return submitStudentPhoto(this.baseService, input)
+  }
+
+  async withdrawStudentPhotoSubmission(input: WithdrawStudentPhotoSubmissionInput): Promise<StudentPhotoSubmission> {
+    return withdrawStudentPhotoSubmission(this.baseService, input)
+  }
+
+  async reviewStudentPhoto(input: ReviewStudentPhotoInput): Promise<StudentPhotoSubmission> {
+    return reviewStudentPhoto(this.baseService, input)
+  }
+
+  async publishStudentPhoto(input: PublishStudentPhotoInput): Promise<Student> {
+    return publishStudentPhoto(this.baseService, input)
   }
 
   private async createSuccessorEnrollment({
@@ -653,8 +659,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     enrolledAt: Date
   }): Promise<StudentClassEnrollment> {
     const [existingEnrollment, enrollments] = await Promise.all([
-      this.baseService.repositories.enrollments.findById(id),
-      this.baseService.repositories.enrollments.list({ studentId: previousEnrollment.studentId }),
+      this.repositories.enrollments.findById(id),
+      this.repositories.enrollments.list({ studentId: previousEnrollment.studentId }),
     ])
     if (existingEnrollment) {
       throw new BusinessRuleViolationError('ENROLLMENT_ID_ALREADY_EXISTS', `Enrollment id ${id} already exists`)
@@ -676,33 +682,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (classGroup.capacity === undefined) {
       return
     }
-    const activeEnrollments = await this.baseService.repositories.enrollments.list({
+    const activeEnrollments = await this.repositories.enrollments.list({
       classGroupId: classGroup.id,
       status: StudentClassEnrollmentStatus.Active,
     })
     if (activeEnrollments.length >= classGroup.capacity) {
       throw new BusinessRuleViolationError('CLASS_GROUP_CAPACITY_EXCEEDED', `Class group ${classGroup.id} has reached capacity`)
     }
-  }
-
-  private async requireGuardian(guardianId: string): Promise<Guardian> {
-    const guardian = await this.baseService.repositories.guardians.findById(guardianId)
-    if (!guardian || guardian.schoolId !== this.baseService.actor.schoolId) {
-      denyResourceAccess()
-    }
-    return guardian
-  }
-
-  private async requireStudentEnrolledInSchool(studentId: string, schoolId: string): Promise<void> {
-    const enrollments = await this.baseService.repositories.enrollments.list({ studentId })
-    for (const enrollment of enrollments) {
-      const classGroup = await this.baseService.repositories.classGroups.findById(enrollment.classGroupId)
-      if (classGroup?.schoolId === schoolId) {
-        await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
-        return
-      }
-    }
-    denyResourceAccess()
   }
 
   private async requireEntity<T>(

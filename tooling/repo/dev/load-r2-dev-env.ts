@@ -1,62 +1,18 @@
 import type { ConfiguredR2Environment } from '@edaya/adaptor-r2'
-import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { isR2FileStorageConfigured } from '@edaya/adaptor-r2'
+import { readConfig, readSecrets } from '../../../apps/api/configuration/index.ts'
 import { loadWranglerDevVars } from './load-wrangler-dev-vars.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
 const stagingSecretsFile = resolve(apiRoot, 'secrets.staging.json')
-const wranglerConfigFile = resolve(apiRoot, 'wrangler.jsonc')
 
-const R2_DEV_VARS_HELP = 'Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME in apps/api/.dev.vars'
-const R2_STAGING_SECRETS_HELP = `Fill R2 credentials in apps/api/secrets.staging.json (copy secrets.json.example). Bucket name comes from wrangler.jsonc env.staging.vars.R2_BUCKET_NAME.`
+const R2_DEV_VARS_HELP = 'Set R2 settings in config.staging.jsonc and R2 credentials in apps/api/.dev.vars'
+const R2_STAGING_SECRETS_HELP = `Fill R2 credentials in apps/api/secrets.staging.json (copy secrets.json.example). R2 endpoint and bucket come from config.staging.jsonc.`
 
 export interface R2DevEnv extends ConfiguredR2Environment {
   TRUSTED_ORIGINS?: string
-}
-
-interface WranglerStagingSecrets {
-  R2_ACCESS_KEY_ID?: string
-  R2_SECRET_ACCESS_KEY?: string
-  R2_ENDPOINT?: string
-  R2_ACCOUNT_ID?: string
-}
-
-function readWranglerStagingVar(name: string): string | undefined {
-  if (!existsSync(wranglerConfigFile)) {
-    return undefined
-  }
-
-  const stagingBlock = readFileSync(wranglerConfigFile, 'utf8').split('"staging"')[1]?.split('"prod"')[0]
-  if (!stagingBlock) {
-    return undefined
-  }
-
-  const match = stagingBlock.match(new RegExp(`"${name}"\\s*:\\s*"([^"]+)"`))
-  return match?.[1]
-}
-
-function readStagingSecretsFile(): WranglerStagingSecrets {
-  if (!existsSync(stagingSecretsFile)) {
-    throw new Error(
-      `Missing ${stagingSecretsFile}. ${R2_STAGING_SECRETS_HELP}`,
-    )
-  }
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(readFileSync(stagingSecretsFile, 'utf8'))
-  }
-  catch {
-    throw new Error(`Invalid JSON in ${stagingSecretsFile}.`)
-  }
-
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error(`Invalid secrets file: ${stagingSecretsFile}.`)
-  }
-
-  return parsed as WranglerStagingSecrets
 }
 
 function toConfiguredR2Env(source: {
@@ -67,6 +23,7 @@ function toConfiguredR2Env(source: {
   R2_ENDPOINT?: string
   TRUSTED_ORIGINS?: string
 }): R2DevEnv {
+  const trustedOrigins = source.TRUSTED_ORIGINS
   if (!isR2FileStorageConfigured(source)) {
     throw new Error('R2 env is incomplete.')
   }
@@ -77,21 +34,19 @@ function toConfiguredR2Env(source: {
     R2_BUCKET_NAME: source.R2_BUCKET_NAME,
     ...(source.R2_ACCOUNT_ID ? { R2_ACCOUNT_ID: source.R2_ACCOUNT_ID } : {}),
     ...(source.R2_ENDPOINT ? { R2_ENDPOINT: source.R2_ENDPOINT } : {}),
-    ...(source.TRUSTED_ORIGINS ? { TRUSTED_ORIGINS: source.TRUSTED_ORIGINS } : {}),
+    ...(trustedOrigins ? { TRUSTED_ORIGINS: trustedOrigins } : {}),
   }
 }
 
-/** Load staging R2 credentials from `apps/api/secrets.staging.json` + bucket from wrangler staging vars. */
+/** Load staging R2 credentials from `apps/api/secrets.staging.json` + settings from config.staging.jsonc. */
 export function loadR2StagingEnv(): R2DevEnv {
-  const secrets = readStagingSecretsFile()
-  const r2BucketName = readWranglerStagingVar('R2_BUCKET_NAME')
-  const trustedOrigins = readWranglerStagingVar('TRUSTED_ORIGINS')
+  const secrets = readSecrets(stagingSecretsFile)
+  const config = readConfig('staging', apiRoot)
 
   try {
     return toConfiguredR2Env({
+      ...config,
       ...secrets,
-      ...(r2BucketName ? { R2_BUCKET_NAME: r2BucketName } : {}),
-      ...(trustedOrigins ? { TRUSTED_ORIGINS: trustedOrigins } : {}),
     })
   }
   catch {
@@ -104,7 +59,14 @@ export function loadR2DevEnv(): R2DevEnv {
   loadWranglerDevVars()
 
   try {
-    return toConfiguredR2Env(process.env)
+    return toConfiguredR2Env({
+      R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+      R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+      R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+      R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+      R2_ENDPOINT: process.env.R2_ENDPOINT,
+      TRUSTED_ORIGINS: process.env.TRUSTED_ORIGINS,
+    })
   }
   catch {
     throw new Error(`R2 is not configured. ${R2_DEV_VARS_HELP}`)

@@ -1,9 +1,10 @@
-import type { ActorMetadata, AuthorizationPolicy } from '@edaya/authorization'
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { noOpNotificationGateway } from '@edaya/core'
 import { BaseSchoolService, createSchoolCommandHandlers, SCHOOL_COMMAND_KEYS, SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { testFileStorage } from '../support/test-file-storage'
 
 function keyDifference(actual: readonly string[], expected: readonly string[]) {
@@ -23,27 +24,19 @@ describe('school command keys', () => {
     const repositories = new Proxy({}, {
       get: () => repository,
     }) as SchoolRepositories
-    const authorizationPolicy = new Proxy({}, {
-      get: () => async () => undefined,
-    }) as AuthorizationPolicy
     const atomicExecution: AtomicExecutionPort = {
       execute: operation => operation(),
     }
 
-    const service = new SchoolService({
-      actor: {} as ActorMetadata,
-      repositories,
-      authorizationPolicy,
-      atomicExecution,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const service = new SchoolService({ commandJournal: new PostgresCommandJournal(), actor: {} as SchoolScopedActorMetadata, repositories, atomicExecution, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
 
     expect(keyDifference(Object.keys(service.commands), SCHOOL_COMMAND_KEYS)).toEqual({
       missing: [],
       extra: [],
     })
     expect(keyDifference(Object.keys(createSchoolCommandHandlers({
+      conversations: {} as import('../../src/services/workflows/conversations').ConversationsWorkflow,
+      teacherCorrections: service.teacherCorrectionsWorkflow,
       setup: service.setupWorkflow,
       accessControl: service.accessControlWorkflow,
       accountInvitation: service.accountInvitationWorkflow,
@@ -56,14 +49,15 @@ describe('school command keys', () => {
       communications: service.communicationsWorkflow,
       behavior: service.behaviorWorkflow,
       finance: service.financeWorkflow,
+      documents: service.documentsWorkflow,
+      familyFeedback: service.familyFeedbackWorkflow,
     })), SCHOOL_COMMAND_KEYS)).toEqual({
       missing: [],
       extra: [],
     })
     expect(new BaseSchoolService({
-      actor: {} as ActorMetadata,
+      actor: {} as SchoolScopedActorMetadata,
       repositories,
-      authorizationPolicy,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
       fileStorage: testFileStorage,

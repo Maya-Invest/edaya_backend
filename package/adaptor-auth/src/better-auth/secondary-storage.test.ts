@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, spyOn } from 'bun:test'
 import { createInMemoryAuthSecondaryStorage } from '../adapters/in-memory-auth-secondary-storage'
 import {
   CLOUDFLARE_KV_MIN_TTL_SECONDS,
@@ -43,12 +43,19 @@ describe('createKvAuthSecondaryStorage', () => {
 describe('createInMemoryAuthSecondaryStorage', () => {
   it('expires values after ttlMs', async () => {
     const storage = createInMemoryAuthSecondaryStorage()
+    const now = 1_700_000_000_000
+    const nowSpy = spyOn(Date, 'now').mockReturnValue(now)
 
-    await storage.set('session:1', 'value', 1)
-    expect(await storage.get('session:1')).toBe('value')
+    try {
+      await storage.set('session:1', 'value', 10)
+      expect(await storage.get('session:1')).toBe('value')
 
-    await new Promise(resolve => setTimeout(resolve, 5))
-    expect(await storage.get('session:1')).toBeNull()
+      nowSpy.mockReturnValue(now + 10)
+      expect(await storage.get('session:1')).toBeNull()
+    }
+    finally {
+      nowSpy.mockRestore()
+    }
   })
 })
 

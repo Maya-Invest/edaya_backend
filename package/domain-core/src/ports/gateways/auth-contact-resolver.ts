@@ -6,4 +6,5 @@ export interface AuthContact {
 export interface AuthContactResolverPort {
   resolveBySubjectId: (subjectId: string) => Promise<AuthContact | undefined>
   hasAccountForEmail?: (email: string) => Promise<boolean>
+  hasAccountForPhone?: (phone: string) => Promise<boolean>
 }

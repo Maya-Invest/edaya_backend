@@ -1,14 +1,15 @@
-import type { Assessment, AssessmentResult, ReportCardAggregation, ReportCardDefinitionSection, ReportCardResult, ReportCardResultSection } from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
+import type { AcademicPeriod, Assessment, AssessmentResult, GradingPolicy, ReportCardAggregation, ReportCardResult, ReportCardResultSection } from '@edaya/core'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import {
   BusinessRuleViolationError,
+  calculateGrade,
   ReportCardAggregationSource,
-  ReportCardDefinitionSectionKind,
-  ReportCardResultSection as ReportCardResultSectionEntity,
   ReportCardResultStatus,
-  roundTo2,
   weightForPeriod,
 } from '@edaya/core'
+import { hydrateReportRevision } from '../../capabilities/academics/report-comment-revisions'
+
+type AggregationRepositories = Pick<SchoolRepositories, 'academicPeriods' | 'assessments' | 'assessmentResults' | 'results'>
 
 export interface AggregationPublishReadiness {
   canPublish: boolean
@@ -16,117 +17,53 @@ export interface AggregationPublishReadiness {
   missingOrDraftReportCardPeriodIds: string[]
 }
 
-export function dedupeReportCardDefinitionSections(
-  sections: readonly ReportCardDefinitionSection[],
-): ReportCardDefinitionSection[] {
-  const byId = new Map<string, ReportCardDefinitionSection>()
-  for (const section of sections) {
-    if (!byId.has(section.id)) {
-      byId.set(section.id, section)
-    }
-  }
-  return [...byId.values()]
-}
-
-export function rootReportCardDefinitionSections(
-  sections: readonly ReportCardDefinitionSection[],
-): ReportCardDefinitionSection[] {
-  const byName = new Map<string, ReportCardDefinitionSection>()
-  for (const section of dedupeReportCardDefinitionSections(sections)) {
-    if (section.parentSectionId) {
-      continue
-    }
-    if (!byName.has(section.name)) {
-      byName.set(section.name, section)
-    }
-  }
-  return [...byName.values()]
-}
-
-export function childReportCardDefinitionSections(
-  sections: readonly ReportCardDefinitionSection[],
-  parentSectionId: string,
-): ReportCardDefinitionSection[] {
-  const seenSubjectIds = new Set<string>()
-  return dedupeReportCardDefinitionSections(sections)
-    .filter(section => section.parentSectionId === parentSectionId)
-    .filter((section) => {
-      if (section.kind !== ReportCardDefinitionSectionKind.Subject || !section.subjectId) {
-        return true
-      }
-      if (seenSubjectIds.has(section.subjectId)) {
-        return false
-      }
-      seenSubjectIds.add(section.subjectId)
-      return true
-    })
-}
-
-export function findSectionAverage(
-  sectionResults: readonly ReportCardResultSection[],
-  sectionId: string,
-): number | undefined {
-  for (const section of sectionResults) {
-    if (section.sectionId === sectionId) {
-      return section.average
-    }
-    const nested = findSectionAverage(section.subResults, sectionId)
-    if (nested !== undefined) {
-      return nested
-    }
-  }
-  return undefined
-}
-
 export async function listPublishedPeriodIds(
-  baseService: BaseSchoolService,
+  repositories: AggregationRepositories,
   periodIds: readonly string[],
 ): Promise<Set<string>> {
   const published = new Set<string>()
-  for (const periodId of periodIds) {
-    const period = await baseService.repositories.academicPeriods.findById(periodId)
-    if (period?.isPublished) {
-      published.add(periodId)
-    }
+  const periods = await repositories.academicPeriods.findByIds(periodIds)
+  for (const period of periods) {
+    if (period.isPublished)
+      published.add(period.id)
   }
   return published
 }
 
 export async function listAssessmentResultsForStudentAndPeriods(
-  baseService: BaseSchoolService,
+  repositories: AggregationRepositories,
   studentId: string,
   periodIds: readonly string[],
   options: { onlyPublishedPeriods?: boolean } = {},
 ): Promise<Array<{ result: AssessmentResult, assessment: Assessment }>> {
   const eligiblePeriodIds = options.onlyPublishedPeriods
-    ? await listPublishedPeriodIds(baseService, periodIds)
+    ? await listPublishedPeriodIds(repositories, periodIds)
     : new Set(periodIds)
-  const results = await baseService.repositories.assessmentResults.list({ studentId })
-  const resolved: Array<{ result: AssessmentResult, assessment: Assessment }> = []
-  for (const result of results) {
-    const assessment = await baseService.repositories.assessments.findById(result.assessmentId)
-    if (assessment?.periodId && eligiblePeriodIds.has(assessment.periodId)) {
-      resolved.push({ result, assessment })
-    }
-  }
+  const assessments = await repositories.assessments.list({ periodId: { $in: [...eligiblePeriodIds] }, marksStatus: 'submitted' })
+  const byId = new Map(assessments.map(assessment => [assessment.id, assessment]))
+  const results = assessments.length ? await repositories.assessmentResults.list({ studentId, assessmentId: { $in: [...byId.keys()] } }) : []
+  const resolved = results.map(result => ({ result, assessment: byId.get(result.assessmentId)! }))
   return resolved
 }
 
 export function buildSubjectAverageFromAssessments(
-  classSubjectId: string,
+  classSubjectId: string | readonly string[],
   assessmentsWithResults: Array<{ result: AssessmentResult, assessment: Assessment }>,
+  policy?: GradingPolicy,
 ): number | undefined {
   const leafResults = assessmentsWithResults
-    .filter(({ assessment, result }) => assessment.classSubjectId === classSubjectId && result.score !== undefined)
+    .filter(({ assessment, result }) => (typeof classSubjectId === 'string' ? assessment.classSubjectId === classSubjectId : classSubjectId.includes(assessment.classSubjectId)) && assessment.marksStatus === 'submitted' && result.designation !== 'absent' && result.designation !== 'exempt' && (result.score !== undefined || result.originalEntry !== undefined))
   if (leafResults.length === 0) {
     return undefined
   }
   const totalWeight = leafResults.reduce((sum, { assessment }) => sum + assessment.coefficient, 0)
   const weightedPoints = leafResults.reduce((sum, { result, assessment }) => {
-    const normalizedScore = ((result.score ?? 0) / assessment.maxScore) * 20
+    const normalizedScore = policy
+      ? calculateGrade(result.originalEntry ?? { kind: 'numeric', value: result.score!, maximum: assessment.maxScore }, policy).value
+      : ((result.score ?? 0) / assessment.maxScore) * 20
     return sum + normalizedScore * assessment.coefficient
   }, 0)
-  return totalWeight === 0 ? 0 : roundTo2(weightedPoints / totalWeight)
+  return totalWeight === 0 ? undefined : weightedPoints / totalWeight
 }
 
 export interface PriorReportCardLoadResult {
@@ -135,7 +72,7 @@ export interface PriorReportCardLoadResult {
 }
 
 export async function loadPriorReportCardResults(
-  baseService: BaseSchoolService,
+  repositories: AggregationRepositories,
   {
     studentId,
     sourcePeriodIds,
@@ -146,56 +83,70 @@ export async function loadPriorReportCardResults(
 ): Promise<PriorReportCardLoadResult> {
   const publishedByPeriodId = new Map<string, ReportCardResult>()
   const missingOrDraftPeriodIds: string[] = []
-  for (const sourcePeriodId of sourcePeriodIds) {
-    const reportCard = await baseService.repositories.results.findOne({
-      studentId,
-      periodId: sourcePeriodId,
-    })
-    if (!reportCard || reportCard.status !== ReportCardResultStatus.Published) {
-      missingOrDraftPeriodIds.push(sourcePeriodId)
-      continue
-    }
-    publishedByPeriodId.set(sourcePeriodId, reportCard)
+  const reports = sourcePeriodIds.length ? await repositories.results.list({ studentId, periodId: { $in: [...sourcePeriodIds] }, status: ReportCardResultStatus.Published }) : []
+  for (const report of reports) {
+    if (publishedByPeriodId.has(report.periodId))
+      throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_SOURCES_AMBIGUOUS', 'Each period must have one published report for this student')
+    publishedByPeriodId.set(report.periodId, report)
+  }
+  for (const periodId of sourcePeriodIds) {
+    if (!publishedByPeriodId.has(periodId))
+      missingOrDraftPeriodIds.push(periodId)
   }
   return { publishedByPeriodId, missingOrDraftPeriodIds }
 }
 
+export interface ReportAggregationContext {
+  publishedPeriods: AcademicPeriod[]
+  priorResultsByPeriodId: Map<string, ReportCardResult>
+  readiness: AggregationPublishReadiness
+}
+
+/** One shared snapshot for calculation, provenance and publication readiness. */
+export async function loadReportAggregationContext(
+  repositories: AggregationRepositories,
+  studentId: string,
+  aggregation: ReportCardAggregation,
+  target?: AcademicPeriod,
+  draftPolicyRevision?: number,
+): Promise<ReportAggregationContext> {
+  if (new Set(aggregation.sourcePeriodIds).size !== aggregation.sourcePeriodIds.length || (target && aggregation.sourcePeriodIds.includes(target.id)))
+    throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_PERIODS_INVALID', 'Contributing periods must be distinct and exclude the target')
+  const periods = await repositories.academicPeriods.findByIds(aggregation.sourcePeriodIds)
+  if (target && (periods.length !== aggregation.sourcePeriodIds.length || periods.some(period => period.schoolId !== target.schoolId || period.academicYearId !== target.academicYearId)))
+    throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_PERIODS_INVALID', 'Contributing periods must belong to the same school and academic year')
+  const publishedPeriods = periods.filter(period => period.isPublished)
+  const publishedIds = new Set(publishedPeriods.map(period => period.id))
+  const unpublishedPeriodIds = aggregation.sourcePeriodIds.filter(id => !publishedIds.has(id))
+  const prior = aggregation.source === ReportCardAggregationSource.ReportCards
+    ? await loadPriorReportCardResults(repositories, { studentId, sourcePeriodIds: aggregation.sourcePeriodIds })
+    : { publishedByPeriodId: new Map<string, ReportCardResult>(), missingOrDraftPeriodIds: [] }
+  return {
+    publishedPeriods,
+    priorResultsByPeriodId: new Map([...prior.publishedByPeriodId].map(([id, result]) => [id, draftPolicyRevision !== undefined && result.revisedDraft?.gradingPolicyRevision === draftPolicyRevision ? hydrateReportRevision(result.revisedDraft) : result])),
+    readiness: {
+      canPublish: unpublishedPeriodIds.length === 0 && prior.missingOrDraftPeriodIds.length === 0
+        && [...prior.publishedByPeriodId.values()].every(result => !result.revisedDraft && !result.calculationStale && !result.pendingCorrectionIds?.length && !result.pendingAssessmentIds?.length),
+      unpublishedPeriodIds,
+      missingOrDraftReportCardPeriodIds: prior.missingOrDraftPeriodIds,
+    },
+  }
+}
+
 export async function evaluateAggregationPublishReadiness(
-  baseService: BaseSchoolService,
+  repositories: AggregationRepositories,
   studentId: string,
   aggregation: ReportCardAggregation,
 ): Promise<AggregationPublishReadiness> {
-  const unpublishedPeriodIds: string[] = []
-  for (const periodId of aggregation.sourcePeriodIds) {
-    const period = await baseService.repositories.academicPeriods.findById(periodId)
-    if (!period?.isPublished) {
-      unpublishedPeriodIds.push(periodId)
-    }
-  }
-
-  if (aggregation.source === ReportCardAggregationSource.Assessments) {
-    return {
-      canPublish: unpublishedPeriodIds.length === 0,
-      unpublishedPeriodIds,
-      missingOrDraftReportCardPeriodIds: [],
-    }
-  }
-
-  const { missingOrDraftPeriodIds } = await loadPriorReportCardResults(baseService, {
-    studentId,
-    sourcePeriodIds: aggregation.sourcePeriodIds,
-  })
-  return {
-    canPublish: unpublishedPeriodIds.length === 0 && missingOrDraftPeriodIds.length === 0,
-    unpublishedPeriodIds,
-    missingOrDraftReportCardPeriodIds: missingOrDraftPeriodIds,
-  }
+  return (await loadReportAggregationContext(repositories, studentId, aggregation)).readiness
 }
 
 export function buildSubjectAverageFromPriorReportCards(
   sectionId: string,
   aggregation: ReportCardAggregation,
   priorResultsByPeriodId: ReadonlyMap<string, ReportCardResult>,
+  subject?: { id: string, byClassSubject: ReadonlyMap<string, string> },
+  policy?: GradingPolicy,
 ): number | undefined {
   let sumWeights = 0
   let sumWeightedPoints = 0
@@ -204,7 +155,17 @@ export function buildSubjectAverageFromPriorReportCards(
     if (!priorResult) {
       continue
     }
-    const average = findSectionAverage(priorResult.sectionResults, sectionId)
+    const findSubject = (sections: readonly ReportCardResultSection[]): number | undefined => {
+      for (const section of sections) {
+        if (section.classSubjectId && subject?.byClassSubject.get(section.classSubjectId) === subject?.id)
+          return policy ? section.grading?.value ?? section.average : section.average
+        const nested = findSubject(section.subResults)
+        if (nested !== undefined)
+          return nested
+      }
+      return undefined
+    }
+    const average = subject ? findSubject(priorResult.sectionResults) : findSectionAverage(priorResult.sectionResults, sectionId)
     if (average === undefined) {
       continue
     }
@@ -215,31 +176,7 @@ export function buildSubjectAverageFromPriorReportCards(
   if (sumWeights === 0) {
     return undefined
   }
-  return roundTo2(sumWeightedPoints / sumWeights)
-}
-
-export function buildGroupResultFromChildren(
-  section: ReportCardDefinitionSection,
-  childResults: ReportCardResultSection[],
-): ReportCardResultSection | null {
-  if (childResults.length === 0) {
-    return null
-  }
-  let sumWeights = 0
-  let sumWeightedPoints = 0
-  for (const childResult of childResults) {
-    sumWeights += childResult.weight
-    sumWeightedPoints += childResult.average * childResult.weight
-  }
-  return new ReportCardResultSectionEntity({
-    sectionId: section.id,
-    sectionKind: ReportCardDefinitionSectionKind.Group,
-    name: section.name,
-    average: sumWeights === 0 ? 0 : sumWeightedPoints / sumWeights,
-    weight: section.weight,
-    parentSectionId: section.parentSectionId,
-    subResults: childResults,
-  })
+  return sumWeightedPoints / sumWeights
 }
 
 export function assertAggregationSource(
@@ -252,4 +189,15 @@ export function assertAggregationSource(
       `Expected aggregation source ${source} but received ${aggregation.source}`,
     )
   }
+}
+
+export function findSectionAverage(sections: readonly ReportCardResultSection[], id: string): number | undefined {
+  for (const section of sections) {
+    if (section.sectionId === id)
+      return section.grading?.value ?? section.average
+    const value = findSectionAverage(section.subResults, id)
+    if (value !== undefined)
+      return value
+  }
+  return undefined
 }

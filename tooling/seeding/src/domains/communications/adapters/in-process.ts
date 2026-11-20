@@ -2,6 +2,7 @@ import type { SeedApplication } from '../../../support/types'
 import type { CommunicationsSeedPort } from '../port'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
+import { seedDeliveryEvents } from '../delivery-history'
 
 export function createInProcessCommunicationsSeedPort(
   application: SeedApplication,
@@ -9,6 +10,11 @@ export function createInProcessCommunicationsSeedPort(
   const service = createInProcessSeedService(application, 'dev-communications-seed')
 
   return {
+    findRecipientSubjectId: async (kind, id) => {
+      const repository = { staff: application.repositories.staffMembers, guardian: application.repositories.guardians, student: application.repositories.students, teacher: application.repositories.teachers }[kind]
+      const profile = await repository.findById(id)
+      return profile?.schoolId === service.baseService.actor.schoolId ? profile.subjectId : undefined
+    },
     createAnnouncement: record => withSeedPortError('communications.createAnnouncement', async () => {
       await service.communicationsWorkflow.createAnnouncement({
         ...record,
@@ -33,6 +39,23 @@ export function createInProcessCommunicationsSeedPort(
         return deliveries.length
       }),
     recordDelivery: record => withSeedPortError('communications.recordDelivery', async () => {
+      const existing = await service.baseService.entities.messageDeliveries.findOne({
+        schoolId: record.schoolId,
+        sourceKey: record.announcementId,
+        subjectId: record.subjectId,
+        recipientKind: record.recipientKind,
+        recipientId: record.recipientId,
+      })
+      if (existing) {
+        for (const event of seedDeliveryEvents(record, existing.sentAt)) {
+          await service.communicationsWorkflow.applyDeliveryEvent({
+            ...event,
+            deliveryId: existing.id,
+            occurredAt: event.occurredAt ? new Date(event.occurredAt) : undefined,
+          })
+        }
+        return
+      }
       await service.communicationsWorkflow.recordDelivery({
         ...record,
         sentAt: record.sentAt ? new Date(record.sentAt) : undefined,

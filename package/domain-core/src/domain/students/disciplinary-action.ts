@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { shortNameSchema } from '../shared/visible-identification'
 
 export enum DisciplinaryActionKind {
   Sanction = 'sanction',
@@ -11,6 +12,7 @@ export const disciplinaryActionBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: shortNameSchema.optional(),
   kind: z.nativeEnum(DisciplinaryActionKind).default(DisciplinaryActionKind.Sanction),
   severity: z.number().finite().positive('severity must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
   defaultDurationDays: z.number().int().positive('defaultDurationDays must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
@@ -34,6 +36,8 @@ export const disciplinaryActionUpdateSchema = disciplinaryActionBaseSchema.parti
 export class DisciplinaryAction {
   readonly data: DisciplinaryActionData
 
+  copyWith(changes: Partial<DisciplinaryActionInput>): DisciplinaryAction { return new DisciplinaryAction({ ...this.data, ...changes }) }
+
   constructor(args: DisciplinaryActionInput) {
     this.data = parseDomain(disciplinaryActionSchema, args)
   }
@@ -41,6 +45,7 @@ export class DisciplinaryAction {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.name }
   get kind() { return this.data.kind }
   get severity() { return this.data.severity }
   get defaultDurationDays() { return this.data.defaultDurationDays }

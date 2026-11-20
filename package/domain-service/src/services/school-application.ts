@@ -1,7 +1,9 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { FileStoragePort } from '@edaya/core'
+import type { AtomicExecutionPort, DurableWorkPort, FileStoragePort } from '@edaya/core'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import type { ServiceArgs } from './service-args'
+import { AuthorizationError, AuthorizationErrorCode, isSchoolScopedActor } from '@edaya/authorization'
+import { CommandExecution } from './commands/command-execution'
 import { SchoolService } from './school-service'
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>
@@ -13,15 +15,42 @@ export class SchoolApplication {
     this.args = args
   }
 
+  get importPersistence(): import('@edaya/core').ImportPersistencePort {
+    if (!this.args.importPersistence)
+      throw new Error('Import persistence is not configured')
+    return this.args.importPersistence
+  }
+
   get repositories(): SchoolRepositories {
     return this.args.repositories
+  }
+
+  get atomicExecution(): AtomicExecutionPort {
+    if (!this.args.atomicExecution)
+      throw new Error('Application writes require atomic execution')
+    return this.args.atomicExecution
   }
 
   get fileStorage(): FileStoragePort {
     return this.args.fileStorage
   }
 
+  get commandExecution(): CommandExecution {
+    if (!this.args.commandJournal)
+      throw new Error('Reliable commands require a transactional command journal')
+    return new CommandExecution(this.atomicExecution, this.args.commandJournal)
+  }
+
+  get durableWork(): DurableWorkPort {
+    if (!this.args.durableWork)
+      throw new Error('Durable dispatch requires a persistent work store')
+    return this.args.durableWork
+  }
+
   forActor(actor: ActorMetadata): SchoolService {
+    if (!isSchoolScopedActor(actor)) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Platform actors are not school-scoped')
+    }
     return new SchoolService({ ...this.args, actor })
   }
 
@@ -31,5 +60,13 @@ export class SchoolApplication {
       return false
     }
     return resolver.hasAccountForEmail(email)
+  }
+
+  async hasAuthAccountForPhone(phone: string): Promise<boolean> {
+    const resolver = this.args.authContactResolver
+    if (!resolver?.hasAccountForPhone) {
+      return false
+    }
+    return resolver.hasAccountForPhone(phone)
   }
 }

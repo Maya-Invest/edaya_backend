@@ -1,25 +1,18 @@
 import type { ActivitySession } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, SchedulingOperations } from '@edaya/authorization'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, OccurrenceStatus } from '@edaya/core'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, config, operationModule, read, readByIds, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/scheduling/activity-session.ts (PR3)
-export const activitySessionConfig: EntityConfigFactory<ActivitySession> = ({ repositories, policy, atomicExecution }) =>
+export const activitySessionConfig: EntityConfigFactory<ActivitySession> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.activitySessions,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(
-      operationModule(SchedulingOperations.timetableRead),
-      readByIds((actor, ids) => policy.checkActivitySessionAccess(actor, ids)),
-    ),
-    write: write(
-      operationModule(SchedulingOperations.timetableManage),
-      authorizeClassGroupLinked(policy, 'classGroupId'),
-      authorizeClassGroupLinkedDelete(policy),
-    ),
+    resource: 'activitySessions',
+
     gates: {
       preSave: validateActivitySessionSave,
     },

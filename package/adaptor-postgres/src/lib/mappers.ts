@@ -9,7 +9,7 @@ export function rowToConstructorArgs(row: Record<string, unknown>): Record<strin
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/
 
-export function deserializeJsonb(value: any): any {
+export function deserializeJsonb<T>(value: T): T {
   if (value === null || value === undefined) {
     return value
   }
@@ -24,15 +24,15 @@ export function deserializeJsonb(value: any): any {
   })
 }
 
-export function createDefaultMappers<T extends { readonly id: string }>(
-  Ctor: new (args: any) => T,
+export function createDefaultMappers<T extends { readonly id: string }, Input extends object>(
+  Ctor: new (args: Input) => T,
 ): {
-  toRow: (entity: T) => any
-  toDomain: (row: any) => T
+  toRow: (entity: T) => Record<string, unknown>
+  toDomain: (row: Record<string, unknown>) => T
 } {
   return {
-    toRow: (entity: T): any => {
-      const row: any = {}
+    toRow: (entity: T): Record<string, unknown> => {
+      const row: Record<string, unknown> = {}
       const dataSource: Record<string, unknown>
         = (entity && typeof entity === 'object' && 'data' in entity && entity.data && typeof entity.data === 'object')
           ? entity.data as Record<string, unknown>
@@ -43,6 +43,6 @@ export function createDefaultMappers<T extends { readonly id: string }>(
       }
       return row
     },
-    toDomain: (row: any): T => new Ctor(rowToConstructorArgs(row)),
+    toDomain: (row: Record<string, unknown>): T => new Ctor(rowToConstructorArgs(row) as Input),
   }
 }

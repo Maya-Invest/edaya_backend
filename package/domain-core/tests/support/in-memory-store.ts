@@ -30,6 +30,8 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   })
 
   return {
+    forAccess: () => { throw new Error('Authorization tests require the native scoped repository') },
+    assertAccess: async () => { throw new Error('Authorization tests require the native scoped repository') },
     findById: async (id: string) => entries.get(id),
     findOne: async () => undefined,
     findByIds: async (ids: readonly string[]) => ids.map(id => entries.get(id)).filter((entity): entity is T => entity !== undefined),

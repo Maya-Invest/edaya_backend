@@ -4,5 +4,5 @@
  * `execute` to the same transaction context.
  */
 export interface AtomicExecutionPort {
-  execute: <T>(operation: () => Promise<T>) => Promise<T>
+  execute: <T>(operation: () => Promise<T>, options?: { lockKeys?: readonly string[], readSnapshot?: boolean }) => Promise<T>
 }

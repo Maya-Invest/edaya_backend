@@ -38,8 +38,6 @@
     "yaml",
     "toml",
     "xml",
-    "gql",
-    "graphql",
     "astro",
     "svelte",
     "css",

@@ -121,3 +121,33 @@ describe("scheduleBackgroundTask", () => {
     expect(close).toHaveBeenCalled();
   });
 });
+
+test("document background runtime stays open while request resources close, then closes on failure", async () => {
+  const { scheduleBackgroundApplicationTask } = await import("@/lib/school-api/schedule-background-task");
+  const { context, waitUntilTasks, loggerErrors } = createScheduleContext({ runtime: "worker" });
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const close = mock(async () => undefined);
+  const application = { forActor: () => ({}) };
+  const spy = spyOn(buildRuntimeModule, "buildWorkerApiRuntime").mockResolvedValue({
+    getSchoolApplication: async () => application,
+    close,
+  } as never);
+  try {
+    scheduleBackgroundApplicationTask(context, async (owned) => {
+      expect(owned).toBe(application as never);
+      await pending;
+      expect(close).not.toHaveBeenCalled();
+      throw new Error("renderer failure");
+    });
+    await Promise.resolve();
+    expect(close).not.toHaveBeenCalled();
+    release();
+    await waitUntilTasks[0];
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(loggerErrors).toHaveLength(1);
+  }
+  finally { spy.mockRestore(); }
+});

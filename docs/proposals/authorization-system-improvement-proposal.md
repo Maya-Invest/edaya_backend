@@ -1,8 +1,10 @@
 # Authorization system improvement proposal
 
+> **Historical proposal — authorization guidance superseded.** The accepted design is the [clean implementation plan](../sprints/authorization-clean-implementation.md), with [one policy implementation](../../package/domain-authorization/src/README.md) and [one coordinated cutover](../architecture/authorization-cutover.md). The strategy port, parallel migration paths, operation dispatch and authorization caches discussed below are not implementation targets. Follow `@edaya/service` → `@edaya/authorization` → `@edaya/core`.
+
 ## Status
 
-- **State:** proposed
+- **State:** historical; authorization work superseded by the clean implementation plan
 - **Date:** 2026-07-13
 - **Scope:** authentication actor assembly, authorization operations, resource policies, tenant isolation, public entity APIs, grant persistence, caches, service accounts, and trusted workloads
 - **Risk classification:** critical authorization enforcement gaps requiring immediate containment

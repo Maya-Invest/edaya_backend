@@ -1,5 +1,5 @@
 import type { SchoolRepositories } from '@edaya/service'
-import { AcademicYear } from '@edaya/core'
+import { AcademicYear, withShortName } from '@edaya/core'
 import { findActiveAcademicYear } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 
@@ -10,41 +10,41 @@ function academicYearsRepo(
 }
 
 describe('findActiveAcademicYear', () => {
-  test('returns the active academic year when one is marked active', async () => {
-    const active = new AcademicYear({
+  test('returns the published academic year when one is marked published', async () => {
+    const published = new AcademicYear(withShortName({
       id: 'year-active',
       schoolId: 'school-1',
       name: '2025-2026',
       startDate: new Date('2025-09-01'),
       endDate: new Date('2026-07-15'),
-      isActive: true,
-    })
-    const inactive = new AcademicYear({
+      status: 'published',
+    }))
+    const archived = new AcademicYear(withShortName({
       id: 'year-old',
       schoolId: 'school-1',
       name: '2024-2025',
       startDate: new Date('2024-09-01'),
       endDate: new Date('2025-07-15'),
-      isActive: false,
-    })
+      status: 'archived',
+    }))
 
     const result = await findActiveAcademicYear(
-      academicYearsRepo(async () => [inactive, active]),
+      academicYearsRepo(async () => [archived, published]),
       'school-1',
     )
 
     expect(result?.id).toBe('year-active')
   })
 
-  test('falls back to the first listed year when none are active', async () => {
-    const first = new AcademicYear({
+  test('falls back to the first listed year when none are published', async () => {
+    const first = new AcademicYear(withShortName({
       id: 'year-first',
       schoolId: 'school-1',
       name: '2024-2025',
       startDate: new Date('2024-09-01'),
       endDate: new Date('2025-07-15'),
-      isActive: false,
-    })
+      status: 'archived',
+    }))
 
     const result = await findActiveAcademicYear(
       academicYearsRepo(async () => [first]),

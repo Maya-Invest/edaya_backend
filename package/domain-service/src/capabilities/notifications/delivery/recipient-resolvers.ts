@@ -1,11 +1,13 @@
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { CalendarEvent, Guardian, GuardianStudentLink, NotificationRecipient } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import { AccessFacts, activityReminderStudentIds } from '@edaya/authorization'
 import {
-  ActivityEnrollmentStatus,
   CalendarEventScopeKind,
   MessageDeliveryRecipientKind,
   StudentClassEnrollmentStatus,
 } from '@edaya/core'
+import { loadInBatches } from '../../shared/bounded-reads'
 import { uniqueNotificationRecipients } from './recipient-utils'
 
 async function resolveStudentRecipients(
@@ -36,24 +38,14 @@ export async function resolveGuardiansForStudents(
   guardianFilter: (guardian: Guardian) => boolean,
 ): Promise<NotificationRecipient[]> {
   const recipients: NotificationRecipient[] = []
-  const seenStudents = new Set(studentIds)
-
-  for (const studentId of seenStudents) {
-    const links = await repositories.guardianLinks.list({ studentId })
-    for (const link of links) {
-      if (link.schoolId !== schoolId || !linkFilter(link)) {
-        continue
-      }
-      const guardian = await repositories.guardians.findById(link.guardianId)
-      if (!guardian || guardian.schoolId !== schoolId || !guardianFilter(guardian) || !guardian.subjectId) {
-        continue
-      }
-      recipients.push({
-        kind: MessageDeliveryRecipientKind.Guardian,
-        id: guardian.id,
-        subjectId: guardian.subjectId,
-      })
-    }
+  const links = await loadInBatches(studentIds, ids => repositories.guardianLinks.list({ schoolId, studentId: { $in: ids } }))
+  // Apply each child's permissions before deduplicating shared guardians.
+  const ids = links.filter(link => link.schoolId === schoolId && linkFilter(link)).map(link => link.guardianId)
+  const guardians = await loadInBatches(ids, chunk => repositories.guardians.list({ schoolId, id: { $in: chunk } }))
+  for (const guardian of guardians) {
+    if (guardian.schoolId !== schoolId || !guardianFilter(guardian) || !guardian.subjectId)
+      continue
+    recipients.push({ kind: MessageDeliveryRecipientKind.Guardian, id: guardian.id, subjectId: guardian.subjectId })
   }
 
   return recipients
@@ -83,7 +75,7 @@ export async function resolveClassGroupStudentAndGuardianRecipients(
     schoolId,
     enrollments.map(enrollment => enrollment.studentId),
     linkFilter,
-    guardian => guardian.contactMethods.some(method => method.allowsNotifications),
+    guardian => guardian.hasAccess,
   )
 
   return uniqueNotificationRecipients([...studentRecipients, ...guardianRecipients])
@@ -91,25 +83,18 @@ export async function resolveClassGroupStudentAndGuardianRecipients(
 
 export async function resolveActivityEnrollmentRecipients(
   repositories: SchoolRepositories,
-  schoolId: string,
+  actor: SchoolScopedActorMetadata,
   activityId: string,
 ): Promise<NotificationRecipient[]> {
-  const enrollments = await repositories.activityEnrollments.list({ activityId })
-  const approvedStudentIds = enrollments
-    .filter(enrollment => enrollment.status === ActivityEnrollmentStatus.Approved)
-    .map(enrollment => enrollment.studentId)
-
-  if (approvedStudentIds.length === 0) {
-    return []
-  }
-
-  const studentRecipients = await resolveStudentRecipients(repositories, schoolId, approvedStudentIds)
+  const { schoolId } = actor
+  const studentIds = await activityReminderStudentIds(new AccessFacts(actor, repositories), activityId)
+  const studentRecipients = await resolveStudentRecipients(repositories, schoolId, studentIds)
   const guardianRecipients = await resolveGuardiansForStudents(
     repositories,
     schoolId,
-    approvedStudentIds,
+    studentIds,
     () => true,
-    guardian => guardian.contactMethods.some(method => method.allowsNotifications),
+    guardian => guardian.hasAccess,
   )
 
   return uniqueNotificationRecipients([...studentRecipients, ...guardianRecipients])

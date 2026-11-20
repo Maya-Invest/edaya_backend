@@ -1,7 +1,9 @@
-import type { AttendanceJustificationStatus, StudentFee } from '@edaya/core'
+import type { Permission } from '@edaya/authorization'
+import type { AttendanceJustificationStatus, Student, SubjectInput } from '@edaya/core'
 import type { SchoolRepositories, SchoolService } from '@edaya/service'
-import { AuthorizationError, AuthorizationErrorCode, authorize, createBootstrapStaffActorMetadata, Permission, permissionRowsFromTemplatePermissions, resolveAuditActorId } from '@edaya/authorization'
-import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, buildStudentFeeSummary, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Fee, FeeStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
+import { AuthorizationError, AuthorizationErrorCode, resolveAuditActorId } from '@edaya/authorization'
+import { AcademicDiscipline, AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, StudentHealthProfile, StudentNote, SubjectCategoryEntity, withShortName } from '@edaya/core'
+import { humanFixture } from '../../../test-support/human-fixtures'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
 
@@ -15,12 +17,18 @@ export async function seedStaffPermissionTemplate(
     idPrefix?: string
   },
 ): Promise<void> {
-  const rows = permissionRowsFromTemplatePermissions(
-    input.staffId,
-    input.schoolId,
-    input.academicYearId,
-    input.permissions,
-  )
+  const rows = input.permissions.map((permission) => {
+    const grain = permissionScope(permission)
+    if (grain === 'platform')
+      throw new Error('School fixtures cannot grant platform authority')
+    return {
+      staffId: input.staffId,
+      schoolId: input.schoolId,
+      academicYearId: input.academicYearId,
+      permission,
+      scopes: grain ? [{ kind: 'all' as const, grain }] : [{ kind: 'school' as const }],
+    }
+  })
 
   for (const [index, row] of rows.entries()) {
     await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
@@ -31,121 +39,58 @@ export async function seedStaffPermissionTemplate(
   }
 }
 
-async function ensureActorStaffMember(app: SchoolService): Promise<void> {
-  const actor = app.baseService.actor
-  if (actor.kind !== 'staff') {
-    return
-  }
-  const existing = await app.baseService.repositories.staffMembers.findById(actor.staffMemberId)
-  if (!existing) {
-    await app.baseService.repositories.staffMembers.save(new StaffMember({
-      id: actor.staffMemberId,
-      schoolId: actor.schoolId,
-      firstName: 'Fixture',
-      lastName: 'Administrator',
-      subjectId: actor.subjectId,
-    }))
-    return
-  }
+/** Explicit synthetic catalogue fixture; production schools start empty. */
+export function withFixtureDiscipline(input: SubjectInput): SubjectInput {
+  return { ...input, disciplineId: input.disciplineId ?? `fixture-discipline-${input.schoolId}` }
+}
 
-  if (!existing.subjectId) {
-    await app.baseService.repositories.staffMembers.save(new StaffMember({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      isActive: existing.isActive,
-      createdAt: existing.createdAt,
-      subjectId: actor.subjectId,
-    }))
-  }
+/** Called only by curriculum fixtures; school-only fixtures remain category-free. */
+export async function createFixtureSubjectCategory(app: SchoolService, schoolId: string): Promise<SubjectCategoryEntity> {
+  const category = new SubjectCategoryEntity(withShortName({ id: `fixture-category-${schoolId}`, schoolId, name: 'Synthetic test category' }))
+  await app.baseService.entities.subjectCategories.save(category)
+  return category
 }
 
 export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School>): Promise<School> {
-  await ensureActorStaffMember(app)
-  const actor = app.baseService.actor
-  const school = new School({
-    ...input,
-    ownerSubjectId: input.ownerSubjectId ?? (actor.kind === 'staff' ? actor.subjectId : undefined),
-  })
-  const registrationActor = createBootstrapStaffActorMetadata({
-    schoolId: school.id,
-    requestId: 'integration-school-registration',
-    staffMemberId: 'integration-fixture',
-  })
-  authorize({
-    actor: registrationActor,
-    request: {
-      schoolId: school.id,
-      permission: Permission.PLATFORM_REGISTER_SCHOOL,
-    },
-  })
-  await app.baseService.entities.schools.save(school, { moduleChecked: true })
+  const existing = await app.baseService.repositories.schools.findById(input.id)
+  const school = new School(withShortName({ ...input, ownerSubjectId: input.ownerSubjectId ?? existing?.ownerSubjectId }))
+  await app.baseService.entities.schools.save(school)
+  await app.baseService.repositories.academicDisciplines.save(new AcademicDiscipline(withShortName({ id: `fixture-discipline-${school.id}`, schoolId: school.id, shortName: 'FIXTURE', name: 'Synthetic test curriculum' })))
   return school
 }
 
 export async function updateSchool(app: SchoolService, input: { schoolId: string } & Partial<Omit<ArgsOf<typeof School>, 'id'>>): Promise<School> {
   const existing = await app.baseService.entities.schools.findById(input.schoolId)
   if (!existing) {
-    throw new Error(`School ${input.schoolId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
-  const school = new School({
+  const school = new School(withShortName({
     id: existing.id,
     name: input.name ?? existing.name,
     timeZone: input.timeZone ?? existing.timeZone,
     ownerSubjectId: input.ownerSubjectId ?? existing.ownerSubjectId,
-    type: input.type ?? existing.type,
+    financeCurrency: input.financeCurrency ?? existing.financeCurrency,
+    shortName: input.shortName ?? existing.shortName,
     country: input.country ?? existing.country,
     city: input.city ?? existing.city,
     createdAt: existing.createdAt,
-  })
+  }))
   await app.baseService.entities.schools.save(school)
   return school
 }
 
 export async function createAcademicPeriod(app: SchoolService, input: ArgsOf<typeof AcademicPeriod>): Promise<AcademicPeriod> {
-  const period = new AcademicPeriod(input)
+  const period = new AcademicPeriod(withShortName(input))
   await app.baseService.entities.academicPeriods.save(period)
   return period
 }
 
 export async function publishAcademicPeriod(app: SchoolService, academicPeriodId: string): Promise<AcademicPeriod> {
-  const existing = await app.baseService.entities.academicPeriods.findById(academicPeriodId)
-  if (!existing) {
-    throw new Error(`Academic period ${academicPeriodId} not found`)
-  }
-  const period = new AcademicPeriod({
-    id: existing.id,
-    schoolId: existing.schoolId,
-    academicYearId: existing.academicYearId,
-    name: existing.name,
-    type: existing.type,
-    startDate: existing.startDate,
-    endDate: existing.endDate,
-    isPublished: true,
-    createdAt: existing.createdAt,
-  })
-  await authorizeCoreServiceHelperPermission(app, Permission.SCHOOL_LIFECYCLE_MANAGE)
-  await app.baseService.entities.academicPeriods.save(period, { moduleChecked: true })
-  return period
-}
-
-async function authorizeCoreServiceHelperPermission(
-  app: SchoolService,
-  permission: Permission,
-): Promise<void> {
-  authorize({
-    actor: app.baseService.actor,
-    request: {
-      schoolId: app.baseService.actor.schoolId,
-      permission,
-    },
-  })
+  return app.setupWorkflow.publishAcademicPeriod({ academicPeriodId })
 }
 
 export async function createClassGroup(app: SchoolService, input: ArgsOf<typeof ClassGroup>): Promise<ClassGroup> {
-  const classGroup = new ClassGroup(input)
+  const classGroup = new ClassGroup(withShortName(input))
   await app.baseService.entities.classGroups.save(classGroup)
   return classGroup
 }
@@ -153,7 +98,7 @@ export async function createClassGroup(app: SchoolService, input: ArgsOf<typeof 
 export async function updateClassGroup(app: SchoolService, input: { classGroupId: string } & Partial<Omit<ArgsOf<typeof ClassGroup>, 'id'>>): Promise<ClassGroup> {
   const existing = await app.baseService.entities.classGroups.findById(input.classGroupId)
   if (!existing) {
-    throw new Error(`Class group ${input.classGroupId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
   const classGroup = existing.copyWith({
     schoolId: input.schoolId ?? existing.schoolId,
@@ -169,21 +114,26 @@ export async function updateClassGroup(app: SchoolService, input: { classGroupId
 }
 
 export async function saveStaffMember(app: SchoolService, input: ArgsOf<typeof StaffMember>): Promise<StaffMember> {
-  const staffMember = new StaffMember(input)
-  await app.baseService.entities.staffMembers.save(staffMember)
-  return staffMember
+  const existing = await app.baseService.entities.staffMembers.findById(input.id)
+  if (existing) {
+    const updated = existing.copyWith(input)
+    await app.baseService.entities.staffMembers.save(updated)
+    return updated
+  }
+  return app.setupWorkflow.registerStaffMember(await humanFixture(input))
 }
 
 export async function updateStaffStatus(app: SchoolService, staffId: string, isActive: boolean): Promise<StaffMember> {
   const existing = await app.baseService.entities.staffMembers.findById(staffId)
   if (!existing) {
-    throw new Error(`Staff member ${staffId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
   const staffMember = new StaffMember({
     id: existing.id,
     schoolId: existing.schoolId,
     firstName: existing.firstName,
     lastName: existing.lastName,
+    identifier: existing.identifier,
     email: existing.email,
     subjectId: existing.subjectId,
     isActive,
@@ -200,9 +150,13 @@ export async function saveStaffAssignment(app: SchoolService, input: ArgsOf<type
 }
 
 export async function saveStudent(app: SchoolService, input: ArgsOf<typeof Student>): Promise<Student> {
-  const student = new Student(input)
-  await app.baseService.entities.students.save(student)
-  return student
+  const existing = await app.baseService.entities.students.findById(input.id)
+  if (existing) {
+    const updated = existing.copyWith(input)
+    await app.baseService.entities.students.save(updated)
+    return updated
+  }
+  return app.studentWorkflow.registerStudent(await humanFixture(input))
 }
 
 export async function updateStudent(app: SchoolService, input: { studentId: string } & Partial<Omit<ArgsOf<typeof Student>, 'id'>>): Promise<Student> {
@@ -218,7 +172,7 @@ export async function updateStudent(app: SchoolService, input: { studentId: stri
     birthDate: input.birthDate ?? existing.birthDate,
     placeOfBirth: input.placeOfBirth !== undefined ? input.placeOfBirth : existing.placeOfBirth,
     nationality: input.nationality !== undefined ? input.nationality : existing.nationality,
-    matricule: input.matricule !== undefined ? input.matricule : existing.matricule,
+    identifier: input.identifier !== undefined ? input.identifier : existing.identifier,
     photoUrl: input.photoUrl !== undefined ? input.photoUrl : existing.photoUrl,
     subjectId: input.subjectId !== undefined ? input.subjectId : existing.subjectId,
     status: input.status ?? existing.status,
@@ -229,9 +183,13 @@ export async function updateStudent(app: SchoolService, input: { studentId: stri
 }
 
 export async function saveGuardian(app: SchoolService, input: ArgsOf<typeof Guardian>): Promise<Guardian> {
-  const guardian = new Guardian(input)
-  await app.baseService.entities.guardians.save(guardian)
-  return guardian
+  const existing = await app.baseService.entities.guardians.findById(input.id)
+  if (existing) {
+    const updated = existing.copyWith(input)
+    await app.baseService.entities.guardians.save(updated)
+    return updated
+  }
+  return app.studentWorkflow.registerGuardian(await humanFixture(input))
 }
 
 export async function saveStudentNote(
@@ -307,7 +265,7 @@ export async function updateGuardian(app: SchoolService, input: {
     schoolId: existing.schoolId,
     firstName: input.firstName ?? existing.firstName,
     lastName: existing.lastName,
-    contactMethods: [...existing.contactMethods],
+    identifier: existing.identifier,
     subjectId: existing.subjectId,
     hasAccess: existing.hasAccess,
     createdAt: existing.createdAt,
@@ -353,62 +311,17 @@ export async function saveClassSubject(
   app: SchoolService,
   input: ArgsOf<typeof ClassSubject>,
 ): Promise<ClassSubject> {
-  if (!input.gradeLevelSubjectId) {
-    const classSubject = new ClassSubject(input)
-    await app.baseService.entities.classSubjects.save(classSubject)
-    return classSubject
-  }
-
-  const classGroup = await app.baseService.repositories.classGroups.findById(input.classGroupId)
-  if (!classGroup) {
-    throw new Error(`saveClassSubject: unknown class group ${input.classGroupId}`)
-  }
-
-  let classSubject = input.id
-    ? await app.baseService.repositories.classSubjects.findById(input.id)
-    : undefined
-  classSubject ??= await app.baseService.repositories.classSubjects.findOne({
-    classGroupId: input.classGroupId,
-    subjectId: input.subjectId,
-  }) ?? undefined
-
-  if (!classSubject) {
-    const gradeLevelSubject = await app.baseService.repositories.gradeLevelSubjects.findById(input.gradeLevelSubjectId)
-    if (!gradeLevelSubject) {
-      await app.academicsWorkflow.offerSubjectToGradeLevel({
-        id: input.gradeLevelSubjectId,
-        gradeLevelId: classGroup.gradeLevelId,
-        academicYearId: classGroup.academicYearId,
-        subjectId: input.subjectId,
-        classSubjectIdsByClassGroupId: input.id
-          ? { [input.classGroupId]: input.id }
-          : undefined,
-      })
-    }
-    classSubject = input.id
-      ? await app.baseService.repositories.classSubjects.findById(input.id)
-      : await app.baseService.repositories.classSubjects.findOne({
-          classGroupId: input.classGroupId,
-          subjectId: input.subjectId,
-        })
-    if (!classSubject) {
-      throw new Error(`saveClassSubject: failed to materialize class subject for ${input.subjectId}`)
-    }
-    return classSubject
-  }
-
-  const updated = new ClassSubject({
-    id: classSubject.id,
-    classGroupId: classSubject.classGroupId,
-    subjectId: classSubject.subjectId,
-    gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
-    coefficient: input.coefficient ?? classSubject.coefficient,
-    completedPercentage: input.completedPercentage ?? classSubject.completedPercentage,
-    isOffered: input.isOffered ?? classSubject.isOffered,
-    createdAt: classSubject.createdAt,
-  })
-  await app.baseService.entities.classSubjects.save(updated)
-  return updated
+  await app.academicsWorkflow.syncSubjectsToClassGroup(input.classGroupId, { [input.subjectId]: { classSubjectId: input.id } })
+  const classSubject = await app.baseService.repositories.classSubjects.findOne({ classGroupId: input.classGroupId, subjectId: input.subjectId })
+  if (!classSubject)
+    throw new Error(`Missing offering for ${input.subjectId}`)
+  if (input.coefficient !== undefined)
+    await app.academicsWorkflow.updateSubject({ subjectId: input.subjectId, coefficient: input.coefficient })
+  if (input.isOffered !== undefined)
+    await app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: classSubject.id, expectedParticipationRevision: classSubject.participationRevision, isOffered: input.isOffered })
+  if (input.completedPercentage !== undefined)
+    await app.baseService.entities.classSubjects.save(new ClassSubject({ ...classSubject.data, completedPercentage: input.completedPercentage }))
+  return (await app.baseService.repositories.classSubjects.findById(classSubject.id))!
 }
 
 export async function saveClassSubjectMatter(
@@ -453,7 +366,7 @@ export async function saveLessonSession(
     schoolId: input.schoolId ?? 'school',
     classGroupId: input.classGroupId,
     classSubjectId: input.classSubjectId,
-    scheduleId: input.scheduleId ?? `schedule-${input.id}`,
+    scheduleId: input.scheduleId,
     displayLabel: input.displayLabel ?? 'Lesson',
     startsAt: input.startsAt,
     endsAt: input.endsAt,
@@ -484,53 +397,59 @@ export async function saveCalendarEvent(app: SchoolService, input: ArgsOf<typeof
   return event
 }
 
-export async function saveFee(app: SchoolService, input: ArgsOf<typeof Fee>): Promise<Fee> {
-  const fee = new Fee(input)
-  await app.baseService.entities.fees.save(fee)
-  return fee
+export async function saveFee(app: SchoolService, input: {
+  id: string
+  schoolId: string
+  academicYearId: string
+  name: string
+  defaultAmount: number
+  currency: string
+}) {
+  return app.financeWorkflow.createCatalogService({
+    id: input.id,
+    academicYearId: input.academicYearId,
+    name: input.name,
+    defaultPrice: input.defaultAmount,
+    currency: input.currency,
+    billingTerms: { kind: 'one_time', installments: [] },
+    status: CatalogServiceStatus.Active,
+  })
+}
+
+export async function assignCatalogService(app: SchoolService, input: {
+  id: string
+  studentId: string
+  catalogServiceId: string
+}) {
+  return app.financeWorkflow.enrollStudentInService(input)
 }
 
 export async function adjustStudentFee(app: SchoolService, input: {
   studentFeeId: string
   adjustmentAmount: number
   reason: string
-}): Promise<StudentFee> {
-  const existing = await app.baseService.entities.studentFees.findById(input.studentFeeId)
-  if (!existing) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-  const studentFee = existing.copyWith({
+}) {
+  return app.financeWorkflow.adjustStudentCharge({
+    requestId: crypto.randomUUID(),
+    chargeId: input.studentFeeId,
     adjustmentAmount: input.adjustmentAmount,
-    adjustmentReason: input.reason,
-    adjustedById: resolveAuditActorId(app.baseService.actor),
-    adjustedAt: new Date(),
-    updatedAt: new Date(),
+    reason: input.reason,
   })
-  await app.baseService.entities.studentFees.save(studentFee)
-  return studentFee
 }
 
 export async function cancelStudentFee(app: SchoolService, input: {
   studentFeeId: string
   reason: string
-}): Promise<StudentFee> {
-  const existing = await app.baseService.entities.studentFees.findById(input.studentFeeId)
-  if (!existing) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-  const studentFee = existing.copyWith({
-    status: FeeStatus.Cancelled,
-    cancellationReason: input.reason,
-    cancelledById: resolveAuditActorId(app.baseService.actor),
-    cancelledAt: new Date(),
-    updatedAt: new Date(),
+}) {
+  return app.financeWorkflow.cancelStudentCharge({
+    requestId: crypto.randomUUID(),
+    chargeId: input.studentFeeId,
+    reason: input.reason,
   })
-  await app.baseService.entities.studentFees.save(studentFee)
-  return studentFee
 }
 
-export async function buildFeeSummary(app: SchoolService, studentId: string) {
-  return buildStudentFeeSummary(await app.baseService.entities.studentFees.list({ studentId }))
+export async function buildFeeSummary(app: SchoolService, studentId: string, academicYearId: string) {
+  return app.getStudentFinanceSummary({ studentId, academicYearId })
 }
 
 export async function saveResourceAssignment(app: SchoolService, input: ArgsOf<typeof ResourceAssignment>): Promise<ResourceAssignment> {
@@ -545,10 +464,10 @@ export async function saveAttachment(app: SchoolService, input: ArgsOf<typeof At
   return attachment
 }
 
-export async function saveReportCardDefinition(app: SchoolService, input: ArgsOf<typeof ReportCardDefinition>): Promise<ReportCardDefinition> {
-  const definition = new ReportCardDefinition(input)
-  await app.baseService.entities.definitions.save(definition)
-  return definition
+export async function seedReportGradingPolicy(app: SchoolService, input: { gradeLevelId: string, academicYearId: string, gradeScaleId: string }): Promise<void> {
+  const level = (await app.baseService.repositories.gradeLevels.findById(input.gradeLevelId))!
+  const scale = (await app.baseService.repositories.gradeScales.findById(input.gradeScaleId))!
+  await app.baseService.repositories.gradeLevels.save(new GradeLevel(withShortName({ ...level.data, gradingPolicies: [{ academicYearId: input.academicYearId, revision: 1, mode: 'numeric-first', aggregateLabel: 'Average', status: 'completed', scale: { ...scale.data, ranges: [...scale.ranges] } }] })))
 }
 
 export async function saveAssessment(app: SchoolService, input: ArgsOf<typeof Assessment>): Promise<Assessment> {

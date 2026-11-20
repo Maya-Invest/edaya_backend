@@ -1,6 +1,8 @@
-# Edaya API
+# EDaya API
 
-Hono API for Edaya Core (`@edaya/api`).
+See [API configuration and secrets](../../docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo ops vars` commands.
+
+Hono API for EDaya Core (`@edaya/api`).
 
 ## Local development
 
@@ -20,21 +22,13 @@ cp .dev.vars.example .dev.vars
 bun run dev:worker
 ```
 
-Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env prod --env-file .dev.vars`.
+Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo ops emergency-deploy production --yes` from repo root). Normal deployments preserve variables. Update them separately with `bun repo ops vars push production`.
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
-GraphiQL (local entity queries): http://localhost:9999/graphiql — requires an authenticated Better Auth session cookie.
+School queries and commands use REST under `/core`, documented in the OpenAPI reference. Authenticate with a school access token or a service-account Bearer key.
 
-### GraphiQL auth
-
-GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authorization: Bearer` service account key).
-
-1. **Sign in on the GraphiQL page** — use the email/password form at http://localhost:9999/graphiql (`POST /graphiql/login`, dev-only wrapper around Better Auth).
-2. **Session cookie** — sign in via the webapp (http://localhost:5173), then open GraphiQL.
-3. **Service account** — set `GRAPHQL_DEV_API_KEY` in `apps/api/.env` to the school profile `seedingApiKey` from `@edaya/fixtures` for auto-injected Bearer auth locally, or add it manually in GraphiQL's **Headers** panel.
-
-Default dev credentials (after `bun repo seed --scope auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
+Default dev credentials (after `bun repo ops seed --scope auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 
 `RUNTIME=local` uses persisted PGlite (`.data/school`) with Better Auth in the `auth` schema. Tests use `RUNTIME=in-memory` with ephemeral storage. Vendor adaptors (Hyperdrive Postgres, R2) are for `RUNTIME=worker` via optional staging smoke or deploy.
 
@@ -44,15 +38,25 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 
 | Target     | Command                     | Output                                                         |
 | ---------- | --------------------------- | -------------------------------------------------------------- |
-| **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api.edaya.app` |
+| **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api.edayaplus.com` |
 
-`bun run build` produces a Node bundle of the **local** entry (`dist/node.js`) for CI/typecheck only — not used in production deploy.
+Bun runs the local TypeScript entry directly. Wrangler bundles the Worker entry for deployment. CI validates both staging and production bundles with `bun run deploy:staging:dry-run` and `bun run deploy:production:dry-run`; these commands do not deploy. Use `bun run check` for API type checking. The repository-root `bun run build` builds the generated API-client package.
 
 Before first production deploy:
 
-1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo db migrate production` (from repo root)
-2. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
+1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo ops db migrate school production` (from repo root)
+2. Apply `config.production.jsonc` using `bun repo ops vars push production` from the repository root. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
 3. Dry-run: `bun run deploy:production:dry-run`
-4. Deploy: `bun run deploy:production` (or `bun repo deploy api production` from repo root)
+4. Deploy: `bun run deploy:production` (or `bun repo ops emergency-deploy production --yes` from repo root)
 
 See [docs/reference/local-dev.md](../../docs/reference/local-dev.md) and [docs/reference/api-runtimes.md](../../docs/reference/api-runtimes.md).
+
+## Authentication terms publication
+
+`GET /auth/edaya/terms?locale=fr|en` is public and returns `{ enforced, document }` with `Cache-Control: no-store`. Staging and production default to `live` (`NODE_ENV=production`). Other environments default to `off`; the checked-in local configuration enables `live`. An explicit `off` disables new acceptance prompts without deleting receipts or revoking sessions. `preview` and `enforced` are aliases for `live`. `AUTH_TERMS_VERSION` is accepted for compatibility and ignored.
+
+The live policy reads the published [French](https://edayaplus.com/conditions-utilisation/) and [English](https://edayaplus.com/en/terms/) legal documents. Update those pages to publish a change. The API retains only legal content and safe links; the optional `html` fragment and existing plain-text `sections` represent the same localized document. `sourceUrl` identifies its public page. A SHA-256 hash identifies each normalized document, and both hashes determine the shared acceptance version. A wording or link change in either language updates the version; changes to surrounding site navigation or styling do not.
+
+The API caches a successful translation pair for five minutes per process or Worker isolate. Both documents must be readable within five seconds on refresh; a failed refresh returns `503 terms_unavailable` and blocks new sign-ins until a retry succeeds. Existing sessions and challenges remain usable. Deploy the backend before the staff iframe reader; no new identity migration is needed. Every client that starts a fresh OTP must submit the version the user accepted, including Spark parent login. Roll out compatible clients before turning on enforcement for their users; an explicit `off` override supports a staged deployment.
+
+OTP-start accepts `termsAcceptance: { version, locale, accepted: true }`. The service validates it before delivery, pins server-owned document hashes across resends and MFA, and inserts the first account/version receipt in the successful session transaction. The durable receipt stores account ID, version, displayed locale, hash and server completion timestamp; it collects no extra IP or user-agent history.

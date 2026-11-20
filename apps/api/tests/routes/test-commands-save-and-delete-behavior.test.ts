@@ -1,7 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/app-router";
-import type { Permission } from "@edaya/authorization";
 import { GradeLevel } from "@edaya/core";
 import { ActorAssuranceLevel } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
@@ -14,11 +13,6 @@ describe("core entity and command routes", () => {
     subjectId: "admin-user",
     schoolId: "school-1",
     staffMemberId: "staff-1",
-    effectiveGrants: {
-      permissions: new Set<Permission>(),
-      scopeGrants: [],
-      isElevated: true,
-    },
     requestId: "request-id",
     authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Strong,
@@ -69,6 +63,7 @@ describe("core entity and command routes", () => {
         id: "grade-level-6",
         schoolId: "school-1",
         name: "Grade 6",
+        label: "G6",
         order: 6,
       }),
     });
@@ -101,7 +96,7 @@ describe("core entity and command routes", () => {
     expect(mockDelete).toHaveBeenCalledWith("grade-level-6");
   });
 
-  it("returns 405 when direct save is disabled for command-only entities", async () => {
+  it("does not expose direct save for command-only entities", async () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
@@ -123,8 +118,29 @@ describe("core entity and command routes", () => {
       }),
     });
 
-    expect(res.status).toBe(405);
+    expect(res.status).toBe(404);
     expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch generic attachment, finance or enrollment writes even for an elevated actor", async () => {
+    const write = mock().mockResolvedValue(undefined);
+    const app = setupTestApp({ baseService: { entities: {
+      attachments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+      payments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+      studentCharges: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+      enrollments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+    } } });
+    for (const entity of ["attachments", "payments", "student-charges", "enrollments"]) {
+      for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
+        const response = await app.request(`/core/entities/${entity}/${action}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: "existing", ids: ["existing"], entities: [{ id: "existing" }] }),
+        });
+        expect(response.status).toBe(404);
+      }
+    }
+    expect(write).not.toHaveBeenCalled();
   });
 
   it("returns 422 when entity save payload fails OpenAPI schema validation", async () => {
@@ -167,8 +183,8 @@ describe("core entity and command routes", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         entities: [
-          { id: "grade-level-6", schoolId: "school-1", name: "Grade 6", order: 6 },
-          { id: "grade-level-7", schoolId: "school-1", name: "Grade 7", order: 7 },
+          { id: "grade-level-6", schoolId: "school-1", name: "Grade 6", label: "G6", order: 6 },
+          { id: "grade-level-7", schoolId: "school-1", name: "Grade 7", label: "G7", order: 7 },
         ],
       }),
     });

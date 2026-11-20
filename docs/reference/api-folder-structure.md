@@ -9,51 +9,57 @@ src/
 ├── main.ts                    # Shim → entries/local (legacy import path)
 ├── entries/
 │   ├── local.ts               # Local dev server entry (PGlite / Postgres)
-│   └── worker.ts              # Cloudflare Worker export
+│   ├── worker.ts              # Cloudflare Worker export
+│   └── cron-local.ts          # Local cron tick
 ├── app.ts                     # Hono app: createApp + OpenAPI + mount app-router
-├── app-router.ts              # Composes route modules + Better Auth proxy
+├── app-router.ts              # Composes REST route modules (no /auth mount)
 │
 ├── routes/                    # Hand-written OpenAPI route modules
+│   ├── authorization.routes.ts
 │   ├── effective-grants.route.ts
-│   ├── onboarding.routes.ts   # School registration bootstrap
-│   └── service-accounts.routes.ts
+│   ├── onboarding.routes.ts
+│   ├── invitation.routes.ts
+│   ├── file-storage.routes.ts
+│   ├── service-accounts.routes.ts
+│   └── seed-auth.routes.ts
 │
 ├── http/                      # App factory, CORS, DI, middleware, responses
+│   ├── bindings.ts            # AppBindings (used by http/ and runtime/)
 │   ├── create-app.ts
 │   ├── dependencies/          # Per-request env, runtime, auth, session, school app
 │   └── middleware/
 │
-├── logging/                   # Pino + Better Auth logger (runtime-safe, no Hono)
-│   └── app-logger.ts
-│
-├── context/                   # Shared request context types
-│   └── bindings.ts            # AppBindings (used by http/ and runtime/)
+├── cron/                      # scheduled() handler + queue consumer
 │
 ├── runtime/                   # Runtime profiles + shared wiring
 │   ├── shared/
 │   │   ├── env/               # schema, bindings, hyperdrive, local-loader
-│   │   └── adapters/          # file storage, notifications, invitations
+│   │   └── adapters/          # file storage, notifications, invitations, identity client
 │   ├── in-memory/             # test profile
 │   ├── local/                 # dev profile + registry + resolve-api-runtime
 │   └── worker/                # Cloudflare profile + resolve-api-runtime (Wrangler alias)
 │
 └── lib/
     ├── authorization/         # Grants cache + serialization
-    └── school-api/            # Registry, schemas, dispatch, route builders
-        ├── application.ts
-        ├── dispatch/          # Command + entity dispatch to core
-        ├── registry.ts
-        ├── routes/            # buildCoreRoutes (commands, queries, entities)
-        └── schemas/           # OpenAPI/Zod request + response schemas
+    ├── documents/             # Report-card / logbook document payloads
+    ├── school-api/            # Registry, schemas, dispatch, route builders
+    │   ├── application.ts
+    │   ├── dispatch/          # Command + entity dispatch to SchoolService
+    │   ├── registry.ts
+    │   ├── routes/            # buildCoreRoutes (commands, queries, entities)
+    │   └── schemas/           # OpenAPI/Zod request + response schemas
+    └── service-accounts/      # Service-account request schemas
 ```
 
 ## Conventions
 
-- **`routes/`** — Hand-crafted OpenAPI routes only (auth proxy is mounted in `app-router.ts`, not a route file). No business logic beyond request/response wiring.
+- **`routes/`** — Hand-crafted OpenAPI routes only. No business logic beyond request/response wiring. Login lives on Central Identity, not this API.
 - **`lib/school-api/routes/`** — Route factories that generate the bulk of `/core/*` endpoints from `registry.ts` (commands, queries, entities). Shared helpers live in `entity-handlers.ts` and `shared.ts`.
-- **`runtime/`** — Env parsing, database handles, Better Auth setup, Hyperdrive resolution, and the Node process runtime registry. Replaces the former `bootstrap/` and `authentication/` trees.
+- **`routes/onboarding.routes.ts`** — Thin HTTP for school registration. Orchestration lives in `@edaya/service` (`capabilities/onboarding`). Template catalogs stay in `@edaya/fixtures/onboarding`.
+- **`runtime/`** — Env parsing, database handles, Account composition, Hyperdrive resolution, and the Node process runtime registry.
 - **`http/dependencies/`** — Request-scoped dependency injection: env → school runtime → auth → session actor. Worker runtimes are resolved per request and closed in `onRequestComplete`.
-- **`app-router.ts`** — Single composition point: index, effective grants, onboarding, system routes, generated core routes, then `/auth/*` proxy.
+- **`cron/`** — Worker `scheduled()` heartbeat and queue consumer.
+- **`app-router.ts`** — REST composition point: index, effective grants, onboarding, system routes, generated core routes. Identity `/auth/*` is not mounted here.
 
 ## Core route generation
 
@@ -65,7 +71,7 @@ src/
 | `buildQueryRoutes()` | `/core/queries/*` | `registry.ts` query definitions |
 | `buildEntityRoutes()` | `/core/entities/*` | `registry.ts` entity configs |
 
-All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api/routes/paths.ts`.
+All generated REST routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api/routes/paths.ts`.
 
 ## Import paths
 
@@ -75,8 +81,7 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 | Runtime resolver (middleware only) | `@/runtime/resolve-api-runtime` (Wrangler alias → `worker/resolve-api-runtime.ts`) |
 | HTTP app | `@/http/create-app` |
 | Dependency injection | `@/http/dependencies` |
-| Request context types | `@/context/bindings` |
-| Logging | `@/logging/app-logger` |
+| Request context types | `@/http/bindings` |
 | Core registry | `@/lib/school-api/registry` |
 | OpenAPI schemas | `@/lib/school-api/schemas/*` |
 | Hand-written routes | `@/routes/*` |
@@ -89,10 +94,12 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 |--------|---------|
 | `dev` | `bun --watch src/entries/local.ts` |
 | `dev:worker` | `wrangler dev --env staging --env-file .dev.vars` |
-| `build` | `tsup` → `dist/node.js` from `src/entries/local.ts` |
+| `check` | `tsc --noEmit` |
+| `deploy:production:dry-run` | `wrangler deploy --env prod --dry-run` |
+| `deploy:staging:dry-run` | `wrangler deploy --env staging --dry-run` |
 | `deploy:production` | `wrangler deploy --env prod` |
 | `deploy:staging` | `wrangler deploy --env staging` |
 
 TypeScript client bindings are generated at the repo root from the exported OpenAPI document: `bun tooling/repo/openapi/generate-bindings.ts`. OpenAPI export: `bun tooling/repo/openapi/export.ts`.
 
-Root shortcuts: `bun repo deploy api production` → `@edaya/api deploy:production`; `bun repo deploy api staging` → `deploy:staging`.
+Root shortcuts: `bun repo ops emergency-deploy production` → `@edaya/api deploy:production`; `bun repo ops emergency-deploy staging` → `deploy:staging`.

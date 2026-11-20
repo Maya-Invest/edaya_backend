@@ -13,7 +13,7 @@ import { isInJobNotificationWindow } from '../due-window'
 export async function scanAssessmentDueNotifications(
   context: SchoolCronJobContext,
 ): Promise<CronJobResult> {
-  const assessments = await context.service.baseService.repositories.assessments.list({})
+  const assessments = await context.service.baseService.entities.assessments.list({})
   let processed = 0
   let skipped = 0
 

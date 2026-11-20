@@ -19,7 +19,6 @@ async function seedPopulationFromDataset(
   port: PopulationSeedPort,
   dataset: FixtureDataset,
 ): Promise<void> {
-  const seedSubjectId = (id: string) => `subject-${id}`
   const students = dataset.entities.students ?? []
   const enrollments = dataset.entities.enrollments ?? []
   const guardians = dataset.entities.guardians ?? []
@@ -29,11 +28,12 @@ async function seedPopulationFromDataset(
     const birthDate = isoDateString(student.birthDate)
     await port.registerStudent({
       id: student.id,
+      identifier: student.identifier ?? undefined,
+      globalIdentifier: student.globalIdentifier ?? undefined,
       schoolId: dataset.schoolId,
       firstName: student.firstName,
       lastName: student.lastName,
       birthDate: birthDate ? seedDateTime(birthDate) : undefined,
-      subjectId: seedSubjectId(student.id),
       sendAccountInvitation: false,
     })
   }
@@ -43,18 +43,19 @@ async function seedPopulationFromDataset(
       id: enrollment.id,
       studentId: enrollment.studentId,
       classGroupId: enrollment.classGroupId,
+      enrolledAt: isoDateString(enrollment.enrolledAt ?? dataset.entities.academicYear?.startDate),
     })
   }
 
   for (const guardian of guardians) {
     await port.registerGuardian({
       id: guardian.id,
+      identifier: guardian.identifier ?? undefined,
       schoolId: dataset.schoolId,
       firstName: guardian.firstName,
       lastName: guardian.lastName,
       email: guardian.email ?? undefined,
       phone: guardian.phone ?? undefined,
-      subjectId: seedSubjectId(guardian.id),
       sendAccountInvitation: false,
     })
   }
@@ -69,14 +70,6 @@ async function seedPopulationFromDataset(
       legalGuardian: link.legalGuardian ?? true,
     })
   }
-}
-
-/** Auth-linked students and guardians only — for fast integration test fixtures. */
-export async function seedIntegrationLightPopulation(
-  port: PopulationSeedPort,
-  dataset: FixtureDataset,
-): Promise<void> {
-  await seedPopulationFromDataset(port, dataset)
 }
 
 export async function seedDevPopulation(

@@ -1,12 +1,12 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { AtomicExecutionPort, NotificationGatewayPort } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { AtomicExecutionPort, DurableWorkPort, NotificationGatewayPort } from '@edaya/core'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ManagedEntityServiceConfig } from '../../entities/managed-entity-service'
 
 export interface EntityConfigFactoryInput {
   repositories: SchoolRepositories
-  policy: AuthorizationPolicy
   atomicExecution: AtomicExecutionPort
+  commandJournal?: import('@edaya/core').CommandJournalPort
+  durableWork?: DurableWorkPort
   notificationGateway: NotificationGatewayPort
 }
 
@@ -23,5 +23,3 @@ export interface EntityWithId {
 export function config<T>(input: ManagedEntityServiceConfig<T>): ManagedEntityServiceConfig<T> {
   return input
 }
-
-export { authorizeDeleteByReadAccess, authorizeExistingById, noopReadAccess, read, write } from './authorization'

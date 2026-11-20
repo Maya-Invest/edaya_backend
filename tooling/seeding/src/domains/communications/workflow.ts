@@ -31,10 +31,9 @@ export async function seedDevCommunications(
       title: announcement.title,
       content: announcement.content,
       createdBy: announcement.createdBy ?? '',
-      status,
+      status: status === AnnouncementStatus.Published ? AnnouncementStatus.Draft : status,
       priority: announcement.priority ?? AnnouncementPriority.Normal,
       createdAt: seedDateTime(String(announcement.createdAt).slice(0, 10)),
-      publishedAt: announcement.publishedAt ? seedDateTime(String(announcement.publishedAt).slice(0, 10)) : undefined,
       expiresAt: announcement.expiresAt ? seedDateTime(String(announcement.expiresAt).slice(0, 10)) : undefined,
     })
   }
@@ -67,15 +66,20 @@ export async function seedDevCommunications(
   }
 
   for (const delivery of messageDeliveries) {
+    const recipientKind = delivery.recipientKind ?? MessageDeliveryRecipientKind.Guardian
+    const recipientId = delivery.recipientId ?? ''
+    const subjectId = await port.findRecipientSubjectId(recipientKind, recipientId)
+    if (!subjectId)
+      continue
     await port.recordDelivery({
       id: delivery.id,
       schoolId: delivery.schoolId,
       title: delivery.title,
       body: delivery.body,
       announcementId: delivery.announcementId ?? '',
-      subjectId: delivery.subjectId,
-      recipientKind: delivery.recipientKind ?? MessageDeliveryRecipientKind.Guardian,
-      recipientId: delivery.recipientId ?? '',
+      subjectId,
+      recipientKind,
+      recipientId,
       status: delivery.status ?? MessageDeliveryStatus.Pending,
       sentAt: delivery.sentAt ? seedDateAndMinute(String(delivery.sentAt)) : undefined,
       readAt: delivery.readAt ? seedDateAndMinute(String(delivery.readAt)) : undefined,

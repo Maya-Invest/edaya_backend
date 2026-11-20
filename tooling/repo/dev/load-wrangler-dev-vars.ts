@@ -1,14 +1,7 @@
-import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
-import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
+import process from 'node:process'
+import { loadConfiguration } from '../../../apps/api/configuration/index.ts'
 
-const repoRoot = resolve(import.meta.dirname, '../../..')
-const devVarsFile = resolve(repoRoot, 'apps/api/.dev.vars')
-
-/** Load `apps/api/.dev.vars` for Wrangler / Cloudflare ops (`wrangler dev`, R2 scripts). */
+/** Staging settings plus private Wrangler-local secrets; never used by bun dev. */
 export function loadWranglerDevVars(): void {
-  if (existsSync(devVarsFile)) {
-    dotenvExpand.expand(dotenv.config({ path: devVarsFile }))
-  }
+  Object.assign(process.env, loadConfiguration('staging'))
 }

@@ -1,38 +1,23 @@
-import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationErrorCode, authorize, COORDINATOR_PERMISSIONS, createStaffActorMetadata, Permission } from '@edaya/authorization'
-import { AcademicPeriodType, AttendanceStatus, GradeLevel, StaffMember, Subject } from '@edaya/core'
+import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationErrorCode, COORDINATOR_PERMISSIONS, createStaffActorMetadata, Permission } from '@edaya/authorization'
+import { AcademicPeriodType, AttendanceStatus, GradeLevel, School, StaffMember, Subject, withShortName } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import {
-  createAcademicPeriod,
-  createClassGroup,
-  publishAcademicPeriod,
-  saveClassSubject,
-  saveFee,
-  saveGuardian,
-  saveLessonSession,
-  saveSchool,
-  saveStaffAssignment,
-  saveStaffMember,
-  saveStudent,
-  seedStaffPermissionTemplate,
-  updateSchool,
-} from '../utils/core-service-helpers'
-import { effectiveGrantsForRoles } from '../utils/effective-grants'
+import { createAcademicPeriod, createClassGroup, createFixtureSubjectCategory, publishAcademicPeriod, saveClassSubject, saveFee, saveGuardian, saveLessonSession, saveSchool, saveStaffAssignment, saveStaffMember, saveStudent, seedStaffPermissionTemplate, updateSchool, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
-  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.CLASS_LOGBOOK_MANAGE,
   Permission.ATTENDANCE_RECORD,
   Permission.DISCIPLINE_CREATE,
-  Permission.GRADE_INPUT,
-  Permission.CLASS_LOGBOOK_UPDATE,
+  Permission.GRADE_MANAGE,
+  Permission.CLASS_LOGBOOK_MANAGE,
 ]
 
 async function setupBaselineFixture() {
   const { app, repositories, schoolRepositories, forActor } = await createTestApp()
 
   // Standard Admin setup of tenant school
-  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
+  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC', financeCurrency: 'USD' })
   await app.setupWorkflow.createAcademicYear({
     id: 'acad-year',
     schoolId: 'school',
@@ -41,7 +26,7 @@ async function setupBaselineFixture() {
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
   await app.baseService.entities.gradeLevels.save(
-    new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
+    new GradeLevel(withShortName({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', shortName: 'G7', order: 7 })),
   )
   await createClassGroup(app, {
     id: 'class-7a',
@@ -94,19 +79,16 @@ async function setupBaselineFixture() {
 
   // Create students & guardians
   await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
-  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
   await saveGuardian(app, { id: 'active-guardian', schoolId: 'school', firstName: 'Eva', lastName: 'Craig' })
-  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
   await app.baseService.entities.subjects.save(
-    new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
+    new Subject(withShortName(withFixtureDiscipline({ categoryId: (await createFixtureSubjectCategory(app, 'school')).id, gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' }))),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-subject-english',
     classGroupId: 'class-7a',
     subjectId: 'english-lit',
-    gradeLevelSubjectId: 'gls-english-lit',
   })
 
   await saveStaffAssignment(app, {
@@ -128,6 +110,10 @@ async function setupBaselineFixture() {
   })
 
   // Create session
+  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a', enrolledAt: new Date('2026-09-01T00:00:00Z') })
+
+  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
+
   const session = await saveLessonSession(app, {
     id: 'active-session',
     schoolId: 'school',
@@ -148,23 +134,22 @@ async function setupBaselineFixture() {
     permissions: [...ASSIGNMENT_SCOPED_PERMISSIONS],
   })
 
+  for (const [staffMemberId, subjectId] of [['coordinator-staff', 'coord-user'], ['teacher-staff', 'teacher-user'], ['accountant-staff', 'acct-user']])
+    await app.accessControlWorkflow.linkActorSubject({ staffMemberId, subjectId })
+
   return { app, repositories, schoolRepositories, forActor, classSubject, session }
 }
 
 describeIntegration('Actor Role and Assurance Permission Policies', () => {
   it('enforces explicit allow and deny actions per staff role', async () => {
-    const { app, schoolRepositories, forActor } = await setupBaselineFixture()
+    const { app, forActor } = await setupBaselineFixture()
 
     // 1. Coordinator Actor
     const coordApp = forActor(createStaffActorMetadata({
       subjectId: 'coord-user',
       staffMemberId: 'coordinator-staff',
       schoolId: 'school',
-      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
-        staffMemberId: 'coordinator-staff',
-        schoolId: 'school',
-        academicYearId: 'acad-year',
-      }),
+      academicYearId: 'acad-year',
       requestId: 'req-coord',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -207,17 +192,13 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'acct-user',
       staffMemberId: 'accountant-staff',
       schoolId: 'school',
-      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
-        staffMemberId: 'accountant-staff',
-        schoolId: 'school',
-        academicYearId: 'acad-year',
-      }),
+      academicYearId: 'acad-year',
       requestId: 'req-acct',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
     }))
 
-    // Accountants can create fees
+    // Accountants can create catalog services
     const fee = await saveFee(accountantApp, {
       id: 'tuition-fee',
       schoolId: 'school',
@@ -242,11 +223,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
-      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
-        staffMemberId: 'teacher-staff',
-        schoolId: 'school',
-        academicYearId: 'acad-year',
-      }),
+      academicYearId: 'acad-year',
       requestId: 'req-teacher',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -275,7 +252,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'admin-user',
       staffMemberId: 'admin',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
+      academicYearId: 'acad-year',
       requestId: 'req-standard',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -285,7 +262,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'admin-user',
       staffMemberId: 'admin',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
+      academicYearId: 'acad-year',
       requestId: 'req-verified',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
@@ -294,6 +271,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     // Create strong-admin staff member in the staff repository
     await repositories.staffMemberRepository.save(new StaffMember({
       id: 'strong-admin',
+      identifier: 'STRONG-ADMIN',
       schoolId: 'strong-school',
       firstName: 'Strong',
       lastName: 'Admin',
@@ -303,7 +281,6 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'strong-admin-user',
       staffMemberId: 'strong-admin',
       schoolId: 'strong-school',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'req-strong-foreign',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -329,13 +306,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     expect(verifiedPeriod.isPublished).toBe(true)
 
     // school staff never receive platform registration authority from school role grants
-    expect(() => authorize({
-      actor: strongForeignAdminApp.baseService.actor,
-      request: {
-        schoolId: 'strong-school',
-        permission: Permission.PLATFORM_REGISTER_SCHOOL,
-      },
-    })).toThrow()
+    await expect(strongForeignAdminApp.setupWorkflow.registerSchool({ id: 'new-school', name: 'New school', timeZone: 'UTC' })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })
 
   it('guarantees denied-mutation rollback and holds strict tenant boundaries', async () => {
@@ -346,11 +317,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-staff',
       schoolId: 'school',
-      effectiveGrants: await schoolRepositories.authorization.resolveEffectiveGrants({
-        staffMemberId: 'teacher-staff',
-        schoolId: 'school',
-        academicYearId: 'acad-year',
-      }),
+      academicYearId: 'acad-year',
       requestId: 'req-unauth',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
@@ -372,21 +339,23 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
     const checkYear = await repositories.academicYearRepository.findById('illegal-year')
     expect(checkYear).toBeUndefined()
 
+    await schoolRepositories.schools.save(new School(withShortName({ id: 'foreign-school', name: 'Foreign', timeZone: 'UTC', ownerSubjectId: 'foreign-admin-user' })))
+    await schoolRepositories.staffMembers.save(new StaffMember({ identifier: 'FOREIGN-ADMIN', id: 'foreign-admin', schoolId: 'foreign-school', subjectId: 'foreign-admin-user', firstName: 'Foreign', lastName: 'Owner' }))
+
     // 2. Strict Tenant boundary check
     const foreignAdminApp = forActor(createStaffActorMetadata({
       subjectId: 'foreign-admin-user',
       staffMemberId: 'foreign-admin',
       schoolId: 'foreign-school',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'req-foreign',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Strong,
     }))
 
-    // Foreign actor attempting to query local school data gets Forbidden
+    // Scoped ID reads do not retrieve or disclose records from another school.
     await expect(foreignAdminApp.baseService.entities.students.findById('active-student'))
-      .rejects
-      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+      .resolves
+      .toBeUndefined()
 
     await expect(foreignAdminApp.baseService.entities.classGroups.list({ schoolId: 'school' }))
       .rejects

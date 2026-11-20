@@ -1,19 +1,43 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "EDAYA_TEST_POOL_METRICS"
+  ],
   "tasks": {
     "build": {
-      "outputs": ["dist/**", "build/**", ".svelte-kit/**"]
+      "outputs": [
+        "dist/**",
+        "build/**"
+      ]
     },
     "check": {
-      "dependsOn": ["^check"]
+      "dependsOn": [
+        "^check"
+      ]
     },
     "quality": {
-      "dependsOn": ["^check"]
+      "dependsOn": [
+        "^check"
+      ]
     },
     "test": {
-      "dependsOn": ["^check"]
+      "cache": false
     },
-    "lint": {},
-    "lint:fix": {}
-  }
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/eslint.config.js",
+        "$TURBO_ROOT$/tooling/repo/eslint-imports.js"
+      ]
+    },
+    "lint:fix": {},
+    "test:integration": {
+      "cache": false
+    }
+  },
+  "globalDependencies": [
+    "package/adaptor-postgres/tests/support/**",
+    "package/domain-service/tests/support/**",
+    "tooling/test-support/**"
+  ]
 }

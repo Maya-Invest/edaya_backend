@@ -1,0 +1,89 @@
+{
+  "createdAt": "2026-10-03T18:03:46.186713+00:00",
+  "readiness": "blocked",
+  "localCodeValidation": "passed",
+  "liveChanges": false,
+  "apiOrigins": {
+    "production": "https://api.edayaplus.com",
+    "staging": "https://staging.api.edayaplus.com",
+    "local": "http://localhost:9999"
+  },
+  "manifestSchemaVersion": 4,
+  "apkProvenanceSchemaVersion": 3,
+  "clientPackage": "@maya-invest/edaya-api-client",
+  "clientPublished": false,
+  "candidateManifest": "../../../bin/release-validation/unified-api-2026-10-03/manifest.json",
+  "releaseContractId": "5608d72f47cb592cb8134ad60b755414fd72db8a2afbac6c0996dca238fe742b",
+  "counts": {
+    "backendPackageUnit": 2021,
+    "releaseTooling": 41,
+    "backendServiceHttp": 57,
+    "nativePostgresPassed": 60,
+    "nativePostgresBenchmarkSkipped": 3,
+    "seedHttp": 8,
+    "frontendPackageUnit": 909,
+    "frontendRootTooling": 3,
+    "availabilityBrowser": 6,
+    "onboardingBrowser": 29,
+    "provisionedBrowser": 398,
+    "webadminBrowser": 4,
+    "demoBrowser": 83,
+    "mobileUnitWidget": 156,
+    "mobilePythonTooling": 19,
+    "mobileApkTooling": 3,
+    "mobileNativeApiIntegration": 47,
+    "guardianIntegration": 42,
+    "teacherIntegration": 29,
+    "browserTotal": 520
+  },
+  "rehearsal": {
+    "passed": true,
+    "at": "2026-10-03T17:08:24.900Z",
+    "databases": "disposable native PostgreSQL",
+    "separateIdentityRole": true,
+    "emailVerificationRequired": true,
+    "provisionedIdentityOnly": true,
+    "attachments": true,
+    "documentFixtures": true,
+    "explicitResetScripts": true,
+    "noResetPreservesData": true,
+    "idempotentIdentityFixtures": true
+  },
+  "androidSignatures": [
+    {
+      "app": "guardian",
+      "applicationId": "ca.maya-invest.edaya.guardian",
+      "certificateSha256": "c7efef9fff9673b6aa087eaea577f9323331c9a36984f2b17ee563ff1fa00d52",
+      "sha256": "91cdabf6a75dd925301c58b80393b421ec963675002e62fa6d89d33db17d1ae0"
+    },
+    {
+      "app": "teacher",
+      "applicationId": "ca.mayainvest.edaya.teacher",
+      "certificateSha256": "b4914d6b0aa952ef164c21732b2ba37e5331a551093aeb525aef29954182ef2d",
+      "sha256": "e514a0977f7865d31e837be6f1e54d1df84c3d7c87ab360c50dfa0e53e25fc17"
+    }
+  ],
+  "workerDryRuns": [
+    "edaya-api-staging",
+    "edaya-webapp-staging",
+    "edaya-webadmin-staging"
+  ],
+  "blockers": [
+    "Retained Neon endpoint project and staging branch ownership remains unverified: ep-holy-mouse-awj7ghpf.c-12.us-east-1.aws.neon.tech.",
+    "Dedicated edaya_identity database and role on the confirmed branch, and its direct TLS STAGING_AUTH_DATABASE_URL, remain unverified.",
+    "Read-only credential/resource preflight requires available validated payloads, cross-repository checkout access, and Cloudflare zone/hostname ownership checks.",
+    "STAGING_AUTH_DATABASE_URL, IDENTITY_CHECKOUT_TOKEN and STAGING_NEON_TARGET_CONFIRMED were not visible in repository/staging-environment inspection; organization inheritance remains unverified."
+  ],
+  "limitations": [
+    "Actions validation was not dispatched. Local Node differs from the coordinator\u2019s pinned Node 22.",
+    "Native installed-device behavior, real notification delivery, real Browser Rendering, deployed smoke and observation remain later rollout acceptance checks.",
+    "Three optional native PostgreSQL benchmarks are skipped by the functional integration runner."
+  ],
+  "evidence": {
+    "browser": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/browser-integration.json",
+    "mobile": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/mobile-integration.json",
+    "preflight": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/preflight.json",
+    "bootstrap": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/bootstrap-rehearsal.json",
+    "rawLocalLogs": "/private/tmp/edaya-unified-readiness-20261003"
+  }
+}

@@ -1,6 +1,5 @@
 import type { SeedEntityManifestStatus } from './entity-manifest'
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '../shared/ids'
-import { SEED_DASHBOARD_ACADEMIC_PERIOD_ID, SEED_REFERENCE_DATE } from './dates'
+import { dashboardAcademicPeriodIdForDataset, resolveSeedReferenceDate } from './dates'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'
 import { resolveExpectedCounts } from './fixture-counts'
 import { resolveDevSeedContext } from './resolve-dev-seed-context'
@@ -40,12 +39,12 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'attendance': 'attendance',
   'student-health-profiles': 'studentHealthProfiles',
   'student-notes': 'studentNotes',
-  'fees': 'fees',
-  'student-fees': 'studentFees',
+  'catalog-services': 'catalogServices',
+  'student-service-enrollments': 'studentServiceEnrollments',
   'payments': 'payments',
+  'document-issuances': 'documentIssuances',
   'grade-scales': 'gradeScales',
-  'definitions': 'definitions',
-  'sections': 'sections',
+  'report-modules': 'reportModules',
   'results': 'results',
   'staff-permission-assignments': 'staffPermissionAssignments',
   'announcements': 'announcements',
@@ -55,6 +54,7 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'student-disciplinary-actions': 'studentDisciplinaryActions',
   'attachments': 'attachments',
   'profile-photos': 'attachments',
+  'school-branding': 'schools',
 }
 
 export interface SeedValidationTarget {
@@ -99,10 +99,11 @@ export function buildSeedValidationTargets(): SeedValidationTarget[] {
 export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
   const context = resolveDevSeedContext()
   const schoolId = context.schoolId
-  const academicYearId = context.dataset.entities.academicYear?.id
-    ?? (context.datasetId === 'demo-ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
-  const academicPeriodId = context.datasetId === 'demo-ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
-  const expectsFinanceAndReportCards = context.datasetId === 'central'
+  const academicYearId = context.dataset.entities.academicYear?.id ?? '2025-ci'
+  const academicPeriodId = dashboardAcademicPeriodIdForDataset(context.datasetId)
+  const referenceDate = context.dataset.extensions?.seedReferenceDate
+    ?? resolveSeedReferenceDate(context.datasetId)
+  const expectsFinanceAndReportCards = false
 
   return [
     {
@@ -112,7 +113,7 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
         schoolId,
         academicYearId,
         academicPeriodId,
-        referenceDate: SEED_REFERENCE_DATE,
+        referenceDate,
       },
     },
     {

@@ -1,6 +1,7 @@
 import type { CreatePresignedDownloadOptions, CreatePresignedUploadInput, FileStoragePort, HeadObjectResult, PutObjectInput, PutObjectResult } from "@edaya/core";
 import { createInMemoryFileStorage } from "@edaya/core";
-import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { createLocalFileObjectStore, resolveObjectPath } from "@edaya/adaptor-local-fs";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 async function readStorageBody(body: PutObjectInput["body"]): Promise<Uint8Array> {
@@ -53,7 +54,7 @@ export type LocalDevFileStorage = FileStoragePort & {
 };
 
 function storagePaths(persistDir: string, storageKey: string): { objectPath: string; metaPath: string } {
-  const objectPath = path.join(persistDir, ...storageKey.split("/"));
+  const objectPath = resolveObjectPath(persistDir, storageKey);
   return {
     objectPath,
     metaPath: `${objectPath}.meta.json`,
@@ -61,6 +62,7 @@ function storagePaths(persistDir: string, storageKey: string): { objectPath: str
 }
 
 function createLocalDevDiskFileStorage(persistDir: string): LocalDevFileStorage {
+  const boundedStore = createLocalFileObjectStore({ rootDir: persistDir });
   async function readStoredObject(storageKey: string): Promise<LocalDevStoredObject | null> {
     const { objectPath, metaPath } = storagePaths(persistDir, storageKey);
     try {
@@ -81,6 +83,10 @@ function createLocalDevDiskFileStorage(persistDir: string): LocalDevFileStorage 
 
   return {
     readStoredObject,
+    async readObject(key, { maxBytes }) {
+      const stored = await boundedStore.readObject(key, maxBytes);
+      return stored ? { ...stored, sizeBytes: stored.body.byteLength } : null;
+    },
     async putObject(input: PutObjectInput): Promise<PutObjectResult> {
       const body = await readStorageBody(input.body);
       const { objectPath, metaPath } = storagePaths(persistDir, input.key);
@@ -91,13 +97,7 @@ function createLocalDevDiskFileStorage(persistDir: string): LocalDevFileStorage 
       ]);
       return { sizeBytes: body.byteLength };
     },
-    async deleteObject(key: string): Promise<void> {
-      const { objectPath, metaPath } = storagePaths(persistDir, key);
-      await Promise.all([
-        unlink(objectPath).catch(() => undefined),
-        unlink(metaPath).catch(() => undefined),
-      ]);
-    },
+    deleteObject: key => boundedStore.deleteObject(key),
     async headObject(key: string): Promise<HeadObjectResult | null> {
       const stored = await readStoredObject(key);
       if (!stored) {
@@ -179,6 +179,7 @@ function createInMemoryLocalDevFileStorage(): LocalDevFileStorage {
     putObject: input => memoryStorage.putObject(input),
     deleteObject: key => memoryStorage.deleteObject(key),
     headObject: key => memoryStorage.headObject(key),
+    readObject: (key, options) => memoryStorage.readObject(key, options),
     createPresignedUpload: input => memoryStorage.createPresignedUpload(input),
     createPresignedDownload: (key, options) => memoryStorage.createPresignedDownload(key, options),
   };

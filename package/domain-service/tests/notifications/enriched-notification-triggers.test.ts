@@ -1,5 +1,5 @@
 import type { Activity, Assessment, CalendarEvent } from '@edaya/core'
-import { ActivityCategory, AssessmentKind, CalendarEventKind, CalendarEventScopeKind, RecordingNotificationGateway, SchoolNotificationTemplates, StudentClassEnrollmentStatus } from '@edaya/core'
+import { ActivityCategory, AssessmentKind, CalendarEventKind, CalendarEventScopeKind, RecordingNotificationGateway, SchoolNotificationTemplates, StudentClassEnrollmentStatus, StudentSubjectEnrollment } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import {
   activityReminderTrigger,
@@ -15,7 +15,7 @@ async function createDefaultTemplateService(): Promise<NotificationTemplateServi
     schoolNotificationTemplates: {
       findById: async () => new SchoolNotificationTemplates({
         schoolId: 'sch1',
-        templates,
+        ...templates,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -27,7 +27,7 @@ const schoolRepositories = {
   schools: {
     findById: async () => ({
       id: 'sch1',
-      name: 'Edaya School',
+      name: 'EDaya School',
       timeZone: 'Africa/Douala',
     }),
   },
@@ -57,9 +57,10 @@ const schoolRepositories = {
       name: 'Mathematics',
     }),
   },
+  subjectEnrollments: { list: async () => [new StudentSubjectEnrollment({ id: 'choice', studentClassEnrollmentId: 'p1', classSubjectId: 'cs1', enrolledAt: new Date('2026-01-01'), source: 'automatic' })] },
   enrollments: {
     list: async () => [
-      { studentId: 'stu1', status: StudentClassEnrollmentStatus.Active },
+      { id: 'p1', studentId: 'stu1', enrolledAt: new Date('2026-01-01'), status: StudentClassEnrollmentStatus.Active },
     ],
   },
   guardianLinks: {
@@ -74,16 +75,22 @@ const schoolRepositories = {
       id: 'gua1',
       schoolId: 'sch1',
       subjectId: 'subject-gua1',
-      contactMethods: [{ allowsNotifications: true }],
+      hasAccess: true,
     }),
   },
   activityEnrollments: {
-    list: async () => [{
-      studentId: 'stu1',
-      status: 'approved',
-    }],
+    forSchool: () => ({
+      list: async () => [{
+        studentId: 'stu1',
+        status: 'approved',
+      }],
+    }),
+  },
+  classActivityEnrollments: {
+    forSchool: () => ({ list: async () => [] }),
   },
   students: {
+    forSchool: () => ({ list: async () => [{ id: 'stu1' }] }),
     findById: async () => ({
       id: 'stu1',
       schoolId: 'sch1',

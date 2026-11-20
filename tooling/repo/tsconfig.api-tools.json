@@ -1,0 +1,12 @@
+{
+  "extends": "../../apps/api/tsconfig.json",
+  "include": [
+    "openapi/export.ts",
+    "openapi/update.ts",
+    "openapi/check-drift.ts",
+    "dev/r2-configure-cors.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

@@ -1,16 +1,20 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // Worker runtime only (`RUNTIME=worker`): optional `bun dev:worker` and deploy.
-  // Local dev (`bun dev`) uses `.env` + PGlite/SQLite/local-files — not this file.
-  // See docs/reference/runtime-boundaries.md.
   "name": "edaya-api",
   "main": "src/entries/worker.ts",
-  "compatibility_date": "2024-09-23",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2026-03-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.txt", "**/*.html"],
+      "globs": [
+        "**/*.txt",
+        "**/*.html",
+        "**/*.css"
+      ],
       "fallthrough": true
     }
   ],
@@ -20,14 +24,6 @@
   "dev": {
     "port": 9999
   },
-  //
-  // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
-  // [env.*] bindings — HYPERDRIVE (school, cached), HYPERDRIVE_AUTH (auth, cache-disabled), AUTH_KV, CRON_JOBS
-  // Secrets          — BETTER_AUTH_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
-  //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
-  // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
-  //                    CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH
-  // Local .env only  — PORT, DATABASE_URL, LOCAL_FILES_*, CRON_JOB_KEYS, GRAPHQL_*
   "observability": {
     "logs": {
       "enabled": true,
@@ -35,47 +31,29 @@
     }
   },
   "env": {
-    // Staging (`wrangler deploy --env staging`):
     "staging": {
       "name": "edaya-api-staging",
-      // School Hyperdrive. Add HYPERDRIVE_AUTH (cache-disabled) for Better Auth once created
-      // (see docs/reference/deploy-staging.md). Until then, disable caching on this config
-      // or auth sign-up → sign-in will fail after the pg driver switch.
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "c6b9a94e449647d78f7c49591ba301e6"
+          "id": "b910754e7de344448b7b8b19be5645f1"
         },
         {
           "binding": "HYPERDRIVE_AUTH",
-          "id": "e08656297f69446c8eea3d1ded0268d5"
+          "id": "1f29cf5c2c8f4f0eb8019aa9d6cd74f5"
         }
       ],
-      "kv_namespaces": [
+      "send_email": [
         {
-          "binding": "AUTH_KV",
-          "id": "5a94d81b83d54a3cb5210f8f4e027d02"
+          "name": "EMAIL"
         }
       ],
-      "vars": {
-        "NODE_ENV": "production",
-        "LOG_LEVEL": "info",
-        "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://staging.api.edaya.app",
-        "TRUSTED_ORIGINS": "https://staging.staff.edaya.app,https://staging.admin.edaya.app",
-        "WEBAPP_ORIGIN": "https://staging.staff.edaya.app",
-        "COOKIE_DOMAIN": "edaya.app",
-        "GRANTS_CACHE_TTL_MS": "300000",
-        "NOVU_API_URL": "https://eu.api.novu.co",
-        "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
-        "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "true",
-        "AUTH_EMAIL_LOG_OTP": "false",
-        "R2_BUCKET_NAME": "edaya-files-staging"
+      "browser": {
+        "binding": "BROWSER"
       },
       "routes": [
         {
-          "pattern": "staging.api.edaya.app",
+          "pattern": "staging.api.edayaplus.com",
           "custom_domain": true
         }
       ],
@@ -95,49 +73,41 @@
           {
             "queue": "edaya-cron-jobs-staging",
             "max_batch_size": 10,
-            "max_retries": 3
+            "max_retries": 20,
+            "retry_delay": 60
           }
         ]
-      }
-    },
-    // Production (`wrangler deploy --env prod`):
-    "prod": {
-      "name": "edaya-api-prod",
-      "vars": {
-        "NODE_ENV": "production",
-        "LOG_LEVEL": "info",
-        "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://api.edaya.app",
-        "TRUSTED_ORIGINS": "https://staff.edaya.app,https://admin.edaya.app",
-        "WEBAPP_ORIGIN": "https://staff.edaya.app",
-        "COOKIE_DOMAIN": "edaya.app",
-        "GRANTS_CACHE_TTL_MS": "300000",
-        "NOVU_API_URL": "https://eu.api.novu.co",
-        "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
-        "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "true",
-        "AUTH_EMAIL_LOG_OTP": "false",
-        "R2_BUCKET_NAME": "edaya-files-production"
       },
-      "hyperdrive": [
-        {
-          "binding": "HYPERDRIVE",
-          "id": "c65edec7dba54f01a45d2d5c2f95e0a5"
-        },
-        {
-          "binding": "HYPERDRIVE_AUTH",
-          "id": "d355a17a3bcc4369b3394f9f86f2ee47"
-        }
-      ],
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",
-          "id": "5381bed94af74b478886d49ef52f1a52"
+          "id": "773f350615fc43919078baf225d7c1a9"
+        }
+      ]
+    },
+    "prod": {
+      "name": "edaya-api-prod",
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "579fd58a69774e838c7060c13bcfa0a8"
+        },
+        {
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "551d31cd34964614b1f5b974ac2b0e4e"
         }
       ],
+      "send_email": [
+        {
+          "name": "EMAIL"
+        }
+      ],
+      "browser": {
+        "binding": "BROWSER"
+      },
       "routes": [
         {
-          "pattern": "api.edaya.app",
+          "pattern": "api.edayaplus.com",
           "custom_domain": true
         }
       ],
@@ -157,11 +127,18 @@
           {
             "queue": "edaya-cron-jobs-prod",
             "max_batch_size": 10,
-            "max_retries": 3
+            "max_retries": 20,
+            "retry_delay": 60
           }
         ]
-      }
+      },
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "6b05cc9701e04c4993d5cf376fbae09e"
+        }
+      ]
     }
-
-  }
+  },
+  "keep_vars": true
 }

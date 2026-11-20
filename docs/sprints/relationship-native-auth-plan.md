@@ -1,11 +1,13 @@
 # Relationship-Native Authorization — Sprint Plan
 
-> **Status:** Fold F complete; enforcement unified via [authorization-operations-plan.md](./authorization-operations-plan.md) (G0–G7 + G6b ✅)  
+> **Historical checkpoint, superseded.** This records the former relationship-scope/capability implementation. Current actors contain identity only; canonical permission actions and current relationships are evaluated by [business policies](../../package/domain-authorization/src/README.md). Follow the [clean implementation plan](authorization-clean-implementation.md).
+
+> **Status:** Fold F complete; enforcement unified via [authorization-operations-plan.md](./archive/authorization-operations-plan.md) (G0–G7 + G6b ✅)  
 > **Created:** 2026-07-05  
 > **Last updated:** 2026-07-07  
 > **Scope:** Multi-profile auth, relationship scopes for portal actors (teacher, guardian, student), staff-only permission catalog  
 > **Out of scope:** Step-up assurance product, distributed grants cache, per-school custom capability catalogs, webapp teacher UI  
-> **Related:** [authorization-model-simplification-plan.md](./authorization-model-simplification-plan.md), [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-operations-plan.md](./authorization-operations-plan.md) (enforcement follow-up — ✅ G0–G7 + G6b complete)
+> **Related:** [authorization-model-simplification-plan.md](./archive/authorization-model-simplification-plan.md), [authorization-operations-plan.md](./archive/authorization-operations-plan.md) (enforcement follow-up — G0–G7 + G6b complete)
 
 This plan replaces the current **portal-permission synthesis** model (`GUARDIAN_PORTAL_PERMISSIONS` → `EffectiveGrants` → `authorize()`) and **teacher-as-staff** model (`StaffAssignment` sync → `StaffPermissionAssignment`) with **relationship-native scopes** and a **staff-only** `Permission` catalog.
 
@@ -696,4 +698,4 @@ Phases **3** and **4a** may run in parallel after phase 2. Phase **4b** follows 
 - Effective grants serialization: `apps/api/src/lib/authorization/serialize-grants.ts`
 - Subject linking: `application/account-linking/link-subject-to-actor.ts`
 - Staff assignment sync: `capabilities/authorization/sync/staff-assignment-permission-sync.ts`
-- Deprecation cleanup log: [authorization-operations-plan.md](./authorization-operations-plan.md) Fold G6b
+- Deprecation cleanup log: [authorization-operations-plan.md](./archive/authorization-operations-plan.md) Fold G6b

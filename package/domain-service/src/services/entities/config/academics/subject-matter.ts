@@ -1,17 +1,22 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { SubjectMatter } from '@edaya/core'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AcademicsOperations, AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
-import { config, noopDeleteAccess, noopReadAccess, operationModule, read, write } from '../../entity-config'
+
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
+import { validateClassSubjectMatterDelete } from './class-subject-matter'
 
 // Extracted from domain/academics/subject-matter.ts (PR3)
-export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ repositories, policy, atomicExecution }) =>
+export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.subjectMatters,
     tenant: subjectMatterTenant(),
-    read: read(operationModule(AcademicsOperations.curriculumRead), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.programUpdate), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
+    resource: 'subjectMatters',
+    writeLockGroup: 'academic-state',
+    gates: { preSave: validateSubjectMatterSave, preDelete: removeUnusedMatterLinks },
+
     atomicExecution,
   })
 
@@ -22,14 +27,17 @@ function subjectMatterTenant(): EntityTenantResolver<SubjectMatter> {
   })
 }
 
-function authorizeSubjectMatter(_policy: AuthorizationPolicy): EntityWriteAuthorization<SubjectMatter>['authorizeSave'] {
-  return async (actor, entity, _existing, repositories) => {
-    const subject = await repositories.subjects.findById(entity.subjectId)
-    if (!subject || subject.schoolId !== actor.schoolId)
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
+/** Delete mirrors before their anchor, in the already authorized parent transaction. */
+async function removeUnusedMatterLinks(matter: SubjectMatter, repositories: SchoolRepositories): Promise<void> {
+  const classMatters = await repositories.classSubjectMatters.list({ subjectMatterId: matter.id })
+  for (const mirrored of classMatters)
+    await validateClassSubjectMatterDelete(mirrored, repositories)
+  await repositories.classSubjectMatters.batchDelete(classMatters.map(entry => entry.id))
 }
 
-function authorizeSubjectMatterDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<SubjectMatter>['authorizeDelete'] {
-  return noopDeleteAccess
+export async function validateSubjectMatterSave(matter: SubjectMatter, existing: SubjectMatter | undefined, repositories: SchoolRepositories): Promise<void> {
+  if (existing && existing.subjectId !== matter.subjectId)
+    throw new BusinessRuleViolationError('SUBJECT_MATTER_IDENTITY_IMMUTABLE', 'A chapter cannot move to another subject')
+  if (!await repositories.subjects.findById(matter.subjectId))
+    throw new BusinessRuleViolationError('UNKNOWN_SUBJECT', 'Chapter subject does not exist')
 }

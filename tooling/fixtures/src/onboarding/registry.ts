@@ -1,17 +1,24 @@
+import type { OnboardingDataset } from '@edaya/service'
 import type { CountryCode, StructureTemplateDefinition, StructureTemplateId } from './types'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { onboardingDatasetSchema } from '@edaya/service'
 import { resolveCountryCode } from './country'
-import { IVORY_COAST_STRUCTURE_TEMPLATES } from './ivory-coast/parse-ivory-coast-templates'
+import { IVORY_COAST_ONBOARDING_DATASET, IVORY_COAST_STRUCTURE_TEMPLATES } from './ivory-coast/parse-ivory-coast-templates'
 
 export { resolveCountryCode } from './country'
 export type { CountryCode } from './types'
 
+export {
+  classDisplayName,
+  classNameFromLabel,
+  isStructureTemplateId,
+  parseGradeLevelTemplateId,
+} from '@edaya/service'
+export type { ClassNamingMode } from '@edaya/service'
+
 export const BUILTIN_STRUCTURE_TEMPLATES: readonly StructureTemplateDefinition[] = [
   ...IVORY_COAST_STRUCTURE_TEMPLATES,
 ]
-
-const BUILTIN_BY_ID = new Map(
-  BUILTIN_STRUCTURE_TEMPLATES.map(template => [template.id, template]),
-)
 
 const TEMPLATES_BY_COUNTRY = new Map<CountryCode, readonly StructureTemplateDefinition[]>([
   ['CI', IVORY_COAST_STRUCTURE_TEMPLATES],
@@ -28,53 +35,45 @@ export function listStructureTemplatesForCountry(
   }
 }
 
-export function isStructureTemplateId(value: string): value is StructureTemplateId {
-  return value.startsWith('ci-')
-}
-
-export function resolveStructureTemplates(
-  templateIds: StructureTemplateId[],
-  snapshots: StructureTemplateDefinition[] = [],
-): StructureTemplateDefinition[] {
-  const snapshotById = new Map(snapshots.map(snapshot => [snapshot.id, snapshot]))
-
-  return templateIds.map((templateId) => {
-    const snapshot = snapshotById.get(templateId)
-    if (snapshot) {
-      return snapshot
-    }
-    const builtin = BUILTIN_BY_ID.get(templateId)
-    if (builtin) {
-      return builtin
-    }
-    throw new Error(`Unknown structure template: ${templateId}`)
+/** Read-side compatibility for older template-list clients; never used for provisioning. */
+export function resolveStructureTemplates(templateIds: StructureTemplateId[]): StructureTemplateDefinition[] {
+  return templateIds.map((id) => {
+    const template = BUILTIN_STRUCTURE_TEMPLATES.find(row => row.id === id)
+    if (!template)
+      throw new Error(`Unknown structure template: ${id}`)
+    return structuredClone(template)
   })
 }
 
-export function parseGradeLevelTemplateId(gradeLevelId: string): {
-  templateId: StructureTemplateId
-  levelCode: string
-} | null {
-  const separatorIndex = gradeLevelId.indexOf(':')
-  if (separatorIndex <= 0) {
-    return null
-  }
-  const templateId = gradeLevelId.slice(0, separatorIndex)
-  const levelCode = gradeLevelId.slice(separatorIndex + 1)
-  if (!isStructureTemplateId(templateId) || !levelCode) {
-    return null
-  }
-  return { templateId, levelCode }
+export function resolveOnboardingDataset(id: string, version: string) {
+  if (id !== IVORY_COAST_ONBOARDING_DATASET.id || version !== IVORY_COAST_ONBOARDING_DATASET.version)
+    throw new BusinessRuleViolationError('UNKNOWN_ONBOARDING_DATASET', `Unknown onboarding dataset: ${id}@${version}`)
+  return structuredClone(IVORY_COAST_ONBOARDING_DATASET)
 }
 
-export function classDisplayName(
-  template: StructureTemplateDefinition,
-  levelCode: string,
-  index: number,
-): string {
-  const level = template.gradeLevels.find(entry => entry.code === levelCode)
-  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as const
-  const letter = letters[index] ?? String(index + 1)
-  const shortLabel = level?.shortLabel ?? levelCode
-  return `${shortLabel} ${letter}`
+/** API composition owns fixture lookup; the service receives only resolved canonical data. */
+export function resolveOnboardingDatasetInput(input: { dataset?: { id: string, version: string }, datasetSnapshot?: OnboardingDataset }): OnboardingDataset {
+  if (input.dataset && input.datasetSnapshot)
+    throw new BusinessRuleViolationError('ONBOARDING_DATASET_AMBIGUOUS', 'Supply a dataset reference or snapshot, not both')
+  if (input.datasetSnapshot)
+    return onboardingDatasetSchema.parse(input.datasetSnapshot)
+  const reference = input.dataset ?? { id: 'ci-general-secondary', version: '1.0.0' }
+  return resolveOnboardingDataset(reference.id, reference.version)
+}
+
+/** Published choices; versions remain pinned even when a new default is introduced. */
+export const ONBOARDING_DATASET_CHOICES = [{
+  id: 'ci-general-secondary',
+  version: '1.0.0',
+  countryCode: 'CI' as const,
+  label: 'Enseignement général — Côte d’Ivoire',
+  isDefault: true,
+}]
+
+export function listOnboardingDatasets(country?: string) {
+  if (country === undefined)
+    return structuredClone(ONBOARDING_DATASET_CHOICES)
+  const normalized = country.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/’/g, '\'')
+  const code = ['ci', 'civ', 'cote d\'ivoire', 'ivory coast', 'republique de cote d\'ivoire'].includes(normalized) ? 'CI' : undefined
+  return structuredClone(ONBOARDING_DATASET_CHOICES.filter(row => row.countryCode === code))
 }

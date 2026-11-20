@@ -1,12 +1,16 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { optionalHumanIdentifierSchema } from '../shared/visible-identification'
 
 export const teacherSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
+  identifier: optionalHumanIdentifierSchema,
+  signatureAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -33,8 +37,11 @@ export class Teacher {
 
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
+  get sourceFullName() { return this.data.sourceFullName }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
+  get identifier() { return this.data.identifier }
+  get signatureAttachmentId() { return this.data.signatureAttachmentId }
   get photoUrl() { return this.data.photoUrl }
   get email() { return this.data.email }
   get phone() { return this.data.phone }
@@ -52,3 +59,15 @@ export class Teacher {
     return new Teacher({ ...this.data, ...changes })
   }
 }
+
+/** Teacher identity remains attached to its own optional signature through document assembly. */
+export interface DocumentTeacher {
+  teacherId: string
+  name: string
+  signatureAttachmentId?: string
+  signatureUrl?: string
+}
+
+export const TEACHER_SIGNATURE_PURPOSE = 'teacher.signature'
+export const TEACHER_SIGNATURE_CAPABILITY = 'capability.teacher-signature'
+export const TEACHER_SIGNATURE_MAX_BYTES = 1_048_576

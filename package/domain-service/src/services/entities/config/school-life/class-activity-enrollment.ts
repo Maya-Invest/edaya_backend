@@ -1,22 +1,18 @@
 import type { ClassActivityEnrollment } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, SchedulingOperations } from '@edaya/authorization'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school-life/class-activity-enrollment.ts (PR3)
-export const classActivityEnrollmentConfig: EntityConfigFactory<ClassActivityEnrollment> = ({ repositories, policy, atomicExecution }) =>
+export const classActivityEnrollmentConfig: EntityConfigFactory<ClassActivityEnrollment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.classActivityEnrollments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(operationModule(SchedulingOperations.timetableRead), noopReadAccess),
-    write: write(
-      operationModule(SchedulingOperations.timetableManage),
-      authorizeClassGroupLinked(policy, 'classGroupId'),
-      authorizeClassGroupLinkedDelete(policy),
-    ),
+    resource: 'classActivityEnrollments',
+
     gates: {
       preSave: validateClassActivityEnrollmentSave,
     },

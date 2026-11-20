@@ -1,10 +1,7 @@
 import type { HttpSeedClient } from './client'
 
-interface EffectiveGrantsBody {
-  effectiveGrants?: {
-    permissions?: string[]
-    isElevated?: boolean
-  }
+interface ActionGrantsBody {
+  grants?: Array<{ permission: string, scopes: Array<{ kind: string }> }>
 }
 
 /** Returns false when the configured key is missing or rejected by the API. */
@@ -37,7 +34,7 @@ export async function isSeedingServiceAccountApiKeyReady(
     return false
   }
 
-  const { response, body } = await client.jsonRequest<EffectiveGrantsBody>(
+  const { response, body } = await client.jsonRequest<ActionGrantsBody>(
     '/core/authorization/effective-grants',
     {
       headers: {
@@ -50,10 +47,6 @@ export async function isSeedingServiceAccountApiKeyReady(
     return false
   }
 
-  const grants = body?.effectiveGrants
-  if (grants?.isElevated) {
-    return true
-  }
-
-  return grants?.permissions?.includes('ATTACHMENT_CONFIGURE') ?? false
+  return body?.grants?.some(grant => grant.permission === 'ATTACHMENT_CONFIGURE'
+    && grant.scopes.some(scope => scope.kind === 'school')) ?? false
 }

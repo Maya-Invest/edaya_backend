@@ -30,6 +30,8 @@ describe('allowsPublicInlineAttachmentContent', () => {
   })
 
   it('rejects non-image and non-profile attachments', () => {
+    expect(allowsPublicInlineAttachmentContent({ ownerKind: AttachmentOwnerKind.Student, mimeType: 'image/png', status: AttachmentStatus.Ready, purpose: 'fixture.private' })).toBe(false)
+
     expect(allowsPublicInlineAttachmentContent({
       ownerKind: AttachmentOwnerKind.Incident,
       mimeType: 'image/jpeg',

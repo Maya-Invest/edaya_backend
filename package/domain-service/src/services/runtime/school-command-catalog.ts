@@ -1,8 +1,22 @@
 export type SchoolCommandKey
-  = | 'registerSchool'
+  = | 'manageStudentSubjectEnrollments'
+    | 'startTeacherConversation'
+    | 'startConversation'
+    | 'configureAcademicDiscipline'
+    | 'configurePlacementStatus'
+    | 'upsertStudentAcademicYearProfile'
+    | 'upsertTeacherAcademicYearProfile'
+    | 'removeStudentAcademicYearProfile'
+    | 'removeTeacherAcademicYearProfile'
+
+    | 'replyConversation'
+    | 'resolveConversation'
+    | 'markConversationRead'
+    | 'registerSchool'
     | 'updateSchoolConfiguration'
     | 'createAcademicYear'
-    | 'activateAcademicYear'
+    | 'publishAcademicYear'
+    | 'archiveAcademicYear'
     | 'createAcademicPeriod'
     | 'publishAcademicPeriod'
     | 'configureGradeLevel'
@@ -13,12 +27,20 @@ export type SchoolCommandKey
     | 'createClassGroup'
     | 'updateClassGroupConfiguration'
     | 'registerStaffMember'
+    | 'registerTeacher'
     | 'updateStaffMemberStatus'
     | 'updateStaffMemberProfile'
+    | 'updateTeacherSelfProfile'
     | 'assignStaffToClass'
     | 'assignStaffToClassSubject'
     | 'assignStaffToLessonSession'
+    | 'configureStaffPermissionScopeDefaults'
+    | 'removeStaffPermission'
     | 'assignStaffPermission'
+    | 'configurePermissionProfile'
+    | 'applyStaffPermissionProfile'
+    | 'reorderStaffPermissionProfiles'
+    | 'removeStaffPermissionProfile'
     | 'assignResourceToClass'
     | 'assignResourceToLessonSession'
     | 'removeResourceAssignment'
@@ -32,28 +54,62 @@ export type SchoolCommandKey
     | 'revokeAccountInvitation'
     | 'acceptAccountInvitation'
     | 'configureSubject'
+    | 'configureSubjectCategory'
     | 'configureSubjectMatter'
-    | 'offerSubjectToClass'
-    | 'assignMatterToClassSubject'
-    | 'offerSubjectToGradeLevel'
-    | 'removeSubjectFromGradeLevel'
-    | 'updateGradeLevelSubject'
-    | 'assignMatterToGradeLevelSubject'
-    | 'addCustomClassSubject'
+    | 'removeSubjectMatter'
+    | 'removeSubject'
+    | 'updateSubject'
     | 'setClassSubjectOffered'
     | 'configureClassSubjectTimetable'
     | 'recordLessonSessionProgress'
+    | 'configureGrading'
+    | 'retryGrading'
+    | 'configureGradeScale'
+    | 'configureReportModules'
     | 'createGradeScale'
-    | 'createReportCardDefinition'
-    | 'createReportCardDefinitionSection'
+    | 'configureReportSettings'
     | 'createAssessment'
+    | 'submitAssessmentMarks'
+    | 'saveTeacherAttendanceDraft'
+    | 'submitTeacherAttendance'
+    | 'recordTeacherAttendanceArrival'
+    | 'recordTeacherAttendanceDeparture'
+    | 'reviseAssessmentMarksCorrection'
+    | 'requestTeacherCorrection'
+    | 'reviseTeacherCorrection'
+    | 'publishReportCommentCorrection'
+    | 'approveTeacherCorrection'
+    | 'rejectTeacherCorrection'
+    | 'withdrawTeacherCorrection'
+    | 'saveTeacherLogbook'
+    | 'validateTeacherLogbook'
+    | 'editTeacherIncident'
+    | 'takeOverTeacherIncident'
+    | 'appendIncidentFollowUp'
+    | 'requestAssessmentMarksCorrection'
+    | 'approveAssessmentMarksCorrection'
+    | 'rejectAssessmentMarksCorrection'
+    | 'withdrawAssessmentMarksCorrection'
     | 'completeAssessment'
+    | 'recordAssessmentResults'
     | 'recordAssessmentResult'
     | 'recordAssessmentResultCompliance'
     | 'listClassSubjectAssessmentResultsForPeriod'
     | 'generateReportCardResult'
     | 'writeHomeroomReportComment'
+    | 'writeReportCardSectionComments'
     | 'publishReportCardResult'
+    | 'renderClassLogbook'
+    | 'requestDocumentIssuance'
+    | 'requestDocumentIssuanceBatch'
+    | 'retryDocumentIssuance'
+    | 'correctDocumentIssuance'
+    | 'voidDocumentIssuance'
+    | 'previewDocument'
+    | 'createSchoolIssuanceAssetUpload'
+    | 'completeSchoolIssuanceAssetUpload'
+    | 'clearSchoolIssuanceAsset'
+    | 'correctHumanIdentifier'
     | 'registerStudent'
     | 'enrollStudent'
     | 'linkGuardianToStudent'
@@ -68,7 +124,7 @@ export type SchoolCommandKey
     | 'upsertStudentHealthProfile'
     | 'createStudentNote'
     | 'updateStudentNote'
-    | 'updateGuardianContactMethods'
+    | 'updateGuardianProfile'
     | 'updateGuardianStudentLink'
     | 'createSchedule'
     | 'saveSchedule'
@@ -85,8 +141,6 @@ export type SchoolCommandKey
     | 'requestAttendanceJustification'
     | 'generateClassGroupTimetable'
     | 'generateSchoolTimetable'
-    | 'publishClassGroupTimetable'
-    | 'republishClassGroupTimetable'
     | 'createAnnouncement'
     | 'addTarget'
     | 'publishAnnouncement'
@@ -113,6 +167,43 @@ export type SchoolCommandKey
     | 'cancelPayment'
     | 'adjustStudentFee'
     | 'cancelStudentFee'
+    | 'getAutoBillingOptions'
+    | 'getFeeAutoBilling'
+    | 'retryAutoBilling'
+    | 'createCatalogService'
+    | 'updateCatalogService'
+    | 'activateCatalogService'
+    | 'archiveCatalogService'
+    | 'enrollStudentInService'
+    | 'enrollStudentsInService'
+    | 'cancelServiceEnrollment'
+    | 'materializeOneTimeCharge'
+    | 'adjustStudentCharge'
+    | 'waiveStudentCharge'
+    | 'cancelStudentCharge'
+    | 'allocateAccountBalance'
+    | 'reverseAllocation'
+    | 'refundAvailableBalance'
+    | 'createTeacherSignatureUpload'
+    | 'completeTeacherSignatureUpload'
+    | 'clearTeacherSignature'
+    | 'createProfilePhotoUpload'
+    | 'completeProfilePhotoUpload'
+    | 'submitStudentPhoto'
+    | 'withdrawStudentPhotoSubmission'
+    | 'reviewStudentPhoto'
+    | 'publishStudentPhoto'
+    | 'createFamilyFeedbackCampaign'
+    | 'updateFamilyFeedbackCampaign'
+    | 'assignFamilyFeedbackModerator'
+    | 'scheduleFamilyFeedbackCampaign'
+    | 'openFamilyFeedbackCampaign'
+    | 'closeFamilyFeedbackCampaign'
+    | 'cancelFamilyFeedbackCampaign'
+    | 'submitFamilyFeedbackResponse'
+    | 'saveFamilyFeedbackThemeDraft'
+    | 'publishFamilyFeedbackCampaign'
+    | 'archiveFamilyFeedbackCampaign'
 
 function defineSchoolCommandKeys<const Keys extends readonly SchoolCommandKey[]>(
   keys: Keys & (
@@ -125,10 +216,24 @@ function defineSchoolCommandKeys<const Keys extends readonly SchoolCommandKey[]>
 }
 
 export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
+  'manageStudentSubjectEnrollments',
+  'configureAcademicDiscipline',
+  'configurePlacementStatus',
+  'upsertStudentAcademicYearProfile',
+  'upsertTeacherAcademicYearProfile',
+  'removeStudentAcademicYearProfile',
+  'removeTeacherAcademicYearProfile',
+
+  'startTeacherConversation',
+  'startConversation',
+  'replyConversation',
+  'resolveConversation',
+  'markConversationRead',
   'registerSchool',
   'updateSchoolConfiguration',
   'createAcademicYear',
-  'activateAcademicYear',
+  'publishAcademicYear',
+  'archiveAcademicYear',
   'createAcademicPeriod',
   'publishAcademicPeriod',
   'configureGradeLevel',
@@ -139,12 +244,20 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'createClassGroup',
   'updateClassGroupConfiguration',
   'registerStaffMember',
+  'registerTeacher',
   'updateStaffMemberStatus',
   'updateStaffMemberProfile',
+  'updateTeacherSelfProfile',
   'assignStaffToClass',
   'assignStaffToClassSubject',
   'assignStaffToLessonSession',
+  'configureStaffPermissionScopeDefaults',
+  'removeStaffPermission',
   'assignStaffPermission',
+  'configurePermissionProfile',
+  'applyStaffPermissionProfile',
+  'reorderStaffPermissionProfiles',
+  'removeStaffPermissionProfile',
   'assignResourceToClass',
   'assignResourceToLessonSession',
   'removeResourceAssignment',
@@ -158,28 +271,62 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'revokeAccountInvitation',
   'acceptAccountInvitation',
   'configureSubject',
+  'configureSubjectCategory',
   'configureSubjectMatter',
-  'offerSubjectToClass',
-  'assignMatterToClassSubject',
-  'offerSubjectToGradeLevel',
-  'removeSubjectFromGradeLevel',
-  'updateGradeLevelSubject',
-  'assignMatterToGradeLevelSubject',
-  'addCustomClassSubject',
+  'removeSubjectMatter',
+  'removeSubject',
+  'updateSubject',
   'setClassSubjectOffered',
   'configureClassSubjectTimetable',
   'recordLessonSessionProgress',
+  'configureGrading',
+  'retryGrading',
+  'configureGradeScale',
+  'configureReportModules',
   'createGradeScale',
-  'createReportCardDefinition',
-  'createReportCardDefinitionSection',
+  'configureReportSettings',
   'createAssessment',
+  'submitAssessmentMarks',
+  'saveTeacherAttendanceDraft',
+  'submitTeacherAttendance',
+  'recordTeacherAttendanceArrival',
+  'recordTeacherAttendanceDeparture',
+  'reviseAssessmentMarksCorrection',
+  'requestTeacherCorrection',
+  'reviseTeacherCorrection',
+  'publishReportCommentCorrection',
+  'approveTeacherCorrection',
+  'rejectTeacherCorrection',
+  'withdrawTeacherCorrection',
+  'saveTeacherLogbook',
+  'validateTeacherLogbook',
+  'editTeacherIncident',
+  'takeOverTeacherIncident',
+  'appendIncidentFollowUp',
+  'requestAssessmentMarksCorrection',
+  'approveAssessmentMarksCorrection',
+  'rejectAssessmentMarksCorrection',
+  'withdrawAssessmentMarksCorrection',
   'completeAssessment',
+  'recordAssessmentResults',
   'recordAssessmentResult',
   'recordAssessmentResultCompliance',
   'listClassSubjectAssessmentResultsForPeriod',
   'generateReportCardResult',
   'writeHomeroomReportComment',
+  'writeReportCardSectionComments',
   'publishReportCardResult',
+  'renderClassLogbook',
+  'requestDocumentIssuance',
+  'requestDocumentIssuanceBatch',
+  'retryDocumentIssuance',
+  'correctDocumentIssuance',
+  'voidDocumentIssuance',
+  'previewDocument',
+  'createSchoolIssuanceAssetUpload',
+  'completeSchoolIssuanceAssetUpload',
+  'clearSchoolIssuanceAsset',
+  'correctHumanIdentifier',
   'registerStudent',
   'enrollStudent',
   'linkGuardianToStudent',
@@ -194,7 +341,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'upsertStudentHealthProfile',
   'createStudentNote',
   'updateStudentNote',
-  'updateGuardianContactMethods',
+  'updateGuardianProfile',
   'updateGuardianStudentLink',
   'createSchedule',
   'saveSchedule',
@@ -211,8 +358,6 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'requestAttendanceJustification',
   'generateClassGroupTimetable',
   'generateSchoolTimetable',
-  'publishClassGroupTimetable',
-  'republishClassGroupTimetable',
   'createAnnouncement',
   'addTarget',
   'publishAnnouncement',
@@ -239,4 +384,41 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'cancelPayment',
   'adjustStudentFee',
   'cancelStudentFee',
+  'getAutoBillingOptions',
+  'getFeeAutoBilling',
+  'retryAutoBilling',
+  'createCatalogService',
+  'updateCatalogService',
+  'activateCatalogService',
+  'archiveCatalogService',
+  'enrollStudentInService',
+  'enrollStudentsInService',
+  'cancelServiceEnrollment',
+  'materializeOneTimeCharge',
+  'adjustStudentCharge',
+  'waiveStudentCharge',
+  'cancelStudentCharge',
+  'allocateAccountBalance',
+  'reverseAllocation',
+  'refundAvailableBalance',
+  'createTeacherSignatureUpload',
+  'completeTeacherSignatureUpload',
+  'clearTeacherSignature',
+  'createProfilePhotoUpload',
+  'completeProfilePhotoUpload',
+  'submitStudentPhoto',
+  'withdrawStudentPhotoSubmission',
+  'reviewStudentPhoto',
+  'publishStudentPhoto',
+  'createFamilyFeedbackCampaign',
+  'updateFamilyFeedbackCampaign',
+  'assignFamilyFeedbackModerator',
+  'scheduleFamilyFeedbackCampaign',
+  'openFamilyFeedbackCampaign',
+  'closeFamilyFeedbackCampaign',
+  'cancelFamilyFeedbackCampaign',
+  'submitFamilyFeedbackResponse',
+  'saveFamilyFeedbackThemeDraft',
+  'publishFamilyFeedbackCampaign',
+  'archiveFamilyFeedbackCampaign',
 ] as const)

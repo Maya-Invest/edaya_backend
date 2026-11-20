@@ -1,17 +1,13 @@
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
-import { demoDataset, demoSchoolOwnerStaffId, integrationDataset } from '@edaya/fixtures'
-import {
-  INTEGRATION_LIGHT_GUARDIANS,
-  INTEGRATION_LIGHT_STUDENTS,
-} from '@edaya/fixtures/integration/narrative'
+import { demoCiSchoolOwnerStaffId, routeSeedDataset } from '@edaya/fixtures'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
-import { seedIntegrationLightPopulation } from '../domains/population/workflow'
-import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'
+import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
+import { seedDevPopulation } from '../domains/population/workflow'
+import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/adapters/in-process'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from '../domains/school-structure/workflow'
 
 export type IntegrationLightSchoolSeedResult
@@ -45,15 +41,16 @@ function requireSeedApplication(
   return application
 }
 
-/** Fast school fixture for route and auth integration tests (no domain demo data). */
+/** School structure plus auth-linked people. Domain demo rows stay out of route tests. */
 export async function runIntegrationLightSchoolSeed(
   application: SeedApplication | undefined,
   options?: RunIntegrationLightSchoolSeedOptions,
 ): Promise<IntegrationLightSchoolSeedResult> {
   const seedApplication = requireSeedApplication(application, 'application')
+  const dataset = routeSeedDataset()
   const schoolStructurePort = createInProcessSchoolStructureSeedPort(seedApplication)
   const populationPort = createInProcessPopulationSeedPort(seedApplication)
-  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, demoDataset)
+  const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, dataset)
 
   if (structureInspection.status === 'skipped') {
     return {
@@ -66,7 +63,7 @@ export async function runIntegrationLightSchoolSeed(
   let ownerSubjectId = options?.ownerSubjectId
   if (!ownerSubjectId && options?.auth) {
     const ownerAccount = DEV_AUTH_STAFF_ACCOUNTS.find(
-      account => account.staffId === demoSchoolOwnerStaffId,
+      account => account.staffId === demoCiSchoolOwnerStaffId,
     )
     if (ownerAccount) {
       ownerSubjectId = await options.auth.lookupSubjectIdByEmail(ownerAccount.email, DEV_AUTH_PASSWORD)
@@ -76,20 +73,20 @@ export async function runIntegrationLightSchoolSeed(
   await seedDevSchoolStructure(schoolStructurePort, {
     demoSchoolExists: structureInspection.demoSchoolExists,
     ownerSubjectId,
-  }, demoDataset)
-  await seedIntegrationLightPopulation(populationPort, integrationDataset)
+  }, dataset)
+  await seedDevPopulation(populationPort, dataset)
 
-  const entities = demoDataset.entities
+  const entities = dataset.entities
 
   return {
     status: 'seeded',
-    schoolId: demoDataset.schoolId,
+    schoolId: dataset.schoolId,
     academicYearId: entities.academicYear?.id ?? '',
     gradeLevels: entities.gradeLevels?.length ?? 0,
     classes: entities.classGroups?.length ?? 0,
     staff: entities.staffMembers?.length ?? 0,
-    students: INTEGRATION_LIGHT_STUDENTS.length,
-    guardians: INTEGRATION_LIGHT_GUARDIANS.length,
+    students: entities.students?.length ?? 0,
+    guardians: entities.guardians?.length ?? 0,
     academicPeriods: entities.academicPeriods?.length ?? 0,
     periodDefinitions: entities.periodDefinitions?.length ?? 0,
   }

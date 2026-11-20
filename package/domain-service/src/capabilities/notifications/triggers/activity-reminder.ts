@@ -1,4 +1,4 @@
-import type { Activity } from '@edaya/core'
+import type { Activity, ClassActivityEnrollment } from '@edaya/core'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
 import { resolveActivityEnrollmentRecipients } from '../delivery/recipient-resolvers'
 import {
@@ -43,7 +43,7 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Activity> 
     }
 
     if (entity.endDate.getTime() < Date.now()) {
-      await context.notificationGateway.cancel(idempotencyKey)
+      await context.notificationGateway.cancel(idempotencyKey, context.actor.schoolId)
       return null
     }
 
@@ -57,7 +57,7 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Activity> 
 
     const recipients = await resolveActivityEnrollmentRecipients(
       context.repositories,
-      entity.schoolId,
+      context.actor,
       entity.id,
     )
     if (recipients.length === 0) {
@@ -92,5 +92,16 @@ export const activityReminderTrigger: NotificationTriggerRegistration<Activity> 
         activityId: entity.id,
       },
     }
+  },
+}
+
+export const classActivityReminderTrigger: NotificationTriggerRegistration<ClassActivityEnrollment> = {
+  entityKey: 'classActivityEnrollments',
+  predicate: (placement, existing) => placement.classGroupId !== existing?.classGroupId,
+  resolver: async (placement, _existing, context) => {
+    const activity = await context.repositories.activities.findById(placement.activityId)
+    if (!activity || activity.startDate.getTime() < Date.now())
+      return null
+    return activityReminderTrigger.resolver(activity, undefined, context)
   },
 }

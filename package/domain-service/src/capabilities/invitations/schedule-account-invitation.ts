@@ -1,13 +1,10 @@
 import type { Guardian, StaffMember, Student } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
-import { AccessControlOperations } from '@edaya/authorization'
-import {
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-} from '@edaya/core'
-import { operationModule } from '../../services/entities/entity-config'
+import { AuthorizationError } from '@edaya/authorization'
+import { AccountInvitationContactChannel, AccountInvitationKind } from '@edaya/core'
+
 import { AccountInvitationServiceWorkflow } from '../../services/workflows/account-invitation'
-import { resolveStudentInvitationEmail } from './resolve-invitation-contact'
+import { resolveGuardianInvitationEmail, resolveStaffInvitationEmail, resolveStudentInvitationEmail } from './resolve-invitation-contact'
 
 export interface ScheduleAccountInvitationInput {
   kind: AccountInvitationKind
@@ -16,11 +13,11 @@ export interface ScheduleAccountInvitationInput {
   inviteEmail?: string
 }
 
-export function scheduleAccountInvitationIfEligible(
+export async function scheduleAccountInvitationIfEligible(
   baseService: BaseSchoolService,
   input: ScheduleAccountInvitationInput,
   entity: StaffMember | Guardian | Student,
-): void {
+): Promise<void> {
   if (input.sendAccountInvitation === false) {
     return
   }
@@ -34,22 +31,29 @@ export function scheduleAccountInvitationIfEligible(
     return
   }
 
-  void (async () => {
-    try {
-      await operationModule(AccessControlOperations.assign)(baseService.actor)
-      const workflow = new AccountInvitationServiceWorkflow(baseService)
-      await workflow.sendAccountInvitation({
-        kind: input.kind,
-        targetId: input.targetId,
-        contactChannel: AccountInvitationContactChannel.Email,
-        contactValue: input.kind === AccountInvitationKind.Student
-          ? resolveStudentInvitationEmail(input.inviteEmail)
-          : undefined,
-        inviteBaseUrl: baseService.inviteBaseUrl!,
-      })
-    }
-    catch {
-      // Invitation delivery must not break entity registration.
-    }
-  })()
+  const contactValue = input.kind === AccountInvitationKind.Student
+    ? resolveStudentInvitationEmail(input.inviteEmail)
+    : input.kind === AccountInvitationKind.Guardian
+      ? resolveGuardianInvitationEmail(entity as Guardian)
+      : resolveStaffInvitationEmail(entity as StaffMember)
+  if (!contactValue)
+    return
+  try {
+    await baseService.access.staffPermissions.assertAssign()
+  }
+  catch (error) {
+    // A caller without invitation authority may still register an entity.
+    // Once admitted, persistence failures must roll back the registration too.
+    if (error instanceof AuthorizationError)
+      return
+    throw error
+  }
+  const workflow = new AccountInvitationServiceWorkflow(baseService)
+  await workflow.sendAccountInvitation({
+    kind: input.kind,
+    targetId: input.targetId,
+    contactChannel: AccountInvitationContactChannel.Email,
+    contactValue,
+    inviteBaseUrl: baseService.inviteBaseUrl,
+  })
 }

@@ -1,11 +1,14 @@
-import type { AccountInvitationData } from "@edaya/core";
 import type { ActorMetadata } from "@edaya/authorization";
+import type { AccountInvitationData } from "@edaya/core";
 import type { CoreEntityKey } from "@edaya/service";
-import { toPublicAccountInvitationData } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
+import type { CoreEntityConfig } from "@/lib/school-api/registry";
+import { toPublicAccountInvitationData } from "@edaya/core";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
 import { normalizeListFilter } from "@/lib/school-api/pagination";
-import type { CoreEntityConfig } from "@/lib/school-api/registry";
+import { coreEntities } from "@/lib/school-api/registry";
+import { permitsPublicSave } from "../public-operations";
+import { serializeNestedEntities, unwrapDomainEntity } from "../serialization";
 
 export class EntityOperationError extends Error {
   constructor(
@@ -28,6 +31,13 @@ function requireActor(actor: ActorMetadata | null | undefined): ActorMetadata {
     throw new EntityOperationError("UNAUTHORIZED", "Missing or invalid authorization session");
   }
   return actor;
+}
+
+function requireDirectDelete(serviceName: CoreEntityKey, batch = false): void {
+  const operations = coreEntities.find(entity => entity.serviceName === serviceName)?.publicOperations;
+  if (!operations || !(batch ? operations.batchDelete : operations.delete)) {
+    throw new EntityOperationError("METHOD_NOT_ALLOWED", `Use a domain command to delete ${serviceName}`);
+  }
 }
 
 function resolveServices(actor: ActorMetadata, schoolApp: ApiSchoolApplication, serviceName: CoreEntityKey) {
@@ -53,29 +63,15 @@ function countFilter(filter: unknown): Record<string, unknown> {
   return next;
 }
 
-function unwrapDomainEntity(entity: unknown): unknown {
-  if (
-    entity
-    && typeof entity === "object"
-    && "data" in entity
-    && entity.data
-    && typeof entity.data === "object"
-  ) {
-    return entity.data;
-  }
-
-  return entity;
-}
-
 function serializeEntityResult(serviceName: CoreEntityKey, entity: unknown): unknown {
+  const unwrapped = unwrapDomainEntity(entity);
   if (serviceName === "accountInvitations") {
-    const unwrapped = unwrapDomainEntity(entity);
     if (unwrapped && typeof unwrapped === "object") {
       return toPublicAccountInvitationData(unwrapped as AccountInvitationData);
     }
   }
 
-  return entity;
+  return serializeNestedEntities(unwrapped);
 }
 
 function serializeEntityResults(serviceName: CoreEntityKey, entities: unknown[]): unknown[] {
@@ -152,11 +148,11 @@ export async function executeEntityGet(
 export async function executeEntitySave(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "allowDirectSave">,
+  entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "publicOperations">,
   input: unknown,
 ) {
   requireActor(actor);
-  if (!entityConfig.allowDirectSave) {
+  if (!permitsPublicSave(entityConfig.publicOperations)) {
     throw new EntityOperationError(
       "METHOD_NOT_ALLOWED",
       `Use a domain command to save ${entityConfig.displayName}`,
@@ -186,6 +182,7 @@ export async function executeEntityDelete(
   id: string,
 ) {
   const resolvedActor = requireActor(actor);
+  requireDirectDelete(serviceName);
   const { writeService } = resolveServices(resolvedActor, schoolApp, serviceName);
   if (!writeService) {
     throw new EntityOperationError("NOT_WRITABLE", `Entity ${serviceName} is not writable`);
@@ -197,11 +194,11 @@ export async function executeEntityDelete(
 export async function executeEntityBatchSave(
   actor: ActorMetadata | null | undefined,
   schoolApp: ApiSchoolApplication,
-  entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "allowDirectSave">,
+  entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "publicOperations">,
   entities: unknown,
 ) {
   requireActor(actor);
-  if (!entityConfig.allowDirectSave) {
+  if (!permitsPublicSave(entityConfig.publicOperations, true)) {
     throw new EntityOperationError(
       "METHOD_NOT_ALLOWED",
       `Use a domain command to save ${entityConfig.displayName}`,
@@ -233,6 +230,7 @@ export async function executeEntityBatchDelete(
   ids: readonly string[],
 ) {
   const resolvedActor = requireActor(actor);
+  requireDirectDelete(serviceName, true);
   const { writeService } = resolveServices(resolvedActor, schoolApp, serviceName);
   if (!writeService) {
     throw new EntityOperationError("NOT_WRITABLE", `Entity ${serviceName} is not writable`);

@@ -7,7 +7,7 @@ import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner } from '../support/types'
 import type { HttpSeedClient } from '../transport/http/client'
 
-export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account' | 'validate' | 'doctor'
+export type HttpDevSeedScope = DevSeedScope | 'school-switching' | 'smoke' | 'service-account' | 's2s-clients' | 'validate' | 'doctor'
 
 export interface RunHttpDevSeedsOptions {
   client: HttpSeedClient
@@ -40,6 +40,7 @@ export interface HttpSmokeSeedResult {
 }
 
 export interface RunHttpDevSeedsResults extends RunDevSeedsResults {
+  switchingCampus?: string
   smoke: HttpSmokeSeedResult | null
   validation: HttpSeedValidationResult | null
   doctor: Awaited<ReturnType<typeof runHttpSeedDoctor>> | null

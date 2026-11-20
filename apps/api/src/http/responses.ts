@@ -1,8 +1,8 @@
 import type { Context } from "hono";
-import * as HttpStatusCodes from "stoker/http-status-codes";
-
 import type { AppBindings } from "@/http/bindings";
+
 import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
+import * as HttpStatusCodes from "stoker/http-status-codes";
 
 type ResponseDetails = Record<string, unknown>;
 
@@ -23,6 +23,7 @@ export function isBusinessRuleViolationError(error: unknown): error is BusinessR
 }
 
 export function unauthorizedResponse(c: Context<AppBindings>) {
+  c.header("WWW-Authenticate", "Bearer");
   return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
 }
 
@@ -34,6 +35,7 @@ export function conflictResponse(c: Context<AppBindings>, error: BusinessRuleVio
   return c.json({
     message: error.message,
     code: error.code,
+    ...(error.details ? { details: error.details } : {}),
   }, HttpStatusCodes.CONFLICT);
 }
 

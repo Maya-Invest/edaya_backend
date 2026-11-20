@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildClientBindings } from "@/lib/school-api/client-bindings";
-import { extractClientBindingsFromOpenApi } from "@edaya/client-codegen";
+import { extractClientBindingsFromOpenApi } from "../../../../tooling/repo/codegen/src/index";
 
 const openApiPath = resolve(
   import.meta.dirname,
@@ -17,6 +17,8 @@ describe("exported OpenAPI client bindings", () => {
     };
 
     expect(openApi.info?.["x-edaya-client-bindings"]).toBeUndefined();
-    expect(extractClientBindingsFromOpenApi(openApi)).toEqual(buildClientBindings());
+    const { auth, ...school } = extractClientBindingsFromOpenApi(openApi);
+    expect(school).toEqual(buildClientBindings());
+    expect(auth).toMatchObject({ accessToken: { path: "/auth/edaya/access-token", basePath: "root", requestSchemaName: "AuthResource", responseSchemaName: "AuthAccessToken" } });
   });
 });

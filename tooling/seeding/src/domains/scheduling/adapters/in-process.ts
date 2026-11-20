@@ -11,7 +11,7 @@ export function createInProcessSchedulingSeedPort(
 
   return {
     saveResource: record => withSeedPortError('scheduling.saveResource', async () => {
-      await service.baseService.entities.resources.save(new Resource(record), { moduleChecked: true })
+      await service.baseService.entities.resources.save(new Resource(record))
     }),
     createSchedule: record => withSeedPortError('scheduling.createSchedule', async () => {
       await service.schedulingWorkflow.createSchedule(record)

@@ -1,27 +1,20 @@
-import type { ActorMetadata } from '@edaya/authorization'
 import type { StaffMember } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { SchoolStructureOperations } from '@edaya/authorization'
+
 import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
+import { assertUniqueHumanIdentifier } from '../human-identifier-uniqueness'
 
 // Extracted from domain/school/staff-member.ts (PR3)
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
-  const readAccess = (actor: ActorMetadata, entities: readonly StaffMember[]) =>
-    input.policy.checkStaffMemberReadAccess(actor, entities)
-
   return {
     ...config({
       repository: input.repositories.staffMembers,
       tenant: directSchoolTenant<StaffMember>(),
-      read: read(operationModule(SchoolStructureOperations.staffRead), readAccess),
-      write: write(
-        operationModule(SchoolStructureOperations.configure),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
+      resource: 'staffMembers',
+
       atomicExecution: input.atomicExecution,
     }),
     gates: {
@@ -35,7 +28,6 @@ export async function validateStaffMemberSave(
   staffMember: StaffMember,
   existing: StaffMember | undefined,
   repositories: SchoolRepositories,
-  actor: ActorMetadata,
 ): Promise<void> {
   const school = await repositories.schools.findById(staffMember.schoolId)
   const ownerSubjectId = school?.ownerSubjectId
@@ -44,14 +36,14 @@ export async function validateStaffMemberSave(
     throw new BusinessRuleViolationError('SCHOOL_OWNER_DEACTIVATION_BLOCKED', 'Transfer school ownership before deactivating the owner')
   }
 
-  if (
-    existing?.isActive
-    && !staffMember.isActive
-    && 'staffMemberId' in actor
-    && actor.staffMemberId === staffMember.id
-  ) {
-    throw new BusinessRuleViolationError('SELF_DEACTIVATION_BLOCKED', 'Staff members cannot deactivate their own account')
-  }
+  await assertUniqueHumanIdentifier({
+    identifier: staffMember.identifier,
+    schoolId: staffMember.schoolId,
+    entityId: staffMember.id,
+    errorCode: 'IDENTIFIER_UNAVAILABLE',
+    entityLabel: 'Staff member',
+    findCandidates: identifier => repositories.staffMembers.list({ schoolId: staffMember.schoolId, identifier: { $normalizedCandidate: identifier } }),
+  })
 }
 
 async function validateStaffMemberDelete(

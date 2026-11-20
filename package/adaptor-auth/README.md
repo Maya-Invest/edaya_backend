@@ -2,21 +2,23 @@
 
 Better Auth persistence for EDAYA: Drizzle schema, SQL migrations, and runtime `runMigrations()` for Postgres (Neon / Hyperdrive / PGlite).
 
-Runtime Better Auth configuration (secrets, `baseURL`, plugins) lives in `apps/api`.
+Runtime Better Auth configuration (secrets, `baseURL`, plugins, first-party JWT issuance) lives in `apps/api/src/identity`, inside `apps/api`. The unified API opens this separate database only for Account operations.
 
-Migration apply scripts live in `@edaya/db-migrate` (`tooling/db-migrate`).
+Migration apply scripts live in `tooling/repo/db/identity` (`bun repo identity-migrate`).
 
 | Runtime | Auth storage |
 |---------|----------------|
-| **Worker** | Postgres via Hyperdrive (`auth` schema on the school Neon DB); optional KV secondary storage for session hot reads |
-| **Node dev / tests** | Same PGlite/Postgres database as school (`auth` schema) |
+| **Worker** | Authoritative Postgres through a cache-disabled Hyperdrive auth connection; no KV session authority |
+| **Node dev / tests** | Local PGlite at `.data/identity` (not shared with school) |
 
 ```sh
-bun run auth:generate-schema   # Regenerate Drizzle schema after Better Auth plugin changes
+bun run auth:generate-schema   # Generate a review file using auth@1.7.3; does not overwrite src/schema.ts
 bun run auth:db:generate       # Generate SQL migration from schema changes (requires DATABASE_URL)
 ```
 
-From the monorepo root: `bun repo db generate --auth`, `bun repo db generate --auth`.
+Review `generated-provider-schema.ts`, merge provider model changes into `src/schema.ts`, preserve EDaya tables and timezone-aware timestamps, then generate an additive migration. The CLI package was renamed to `auth` in Better Auth 1.7 ([CLI documentation](https://better-auth.com/docs/concepts/cli)). Never apply the generated provider file directly over the maintained schema.
+
+`src/adapters/access-tokens.ts` stores rate-limit buckets and session revocation helpers. First-party access tokens are compact JWTs signed in `apps/api/src/identity`. `auth-transactions.ts` gives protocol mutations a database transaction and cross-instance lock separate from school transactions.
 
 ## Usage
 
@@ -24,9 +26,9 @@ From the monorepo root: `bun repo db generate --auth`, `bun repo db generate --a
 import { authSchema, runMigrations } from '@edaya/adaptor-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 
-await runMigrations(db, { driver: 'pglite' }) // PGlite local/tests
-// or { driver: 'node-postgres' } with drizzle-orm/node-postgres (Worker / Hyperdrive)
-// or { driver: 'postgres-js' } with drizzle-orm/postgres-js (CLI migrate tooling)
+await runMigrations(db, { driver: 'pglite' }) // PGlite local/tests (`.data/identity`)
+// or { driver: 'postgres-js' } with drizzle-orm/postgres-js (CLI migrate + identity process)
+// Worker skips startup migrations; apply them with `bun repo ops db migrate`.
 
 betterAuth({
   database: drizzleAdapter(db, {
@@ -37,18 +39,6 @@ betterAuth({
   // ...
 })
 
-// Worker session acceleration (optional):
-import {
-  createKvAuthSecondaryStorage,
-  toBetterAuthSecondaryStorage,
-  buildBetterAuthSessionOptions,
-} from '@edaya/adaptor-auth'
-
-const secondaryStorage = createKvAuthSecondaryStorage(env.AUTH_KV)
-betterAuth({
-  secondaryStorage: toBetterAuthSecondaryStorage(secondaryStorage),
-  session: buildBetterAuthSessionOptions({ secondaryStorage }),
-})
 ```
 
-**Naming note:** `@edaya/adaptor-postgres` has scheduling session tables in `public`. Better Auth tables live in the separate `auth` Postgres schema (`auth.user`, `auth.session`, …).
+**Naming note:** School Postgres (`@edaya/adaptor-postgres` in `edaya_backend`) has scheduling session tables in `public`. Better Auth tables live in this identity database's `auth` schema (`auth.user`, `auth.session`, …).

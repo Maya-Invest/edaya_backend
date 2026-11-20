@@ -1,34 +1,33 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
-import type { StaffMember } from '@edaya/core'
-import type {
-  Permission,
-} from '../'
+import type { AtomicExecutionPort, StaffMember, UserScopeSelection } from '@edaya/core'
 import type { StaffActorMetadata } from '../model/actor'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { randomUUID } from 'node:crypto'
-import {
-  BusinessRuleViolationError,
-  ServiceApiKey,
-  StaffMember as StaffMemberEntity,
-  StaffPermissionAssignment,
-} from '@edaya/core'
-import {
-  assertDelegatedPermissionAssignmentsSubset,
-  assertOwnerServiceAccountAllowed,
-  encodeApiKey,
-  generateApiKey,
-  ServiceAccountOperations,
-} from '../'
-import { operationModule } from '../gates/operation-module'
+import { BusinessRuleViolationError, corePermissionDefinition, Permission, permissionScopeSelectionsSchema, scopesForPermission, ServiceApiKey, shortNameSchema, StaffMember as StaffMemberEntity, StaffPermissionAssignment, suggestShortName } from '@edaya/core'
+import { AccessPolicies } from '../access/access-policies'
+import { encodeApiKey, generateApiKey } from './api-key-crypto'
 
 export interface ServiceAccountPermissionAssignmentInput {
   permission: Permission
-  scopeIds: string
+  scopes: UserScopeSelection[]
   academicYearId: string
+}
+
+export function materializeServiceAccountGrant(input: ServiceAccountPermissionAssignmentInput) {
+  const definition = corePermissionDefinition(input.permission)
+  const policy = definition.scopePolicy
+  const selections = permissionScopeSelectionsSchema.parse(input.scopes)
+  if (!definition.serviceAccountAssignable || (policy.mode === 'none' && selections.length))
+    throw new BusinessRuleViolationError('SERVICE_ACCOUNT_PERMISSION_INVALID', 'Permission or scope selections are not available to service accounts')
+  const scopes = scopesForPermission(input.permission, selections)
+  if (!scopes.length || (policy.mode === 'resources' && selections.some(scope => !policy.allowedKinds.includes(scope.kind === 'all' ? scope.grain : scope.kind))))
+    throw new BusinessRuleViolationError('SERVICE_ACCOUNT_SCOPE_REQUIRED', 'Select compatible resources for this permission')
+  return { ...input, scopes }
 }
 
 export interface CreateServiceAccountInput {
   serviceId: string
-  displayName: string
+  name: string
+  shortName?: string
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
   elevated?: boolean
   /** When set, stores this key instead of generating a random one (dev/seeding only). */
@@ -41,21 +40,21 @@ export interface CreateServiceAccountResult {
 }
 
 export interface UpdateServiceAccountInput {
-  displayName?: string
+  name?: string
+  shortName?: string
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
 }
 
-export async function createServiceAccount(
+async function performCreateServiceAccount(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   input: CreateServiceAccountInput,
 ): Promise<CreateServiceAccountResult> {
-  await operationModule(ServiceAccountOperations.create)(actor)
+  await new AccessPolicies(actor, repositories).serviceAccounts.assertCreate({ ...input, permissionAssignments: input.permissionAssignments?.map(materializeServiceAccountGrant) })
 
   const schoolId = actor.schoolId
   const elevated = input.elevated ?? false
   const permissionAssignments = input.permissionAssignments ?? []
-  assertOwnerServiceAccountAllowed(actor.effectiveGrants, elevated)
 
   if (elevated) {
     const existing = await repositories.serviceApiKeys.countActiveElevatedServiceAccounts(schoolId)
@@ -74,14 +73,6 @@ export async function createServiceAccount(
     )
   }
 
-  if (permissionAssignments.length > 0) {
-    assertDelegatedPermissionAssignmentsSubset(
-      actor.effectiveGrants,
-      permissionAssignments,
-      schoolId,
-    )
-  }
-
   const existingService = await repositories.staffMembers.findOne({
     schoolId,
     accountKind: 'service',
@@ -95,12 +86,14 @@ export async function createServiceAccount(
     )
   }
 
-  const { firstName, lastName } = splitDisplayName(input.displayName || input.serviceId)
+  const { firstName, lastName } = splitDisplayName(input.name || input.serviceId)
   const staffMember = new StaffMemberEntity({
     id: randomUUID(),
     schoolId,
     firstName,
     lastName,
+    name: input.name || input.serviceId,
+    shortName: input.shortName ? shortNameSchema.parse(input.shortName) : suggestShortName(input.name || input.serviceId),
     accountKind: 'service',
     serviceId: input.serviceId,
     createdBySubjectId: actor.subjectId,
@@ -150,7 +143,7 @@ async function saveServiceAccountPermissionAssignments(
       schoolId,
       academicYearId: assignment.academicYearId,
       permission: assignment.permission,
-      scopeIds: assignment.scopeIds,
+      scopes: materializeServiceAccountGrant(assignment).scopes,
       status: 'active',
     }))
   }
@@ -169,9 +162,7 @@ async function replaceServiceAccountPermissionAssignments(
   })
 
   await Promise.all(
-    existing
-      .filter(assignment => !assignment.sourceStaffAssignmentId)
-      .map(assignment => repositories.staffPermissionAssignments.delete(assignment.id)),
+    existing.map(assignment => repositories.staffPermissionAssignments.delete(assignment.id)),
   )
 
   await saveServiceAccountPermissionAssignments(
@@ -182,24 +173,25 @@ async function replaceServiceAccountPermissionAssignments(
   )
 }
 
-function splitDisplayName(displayName: string): { firstName: string, lastName: string } {
-  const [firstName, ...rest] = displayName.trim().split(/\s+/)
+function splitDisplayName(name: string): { firstName: string, lastName: string } {
+  const [firstName, ...rest] = name.trim().split(/\s+/)
   return {
     firstName: firstName || 'Service',
     lastName: rest.join(' ') || 'Integration',
   }
 }
 
-export async function updateServiceAccount(
+async function performUpdateServiceAccount(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
   input: UpdateServiceAccountInput,
 ): Promise<StaffMember> {
-  await operationModule(ServiceAccountOperations.update)(actor)
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertUpdate(staffMemberId, input.permissionAssignments?.map(materializeServiceAccountGrant))
 
   if (
-    input.displayName === undefined
+    input.name === undefined
+    && input.shortName === undefined
     && input.permissionAssignments === undefined
   ) {
     throw new BusinessRuleViolationError(
@@ -208,25 +200,7 @@ export async function updateServiceAccount(
     )
   }
 
-  const existing = await repositories.staffMembers.findById(staffMemberId)
-  if (
-    !existing
-    || existing.schoolId !== actor.schoolId
-    || existing.accountKind !== 'service'
-    || !existing.isActive
-  ) {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_NOT_FOUND',
-      'Active service account not found for this school',
-    )
-  }
-
   if (input.permissionAssignments !== undefined) {
-    assertDelegatedPermissionAssignmentsSubset(
-      actor.effectiveGrants,
-      input.permissionAssignments,
-      actor.schoolId,
-    )
     await replaceServiceAccountPermissionAssignments(
       repositories,
       staffMemberId,
@@ -236,13 +210,15 @@ export async function updateServiceAccount(
   }
 
   let updatedStaffMember = existing
-  if (input.displayName !== undefined) {
-    const { firstName, lastName } = splitDisplayName(input.displayName)
+  if (input.name !== undefined || input.shortName !== undefined) {
+    const { firstName, lastName } = splitDisplayName(input.name ?? existing.name ?? existing.fullName)
     updatedStaffMember = new StaffMemberEntity({
       id: existing.id,
       schoolId: existing.schoolId,
       firstName,
       lastName,
+      name: input.name ?? existing.name,
+      shortName: input.shortName === undefined ? existing.shortName : shortNameSchema.parse(input.shortName),
       email: existing.email,
       accountKind: existing.accountKind,
       serviceId: existing.serviceId,
@@ -253,7 +229,7 @@ export async function updateServiceAccount(
     })
   }
 
-  if (input.displayName !== undefined) {
+  if (input.name !== undefined || input.shortName !== undefined) {
     await repositories.staffMembers.save(updatedStaffMember)
   }
 
@@ -264,33 +240,27 @@ export async function listServiceAccounts(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
 ): Promise<StaffMember[]> {
-  await operationModule(ServiceAccountOperations.read)(actor)
+  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_READ)
   return repositories.staffMembers.list({
     schoolId: actor.schoolId,
     accountKind: 'service',
   })
 }
 
-export async function revokeServiceAccount(
+async function performRevokeServiceAccount(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
 ): Promise<StaffMember> {
-  await operationModule(ServiceAccountOperations.revoke)(actor)
-
-  const existing = await repositories.staffMembers.findById(staffMemberId)
-  if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service') {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_NOT_FOUND',
-      'Service account not found for this school',
-    )
-  }
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertRevoke(staffMemberId)
 
   const revoked = new StaffMemberEntity({
     id: existing.id,
     schoolId: existing.schoolId,
     firstName: existing.firstName,
     lastName: existing.lastName,
+    name: existing.name,
+    shortName: existing.shortName,
     email: existing.email,
     accountKind: existing.accountKind,
     serviceId: existing.serviceId,
@@ -328,21 +298,13 @@ export interface RotateServiceAccountKeyInput {
   apiKey?: string
 }
 
-export async function rotateServiceAccountKey(
+async function performRotateServiceAccountKey(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
   input: RotateServiceAccountKeyInput = {},
 ): Promise<{ apiKey: string }> {
-  await operationModule(ServiceAccountOperations.rotateKey)(actor)
-
-  const existing = await repositories.staffMembers.findById(staffMemberId)
-  if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service' || !existing.isActive) {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_NOT_FOUND',
-      'Active service account not found for this school',
-    )
-  }
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertRotateKey(staffMemberId)
 
   const keys = await repositories.serviceApiKeys.list({ staffMemberId: existing.id })
   const now = new Date()
@@ -376,4 +338,21 @@ export async function rotateServiceAccountKey(
   }))
 
   return { apiKey: generated.plaintext }
+}
+
+/** Each command reads its authority and changes its facts within the same transaction. */
+export function createServiceAccount(repositories: AuthorizationRepositories, actor: StaffActorMetadata, input: CreateServiceAccountInput, atomicExecution: AtomicExecutionPort): Promise<CreateServiceAccountResult> {
+  return atomicExecution.execute(() => performCreateServiceAccount(repositories, actor, input), { lockKeys: [`service-accounts:${actor.schoolId}`] })
+}
+
+export function updateServiceAccount(repositories: AuthorizationRepositories, actor: StaffActorMetadata, id: string, input: UpdateServiceAccountInput, atomicExecution: AtomicExecutionPort): Promise<StaffMember> {
+  return atomicExecution.execute(() => performUpdateServiceAccount(repositories, actor, id, input), { lockKeys: [`service-accounts:${actor.schoolId}`] })
+}
+
+export function revokeServiceAccount(repositories: AuthorizationRepositories, actor: StaffActorMetadata, id: string, atomicExecution: AtomicExecutionPort): Promise<StaffMember> {
+  return atomicExecution.execute(() => performRevokeServiceAccount(repositories, actor, id), { lockKeys: [`service-accounts:${actor.schoolId}`] })
+}
+
+export function rotateServiceAccountKey(repositories: AuthorizationRepositories, actor: StaffActorMetadata, id: string, input: RotateServiceAccountKeyInput, atomicExecution: AtomicExecutionPort): Promise<{ apiKey: string }> {
+  return atomicExecution.execute(() => performRotateServiceAccountKey(repositories, actor, id, input), { lockKeys: [`service-accounts:${actor.schoolId}`] })
 }

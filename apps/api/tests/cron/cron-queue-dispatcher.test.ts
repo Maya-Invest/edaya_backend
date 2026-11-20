@@ -8,20 +8,9 @@ import { resolveCronJobDispatcher } from "@/runtime/worker/resolve-cron-job-disp
 
 describe("cron job dispatch payload", () => {
   test("round-trips queue bodies", () => {
-    const message = {
-      jobKey: "reconcilePendingDeliveries" as const,
-      schoolId: "school-1",
-      asOf: new Date("2026-07-03T12:00:00.000Z"),
-      requestId: "worker-cron:reconcilePendingDeliveries:school-1:2026-07-03T12:00:00.000Z",
-    };
-
+    const message = { jobId: `cron-execute:${crypto.randomUUID()}` };
     const body = toCronJobDispatchQueueBody(message);
-    expect(body).toEqual({
-      jobKey: "reconcilePendingDeliveries",
-      schoolId: "school-1",
-      asOf: "2026-07-03T12:00:00.000Z",
-      requestId: message.requestId,
-    });
+    expect(body).toEqual(message);
     expect(parseCronJobDispatchQueueBody(body)).toEqual(message);
   });
 });
@@ -35,19 +24,9 @@ describe("createCloudflareQueueCronJobDispatcher", () => {
       },
     });
 
-    await dispatcher.dispatch({
-      jobKey: "processDueNotifications",
-      schoolId: "school-2",
-      asOf: new Date("2026-07-03T06:00:00.000Z"),
-      requestId: "req-1",
-    });
-
-    expect(sent).toEqual([{
-      jobKey: "processDueNotifications",
-      schoolId: "school-2",
-      asOf: "2026-07-03T06:00:00.000Z",
-      requestId: "req-1",
-    }]);
+    const message = { jobId: `cron-execute:${crypto.randomUUID()}` };
+    await dispatcher.dispatch(message);
+    expect(sent).toEqual([message]);
   });
 });
 
@@ -74,4 +53,14 @@ describe("resolveCronJobDispatcher", () => {
 
     expect(dispatcher.dispatch).toBeFunction();
   });
+});
+
+test("rejects mutable authority, legacy payloads and malformed references", () => {
+  const jobId = `cron-execute:${crypto.randomUUID()}`;
+  for (const payload of [null, [], {}, { jobId: "" }, { jobId: 1 }, { jobId, schoolId: "foreign" }, { jobId, jobKey: "expireAccountInvitations" }, { schoolId: "school-a", jobKey: "expireAccountInvitations", asOf: "2026-07-07" }])
+    expect(() => parseCronJobDispatchQueueBody(payload)).toThrow("CRON_QUEUE_PAYLOAD_INVALID");
+});
+
+test("worker missing queue binding fails closed", () => {
+  expect(() => resolveCronJobDispatcher({ RUNTIME: "worker" } as any, {} as any)).toThrow("CRON_JOBS");
 });

@@ -14,6 +14,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { assertStorageReadLimit, FileStorageReadError, readBoundedStorageBody } from "@edaya/core";
 
 export interface R2FileStorageConfig {
   /** Cloudflare account id — used only to derive the endpoint when `endpoint` is unset. */
@@ -65,6 +66,32 @@ export function createR2FileStorage(config: R2FileStorageConfig): FileStoragePor
   });
 
   return {
+    async readObject(key, { maxBytes }) {
+      assertStorageReadLimit(maxBytes);
+      try {
+        const response = await client.send(new GetObjectCommand({
+          Bucket: config.bucketName,
+          Key: key,
+        }));
+        if (!response.Body) {
+          throw new FileStorageReadError("FILE_READ_FAILED");
+        }
+        const body = await readBoundedStorageBody(response.Body.transformToWebStream(), maxBytes, response.ContentLength);
+        return { body, sizeBytes: body.byteLength, contentType: response.ContentType, etag: response.ETag };
+      }
+      catch (error) {
+        const status = error && typeof error === "object"
+          ? (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode
+          : undefined;
+        if (status === 404) {
+          return null;
+        }
+        if (error instanceof FileStorageReadError) {
+          throw error;
+        }
+        throw new FileStorageReadError("FILE_READ_FAILED");
+      }
+    },
     async putObject(input: PutObjectInput): Promise<PutObjectResult> {
       const body = await readBody(input.body);
       const response = await client.send(new PutObjectCommand({
@@ -109,11 +136,13 @@ export function createR2FileStorage(config: R2FileStorageConfig): FileStoragePor
       }
     },
     async createPresignedUpload(input: CreatePresignedUploadInput) {
+      assertStorageReadLimit(input.sizeBytes);
       const expiresIn = input.expiresInSeconds ?? DEFAULT_UPLOAD_TTL_SECONDS;
       const command = new PutObjectCommand({
         Bucket: config.bucketName,
         Key: input.key,
         ContentType: input.contentType,
+        ContentLength: input.sizeBytes,
       });
       const uploadUrl = await getSignedUrl(client, command, { expiresIn });
       return {

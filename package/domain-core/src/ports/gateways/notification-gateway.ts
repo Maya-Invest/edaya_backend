@@ -1,6 +1,5 @@
 import type {
   AnnouncementPriority,
-  MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
 } from '../../domain'
 
@@ -17,9 +16,9 @@ export interface NotificationRecipientProfile {
   schoolId: string
   recipient: NotificationRecipient
   displayName?: string
-  /** Resolved delivery email — populated when upserting to the provider */
+  /** Resolved delivery email from current profile and identity contacts */
   email?: string
-  /** Resolved delivery phone — populated when upserting to the provider */
+  /** Resolved delivery phone from current profile and identity contacts */
   phone?: string
   /** Explicit notification override; defaults to auth email when unset */
   notificationEmail?: string
@@ -52,12 +51,31 @@ export interface NotificationEnqueueInput {
   emailSubject?: string
   /** Rendered email HTML body — defaults to `body` when omitted at the provider */
   emailBody?: string
+  /** Rendered SMS body from simple_message */
+  smsBody?: string
+  /** School template gates — adaptor fans out after AND with recipient prefs */
+  enableEmail?: boolean
+  enablePush?: boolean
+  enableSms?: boolean
   recipients: NotificationRecipient[]
   priority?: AnnouncementPriority
   deliverAfter?: Date
   expiresAt?: Date
   metadata?: Record<string, string>
 }
+
+/** A durable school send must resolve its exact recipient from current business facts. */
+export interface NotificationDispatchRequest {
+  deliveryId: string
+  schoolId: string
+  subjectId: string
+  eventKey: string
+  metadata: Readonly<Record<string, string>>
+}
+
+export type ResolveNotificationDispatchRecipient = (
+  request: NotificationDispatchRequest,
+) => Promise<NotificationRecipientProfile | undefined>
 
 export interface NotificationDeliveryStatusLookup {
   status: 'sent' | 'failed' | 'read' | 'cancelled'
@@ -67,6 +85,7 @@ export interface NotificationDeliveryStatusLookup {
 }
 
 export interface NotificationDeliveryStatusQuery {
+  schoolId: string
   deliveryId: string
   subjectId: string
 }
@@ -74,6 +93,10 @@ export interface NotificationDeliveryStatusQuery {
 export type PushDeviceProvider = 'fcm' | 'apns'
 
 export interface RegisterPushDeviceInput {
+  profileId: string
+  profileKind: string
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   subjectId: string
   schoolId: string
   token: string
@@ -81,6 +104,9 @@ export interface RegisterPushDeviceInput {
 }
 
 export interface UnregisterPushDeviceInput {
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
+  schoolId: string
   subjectId: string
   provider: PushDeviceProvider
 }
@@ -91,18 +117,13 @@ export interface UnregisterPushDeviceInput {
  */
 export interface NotificationGatewayPort {
   enqueue: (input: NotificationEnqueueInput) => Promise<void>
-  cancel: (idempotencyKey: string) => Promise<void>
-  upsertRecipient: (profile: NotificationRecipientProfile) => Promise<void>
-  removeRecipient: (schoolId: string, recipient: NotificationRecipient) => Promise<void>
-  /** Poll provider message status — used by reconcilePendingDeliveries cron when webhooks are unavailable */
+  cancel: (idempotencyKey: string, schoolId: string) => Promise<void>
+  /** Poll remaining pending deliveries — used by reconcilePendingDeliveries cron */
   lookupDeliveryStatuses?: (
     deliveries: ReadonlyArray<NotificationDeliveryStatusQuery>,
   ) => Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>>
-  /** Attach a mobile push token to the provider subscriber (Novu credentials API). */
+  /** Attach a mobile push token to the authenticated login. */
   registerPushDevice?: (input: RegisterPushDeviceInput) => Promise<void>
-  /** Remove push credentials for the provider subscriber. */
+  /** Remove push credentials for the authenticated login. */
   unregisterPushDevice?: (input: UnregisterPushDeviceInput) => Promise<void>
 }
-
-/** Channel preference mapping for subscriber sync — not used for routing in domain */
-export type NotificationChannelPreference = MessageDeliveryChannel

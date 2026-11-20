@@ -1,4 +1,4 @@
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { createSchoolBootstrapActor } from '@edaya/authorization'
 import {
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -6,6 +6,7 @@ import {
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
+import { humanFixture } from '../../../test-support/human-fixtures'
 import {
   createAppRequest,
   grantAccessControlAssign,
@@ -20,20 +21,19 @@ describeWithLightSchool('link-actor-subject command route', (getContext) => {
     const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
-    const bootstrapActor = createBootstrapStaffActorMetadata({
+    const bootstrapActor = createSchoolBootstrapActor({
       schoolId: SEED_SCHOOL_ID,
       requestId: 'link-actor-subject-test',
-      staffMemberId: 'link-actor-subject-test',
     })
     const service = application.forActor(bootstrapActor)
 
-    await service.setupWorkflow.registerStaffMember({
+    await humanFixture({
       id: UNLINKED_STAFF_ID,
       schoolId: SEED_SCHOOL_ID,
       firstName: 'Paul',
       lastName: 'Martin',
       email: 'p.martin@school.edu',
-    })
+    }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))
 
     const subjectId = await signUpAuthUser(runtime, {
       email: 'p.martin@school.edu',

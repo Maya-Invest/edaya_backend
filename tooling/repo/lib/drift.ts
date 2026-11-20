@@ -7,9 +7,10 @@ export interface GeneratedArtifact {
 }
 
 function filesMatch(generated: string, tracked: string): boolean {
-  return existsSync(generated)
-    && existsSync(tracked)
-    && readFileSync(generated).equals(readFileSync(tracked))
+  if (!existsSync(generated) || !existsSync(tracked))
+    return false
+  const normalize = (path: string) => readFileSync(path, 'utf8').replaceAll('\r\n', '\n')
+  return normalize(generated) === normalize(tracked)
 }
 
 export function findDriftedArtifacts(

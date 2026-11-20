@@ -1,28 +1,32 @@
-import { listPermissionCatalog, Permission, renderScopeIds } from "@edaya/authorization";
-import type { ScopeType } from "@edaya/authorization";
+import type { AppRouteHandler } from "@/http/types";
+import { AccessFacts, listPermissionCatalog, renderGrantScopes, renderScopeSelections } from "@edaya/authorization";
+import { grantGrainSchema, grantScopeSchema, grantScopesSchema, Permission, permissionScopeSelectionsSchema, userScopeSelectionSchema } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import type { AppRouteHandler } from "@/http/types";
-import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
-import { requireInteractiveActor } from "@/lib/authorization/serialize-grants";
+import { getErrorMessage, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
+import { requireInteractiveActor, requireSchoolInteractiveActor } from "@/lib/authorization/serialize-grants";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
+import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 
 const commandMessageSchema = createMessageObjectSchema();
 
 const permissionCatalogEntrySchema = z.object({
   permission: z.nativeEnum(Permission),
-  scope: z.enum([
-    "grade_level",
-    "grade_level_subject",
-    "class_group",
-    "class_subject",
-    "activity",
-    "student",
-    "platform",
-  ]).optional(),
+  scopePolicy: z.discriminatedUnion("mode", [
+    z.object({ mode: z.literal("none") }),
+    z.object({ mode: z.literal("resources"), allowedKinds: z.array(grantGrainSchema).min(1), allowAll: z.literal(true), subjectClassRequired: z.boolean().optional() }),
+    z.object({ mode: z.literal("relationship") }),
+    z.object({ mode: z.literal("platform") }),
+  ]),
+  staffAssignable: z.boolean(),
+  serviceAccountAssignable: z.boolean(),
+  s2sAccess: z.enum(["none", "read", "write"]),
+  assignmentTargets: z.array(z.enum(["class_group", "class_subject", "lesson_session", "activity_session", "assessment"])),
+  humanOnly: z.boolean(),
+  minimumAssurance: z.enum(["standard", "verified", "strong"]),
 }).openapi("PermissionCatalogEntry");
 
 const permissionCatalogResponseSchema = z.object({
@@ -41,8 +45,11 @@ export const getPermissionCatalogRoute = createRoute({
     responseSchemaName: "PermissionCatalogResponse",
   }),
   responses: {
+    ...coreRouteErrorResponses,
     [HttpStatusCodes.OK]: jsonContent(permissionCatalogResponseSchema, "Permission catalog"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Missing or invalid authorization session"),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(commandMessageSchema, "Access denied"),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(commandMessageSchema, "Invalid request"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(commandMessageSchema, "Internal server error occurred"),
   },
 });
@@ -58,10 +65,7 @@ export const getPermissionCatalogHandler: AppRouteHandler<typeof getPermissionCa
   }
 
   try {
-    const items = listPermissionCatalog().map(entry => ({
-      permission: entry.permission,
-      ...(entry.scope ? { scope: entry.scope } : {}),
-    }));
+    const items = listPermissionCatalog().map(entry => permissionCatalogEntrySchema.parse(entry));
     return c.json({ items }, HttpStatusCodes.OK);
   }
   catch (err) {
@@ -70,53 +74,27 @@ export const getPermissionCatalogHandler: AppRouteHandler<typeof getPermissionCa
 };
 
 const scopeRenderItemRequestSchema = z.object({
-  permission: z.nativeEnum(Permission).optional(),
-  scopeIds: z.string(),
-});
-
-const scopeRenderSegmentSchema = z.object({
-  id: z.string(),
-  scope: z.enum([
-    "grade_level",
-    "grade_level_subject",
-    "class_group",
-    "class_subject",
-    "activity",
-    "student",
-    "platform",
-  ]),
-  label: z.string(),
-  missing: z.boolean().optional(),
-});
-
-const scopeRenderClauseSchema = z.object({
-  raw: z.string(),
-  label: z.string(),
-  wildcard: z.boolean(),
-  segments: z.array(scopeRenderSegmentSchema),
-});
-
-const scopeRenderItemResponseSchema = z.object({
-  scopeIds: z.string(),
-  permission: z.nativeEnum(Permission).optional(),
-  tenantWide: z.boolean(),
-  clauses: z.array(scopeRenderClauseSchema),
+  permission: z.nativeEnum(Permission),
+  scopes: grantScopesSchema,
 });
 
 const scopeRenderRequestSchema = z.object({
-  academicYearId: z.string().optional(),
-  items: z.array(scopeRenderItemRequestSchema).min(1),
+  academicYearId: z.string().trim().min(1),
+  items: z.array(scopeRenderItemRequestSchema).min(1).max(100),
 }).openapi("ScopeRenderRequest");
 
 const scopeRenderResponseSchema = z.object({
-  items: z.array(scopeRenderItemResponseSchema),
+  items: z.array(z.object({
+    permission: z.nativeEnum(Permission),
+    scopes: z.array(z.object({ scope: grantScopeSchema, label: z.string(), missing: z.boolean() })),
+  })),
 }).openapi("ScopeRenderResponse");
 
 export const postScopeRenderRoute = createRoute({
   method: "post",
   path: schoolApiPath("authorization", "scope", "render"),
   tags: ["Core Authorization"],
-  summary: "Render scopeIds strings for admin UI display",
+  summary: "Label typed permission scopes for the access-control UI",
   request: {
     body: jsonContent(scopeRenderRequestSchema, "Scope render batch"),
   },
@@ -128,8 +106,11 @@ export const postScopeRenderRoute = createRoute({
     responseSchemaName: "ScopeRenderResponse",
   }),
   responses: {
+    ...coreRouteErrorResponses,
     [HttpStatusCodes.OK]: jsonContent(scopeRenderResponseSchema, "Rendered scope labels"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Missing or invalid authorization session"),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(commandMessageSchema, "Access denied"),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(commandMessageSchema, "Invalid request"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(commandMessageSchema, "Internal server error occurred"),
   },
 });
@@ -140,80 +121,69 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
     return unauthorizedResponse(c);
   }
 
-  const interactiveActor = requireInteractiveActor(actor);
+  const interactiveActor = requireSchoolInteractiveActor(actor);
   if (!interactiveActor) {
     return unauthorizedResponse(c);
   }
 
   const body = c.req.valid("json");
   const service = c.get("schoolApp").forActor(interactiveActor);
-  const repositories = service.baseService.repositories;
-
   try {
-    const items = await Promise.all(body.items.map(async (item) => {
-      return renderScopeIds(item.scopeIds, {
-        permission: item.permission,
-        resolveLabel: async (scope: ScopeType, entityId: string) => {
-          switch (scope) {
-            case "class_group": {
-              const entity = await repositories.classGroups.findById(entityId);
-              return entity?.name;
-            }
-            case "class_subject": {
-              const classSubject = await repositories.classSubjects.findById(entityId);
-              if (!classSubject) {
-                return undefined;
-              }
-              const subject = await repositories.subjects.findById(classSubject.subjectId);
-              return subject?.name;
-            }
-            case "grade_level": {
-              const entity = await repositories.gradeLevels.findById(entityId);
-              return entity?.name;
-            }
-            case "grade_level_subject": {
-              const gradeLevelSubject = await repositories.gradeLevelSubjects.findById(entityId);
-              if (!gradeLevelSubject) {
-                return undefined;
-              }
-              const subject = await repositories.subjects.findById(gradeLevelSubject.subjectId);
-              return subject?.name;
-            }
-            case "activity": {
-              const entity = await repositories.activities.findById(entityId);
-              return entity?.name;
-            }
-            case "student": {
-              const entity = await repositories.students.findById(entityId);
-              return entity ? `${entity.firstName} ${entity.lastName}` : undefined;
-            }
-            default:
-              return undefined;
-          }
-        },
-      });
-    }));
-
-    return c.json({
-      items: items.map(item => ({
-        scopeIds: item.scopeIds,
-        ...(item.permission ? { permission: item.permission } : {}),
-        tenantWide: item.tenantWide,
-        clauses: item.clauses.map(clause => ({
-          raw: clause.raw,
-          label: clause.label,
-          wildcard: clause.wildcard,
-          segments: clause.segments.map(segment => ({
-            id: segment.id,
-            scope: segment.scope,
-            label: segment.label,
-            ...(segment.missing ? { missing: true } : {}),
-          })),
-        })),
-      })),
-    }, HttpStatusCodes.OK);
+    await service.baseService.access.staffPermissions.assertRead();
+    const facts = new AccessFacts(interactiveActor, service.baseService.repositories);
+    const items = await Promise.all(body.items.map(async item => ({
+      permission: item.permission,
+      scopes: await renderGrantScopes(facts, { ...item, academicYearId: body.academicYearId }),
+    })));
+    return c.json({ items }, HttpStatusCodes.OK);
   }
-  catch (err) {
-    return c.json({ message: getErrorMessage(err) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  catch (error) {
+    return routeErrorResponse(c, error);
+  }
+};
+
+const scopeSelectionsRenderRequestSchema = z.object({
+  academicYearId: z.string().trim().min(1),
+  scopes: permissionScopeSelectionsSchema,
+}).openapi("ScopeSelectionsRenderRequest");
+
+const scopeSelectionsRenderResponseSchema = z.object({
+  scopes: z.array(z.object({ scope: userScopeSelectionSchema, label: z.string(), missing: z.boolean() })),
+}).openapi("ScopeSelectionsRenderResponse");
+
+export const postScopeSelectionsRenderRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("authorization", "scope-selections", "render"),
+  tags: ["Core Authorization"],
+  summary: "Label saved scope selections for the access-control UI",
+  request: { body: jsonContent(scopeSelectionsRenderRequestSchema, "Scope selections") },
+  ...clientRouteOperation({
+    namespace: "authorization",
+    clientKey: "scopeSelectionsRender",
+    path: "authorization/scope-selections/render",
+    requestSchemaName: "ScopeSelectionsRenderRequest",
+    responseSchemaName: "ScopeSelectionsRenderResponse",
+  }),
+  responses: {
+    ...coreRouteErrorResponses,
+    [HttpStatusCodes.OK]: jsonContent(scopeSelectionsRenderResponseSchema, "Rendered scope selections"),
+  },
+});
+
+export const postScopeSelectionsRenderHandler: AppRouteHandler<typeof postScopeSelectionsRenderRoute> = async (c) => {
+  const actor = c.get("actor");
+  const interactiveActor = actor && requireSchoolInteractiveActor(actor);
+  if (!interactiveActor) {
+    return unauthorizedResponse(c);
+  }
+  const body = c.req.valid("json");
+  const service = c.get("schoolApp").forActor(interactiveActor);
+  try {
+    await service.baseService.access.staffPermissions.assertRead();
+    const facts = new AccessFacts(interactiveActor, service.baseService.repositories);
+    return c.json({ scopes: await renderScopeSelections(facts, body) }, HttpStatusCodes.OK);
+  }
+  catch (error) {
+    return routeErrorResponse(c, error);
   }
 };

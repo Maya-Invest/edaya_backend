@@ -1,27 +1,27 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { StudentClassEnrollment } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, EnrollmentOperations } from '@edaya/authorization'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
-import { config, operationModule, read, write } from '../../entity-config'
-import { dateTime, unique } from '../../entity-config/helper-utils'
+import { enrollmentBillingHooks } from '../../../../capabilities/finance/auto-billing-hooks'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student-class-enrollment.ts (PR3)
-export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrollment> = ({ repositories, policy, atomicExecution }) =>
+export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrollment> = context =>
   config({
-    repository: repositories.enrollments,
+    repository: context.repositories.enrollments,
     tenant: studentLinkedTenant(),
-    read: read(operationModule(EnrollmentOperations.read), async (actor, entities) => {
-      await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-    }),
-    write: write(operationModule(EnrollmentOperations.create), authorizeStudentLinked(policy), authorizeStudentLinkedDelete(policy)),
+    resource: 'enrollments',
+    writeLockGroup: 'academic-state',
+
     gates: {
       preSave: validateEnrollmentSave,
       preDelete: validateEnrollmentDelete,
     },
-    atomicExecution,
+    hooks: enrollmentBillingHooks(context),
+    atomicExecution: context.atomicExecution,
   })
 
 function studentLinkedTenant(): EntityTenantResolver<StudentClassEnrollment> {
@@ -29,20 +29,6 @@ function studentLinkedTenant(): EntityTenantResolver<StudentClassEnrollment> {
     const student = await repositories.students.findById(entity.studentId)
     return student?.schoolId
   })
-}
-
-function authorizeStudentLinked(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentClassEnrollment>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-    await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-  }
-}
-
-function authorizeStudentLinkedDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentClassEnrollment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-    await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-  }
 }
 
 export async function validateEnrollmentSave(
@@ -93,6 +79,8 @@ export async function validateEnrollmentSave(
   }
 
   if (existing) {
+    if (existing.classGroupId !== entity.classGroupId || existing.academicYearId !== entity.academicYearId || existing.enrolledAt.getTime() !== entity.enrolledAt.getTime())
+      throw new BusinessRuleViolationError('PLACEMENT_IDENTITY_IMMUTABLE', 'Use the transfer workflow to change class placement')
     const closesActiveEnrollment = existing.status === StudentClassEnrollmentStatus.Active
       && entity.status === StudentClassEnrollmentStatus.Closed
     if (closesActiveEnrollment) {
@@ -114,7 +102,10 @@ export async function validateEnrollmentSave(
 
 async function validateEnrollmentDelete(
   entity: StudentClassEnrollment,
+  repositories: SchoolRepositories,
 ): Promise<void> {
+  if (await repositories.subjectEnrollments.count({ studentClassEnrollmentId: entity.id }))
+    throw new BusinessRuleViolationError('PLACEMENT_PARTICIPATION_HISTORY', 'Class placements with subject history cannot be deleted')
   if (entity.status === StudentClassEnrollmentStatus.Active) {
     throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_DELETE_BLOCKED', `Enrollment ${entity.id} is active and cannot be deleted`)
   }

@@ -32,7 +32,8 @@ describe('entity tenant resolvers', () => {
   test('extracts string filters from direct, equality, and inclusion filter shapes', () => {
     expect(resolveSchoolIdFromFilter({ schoolId: 'school-1' })).toBe('school-1')
     expect(resolveSchoolIdFromFilter({ schoolId: { $eq: 'school-2' } } as any)).toBe('school-2')
-    expect(resolveSchoolIdFromFilter({ schoolId: { $in: ['school-3', 'school-4'] } } as any)).toBe('school-3')
+    expect(resolveSchoolIdFromFilter({ schoolId: { $in: ['school-3', 'school-4'] } } as any)).toBeUndefined()
+    expect(resolveSchoolIdFromFilter({ schoolId: { $in: ['school-3'] } } as any)).toBe('school-3')
     expect(resolveIdFromFilter({ id: 'entity-1' })).toBe('entity-1')
     expect(resolveStringFilterValue(undefined)).toBeUndefined()
     expect(resolveStringFilterValue(123)).toBeUndefined()

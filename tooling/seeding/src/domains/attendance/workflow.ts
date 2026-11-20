@@ -67,5 +67,14 @@ export async function seedDevAttendance(
     await port.markJustificationPending(recordId, 'Awaiting parent justification')
   }
 
+  for (const day of dataset.extensions?.dailyAttendanceDays ?? []) {
+    await port.recordClassDailyAttendance({
+      classGroupId: day.classGroupId,
+      date: new Date(`${day.date}T12:00:00.000Z`),
+      attendanceByStudent: { ...day.attendanceByStudent },
+    })
+    recordCount += Object.keys(day.attendanceByStudent).length
+  }
+
   return recordCount
 }

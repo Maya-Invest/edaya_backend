@@ -1,16 +1,14 @@
 export { HttpAuthProvisioner, signInViaHttp } from './auth/http-provisioner'
-export { markAuthUserEmailVerifiedBySql } from './auth/mark-email-verified'
 export {
-  isStagingSeedApiUrl,
-  repairStagingAuthUser,
-  shouldRepairStaleStagingAuthUsers,
-} from './auth/staging-user-repair'
-export { type AuthHandler, createHandlerAuthProvisioner } from './handler-auth-provisioner'
+  EDAYA_SPARK_S2S_CLIENT_ID,
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
+  type ProvisionEdayaSparkS2sClientResult,
+} from './s2s-client'
 export { seedMinimalSchool } from './seed-minimal-school'
 export {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
-  provisionSeedingServiceAccountInProcess,
   type ProvisionSeedingServiceAccountResult,
   SEEDING_SERVICE_ID,
 } from './service-account'

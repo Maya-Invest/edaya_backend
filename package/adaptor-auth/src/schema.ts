@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm'
-import { boolean, index, pgSchema, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, index, integer, pgSchema, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const authPgSchema = pgSchema('auth')
 
@@ -9,6 +9,8 @@ export const user = authPgSchema.table('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  phoneNumber: text('phone_number').unique(),
+  phoneNumberVerified: boolean('phone_number_verified').default(false),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
     .defaultNow()
@@ -34,6 +36,16 @@ export const session = authPgSchema.table(
   },
   table => [index('session_userId_idx').on(table.userId)],
 )
+
+export const edayaAccessToken = authPgSchema.table('edaya_access_tokens', {
+  digest: text('digest').primaryKey(),
+  sessionId: text('session_id').notNull().references(() => session.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+}, table => [
+  index('edaya_access_tokens_session_idx').on(table.sessionId),
+  index('edaya_access_tokens_expiry_idx').on(table.expiresAt),
+])
 
 export const account = authPgSchema.table(
   'account',
@@ -93,3 +105,20 @@ export const accountRelations = relations(account, ({ one }) => ({
     references: [user.id],
   }),
 }))
+
+export const edayaAuthRateBucket = authPgSchema.table('edaya_auth_rate_buckets', {
+  id: text('id').primaryKey(),
+  attempts: integer('attempts').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+}, table => [index('edaya_auth_rate_buckets_expiry_idx').on(table.expiresAt)])
+
+// Provider-owned JWKS from auth@1.7.3 jwt(); retain EDaya tables above.
+export const jwks = authPgSchema.table('jwks', {
+  id: text('id').primaryKey(),
+  publicKey: text('public_key').notNull(),
+  privateKey: text('private_key').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }),
+  alg: text('alg'),
+  crv: text('crv'),
+})

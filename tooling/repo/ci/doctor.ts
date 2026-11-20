@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 import process from 'node:process'
 import { $ } from 'bun'
+import { findLayoutIdentityViolations } from '../lib/layout-identity.ts'
 import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
@@ -18,7 +19,6 @@ const expectedSecretExamples = [
 function isAllowedTrackedEnvFile(name: string): boolean {
   return name === '.env.example'
     || /^\.env\..+\.example$/.test(name)
-    || /^container\..+\.env$/.test(name)
 }
 
 const trackedEnvOutput = await $`git -C ${repoRoot} ls-files -- ${'*.env*'}`.text()
@@ -58,4 +58,14 @@ if (runtimeBoundaryViolations.length > 0) {
 }
 else {
   console.log('Runtime boundary checks passed.')
+}
+
+const layoutIdentityViolations = findLayoutIdentityViolations(repoRoot)
+if (layoutIdentityViolations.length > 0) {
+  console.error('Layout identity checks failed:')
+  layoutIdentityViolations.forEach(violation => console.error(`  - ${violation.label}: ${violation.message}`))
+  process.exitCode = 1
+}
+else {
+  console.log('Layout identity checks passed.')
 }

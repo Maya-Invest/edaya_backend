@@ -6,13 +6,13 @@ const PDF_MAX_BYTES = 25 * 1024 * 1024
 const IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
+  'image/apng',
   'image/webp',
   'image/gif',
 ])
 
 const DOCUMENT_MIME_TYPES = new Set([
   'application/pdf',
-  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
 
@@ -21,9 +21,11 @@ function allowedMimeTypesForOwner(ownerKind: AttachmentOwnerKind): ReadonlySet<s
     case AttachmentOwnerKind.Student:
     case AttachmentOwnerKind.Guardian:
     case AttachmentOwnerKind.Staff:
+    case AttachmentOwnerKind.School:
       return new Set([...IMAGE_MIME_TYPES, ...DOCUMENT_MIME_TYPES])
     case AttachmentOwnerKind.ReportCard:
     case AttachmentOwnerKind.Incident:
+    case AttachmentOwnerKind.DocumentIssuance:
     case AttachmentOwnerKind.StudentDisciplinaryAction:
       return new Set(['application/pdf', ...IMAGE_MIME_TYPES])
     default:
@@ -35,6 +37,7 @@ function maxBytesForOwner(ownerKind: AttachmentOwnerKind): number {
   switch (ownerKind) {
     case AttachmentOwnerKind.ReportCard:
     case AttachmentOwnerKind.Incident:
+    case AttachmentOwnerKind.DocumentIssuance:
       return PDF_MAX_BYTES
     default:
       return DEFAULT_MAX_BYTES
@@ -45,8 +48,8 @@ export function assertUploadPolicyAllowed(input: {
   ownerKind: AttachmentOwnerKind
   mimeType: string
   sizeBytes: number
-}): void {
-  const allowedMimeTypes = allowedMimeTypesForOwner(input.ownerKind)
+}, policy?: { allowedMimeTypes?: readonly string[], maxBytes?: number }): void {
+  const allowedMimeTypes = new Set(policy?.allowedMimeTypes ?? [...allowedMimeTypesForOwner(input.ownerKind)])
   if (!allowedMimeTypes.has(input.mimeType)) {
     throw new BusinessRuleViolationError(
       'UPLOAD_MIME_TYPE_NOT_ALLOWED',
@@ -54,8 +57,8 @@ export function assertUploadPolicyAllowed(input: {
     )
   }
 
-  const maxBytes = maxBytesForOwner(input.ownerKind)
-  if (input.sizeBytes <= 0 || input.sizeBytes > maxBytes) {
+  const maxBytes = policy?.maxBytes ?? maxBytesForOwner(input.ownerKind)
+  if (!Number.isSafeInteger(input.sizeBytes) || input.sizeBytes <= 0 || input.sizeBytes > maxBytes) {
     throw new BusinessRuleViolationError(
       'UPLOAD_SIZE_NOT_ALLOWED',
       `Upload size must be between 1 and ${maxBytes} bytes`,

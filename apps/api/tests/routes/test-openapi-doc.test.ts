@@ -14,11 +14,16 @@ describe("OpenAPI document", () => {
     expect(res.status).toBe(200);
     const doc = await res.json() as {
       openapi: string;
-      paths: Record<string, unknown>;
+      paths: Record<string, { get?: { security: unknown }; post?: { security: unknown } }>;
       components: { schemas: { ReportCardResultSection: { type: string } } };
     };
     expect(doc.openapi).toBe("3.0.0");
     expect(doc.components.schemas.ReportCardResultSection.type).toBe("object");
-    expect(Object.keys(doc.paths).some(path => path.startsWith("/auth"))).toBe(false);
+    expect(doc.paths["/auth/edaya/otp/start"].post?.security).toEqual([]);
+    expect(doc.paths["/auth/edaya/access-token"].post).toBeDefined();
+    expect(Object.keys(doc.paths).filter(path => path.startsWith("/internal/"))).toEqual([
+      "/internal/edaya-spark/resolve-guardian",
+    ]);
+    expect(doc.paths["/internal/edaya-spark/resolve-guardian"].post).toBeDefined();
   });
 });

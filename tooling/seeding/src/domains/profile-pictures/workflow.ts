@@ -3,10 +3,10 @@ import type { DevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-conte
 import type { ProfilePicturesSeedPort } from './port'
 import { readFile } from 'node:fs/promises'
 import { AttachmentOwnerKind } from '@edaya/core'
-import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { demoCiSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   buildSeedProfileAttachmentId,
-  createRandomProfilePictureAllocator,
+  profilePictureForOwner,
   resolveProfilePicturePath,
   SEED_PROFILE_PHOTO_FILE_NAME,
   SEED_PROFILE_PHOTO_MIME_TYPE,
@@ -42,21 +42,13 @@ async function mapWithConcurrency<T>(
 async function seedProfilePhotoForOwner(
   port: ProfilePicturesSeedPort,
   schoolId: string,
-  ownerKind: AttachmentOwnerKind,
+  ownerKind: AttachmentOwnerKind.Staff | AttachmentOwnerKind.Guardian | AttachmentOwnerKind.Student | AttachmentOwnerKind.Teacher,
   ownerId: string,
-  pickPictureFile: () => string,
   setPhotoUrl: (photoUrl: string) => Promise<void>,
 ): Promise<void> {
-  const pictureFileName = pickPictureFile()
+  const pictureFileName = profilePictureForOwner(ownerKind, ownerId)
   const body = await readFile(resolveProfilePicturePath(pictureFileName))
-  const attachmentId = buildSeedProfileAttachmentId(
-    ownerKind === AttachmentOwnerKind.Staff
-      ? 'staff'
-      : ownerKind === AttachmentOwnerKind.Guardian
-        ? 'guardian'
-        : 'student',
-    ownerId,
-  )
+  const attachmentId = buildSeedProfileAttachmentId(ownerKind, ownerId)
 
   const uploaded = await port.uploadProfilePhoto({
     attachmentId,
@@ -67,7 +59,7 @@ async function seedProfilePhotoForOwner(
     mimeType: SEED_PROFILE_PHOTO_MIME_TYPE,
     sizeBytes: body.byteLength,
     body,
-    uploadedById: demoSchoolOwnerStaffId,
+    uploadedById: demoCiSchoolOwnerStaffId,
   })
 
   await setPhotoUrl(uploaded.photoUrl)
@@ -78,25 +70,30 @@ export async function seedDevProfilePictures(
   options: SeedDevProfilePicturesOptions,
   dataset: FixtureDataset,
 ): Promise<{ profilePhotos: number }> {
-  const pickPictureFile = createRandomProfilePictureAllocator()
   const staffMembers = dataset.entities.staffMembers ?? []
   const students = dataset.entities.students ?? []
   const guardians = dataset.entities.guardians ?? []
+  const teachers = dataset.entities.teachers ?? []
   const targets = [
     ...staffMembers.map(staff => ({
-      ownerKind: AttachmentOwnerKind.Staff,
+      ownerKind: AttachmentOwnerKind.Staff as const,
       ownerId: staff.id,
       setPhotoUrl: (photoUrl: string) => port.setStaffPhotoUrl(staff.id, photoUrl),
     })),
     ...students.map(student => ({
-      ownerKind: AttachmentOwnerKind.Student,
+      ownerKind: AttachmentOwnerKind.Student as const,
       ownerId: student.id,
       setPhotoUrl: (photoUrl: string) => port.setStudentPhotoUrl(student.id, photoUrl),
     })),
     ...guardians.map(guardian => ({
-      ownerKind: AttachmentOwnerKind.Guardian,
+      ownerKind: AttachmentOwnerKind.Guardian as const,
       ownerId: guardian.id,
       setPhotoUrl: (photoUrl: string) => port.setGuardianPhotoUrl(guardian.id, photoUrl),
+    })),
+    ...teachers.map(teacher => ({
+      ownerKind: AttachmentOwnerKind.Teacher as const,
+      ownerId: teacher.id,
+      setPhotoUrl: (photoUrl: string) => port.setTeacherPhotoUrl(teacher.id, photoUrl),
     })),
   ]
 
@@ -106,7 +103,6 @@ export async function seedDevProfilePictures(
       dataset.schoolId,
       target.ownerKind,
       target.ownerId,
-      pickPictureFile,
       target.setPhotoUrl,
     )
     options.onProgress?.()
@@ -120,7 +116,6 @@ export async function seedDevDemoStaffProfilePictures(
   port: ProfilePicturesSeedPort,
   context: Pick<DevSeedContext, 'schoolId' | 'staffAccounts' | 'dataset'>,
 ): Promise<number> {
-  const pickPictureFile = createRandomProfilePictureAllocator()
   const demoStaffIds = new Set(context.staffAccounts.map(account => account.staffId))
   const staffMembers = (context.dataset.entities.staffMembers ?? []).filter(member => demoStaffIds.has(member.id))
 
@@ -130,7 +125,6 @@ export async function seedDevDemoStaffProfilePictures(
       context.schoolId,
       AttachmentOwnerKind.Staff,
       staff.id,
-      pickPictureFile,
       photoUrl => port.setStaffPhotoUrl(staff.id, photoUrl),
     )
   })

@@ -2,13 +2,13 @@
 
 Portable Postgres persistence for EDAYA: Drizzle schema, SQL migrations, and repository implementations.
 
-Migration apply scripts for Neon / Hyperdrive and Better Auth D1 live in `@edaya/db-migrate`.
+Migration apply scripts for Neon / Hyperdrive live in `tooling/repo/db/school`. Identity migration commands live in `tooling/repo/db/identity`.
 
 ## Scripts
 
 ```sh
 # Generate SQL migration from schema changes
-bun repo db generate
+bun repo ops db generate
 
 # Push schema (requires DATABASE_URL)
 DATABASE_URL=postgres://... bun run db:push
@@ -17,14 +17,13 @@ DATABASE_URL=postgres://... bun run db:push
 From the monorepo root:
 
 ```sh
-bun repo db generate
+bun repo ops db generate
 
 # Browse local dev tables (loads apps/api/.env; stop the API first for PGlite)
-bun repo db browser school
-bun repo db browser auth
+bun repo ops db browser school
 ```
 
-Apply migrations with `@edaya/db-migrate` (`bun repo db migrate staging`, `bun repo db migrate production`).
+Apply migrations with `tooling/repo/db/school` (`bun repo ops db migrate school staging`, `bun repo ops db migrate school production`).
 
 ## Runtime usage
 
@@ -52,6 +51,12 @@ const repos = new PostgresSchoolRepositories(db)
 await repos.init({ driver: resolveMigrationDriver(databaseUrl) })
 ```
 
-## Naming note
+## School-scoped repositories
 
-`@edaya/adaptor-auth` has a `session` table for auth sessions. The school `sessions` table in this package is for **class scheduling** — unrelated to Better Auth.
+`PostgresStore.forSchool(schoolId)` returns a repository bound to a trusted school without changing the original store. Pass an authenticated school context, never a school ID taken directly from an unvalidated request. The original stores remain privileged for internal orchestration.
+
+`src/lib/school-scope.ts` defines direct and indirect ownership paths. Scoped reads compose this predicate with caller filters before pagination; counts stay in SQL. Scoped upserts check proposed ownership and conflict-row ownership in the write statement. Batch saves run transactionally. These constraints enforce school ownership; callers still need permission checks, business validation and actor-specific resource authorization.
+
+When adding an indirectly owned table, add its ownership path and exercise its scoped reads/writes. Unclassified tables without a school ownership predicate cannot be bound. Custom store overrides must preserve the shared scope; notification templates and invitations retain their custom mapping/update behavior through this boundary.
+
+The school `sessions` table in this package is for **class scheduling**. Authentication persistence is owned by the sibling Central Identity service and database.

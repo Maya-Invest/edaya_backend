@@ -2,7 +2,7 @@ import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { TeachersSeedPort } from '../port'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postEntitySave } from '../../../transport/http/core-entity'
+import { postCoreCommand, postEntitySave } from '../../../transport/http/core-entity'
 
 export interface CreateHttpTeachersSeedPortOptions {
   client: HttpSeedClient
@@ -20,7 +20,7 @@ export function createHttpTeachersSeedPort(
 
   return {
     saveTeacher: record => withSeedPortError('teachers.saveTeacher', async () => {
-      await postEntitySave(requestOptions, 'teachers', {
+      await postCoreCommand(requestOptions, 'registerTeacher', {
         ...record,
         isActive: true,
       })

@@ -11,7 +11,7 @@ export function resolveClientRoutePath(
 	params: Record<string, string> = {},
 	basePath: 'core' | 'root' = 'core',
 ): string {
-	const segments = pathTemplate.split('/').map((segment) => {
+	const segments = pathTemplate.split('/').filter(Boolean).map((segment) => {
 		if (segment.startsWith('{') && segment.endsWith('}')) {
 			const paramName = segment.slice(1, -1)
 			const value = params[paramName]
@@ -28,4 +28,17 @@ export function resolveClientRoutePath(
 	}
 
 	return schoolApiPath(...segments)
+}
+
+/** GET reads use canonical scalar search parameters for HTTP revalidation. */
+export function readQueryPath(path: string, input: unknown): string {
+	const params = new URLSearchParams()
+	for (const [key, value] of Object.entries(input ?? {})) {
+		if (value == null) continue
+		if (typeof value === 'object') throw new TypeError('Read parameters must be scalar')
+		params.set(key, String(value))
+	}
+	params.sort()
+	const search = params.toString()
+	return search ? `${path}?${search}` : path
 }

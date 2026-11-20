@@ -1,7 +1,4 @@
 /* eslint-disable no-console -- CLI progress and result reporting intentionally writes to stdout. */
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
-import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { HttpSeedClient, signInViaHttp } from '@edaya/seeding/http'
 import { loadSmokeStagingEnv } from './load-smoke-env'
 
@@ -36,7 +33,7 @@ async function checkHealth(client: HttpSeedClient): Promise<SmokeCheckResult> {
     }
   }
 
-  if (body?.message !== 'Edaya Core API') {
+  if (body?.message !== 'EDaya Core API') {
     return {
       id: 'S1',
       label: 'API health',
@@ -113,49 +110,38 @@ async function checkCorsDeny(client: HttpSeedClient): Promise<SmokeCheckResult> 
 
 async function checkSignIn(
   client: HttpSeedClient,
-  appOrigin: string,
+  _appOrigin: string,
   email: string,
   password: string,
 ): Promise<SmokeCheckResult> {
-  const response = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'origin': appOrigin,
-    },
-    body: JSON.stringify({ email, password }),
-  })
-
-  if (!response.ok) {
-    return {
-      id: 'S5',
-      label: 'Auth sign-in',
-      status: 'failed',
-      detail: `${response.status} ${truncateBody(await response.text())}`,
-    }
+  try {
+    await signInViaHttp(client, { email, password })
+  }
+  catch (error) {
+    return { id: 'S5', label: 'Identity sign-in', status: 'failed', detail: error instanceof Error ? error.message : 'Sign-in failed' }
   }
 
   if (!client.cookieHeader()) {
     return {
       id: 'S5',
-      label: 'Auth sign-in',
+      label: 'Identity sign-in',
       status: 'failed',
       detail: 'Sign-in succeeded but no session cookie was set',
     }
   }
 
-  return { id: 'S5', label: 'Auth sign-in', status: 'passed' }
+  return { id: 'S5', label: 'Identity sign-in', status: 'passed' }
 }
 
 async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | undefined> {
   const { response, body } = await client.jsonRequest<{
     session?: { id?: string }
     user?: { email?: string }
-  }>('/auth/get-session')
+  }>('/auth/edaya/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
 
   if (response.ok && body?.session && body?.user) {
     const email = body.user.email ?? 'unknown'
-    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo seed --staging\``
+    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo ops seed staging\``
   }
 
   return undefined
@@ -164,7 +150,7 @@ async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | un
 async function checkEffectiveGrants(client: HttpSeedClient): Promise<SmokeCheckResult> {
   const { response, body } = await client.jsonRequest<{
     kind?: string
-    effectiveGrants?: { permissions?: string[] }
+    grants?: Array<{ permission: string }>
   }>('/core/authorization/effective-grants')
 
   if (!response.ok) {
@@ -209,7 +195,7 @@ async function checkServiceAccount(apiUrl: string, apiKey: string): Promise<Smok
       label: 'Service account entity access',
       status: 'failed',
       detail: response.status === 401 || response.status === 500
-        ? `${response.status} — service account key may be missing on staging; run \`bun repo seed --staging\``
+        ? `${response.status} — service account key may be missing on staging; run \`bun repo ops seed staging\``
         : `${response.status}`,
     }
   }
@@ -221,7 +207,7 @@ function schoolIdFromListItem(school: { id?: string, data?: { id?: string } }): 
   return school.id ?? school.data?.id
 }
 
-async function checkSeededSchool(client: HttpSeedClient): Promise<SmokeCheckResult> {
+async function checkSeededSchool(client: HttpSeedClient, schoolId: string): Promise<SmokeCheckResult> {
   const { response, body } = await client.jsonRequest<Array<{ id?: string, data?: { id?: string } }>>('/core/entities/schools/list', {
     method: 'POST',
     headers: {
@@ -244,12 +230,12 @@ async function checkSeededSchool(client: HttpSeedClient): Promise<SmokeCheckResu
   }
 
   const schools = body ?? []
-  if (!schools.some(school => schoolIdFromListItem(school) === SEED_SCHOOL_ID)) {
+  if (!schools.some(school => schoolIdFromListItem(school) === schoolId)) {
     return {
       id: 'S8',
       label: 'Hyperdrive seeded data',
       status: 'failed',
-      detail: `Expected seeded school ${SEED_SCHOOL_ID} in list response`,
+      detail: `Expected seeded school ${schoolId} in list response`,
     }
   }
 
@@ -258,9 +244,12 @@ async function checkSeededSchool(client: HttpSeedClient): Promise<SmokeCheckResu
 
 export async function runSmokeStaging(): Promise<SmokeStagingResult> {
   const env = loadSmokeStagingEnv()
-  const staffEmail = env.staffEmail || MINIMAL_AUTH_FIXTURE_STAFF_EMAIL
-  const staffPassword = env.staffPassword || DEV_AUTH_PASSWORD
-  const client = new HttpSeedClient({ baseUrl: env.apiUrl, appOrigin: env.appOrigin })
+  const staffEmail = env.staffEmail
+  const staffPassword = env.staffPassword
+  const client = new HttpSeedClient({
+    baseUrl: env.apiUrl,
+    appOrigin: env.appOrigin,
+  })
   const checks: SmokeCheckResult[] = []
 
   checks.push(await checkHealth(client))
@@ -273,7 +262,7 @@ export async function runSmokeStaging(): Promise<SmokeStagingResult> {
 
   if (signInResult.status === 'passed') {
     checks.push(await checkEffectiveGrants(client))
-    checks.push(await checkSeededSchool(client))
+    checks.push(await checkSeededSchool(client, env.schoolId))
   }
   else {
     checks.push({

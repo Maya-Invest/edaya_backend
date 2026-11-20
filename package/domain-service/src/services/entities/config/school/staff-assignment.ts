@@ -1,35 +1,21 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { StaffAssignment } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AccessControlOperations, deleteSyncedStaffAssignmentPermissions, denyResourceAccess, resolveStaffAssignmentTarget, SchoolStructureOperations, syncStaffAssignmentPermissions, validateStaffAssignmentPermissionSelection, WorkspaceOperations } from '@edaya/authorization'
-import { anyOperationModule, config, operationModule, read, write } from '../../entity-config'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess, resolveStaffAssignmentTarget, validateStaffAssignmentPermissionSelection } from '@edaya/authorization'
+import { config } from '../../entity-config'
 import { indirectTenant, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId } from '../../entity-config/tenant'
 
 // Extracted from domain/school/staff-assignment.ts (PR3)
-export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ repositories, policy, atomicExecution }) =>
+export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.staffAssignments,
     tenant: staffAssignmentTenant(),
-    read: read(
-      anyOperationModule([
-        WorkspaceOperations.read,
-        SchoolStructureOperations.configure,
-      ]),
-      (actor, entities) => policy.checkStaffAssignmentAccess(actor, entities),
-    ),
-    write: write(operationModule(AccessControlOperations.assign), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
+    resource: 'staffAssignments',
+
     gates: {
       preSave: validateStaffAssignmentSave,
     },
-    hooks: {
-      postSave: async (assignment, _existing, repos) => {
-        await syncStaffAssignmentPermissions(assignment, repos)
-      },
-      postDelete: async (assignment, repos) => {
-        await deleteSyncedStaffAssignmentPermissions(assignment.id, repos)
-      },
-    },
+
     atomicExecution,
   })
 
@@ -52,28 +38,6 @@ function staffAssignmentTenant(): EntityTenantResolver<StaffAssignment> {
     }
     return undefined
   })
-}
-
-function authorizeStaffAssignment(policy: AuthorizationPolicy): EntityWriteAuthorization<StaffAssignment>['authorizeSave'] {
-  return async (actor, entity, _existing, repositories) => {
-    if (entity.classGroupId)
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.classSubjectId) {
-      const classSubject = await repositories.classSubjects.findById(entity.classSubjectId)
-      if (classSubject)
-        await policy.checkClassGroupAccess(actor, [classSubject.classGroupId])
-    }
-    if (entity.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    if (entity.activitySessionId)
-      await policy.checkActivitySessionAccess(actor, [entity.activitySessionId])
-    if (entity.assessmentId)
-      await policy.checkAssessmentAccess(actor, [entity.assessmentId])
-  }
-}
-
-function authorizeStaffAssignmentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<StaffAssignment>['authorizeDelete'] {
-  return async (actor, entity, repositories) => authorizeStaffAssignment(policy)(actor, entity, entity, repositories)
 }
 
 export async function validateStaffAssignmentSave(

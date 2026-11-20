@@ -37,11 +37,17 @@ export function createHttpSchoolStructureSeedPort(
     registerSchool: record => withSeedPortError('schoolStructure.registerSchool', async () => {
       await postCoreCommand(requestOptions, 'registerSchool', record)
     }),
+    configureFinanceCurrency: (schoolId, financeCurrency) => withSeedPortError('schoolStructure.configureFinanceCurrency', async () => {
+      await postCoreCommand(requestOptions, 'updateSchoolConfiguration', { schoolId, financeCurrency })
+    }),
     saveGradeLevel: record => withSeedPortError('schoolStructure.saveGradeLevel', async () => {
       await postCoreCommand(requestOptions, 'configureGradeLevel', record)
     }),
     createAcademicYear: record => withSeedPortError('schoolStructure.createAcademicYear', async () => {
       await postCoreCommand(requestOptions, 'createAcademicYear', record)
+    }),
+    publishAcademicYear: academicYearId => withSeedPortError('schoolStructure.publishAcademicYear', async () => {
+      await postCoreCommand(requestOptions, 'publishAcademicYear', { academicYearId })
     }),
     createAcademicPeriod: record => withSeedPortError('schoolStructure.createAcademicPeriod', async () => {
       await postCoreCommand(requestOptions, 'createAcademicPeriod', record)

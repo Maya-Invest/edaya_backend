@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://edaya.local/templates/schooling-certificate.v1/schema.json",
+  "title": "schooling-certificate.v1 payload",
+  "type": "object",
+  "required": [
+    "studentName",
+    "schoolName",
+    "schoolYear"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "documentTitle": {
+      "type": "string"
+    },
+    "schoolName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schoolYear": {
+      "type": "string"
+    },
+    "schoolCity": {
+      "type": "string"
+    },
+    "schoolAddress": {
+      "type": "string"
+    },
+    "schoolPhone": {
+      "type": "string"
+    },
+    "schoolEmail": {
+      "type": "string"
+    },
+    "schoolCode": {
+      "type": "string"
+    },
+    "logoUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "crestUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stampUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signatureUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "photoUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primaryColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "studentName": {
+      "type": "string"
+    },
+    "classLabel": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string"
+    },
+    "orderNumber": {
+      "type": "string"
+    },
+    "matricule": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "watermark": {
+      "type": "boolean"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "paragraphs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "cells"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

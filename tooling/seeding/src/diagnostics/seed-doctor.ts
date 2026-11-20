@@ -1,6 +1,7 @@
 import type { HttpSeedClient } from '../transport/http/client'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { signInSeedAccount } from '../bootstrap/auth/http-provisioner'
 import { postEntityCount, postEntityList } from '../transport/http/core-entity'
 import { isServiceAccountApiKeyValid } from '../transport/http/verify-service-account'
 import {
@@ -8,6 +9,7 @@ import {
   probeLocalFilesService,
   resolveLocalFilesUrl,
 } from './profile-photo-preflight'
+import { countPublishedProfilePhotos } from './published-profile-photos'
 
 function expectedAccessPermissionAssignments(): number {
   const context = resolveDevSeedContext()
@@ -33,7 +35,7 @@ export interface SeedDoctorResult {
   findings: readonly SeedDoctorFinding[]
 }
 
-const WIPE_AND_RESEED_REPAIR = 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.'
+const WIPE_AND_RESEED_REPAIR = 'Stop `bun repo dev`, run `bun repo ops seed clean --yes`, restart the API, then `bun repo ops seed`.'
 
 function finding(
   severity: SeedDoctorFinding['severity'],
@@ -64,21 +66,15 @@ export async function runHttpSeedDoctor(
 
   findings.push(finding('ok', 'api-reachable', `API at ${client.origin} is reachable.`))
 
-  const signInResponse = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      email: context.minimalStaffEmail,
-      password: context.authPassword,
-    }),
-  })
+  const signInResponse = await signInSeedAccount(client, context.minimalStaffEmail)
+    .then(() => ({ ok: true, status: 200 }), () => ({ ok: false, status: 401 }))
 
   if (!signInResponse.ok) {
     findings.push(finding(
       'error',
       'auth-missing',
       `Dev staff sign-in failed for ${context.minimalStaffEmail} (HTTP ${signInResponse.status}).`,
-      `Run \`bun repo seed\` while the API is up. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo ops seed\` while the API is up. ${WIPE_AND_RESEED_REPAIR}`,
     ))
     return { status: 'broken', findings }
   }
@@ -91,7 +87,7 @@ export async function runHttpSeedDoctor(
       'warn',
       'staff-unlinked',
       'Sign-in succeeded but effective-grants failed — staff actor is likely not linked.',
-      `Run \`bun repo seed --scope auth:link\` or \`bun repo seed --scope doctor --repair\`. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo ops seed --scope auth:link\` or \`bun repo ops seed --scope doctor --repair\`. ${WIPE_AND_RESEED_REPAIR}`,
     ))
   }
   else {
@@ -102,7 +98,19 @@ export async function runHttpSeedDoctor(
     ? { client, serviceAccountApiKey, requestId: 'http-seed-doctor' }
     : { client, requestId: 'http-seed-doctor' }
 
-  const schools = await postEntityList(listOptions, 'schools')
+  let schools: unknown[] = []
+  try {
+    schools = await postEntityList(listOptions, 'schools')
+  }
+  catch {
+    findings.push(finding(
+      'error',
+      'school-missing',
+      'Could not list schools. The identity session may be valid while the school database is empty.',
+      `Run \`bun repo ops seed\`. ${WIPE_AND_RESEED_REPAIR}`,
+    ))
+    return { status: 'broken', findings }
+  }
   const demoSchool = schools.find(school => typeof school === 'object' && school && 'id' in school && school.id === context.schoolId)
 
   if (schools.length === 0) {
@@ -110,7 +118,7 @@ export async function runHttpSeedDoctor(
       'error',
       'school-missing',
       'No school records found in the database.',
-      `Run \`bun repo seed\`. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo ops seed\`. ${WIPE_AND_RESEED_REPAIR}`,
     ))
     return { status: 'broken', findings }
   }
@@ -120,7 +128,7 @@ export async function runHttpSeedDoctor(
       'warn',
       'demo-school-missing',
       `School data exists (${schools.length} school(s)) but expected demo school ${context.schoolId} is absent.`,
-      'Check `SEED_DATASET` / `SEED_SCHOOL_ID`, then reseed.',
+      'Check `SEED_SCHOOL_ID`, then reseed.',
     ))
   }
   else {
@@ -133,7 +141,7 @@ export async function runHttpSeedDoctor(
       'error',
       'students-missing',
       `Demo school ${context.schoolId} has no students.`,
-      `Run \`bun repo seed\`. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo ops seed\`. ${WIPE_AND_RESEED_REPAIR}`,
     ))
     return { status: 'broken', findings }
   }
@@ -147,7 +155,7 @@ export async function runHttpSeedDoctor(
         'warn',
         'service-account-key-rejected',
         'The profile seeding API key was rejected (401).',
-        'Run `bun repo seed --scope doctor --repair` or `bun repo seed` on a fresh database.',
+        'Run `bun repo ops seed --scope doctor --repair` or `bun repo ops seed` on a fresh database.',
       ))
     }
     else {
@@ -159,7 +167,7 @@ export async function runHttpSeedDoctor(
           'warn',
           'service-account-grants',
           'Seeding service account API key is accepted but effective-grants failed.',
-          'Run `bun repo seed --scope doctor --repair` or `bun repo seed` to reprovision the seeding service account.',
+          'Run `bun repo ops seed --scope doctor --repair` or `bun repo ops seed` to reprovision the seeding service account.',
         ))
       }
       else {
@@ -177,7 +185,7 @@ export async function runHttpSeedDoctor(
           'warn',
           'access-assignments-missing',
           `Demo school has ${permissionCount} staff permission assignment(s); expected at least ${expectedPermissions}.`,
-          'Run `bun repo seed --scope access` or `bun repo seed --scope doctor --repair`.',
+          'Run `bun repo ops seed --scope access` or `bun repo ops seed --scope doctor --repair`.',
         ))
       }
       else {
@@ -199,24 +207,24 @@ export async function runHttpSeedDoctor(
           'warn',
           'profile-photos-unavailable',
           `Local file storage is not reachable at ${resolveLocalFilesUrl()}; profile photos were not checked.`,
-          'Start `bun repo dev` (API + @edaya/local-files-server), then run `bun repo seed --scope profile-pictures`.',
+          'Start `bun repo dev` (API + local file server), then run `bun repo ops seed --scope profile-pictures`.',
         ))
       }
       else {
-        const attachmentCount = await postEntityCount(listOptions, 'attachments', { schoolId: context.schoolId })
-        if (attachmentCount < expectedPhotos) {
+        const photoCount = await countPublishedProfilePhotos(listOptions)
+        if (photoCount < expectedPhotos) {
           findings.push(finding(
             'warn',
             'profile-photos-missing',
-            `Demo school has ${attachmentCount} attachment(s); expected at least ${expectedPhotos} profile photos.`,
-            'Run `bun repo seed --scope profile-pictures` or `bun repo seed --scope doctor --repair`.',
+            `Demo school has ${photoCount} published profile photo(s); expected at least ${expectedPhotos}.`,
+            'Run `bun repo ops seed --scope profile-pictures` or `bun repo ops seed --scope doctor --repair`.',
           ))
         }
         else {
           findings.push(finding(
             'ok',
             'profile-photos-present',
-            `Profile photo attachments present (${attachmentCount}).`,
+            `Profile photos present (${photoCount}).`,
           ))
         }
       }

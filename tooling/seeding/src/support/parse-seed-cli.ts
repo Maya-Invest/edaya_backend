@@ -4,11 +4,13 @@ import type { SeedHttpTarget } from './resolve-seed-env'
 export const SEED_CLI_SCOPES = [
   'all',
   'school',
+  'school-switching',
   'auth',
   'auth:link',
   'access',
   'profile-pictures',
   'service-account',
+  's2s-clients',
   'validate',
   'doctor',
 ] as const
@@ -21,14 +23,13 @@ export type SeedCliInvocation
       kind: 'clean'
       target: SeedHttpTarget
       yes: boolean
-      school: boolean
-      auth: boolean
     }
     | {
       kind: 'seed'
       target: SeedHttpTarget
       scope: HttpDevSeedScope
       clean: boolean
+      yes?: boolean
       repair: boolean
       skipProfilePhotos: boolean
       skipAttachments: boolean
@@ -47,28 +48,17 @@ function readFlagValue(argv: readonly string[], flag: string): string | undefine
   return argv[index + 1]
 }
 
-function parseDbSliceFlags(flagArgs: readonly string[]): { school: boolean, auth: boolean } {
-  const hasSchool = flagArgs.includes('--school')
-  const hasAuth = flagArgs.includes('--auth')
-  if (hasSchool && hasAuth) {
-    throw new Error('Use either --school or --auth, not both.')
-  }
-
-  return {
-    school: !hasAuth,
-    auth: !hasSchool,
-  }
-}
-
 function parseCleanInvocation(flagArgs: readonly string[]): SeedCliInvocation {
-  const { school, auth } = parseDbSliceFlags(flagArgs)
+  if (flagArgs.includes('--auth')) {
+    throw new Error(
+      'Account authentication lives in apps/api/src/identity. Run `bun repo ops db wipe identity local --yes` or `bun repo ops db wipe identity staging --yes`.',
+    )
+  }
 
   return {
     kind: 'clean',
     target: flagArgs.includes('--staging') ? 'staging' : 'local',
     yes: flagArgs.includes('--yes') || flagArgs.includes('-y'),
-    school,
-    auth,
   }
 }
 
@@ -89,6 +79,7 @@ function parseSeedInvocation(flagArgs: readonly string[]): SeedCliInvocation {
     target: flagArgs.includes('--staging') ? 'staging' : 'local',
     scope,
     clean: flagArgs.includes('--clean'),
+    ...((flagArgs.includes('--yes') || flagArgs.includes('-y')) ? { yes: true } : {}),
     repair: flagArgs.includes('--repair'),
     skipProfilePhotos: flagArgs.includes('--skip-profile-photos'),
     skipAttachments: flagArgs.includes('--skip-attachments'),
@@ -96,37 +87,9 @@ function parseSeedInvocation(flagArgs: readonly string[]): SeedCliInvocation {
   }
 }
 
+/** Private worker parser; public options and help live in the repository command tree. */
 export function seedCliUsage(): string {
-  return [
-    'Usage: bun repo seed [clean] [--staging] [--scope <name>] [--clean] [--repair] [--skip-profile-photos] [--skip-attachments]',
-    '',
-    'Commands:',
-    '  bun repo seed                 Full local demo seed',
-    '  bun repo seed --staging       Full staging seed',
-    '  bun repo seed clean           Wipe local .data (stop bun repo dev first)',
-    '  bun repo seed clean --staging Wipe staging DB (requires STAGING_DATABASE_URL)',
-    '  bun repo seed --scope doctor [--repair]',
-    '  bun repo seed --scope <name>  Granular scope',
-    '',
-    'Options:',
-    '  --staging                Target SEED_STAGING_API_URL (default: local SEED_API_URL)',
-    '  --scope <name>           Granular scope (default: all)',
-    `                           ${SEED_CLI_SCOPES.join(', ')}`,
-    '  --clean                  Wipe before seeding (local or staging when --staging)',
-    '  --repair                 With --scope doctor: run minimal repair chain',
-    '  --skip-profile-photos    Skip profile photo uploads',
-    '  --skip-attachments       Skip fixture attachment registration',
-    '  --no-progress            Disable interactive progress bars',
-    '  --yes, -y                With clean: skip confirmation prompt',
-    '  --school                 With clean --staging: truncate school DB only',
-    '  --auth                   With clean --staging: wipe auth only',
-    '  -h, --help               Show this help',
-    '',
-    'Examples:',
-    '  bun repo seed --scope auth:link',
-    '  bun repo seed --staging --clean',
-    '  bun repo seed clean --yes',
-  ].join('\n')
+  return 'Use bun repo ops seed --help, bun repo ops seed clean --help, or bun repo ops seed staging --help for public usage.'
 }
 
 export function parseSeedCliArgs(argv: readonly string[]): SeedCliInvocation {
@@ -134,6 +97,23 @@ export function parseSeedCliArgs(argv: readonly string[]): SeedCliInvocation {
     return { kind: 'help' }
   }
 
+  const flags = argv.slice(2)
+  const cleaning = flags[0] === 'clean'
+  const allowed = new Set(cleaning ? ['--staging', '--yes', '-y', '--auth'] : ['--staging', '--scope', '--clean', '--yes', '-y', '--repair', '--skip-profile-photos', '--skip-attachments', '--no-progress'])
+  const seen = new Set<string>()
+  for (let i = cleaning ? 1 : 0; i < flags.length; i++) {
+    const flag = flags[i]!
+    if (!allowed.has(flag) || seen.has(flag === '-y' ? '--yes' : flag))
+      throw new Error(`Unexpected or duplicate seed argument: ${flag}`)
+    seen.add(flag === '-y' ? '--yes' : flag)
+    if (flag === '--scope') {
+      const value = flags[++i]
+      if (!value || value.startsWith('-'))
+        throw new Error('--scope requires a value')
+    }
+  }
+  if (!cleaning && (seen.has('--yes') || seen.has('-y')) && !seen.has('--clean'))
+    throw new Error('--yes requires clean or --clean')
   const positionalArgs = argv.slice(2)
   if (positionalArgs[0] === 'clean') {
     return parseCleanInvocation(positionalArgs.slice(1))

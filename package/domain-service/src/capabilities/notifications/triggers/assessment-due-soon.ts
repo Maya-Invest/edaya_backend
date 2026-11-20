@@ -1,6 +1,8 @@
 import type { Assessment } from '@edaya/core'
 import type { NotificationTriggerRegistration } from '../notification-trigger-registry'
-import { AssessmentKind, MessageDeliveryRecipientKind, StudentClassEnrollmentStatus } from '@edaya/core'
+import { AssessmentKind, MessageDeliveryRecipientKind } from '@edaya/core'
+import { assessmentDate } from '../../academics/marks-state'
+import { loadParticipation, subjectRoster } from '../../subject-enrollment/participation'
 import { cancelNotificationDeliveries } from '../delivery/deliver-notification'
 import { formatNotificationDueLabel } from '../templates/format-notification-variables'
 import { renderNotificationEnqueueContent } from '../templates/render-enqueue-content'
@@ -53,7 +55,7 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
   entityKey: 'assessments',
   predicate: assessmentDueSoonPredicate,
   resolver: async (entity, existing, context) => {
-    if (entity.kind !== AssessmentKind.Homework) {
+    if (entity.kind !== AssessmentKind.Homework && existing?.kind !== AssessmentKind.Homework) {
       return null
     }
     const idempotencyKey = assessmentDueSoonIdempotencyKey(entity.id)
@@ -67,19 +69,13 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
       return null
     }
 
-    const enrollments = await context.repositories.enrollments.list({
-      classGroupId: entity.classGroupId,
-      status: StudentClassEnrollmentStatus.Active,
-    })
-    const recipients = enrollments.map(enrollment => ({
-      kind: MessageDeliveryRecipientKind.Student,
-      id: enrollment.studentId,
-    }))
-
-    if (entity.completedAt || !entity.dueAt) {
-      await cancelNotificationDeliveries(deps, idempotencyKey, recipients)
+    if (entity.kind !== AssessmentKind.Homework || entity.completedAt || !entity.dueAt) {
+      await cancelNotificationDeliveries(deps, classGroup.schoolId, idempotencyKey)
       return null
     }
+
+    const roster = subjectRoster(await loadParticipation(context.repositories, [entity.classGroupId]), entity.classSubjectId, await assessmentDate(entity, context.repositories))
+    const recipients = roster.map(studentId => ({ kind: MessageDeliveryRecipientKind.Student, id: studentId }))
 
     if (existing?.dueAt?.getTime() === entity.dueAt.getTime()) {
       return null

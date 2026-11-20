@@ -1,0 +1,240 @@
+import type { Assessment, AssessmentResult, GradeScale, ReportCardResult, ReportModule } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
+import type { StoredReportCardResultSection } from './entity-store-helpers'
+import type { EntityStores } from './entity-stores-types'
+import {
+  Assessment as AssessmentCtor,
+  AssessmentKind,
+  AssessmentResult as AssessmentResultCtor,
+  AttendanceSummary,
+  DeadlineComplianceStatus,
+  GradeScale as GradeScaleCtor,
+  ReportCardResult as ReportCardResultCtor,
+  ReportCardResultStatus,
+  ReportModule as ReportModuleCtor,
+} from '@edaya/core'
+import { deserializeJsonb } from '../lib/mappers'
+import { customStore } from '../lib/store-factory'
+import * as schema from '../postgres-schema'
+import {
+  deserializeReportCardResultSection,
+  enumValue,
+  serializeReportCardResultSection,
+} from './entity-store-helpers'
+
+function numberToNumeric(value: number): string {
+  return value.toFixed(2)
+}
+
+function numericToNumber(value: string | number): number {
+  const parsed = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(parsed))
+    throw new Error(`Invalid numeric grade value: ${value}`)
+  return parsed
+}
+
+export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntityStores, 'assessments' | 'assessmentResults' | 'gradeScales' | 'reportModules' | 'results'> {
+  return {
+    assessments: customStore(
+      db,
+      schema.assessments,
+      (entity: Assessment) => ({
+        id: entity.id,
+        classGroupId: entity.classGroupId,
+        classSubjectId: entity.classSubjectId,
+        periodId: entity.periodId,
+        title: entity.title,
+        kind: entity.kind,
+        maxScore: numberToNumeric(entity.maxScore),
+        coefficient: numberToNumeric(entity.coefficient),
+        description: entity.description ?? null,
+        attachments: entity.attachments,
+        lessonSessionId: entity.lessonSessionId ?? null,
+        startsAt: entity.startsAt ?? null,
+        endsAt: entity.endsAt ?? null,
+        dueAt: entity.dueAt ?? null,
+        completedAt: entity.completedAt ?? null,
+        marksStatus: entity.marksStatus,
+        marksRevision: entity.marksRevision,
+        marksReview: entity.marksReview,
+        createdAt: entity.createdAt,
+      }),
+      row => new AssessmentCtor({
+        id: row.id,
+        classGroupId: row.classGroupId,
+        classSubjectId: row.classSubjectId,
+        periodId: row.periodId,
+        title: row.title,
+        kind: enumValue(AssessmentKind, row.kind, 'assessments.kind'),
+        maxScore: numericToNumber(row.maxScore),
+        coefficient: numericToNumber(row.coefficient),
+        description: row.description ?? undefined,
+        attachments: deserializeJsonb(row.attachments) ?? [],
+        lessonSessionId: row.lessonSessionId ?? undefined,
+        startsAt: row.startsAt ?? undefined,
+        endsAt: row.endsAt ?? undefined,
+        dueAt: row.dueAt,
+        completedAt: row.completedAt,
+        marksStatus: row.marksStatus,
+        marksRevision: row.marksRevision,
+        marksReview: deserializeJsonb(row.marksReview),
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    assessmentResults: customStore(
+      db,
+      schema.assessmentResults,
+      (entity: AssessmentResult) => ({
+        revision: entity.revision,
+        id: entity.id,
+        studentId: entity.studentId,
+        assessmentId: entity.assessmentId,
+        mentionId: entity.mentionId ?? null,
+        originalEntry: entity.originalEntry ?? null,
+        calculation: entity.calculation ?? null,
+        designation: entity.designation ?? null,
+        score: entity.score == null ? null : String(entity.score),
+        status: entity.status ?? null,
+        notes: entity.notes ?? null,
+        createdBy: entity.createdBy ?? null,
+        createdAt: entity.createdAt,
+      }),
+      row => new AssessmentResultCtor({
+        revision: row.revision,
+        id: row.id,
+        studentId: row.studentId,
+        assessmentId: row.assessmentId,
+        mentionId: row.mentionId ?? undefined,
+        originalEntry: deserializeJsonb(row.originalEntry) ?? undefined,
+        calculation: deserializeJsonb(row.calculation) ?? undefined,
+        designation: row.designation ?? undefined,
+        score: row.score == null ? undefined : numericToNumber(row.score),
+        status: row.status === null ? undefined : enumValue(DeadlineComplianceStatus, row.status, 'assessmentResults.status'),
+        notes: row.notes,
+        createdBy: row.createdBy,
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    gradeScales: customStore(
+      db,
+      schema.gradeScales,
+      (entity: GradeScale) => ({
+        id: entity.id,
+        schoolId: entity.schoolId,
+        name: entity.name,
+        shortName: entity.shortName,
+        minScore: String(entity.minScore),
+        maxScore: String(entity.maxScore),
+        ranges: entity.ranges,
+        decimalPlaces: entity.decimalPlaces,
+        roundingMode: entity.roundingMode,
+        intervalConvention: entity.intervalConvention,
+        revision: entity.revision,
+        description: entity.description,
+        isDefault: entity.isDefault,
+        createdAt: entity.createdAt,
+      }),
+      row => new GradeScaleCtor({
+        id: row.id,
+        schoolId: row.schoolId,
+        name: row.name,
+        shortName: row.shortName ?? undefined,
+        minScore: numericToNumber(row.minScore),
+        maxScore: numericToNumber(row.maxScore),
+        ranges: [...deserializeJsonb(row.ranges)],
+        decimalPlaces: row.decimalPlaces,
+        roundingMode: row.roundingMode as GradeScale['roundingMode'],
+        intervalConvention: row.intervalConvention as GradeScale['intervalConvention'],
+        revision: row.revision,
+        description: row.description,
+        isDefault: row.isDefault,
+        createdAt: row.createdAt,
+      }),
+    ),
+
+    reportModules: customStore(
+      db,
+      schema.reportModules,
+      (entity: ReportModule) => ({ ...entity.data, explicitWeight: entity.explicitWeight ?? null }),
+      row => new ReportModuleCtor({ ...row, weightingMode: row.weightingMode as ReportModule['weightingMode'] }),
+    ),
+
+    results: customStore(
+      db,
+      schema.reportCardResults,
+      (entity: ReportCardResult) => ({
+        id: entity.id,
+        studentId: entity.studentId,
+        classGroupId: entity.classGroupId,
+        periodId: entity.periodId,
+        gradeLevelId: entity.gradeLevelId,
+        academicYearId: entity.academicYearId,
+        reportConfigurationRevision: entity.reportConfigurationRevision,
+        sectionResults: entity.sectionResults.map(serializeReportCardResultSection),
+        attendanceSummary: entity.attendanceSummary,
+        assessmentResultCount: entity.assessmentResultCount,
+        version: entity.version,
+        sourceMarks: entity.sourceMarks,
+        pendingCorrectionIds: entity.pendingCorrectionIds,
+        sourceAssessments: entity.sourceAssessments,
+        pendingAssessmentIds: entity.pendingAssessmentIds,
+        calculationStale: entity.calculationStale,
+        grading: entity.grading ?? null,
+        aggregateLabel: entity.aggregateLabel ?? null,
+        gradingPolicyRevision: entity.gradingPolicyRevision ?? null,
+        revisedDraft: entity.revisedDraft ?? null,
+        publicationHistory: entity.publicationHistory,
+        overallAverage: entity.overallAverage == null ? null : String(entity.overallAverage),
+        rank: entity.rank ?? null,
+        classSize: entity.classSize ?? null,
+        passThreshold: entity.passThreshold == null ? null : String(entity.passThreshold),
+        teacherComment: entity.teacherComment ?? null,
+        principalComment: entity.principalComment ?? null,
+        status: entity.status,
+        generatedAt: entity.generatedAt,
+        publishedAt: entity.publishedAt ?? null,
+        aggregation: entity.aggregation ?? null,
+      }),
+      (row) => {
+        const sectionsData = deserializeJsonb(row.sectionResults) || []
+        const attendanceData = deserializeJsonb(row.attendanceSummary)
+
+        return new ReportCardResultCtor({
+          id: row.id,
+          gradeLevelId: row.gradeLevelId,
+          academicYearId: row.academicYearId,
+          reportConfigurationRevision: row.reportConfigurationRevision,
+          studentId: row.studentId,
+          classGroupId: row.classGroupId,
+          periodId: row.periodId,
+          sectionResults: (sectionsData as StoredReportCardResultSection[]).map(deserializeReportCardResultSection),
+          attendanceSummary: new AttendanceSummary(attendanceData),
+          assessmentResultCount: row.assessmentResultCount,
+          version: row.version,
+          sourceMarks: deserializeJsonb(row.sourceMarks),
+          pendingCorrectionIds: deserializeJsonb(row.pendingCorrectionIds),
+          sourceAssessments: deserializeJsonb(row.sourceAssessments),
+          pendingAssessmentIds: deserializeJsonb(row.pendingAssessmentIds),
+          calculationStale: row.calculationStale,
+          grading: deserializeJsonb(row.grading) ?? undefined,
+          aggregateLabel: row.aggregateLabel ?? undefined,
+          gradingPolicyRevision: row.gradingPolicyRevision ?? undefined,
+          revisedDraft: deserializeJsonb(row.revisedDraft) ?? undefined,
+          publicationHistory: deserializeJsonb(row.publicationHistory) ?? [],
+          overallAverage: row.overallAverage == null ? undefined : numericToNumber(row.overallAverage),
+          rank: row.rank,
+          classSize: row.classSize,
+          passThreshold: row.passThreshold == null ? undefined : numericToNumber(row.passThreshold),
+          teacherComment: row.teacherComment,
+          principalComment: row.principalComment,
+          status: enumValue(ReportCardResultStatus, row.status, 'reportCardResults.status'),
+          generatedAt: row.generatedAt,
+          publishedAt: row.publishedAt,
+          aggregation: row.aggregation ?? undefined,
+        })
+      },
+    ),
+  }
+}

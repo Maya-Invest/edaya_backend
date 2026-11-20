@@ -1,24 +1,18 @@
 import type { Student } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { StudentOperations } from '@edaya/authorization'
+
 import { AttachmentOwnerKind, BusinessRuleViolationError, StudentStatus } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student.ts (PR3)
-export const studentConfig: EntityConfigFactory<Student> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkStudentAccess(actor, ids))
-
+export const studentConfig: EntityConfigFactory<Student> = ({ repositories, atomicExecution }) => {
   return config({
     repository: repositories.students,
     tenant: directSchoolTenant(),
-    read: read(operationModule(StudentOperations.directoryRead), readAccess),
-    write: write(
-      operationModule(StudentOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    resource: 'students',
+
     gates: {
       preSave: validateStudentSave,
       preDelete: validateStudentDelete,
@@ -40,12 +34,16 @@ async function validateStudentDelete(
   student: Student,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (await repositories.studentAcademicYearProfiles.count({ studentId: student.id }))
+    throw new BusinessRuleViolationError('STUDENT_HAS_ANNUAL_PROFILES', 'Remove annual information before deleting this student')
   const [
     enrollments,
     guardianLinks,
     notes,
     healthProfiles,
-    studentFees,
+    studentCharges,
+    studentServiceEnrollments,
+    studentYearAccounts,
     attendance,
     assessmentResults,
     reportCards,
@@ -57,7 +55,9 @@ async function validateStudentDelete(
     repositories.guardianLinks.list({ studentId: student.id }),
     repositories.studentNotes.list({ studentId: student.id }),
     repositories.studentHealthProfiles.list({ studentId: student.id }),
-    repositories.studentFees.list({ studentId: student.id }),
+    repositories.studentCharges.list({ studentId: student.id }),
+    repositories.studentServiceEnrollments.list({ studentId: student.id }),
+    repositories.studentYearAccounts.list({ studentId: student.id }),
     repositories.attendance.list({ studentId: student.id }),
     repositories.assessmentResults.list({ studentId: student.id }),
     repositories.results.list({ studentId: student.id }),
@@ -70,7 +70,9 @@ async function validateStudentDelete(
     || guardianLinks.length > 0
     || notes.length > 0
     || healthProfiles.length > 0
-    || studentFees.length > 0
+    || studentCharges.length > 0
+    || studentServiceEnrollments.length > 0
+    || studentYearAccounts.length > 0
     || attendance.length > 0
     || assessmentResults.length > 0
     || reportCards.length > 0

@@ -47,7 +47,7 @@ export const calendarEventReminderTrigger: NotificationTriggerRegistration<Calen
     const idempotencyKey = calendarEventReminderIdempotencyKey(entity.id)
 
     if (entity.kind !== CalendarEventKind.Event) {
-      await context.notificationGateway.cancel(idempotencyKey)
+      await context.notificationGateway.cancel(idempotencyKey, context.actor.schoolId)
       return null
     }
 
@@ -56,7 +56,7 @@ export const calendarEventReminderTrigger: NotificationTriggerRegistration<Calen
     }
 
     if (entity.endDate.getTime() < Date.now()) {
-      await context.notificationGateway.cancel(idempotencyKey)
+      await context.notificationGateway.cancel(idempotencyKey, context.actor.schoolId)
       return null
     }
 

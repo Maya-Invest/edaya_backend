@@ -19,9 +19,7 @@
     "tsc",
     "tsx",
     "tsconfig",
-    "tsup",
     "turbo",
-    "vitest",
     "antfu"
   ]
 }

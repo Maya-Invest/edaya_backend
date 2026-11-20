@@ -2,12 +2,13 @@
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { loadRepoEnvFile } from '../../../seeding/src/support/load-repo-env'
 import {
   resolveStagingAppOrigin,
   resolveStagingSeedApiUrl,
+  resolveStagingSeedAuthUrl,
 } from '../../../seeding/src/support/resolve-seed-env'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -15,6 +16,8 @@ const repoRoot = path.resolve(packageRoot, '../..')
 
 export interface SmokeStagingEnv {
   apiUrl: string
+  schoolId: string
+  authUrl: string
   appOrigin: string
   staffEmail: string
   staffPassword: string
@@ -29,13 +32,16 @@ export function loadSmokeStagingEnv(options?: { loadEnvFile?: boolean }): SmokeS
 
   const apiUrl = resolveStagingSeedApiUrl()
   const appOrigin = resolveStagingAppOrigin()
-  const schoolId = process.env['SEED_SCHOOL_ID']?.trim() || SEED_SCHOOL_ID
+  const seed = resolveDevSeedContext()
+  const schoolId = process.env['SEED_SCHOOL_ID']?.trim() || seed.schoolId
 
   return {
     apiUrl,
+    schoolId,
+    authUrl: resolveStagingSeedAuthUrl(),
     appOrigin,
-    staffEmail: process.env['SMOKE_STAFF_EMAIL']?.trim() ?? '',
-    staffPassword: process.env['SMOKE_STAFF_PASSWORD']?.trim() ?? '',
+    staffEmail: process.env['SMOKE_STAFF_EMAIL']?.trim() ?? seed.minimalStaffEmail,
+    staffPassword: process.env['SMOKE_STAFF_PASSWORD']?.trim() ?? seed.authPassword,
     serviceAccountApiKey: resolveSeedingApiKeyForSchool(schoolId),
   }
 }

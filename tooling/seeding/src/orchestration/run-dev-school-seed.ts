@@ -6,11 +6,13 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
+import type { DocumentsSeedPort } from '../domains/documents/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
 import type { ReportCardsSeedPort } from '../domains/report-cards/port'
 import type { SchedulingSeedPort } from '../domains/scheduling/port'
+import type { SchoolBrandingSeedPort } from '../domains/school-branding/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
@@ -19,39 +21,45 @@ import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { syncDevAuthAndGuardianInboxProbes } from '../bootstrap/sync-dev-auth-inbox'
-import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
+import { createInProcessActivitiesSeedPort } from '../domains/activities/adapters/in-process'
 import { seedDevActivities } from '../domains/activities/workflow'
-import { createInProcessAssessmentsSeedPort } from '../domains/assessments/in-process'
+import { createInProcessAssessmentsSeedPort } from '../domains/assessments/adapters/in-process'
 import { countDevAssessmentSeedOperations, seedDevAssessments } from '../domains/assessments/workflow'
-import { createInProcessAttachmentsSeedPort } from '../domains/attachments/in-process'
+import { createInProcessAttachmentsSeedPort } from '../domains/attachments/adapters/in-process'
 import { seedDevAttachments } from '../domains/attachments/workflow'
-import { createInProcessAttendanceSeedPort } from '../domains/attendance/in-process'
+import { createInProcessAttendanceSeedPort } from '../domains/attendance/adapters/in-process'
 import { seedDevAttendance } from '../domains/attendance/workflow'
-import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/in-process'
-import { createInProcessCommunicationsSeedPort } from '../domains/communications/in-process'
+import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/adapters/in-process'
+import { createInProcessCommunicationsSeedPort } from '../domains/communications/adapters/in-process'
+import { seedAuthLinkedGuardianInboxProbes } from '../domains/communications/guardian-inbox-probe'
 import { seedDevCommunications } from '../domains/communications/workflow'
-import { createInProcessCurriculumSeedPort } from '../domains/curriculum/in-process'
+import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapters/in-process'
 import { seedDevCurriculum } from '../domains/curriculum/workflow'
-import { createInProcessDisciplineSeedPort } from '../domains/discipline/in-process'
+import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapters/in-process'
 import { seedDevDiscipline } from '../domains/discipline/workflow'
-import { createInProcessFinanceSeedPort } from '../domains/finance/in-process'
+import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
+import { seedDevDocuments } from '../domains/documents/workflow'
+import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { seedDevFinance } from '../domains/finance/workflow'
-import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
+import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { seedDevPopulation } from '../domains/population/workflow'
-import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/in-process'
+import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
 import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
-import { createInProcessReportCardsSeedPort } from '../domains/report-cards/in-process'
-import { seedDevReportCards } from '../domains/report-cards/workflow'
-import { createInProcessSchedulingSeedPort } from '../domains/scheduling/in-process'
+import { createInProcessReportCardsSeedPort } from '../domains/report-cards/adapters/in-process'
+import { seedDevReportCardConfiguration, seedDevReportCardResults } from '../domains/report-cards/workflow'
+import { createInProcessSchedulingSeedPort } from '../domains/scheduling/adapters/in-process'
 import { seedDevScheduling } from '../domains/scheduling/workflow'
-import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/in-process'
+import { createInProcessSchoolBrandingSeedPort } from '../domains/school-branding/adapters/in-process'
+import { seedDevSchoolBranding } from '../domains/school-branding/workflow'
+import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/adapters/in-process'
 import { seedDevSchoolLife } from '../domains/school-life/workflow'
-import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'
+import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/adapters/in-process'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from '../domains/school-structure/workflow'
-import { createInProcessStudentSupportSeedPort } from '../domains/student-support/in-process'
+import { createInProcessStudentSupportSeedPort } from '../domains/student-support/adapters/in-process'
 import { seedDevStudentSupport } from '../domains/student-support/workflow'
-import { createInProcessTeachersSeedPort } from '../domains/teachers/in-process'
+import { createInProcessTeachersSeedPort } from '../domains/teachers/adapters/in-process'
 import { seedDevTeachers } from '../domains/teachers/workflow'
 import { buildFixtureCurriculumPlan } from '../support/curriculum-plan'
 import { runSeedProgressStep } from '../support/seed-progress'
@@ -71,9 +79,10 @@ export type DevSchoolSeedResult
       subjects: number
       classSubjects: number
       periodDefinitions: number
-      fees: number
-      studentFees: number
+      catalogServices: number
+      studentServiceEnrollments: number
       payments: number
+      documentIssuances: number
       classSubjectMatters: number
       resources: number
       schedules: number
@@ -88,8 +97,8 @@ export type DevSchoolSeedResult
       studentHealthProfiles: number
       studentNotes: number
       gradeScales: number
-      reportCardDefinitions: number
-      reportCardSections: number
+      reportModules: number
+      reportModuleAssignments: number
       reportCardResults: number
       disciplinaryActions: number
       studentDisciplinaryActions: number
@@ -117,9 +126,11 @@ export interface RunDevSchoolSeedOptions {
   schoolLifePort?: SchoolLifeSeedPort
   studentSupportPort?: StudentSupportSeedPort
   disciplinePort?: DisciplineSeedPort
+  documentsPort?: DocumentsSeedPort
   communicationsPort?: CommunicationsSeedPort
   attachmentsPort?: AttachmentsSeedPort
   profilePicturesPort?: ProfilePicturesSeedPort
+  schoolBrandingPort?: SchoolBrandingSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
   skipProfilePhotos?: boolean
@@ -167,6 +178,8 @@ export async function runDevSchoolSeed(
     ?? createInProcessReportCardsSeedPort(requireSeedApplication(application, 'reportCardsPort'))
   const financePort = options?.financePort
     ?? createInProcessFinanceSeedPort(requireSeedApplication(application, 'financePort'))
+  const documentsPort = options?.documentsPort
+    ?? createInProcessDocumentsSeedPort(requireSeedApplication(application, 'documentsPort'))
   const activitiesPort = options?.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireSeedApplication(application, 'activitiesPort'))
   const schoolLifePort = options?.schoolLifePort
@@ -184,12 +197,23 @@ export async function runDevSchoolSeed(
       application: requireSeedApplication(application, 'profilePicturesPort'),
       apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
     })
+  const schoolBrandingPort = options?.schoolBrandingPort
+    ?? createInProcessSchoolBrandingSeedPort(requireSeedApplication(application, 'schoolBrandingPort'))
 
   const seedContext = resolveDevSeedContext()
   const seedDataset = seedContext.dataset
   const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, seedDataset)
 
   if (structureInspection.status === 'skipped') {
+    await runSchoolSeedStep(options?.progress, async () => {
+      await seedDevSchoolBranding(schoolBrandingPort, seedDataset)
+    })
+    if (!options?.skipProfilePhotos) {
+      await runSchoolSeedStep(options?.progress, async tick => seedDevProfilePictures(profilePicturesPort, {
+        apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
+        onProgress: tick,
+      }, seedDataset))
+    }
     if (options?.auth) {
       await syncDevAuthAndGuardianInboxProbes(
         options.authLinkPort ?? createInProcessAuthLinkSeedPort(
@@ -225,15 +249,26 @@ export async function runDevSchoolSeed(
     }, seedDataset)
   })
 
+  const reportCardConfiguration = await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevCurriculum(curriculumPort, seedDataset)
+    return seedDevReportCardConfiguration(reportCardsPort, seedDataset)
+  })
   await runSchoolSeedStep(options?.progress, async () => {
     await seedDevPopulation(populationPort, seedDataset)
   })
   await runSchoolSeedStep(options?.progress, async () => {
-    await seedDevCurriculum(curriculumPort, seedDataset)
-  })
-  await runSchoolSeedStep(options?.progress, async () => {
     await seedDevTeachers(teachersPort, seedDataset)
   })
+  if (options?.auth) {
+    await syncDevStaffAuthAndOwner(
+      options.authLinkPort ?? createInProcessAuthLinkSeedPort(
+        requireSeedApplication(application, 'authLinkPort'),
+      ),
+      options.auth,
+      ownerSubjectId,
+    )
+  }
+
   const activitiesCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevActivities(activitiesPort, seedDataset))
   await runSchoolSeedStep(options?.progress, async () => {
@@ -253,10 +288,12 @@ export async function runDevSchoolSeed(
   const studentSupportCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevStudentSupport(studentSupportPort, seedDataset))
 
-  const reportCardCounts = await runSchoolSeedStep(options?.progress, async () =>
-    seedDevReportCards(reportCardsPort, seedDataset))
+  const reportCardCounts = { ...reportCardConfiguration, ...await runSchoolSeedStep(options?.progress, async () =>
+    seedDevReportCardResults(reportCardsPort, seedDataset)) }
   const financeCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevFinance(financePort, seedDataset))
+  const documentCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevDocuments(documentsPort, seedDataset))
 
   const communicationsCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevCommunications(communicationsPort, seedDataset))
@@ -264,6 +301,9 @@ export async function runDevSchoolSeed(
     ? { attachments: 0 }
     : await runSchoolSeedStep(options?.progress, async () =>
         seedDevAttachments(attachmentsPort, seedDataset))
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevSchoolBranding(schoolBrandingPort, seedDataset)
+  })
   const profilePictureCounts = options?.skipProfilePhotos
     ? { profilePhotos: 0 }
     : await runSchoolSeedStep(options?.progress, async tick =>
@@ -276,13 +316,13 @@ export async function runDevSchoolSeed(
           + (seedDataset.entities.guardians?.length ?? 0),
       })
   if (options?.auth) {
-    await syncDevAuthAndGuardianInboxProbes(
+    await seedAuthLinkedGuardianInboxProbes(
+      communicationsPort,
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
         requireSeedApplication(application, 'authLinkPort'),
       ),
-      communicationsPort,
-      options.auth,
-      ownerSubjectId,
+      seedDataset,
+      seedContext.guardianAccounts.map(account => account.guardianId),
     )
   }
 
@@ -303,10 +343,11 @@ export async function runDevSchoolSeed(
     subjects: entities.subjects?.length ?? 0,
     classSubjects: entities.classSubjects?.length ?? 0,
     periodDefinitions: entities.periodDefinitions?.length ?? 0,
-    fees: financeCounts.fees,
-    studentFees: financeCounts.studentFees,
+    catalogServices: financeCounts.catalogServices,
+    studentServiceEnrollments: financeCounts.studentServiceEnrollments,
     payments: financeCounts.payments,
-    classSubjectMatters: curriculumPlan.gradeLevelSubjectMatters.length,
+    documentIssuances: documentCounts.documentIssuances,
+    classSubjectMatters: curriculumPlan.classSubjectMatterCount,
     resources: fixtureCounts.resources ?? 0,
     schedules: fixtureCounts.schedules ?? 0,
     lessonSessions: fixtureCounts['lesson-sessions'] ?? 0,
@@ -320,8 +361,8 @@ export async function runDevSchoolSeed(
     studentHealthProfiles: studentSupportCounts.studentHealthProfiles,
     studentNotes: studentSupportCounts.studentNotes,
     gradeScales: reportCardCounts.gradeScales,
-    reportCardDefinitions: reportCardCounts.definitions,
-    reportCardSections: reportCardCounts.sections,
+    reportModules: reportCardCounts.modules,
+    reportModuleAssignments: reportCardCounts.assignments,
     reportCardResults: reportCardCounts.results,
     disciplinaryActions: disciplineCounts.disciplinaryActions,
     studentDisciplinaryActions: disciplineCounts.studentDisciplinaryActions,

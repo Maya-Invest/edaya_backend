@@ -1,28 +1,41 @@
 import type { Guardian } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { GuardianOperations } from '@edaya/authorization'
+
 import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
+import { assertUniqueHumanIdentifier } from '../human-identifier-uniqueness'
 
 // Extracted from domain/students/guardian.ts (PR3)
-export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkGuardianAccess(actor, ids))
+export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, atomicExecution }) => {
+  return {
+    ...config({
+      repository: repositories.guardians,
+      tenant: directSchoolTenant(),
+      resource: 'guardians',
 
-  return config({
-    repository: repositories.guardians,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(GuardianOperations.read), readAccess),
-    write: write(
-      operationModule(GuardianOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+      atomicExecution,
+    }),
     gates: {
+      preSave: validateGuardianSave,
       preDelete: validateGuardianDelete,
     },
-    atomicExecution,
+  }
+}
+
+async function validateGuardianSave(
+  guardian: Guardian,
+  _existing: Guardian | undefined,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  await assertUniqueHumanIdentifier({
+    identifier: guardian.identifier,
+    schoolId: guardian.schoolId,
+    entityId: guardian.id,
+    errorCode: 'IDENTIFIER_UNAVAILABLE',
+    entityLabel: 'Guardian',
+    findCandidates: identifier => repositories.guardians.list({ schoolId: guardian.schoolId, identifier: { $normalizedCandidate: identifier } }),
   })
 }
 

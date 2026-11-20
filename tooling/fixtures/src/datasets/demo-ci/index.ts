@@ -1,4 +1,10 @@
 import type { FixtureDataset } from '../types'
+import {
+  DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
+  DEMO_CI_SCHEDULING_REFERENCE_WEEK_START,
+  DEMO_CI_SEED_REFERENCE_DATE,
+} from '../../meta/dates'
+import { IVORY_COAST_ONBOARDING_DATASET } from '../../onboarding/ivory-coast/parse-ivory-coast-templates'
 import { DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { demoCiActivities, demoCiActivityEnrollments, demoCiClassActivityEnrollments } from './domains/activities'
 import {
@@ -10,6 +16,7 @@ import { demoCiAttachments } from './domains/attachments'
 import {
   demoCiAttendanceAbsenceSessions,
   demoCiAttendanceRecords,
+  demoCiDailyAttendanceDays,
   demoCiPendingJustificationRecordIds,
   demoCiTodayAttendanceSession,
 } from './domains/attendance'
@@ -21,13 +28,14 @@ import {
   demoCiMessageDeliveries,
 } from './domains/communications'
 import { demoCiDisciplinaryActions, demoCiStudentDisciplinaryActions } from './domains/discipline'
-import { demoCiFees, demoCiPayments, demoCiStudentFees } from './domains/finance'
+import { demoCiDocumentIssuances } from './domains/documents'
+import { demoCiCatalogServices, demoCiPayments, demoCiStudentServiceEnrollments } from './domains/finance'
 import { demoCiIncidents, demoCiStudentIncidentInvolvements } from './domains/incidents'
 import {
   demoCiGradeScales,
-  demoCiReportCardDefinitionFixtures,
   demoCiReportCardGradeScaleFixtures,
   demoCiReportCardResults,
+  demoCiReportConfigurationFixtures,
 } from './domains/report-cards'
 import {
   demoCiClassResourceAssignments,
@@ -74,7 +82,9 @@ export const demoCiDataset = {
     enrollments: demoCiEnrollments,
     guardians: demoCiGuardians,
     guardianLinks: demoCiGuardianLinks,
-    subjects: demoCiSubjects,
+    subjectCategories: IVORY_COAST_ONBOARDING_DATASET.subjectCategories.map(row => ({ id: `${DEMO_CI_SCHOOL_ID}:subject-category:${row.code}`, schoolId: DEMO_CI_SCHOOL_ID, name: row.name })),
+    academicDisciplines: [{ id: 'ci-discipline-demo', schoolId: DEMO_CI_SCHOOL_ID, shortName: 'DEMO', name: 'Demonstration curriculum' }],
+    subjects: demoCiSubjects.map(subject => ({ ...subject, disciplineId: 'ci-discipline-demo' })),
     subjectMatters: demoCiSubjectMatters,
     classSubjects: demoCiClassSubjects,
     resources: demoCiResources,
@@ -87,8 +97,8 @@ export const demoCiDataset = {
     activities: demoCiActivities,
     activityEnrollments: demoCiActivityEnrollments,
     classActivityEnrollments: demoCiClassActivityEnrollments,
-    fees: demoCiFees,
-    studentFees: demoCiStudentFees,
+    catalogServices: demoCiCatalogServices,
+    studentServiceEnrollments: demoCiStudentServiceEnrollments,
     payments: demoCiPayments,
     announcements: demoCiAnnouncements,
     announcementTargets: demoCiAnnouncementTargets,
@@ -108,13 +118,18 @@ export const demoCiDataset = {
       todaySession: demoCiTodayAttendanceSession,
       pendingJustificationRecordIds: demoCiPendingJustificationRecordIds,
     },
+    dailyAttendanceDays: demoCiDailyAttendanceDays,
     schedulingSlots: demoCiSchedulingSlots,
     classResourceAssignments: demoCiClassResourceAssignments,
     schedulingSessionProgressAnchors: demoCiSchedulingSessionProgressAnchors,
     calendarEvents: demoCiCalendarEvents,
     reportCardGradeScaleFixtures: demoCiReportCardGradeScaleFixtures,
-    reportCardDefinitionFixtures: demoCiReportCardDefinitionFixtures,
+    reportConfigurationFixtures: demoCiReportConfigurationFixtures,
     reportCardResults: demoCiReportCardResults,
     announcementMaterializePlans: demoCiAnnouncementMaterializePlans,
+    documentIssuances: demoCiDocumentIssuances,
+    publishAcademicPeriodIds: [DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID],
+    schedulingReferenceWeekStart: DEMO_CI_SCHEDULING_REFERENCE_WEEK_START,
+    seedReferenceDate: DEMO_CI_SEED_REFERENCE_DATE,
   },
 } satisfies FixtureDataset<'demo-ci'>

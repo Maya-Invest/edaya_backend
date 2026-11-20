@@ -9,14 +9,20 @@ export interface InvitationDeliveryInput {
   actorKind: AccountInvitationKind
   inviteUrl: string
   expiresAt: Date
-  /** Rendered invitation email subject */
-  emailSubject: string
-  /** Rendered invitation email HTML body */
-  emailBody: string
+  emailSubject?: string
+  emailBody?: string
+  smsBody?: string
 }
 
-/** Delivers invite messages to pre-account contacts via the notification provider. */
+export type ResolveInvitationDispatchRecipient = (request: { schoolId: string, invitationId: string }) => Promise<{
+  schoolId: string
+  invitationId: string
+  contactChannel: 'email' | 'phone'
+  contactValue: string
+} | undefined>
+
+/** Persist invitation delivery intent with the business transaction; provider I/O occurs after commit. */
 export interface InvitationDeliveryPort {
   deliver: (input: InvitationDeliveryInput) => Promise<void>
-  revoke: (invitationId: string) => Promise<void>
+  revoke: (invitationId: string, schoolId: string) => Promise<void>
 }

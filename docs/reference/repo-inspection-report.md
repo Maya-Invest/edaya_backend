@@ -1,5 +1,7 @@
 # Repo Inspection Report
 
+> **Historical (2026-06).** Package paths in this report (`package/generated-api-client`, `apps/webapp`, `package/integration-*`) predate the current layout. Canonical map: [integrations-restructure.md](./integrations-restructure.md).
+
 Date: 2026-06-16  
 Scope: over-engineering, boundary definition/enforcement, and developer experience for the `edaya_backend` monorepo.
 
@@ -9,7 +11,7 @@ Scope: over-engineering, boundary definition/enforcement, and developer experien
 
 ## Simplification initiative closure (2026-06-22)
 
-Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun repo verify` is green and idempotent.
+Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun run repo check` is green and idempotent.
 
 | Finding | Status | Resolution |
 |---------|--------|------------|
@@ -30,7 +32,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 
 | Metric | Baseline (audit) | Current |
 |--------|------------------|---------|
-| `bun repo verify` | Failing / mutating | Passes twice idempotently; used in CI |
+| `bun run repo check` | Failing / mutating | Passes twice idempotently; used in CI |
 | Package tests | 688 passed | **826 passed**, 7 integration skips |
 | Webapp tests | Not typechecked | **141** runtime tests, typechecked via `tsconfig.test.json` |
 | Raw `.list({})` in webapp | 65 / 65 loaders | **0** (37 documented `schoolWideEntityList` call sites) |
@@ -48,7 +50,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 - **Phase 4:** Split `postgres-schema.ts` and `entity-stores.ts` by bounded context without migration drift.
 - **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points. (`prototype.queries.ts` rename completed 2026-06-23.)
 - **Product:** Domain-scoped mutation invalidation buckets (Finding 8), pagination for school-wide admin lists (Finding 9).
-- **Operator:** Staging smoke (`bun repo smoke-test staging`), manual screen QA checklist (Phase 8.2).
+- **Operator:** Staging smoke (`bun run repo maintenance smoke api staging`), manual screen QA checklist (Phase 8.2).
 
 ---
 
@@ -133,7 +135,7 @@ Keep special cases explicit through per-entity overrides rather than parallel ha
 
 ### Recommendation
 
-Keep `SchoolService` if it is the public domain API, but make command registration derive from metadata instead of requiring another manual list. A command registry could include method name, public API name, schema, service-only flag, and response schema.
+Keep `SchoolService` if it is the public domain API, but make command registration derive from metadata instead of requiring another manual list. A command registry could include method name, public API name, schema and response schema. Caller eligibility belongs in action-bound business policies rather than command-registry metadata.
 
 If `SchoolService` is not needed as a public facade, expose workflow namespaces and let the API command dispatcher call registered workflow handlers directly.
 
@@ -196,7 +198,7 @@ Move boundary rules into either ESLint `no-restricted-imports` or a dependency g
 Rules worth encoding:
 
 - `package/domain-core` must not import apps, integrations, runtime, or adapters unless intentionally allowed.
-- `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` must not import `package/integration-*`.
+- `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-notify` must not import `package/integration-*`.
 - Runtime internals may only be imported by runtime files plus a short explicit allowlist.
 - API route modules should depend on `lib/school-api` and HTTP helpers, not runtime internals directly.
 - Webapp routes should go through query/data modules rather than raw generated client calls, except in tests or explicitly allowed integration points.

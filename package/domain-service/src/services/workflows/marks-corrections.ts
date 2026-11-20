@@ -1,0 +1,237 @@
+import type { Assessment, AssessmentResult, DecideMarksCorrectionInput, MarksCorrection, RejectMarksCorrectionInput, RequestMarksCorrectionInput, ReviseMarksCorrectionInput } from '@edaya/core'
+import type { BaseSchoolService } from '../base-school-service'
+import { denyResourceAccess } from '@edaya/authorization'
+import { Assessment as AssessmentEntity, BusinessRuleViolationError, decideMarksCorrectionSchema, Permission, rejectMarksCorrectionSchema, requestMarksCorrectionSchema, AssessmentResult as ResultEntity, reviseMarksCorrectionSchema } from '@edaya/core'
+import { assessmentGradingPolicy, captureGradeEntry } from '../../capabilities/academics/grading'
+import { academicStateLock, assertMarkDesignation, assertMarksRevision } from '../../capabilities/academics/marks-state'
+import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
+import { notifyTeacherCorrection } from '../../capabilities/notifications/teacher-correction-notifications'
+import { schoolCommandScope } from '../commands/school-command-scope'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+
+function values(mark: AssessmentResult) {
+  return { ...(mark.mentionId ? { mentionId: mark.mentionId } : {}), score: mark.score ?? null, designation: mark.designation ?? 'scored' as const, notes: mark.notes ?? null, status: mark.status ?? null }
+}
+function fail(code: string, message: string): never {
+  throw new BusinessRuleViolationError(code, message)
+}
+
+/** Pending proposals never mutate official marks. All writes share publication's transaction lock. */
+export class MarksCorrectionsWorkflow {
+  private readonly repositories
+  constructor(private readonly base: BaseSchoolService) { this.repositories = pickWorkflowRepositories('assessments', base.repositories) }
+
+  private async editable(assessmentId: string) {
+    if (this.base.actor.kind !== 'staff' && this.base.actor.kind !== 'teacher')
+      denyResourceAccess()
+    await this.base.access.marksReview.edit(assessmentId)
+    const sheet = await this.repositories.assessments.forSchool!(this.base.actor.schoolId).findById(assessmentId)
+    if (!sheet)
+      denyResourceAccess()
+    return sheet
+  }
+
+  private async unlocked(ids: string[]) {
+    if ((await this.repositories.assessmentDependencies.publishedMarkIds(this.base.actor.schoolId, ids)).size)
+      fail('PUBLISHED_REPORT_CARD_IMMUTABLE', 'A proposed mark is included in a published report and cannot be revised')
+  }
+
+  async request(raw: RequestMarksCorrectionInput): Promise<MarksCorrection> {
+    const input = requestMarksCorrectionSchema.parse(raw)
+    const actor = this.base.actor
+    if (actor.kind !== 'staff' && actor.kind !== 'teacher')
+      denyResourceAccess()
+    return this.base.commandExecution.execute({
+      scope: await schoolCommandScope(actor, 'requestAssessmentMarksCorrection', input.requestId),
+      input,
+      resultMode: 'ordinary',
+      lockKeys: [academicStateLock(actor.schoolId)],
+      authorize: async () => { await this.editable(input.assessmentId) },
+      execute: async () => {
+        const sheet = await this.editable(input.assessmentId)
+        if (sheet.marksStatus !== 'submitted')
+          fail('MARKS_NOT_SUBMITTED', 'Submit the marks before requesting a correction')
+        assertMarksRevision(sheet, input.expectedRevision)
+        const ids = input.changes.map(row => row.resultId)
+        if (new Set(ids).size !== ids.length)
+          fail('DUPLICATE_ASSESSMENT_MARK', 'Each mark may appear only once in a correction')
+        if ((await this.repositories.marksCorrections.pendingForMarks(actor.schoolId, ids)).length)
+          fail('MARKS_CORRECTION_PENDING', 'A selected student already has a pending correction')
+        await this.unlocked(ids)
+        const marks = new Map((await this.repositories.assessmentResults.findByIds(ids)).map(row => [row.id, row]))
+        const policy = await assessmentGradingPolicy(this.repositories, sheet)
+        if (input.expectedGradingRevision !== undefined && input.expectedGradingRevision !== (policy?.revision ?? 0))
+          fail('GRADING_REVISION_CONFLICT', 'Reload the grading configuration before proposing a correction')
+        const changes = input.changes.map((change) => {
+          const mark = marks.get(change.resultId)
+          if (!mark || mark.assessmentId !== sheet.id || !sheet.marksReview.rosterStudentIds.includes(mark.studentId))
+            denyResourceAccess()
+          const proposedMark = new ResultEntity({ ...mark.data, ...change.proposed, ...(policy && change.proposed.score !== null ? { originalEntry: { kind: 'numeric' as const, value: change.proposed.score, maximum: sheet.maxScore } } : {}) })
+          this.validate(sheet, proposedMark)
+          captureGradeEntry(proposedMark, sheet, policy, mark)
+          const before = values(mark)
+          const proposed = values(proposedMark)
+          if (JSON.stringify(before) === JSON.stringify(proposed))
+            fail('MARKS_CORRECTION_UNCHANGED', 'Every proposed correction must change a mark')
+          return { resultId: mark.id, studentId: mark.studentId, revision: mark.revision, before, proposed }
+        })
+        const row: MarksCorrection = { id: crypto.randomUUID(), schoolId: actor.schoolId, assessmentId: sheet.id, status: 'pending', version: 0, baseRevision: sheet.marksRevision, baseGradingRevision: policy?.revision ?? 0, authorSubjectId: actor.subjectId, reason: input.reason, createdAt: new Date(), changes, revisions: [] }
+        await this.repositories.marksCorrections.save(row)
+        await notifyTeacherCorrection(this.base, { ...row, classGroupId: sheet.classGroupId }, 'requested', Permission.GRADE_VALIDATE)
+        return row
+      },
+      persistResult: row => ({ id: row.id }),
+      replay: stored => this.require(stored.id),
+      audit: row => [{ event: 'requestAssessmentMarksCorrection', resourceType: 'assessments', resourceId: row.assessmentId }],
+    })
+  }
+
+  async revise(raw: ReviseMarksCorrectionInput): Promise<MarksCorrection> {
+    const input = reviseMarksCorrectionSchema.parse(raw)
+    const actor = this.base.actor
+    if (actor.kind !== 'staff' && actor.kind !== 'teacher')
+      denyResourceAccess()
+    return this.base.commandExecution.execute({
+      scope: await schoolCommandScope(actor, 'reviseAssessmentMarksCorrection', input.requestId),
+      input,
+      resultMode: 'ordinary',
+      lockKeys: [academicStateLock(actor.schoolId)],
+      authorize: async () => {
+        const row = await this.require(input.correctionId)
+        if (row.authorSubjectId !== actor.subjectId || row.assessmentId !== input.assessmentId)
+          denyResourceAccess()
+        await this.editable(row.assessmentId)
+      },
+      execute: async () => {
+        const row = await this.require(input.correctionId)
+        if (row.status !== 'pending' || row.version !== input.expectedVersion)
+          fail('MARKS_CORRECTION_VERSION_CONFLICT', 'The correction changed; reload it')
+        const sheet = await this.editable(row.assessmentId)
+        assertMarksRevision(sheet, input.expectedRevision)
+        if (sheet.marksStatus !== 'submitted')
+          fail('MARKS_NOT_SUBMITTED', 'The marks must be submitted')
+        const ids = input.changes.map(c => c.resultId)
+        if (new Set(ids).size !== ids.length)
+          fail('DUPLICATE_ASSESSMENT_MARK', 'Each student may appear only once')
+        if ((await this.repositories.marksCorrections.pendingForMarks(actor.schoolId, ids)).some(id => id !== row.id))
+          fail('MARKS_CORRECTION_PENDING', 'A selected student has another pending correction')
+        await this.unlocked(ids)
+        const marks = new Map((await this.repositories.assessmentResults.findByIds(ids)).map(m => [m.id, m]))
+        const policy = await assessmentGradingPolicy(this.repositories, sheet)
+        if (input.expectedGradingRevision !== undefined && input.expectedGradingRevision !== (policy?.revision ?? 0))
+          fail('GRADING_REVISION_CONFLICT', 'Reload the grading configuration before proposing a correction')
+        const changes = input.changes.map((change) => {
+          const mark = marks.get(change.resultId)
+          if (!mark || mark.assessmentId !== sheet.id || !sheet.marksReview.rosterStudentIds.includes(mark.studentId))
+            denyResourceAccess()
+          const proposedMark = new ResultEntity({ ...mark.data, ...change.proposed, ...(policy && change.proposed.score !== null ? { originalEntry: { kind: 'numeric' as const, value: change.proposed.score, maximum: sheet.maxScore } } : {}) })
+          this.validate(sheet, proposedMark)
+          captureGradeEntry(proposedMark, sheet, policy, mark)
+          const before = values(mark)
+          const proposed = values(proposedMark)
+          if (JSON.stringify(before) === JSON.stringify(proposed))
+            fail('MARKS_CORRECTION_UNCHANGED', 'Each proposal must change a mark')
+          return { resultId: mark.id, studentId: mark.studentId, revision: mark.revision, before, proposed }
+        })
+        const revised: MarksCorrection = { ...row, version: row.version + 1, baseRevision: sheet.marksRevision, baseGradingRevision: policy?.revision ?? 0, reason: input.reason, changes, revisions: [...row.revisions, { version: row.version, reason: row.reason, changes: row.changes, at: new Date() }] }
+        await this.repositories.marksCorrections.save(revised)
+        await notifyTeacherCorrection(this.base, { ...revised, classGroupId: sheet.classGroupId }, 'revised', Permission.GRADE_VALIDATE)
+        return revised
+      },
+      persistResult: row => ({ id: row.id }),
+      replay: stored => this.require(stored.id),
+      audit: row => [{ event: 'reviseAssessmentMarksCorrection', resourceType: 'assessments', resourceId: row.assessmentId }],
+    })
+  }
+
+  private validate(sheet: Assessment, mark: AssessmentResult) {
+    assertMarkDesignation(mark)
+    if (mark.score !== undefined && mark.score > sheet.maxScore)
+      fail('SCORE_EXCEEDS_MAX_SCORE', 'A proposed score exceeds the evaluation maximum')
+  }
+
+  private async require(id: string) {
+    const row = await this.repositories.marksCorrections.find(this.base.actor.schoolId, id)
+    if (!row)
+      denyResourceAccess()
+    return row
+  }
+
+  async decide(action: 'approve' | 'reject' | 'withdraw', raw: DecideMarksCorrectionInput | RejectMarksCorrectionInput): Promise<MarksCorrection> {
+    const input = action === 'reject' ? rejectMarksCorrectionSchema.parse(raw) : decideMarksCorrectionSchema.parse(raw)
+    const actor = this.base.actor
+    if (actor.kind !== 'staff' && actor.kind !== 'teacher')
+      denyResourceAccess()
+    const command = { approve: 'approveAssessmentMarksCorrection', reject: 'rejectAssessmentMarksCorrection', withdraw: 'withdrawAssessmentMarksCorrection' }[action]
+    return this.base.commandExecution.execute({
+      scope: await schoolCommandScope(actor, command, input.requestId),
+      input,
+      resultMode: 'ordinary',
+      lockKeys: [academicStateLock(actor.schoolId)],
+      authorize: async () => {
+        const row = await this.require(input.correctionId)
+        if (action === 'withdraw') {
+          if (row.authorSubjectId !== actor.subjectId)
+            denyResourceAccess()
+          await this.editable(row.assessmentId)
+        }
+        else {
+          if (actor.kind !== 'staff')
+            denyResourceAccess()
+          const sheet = await this.repositories.assessments.forSchool!(actor.schoolId).findById(row.assessmentId)
+          if (!sheet)
+            denyResourceAccess()
+          await this.base.access.marksReview.assertClassAction('approve', sheet.classGroupId)
+          if (row.authorSubjectId === actor.subjectId)
+            fail('MARKS_SELF_APPROVAL', 'The correction author cannot review their own request')
+        }
+      },
+      execute: async () => {
+        const row = await this.require(input.correctionId)
+        if (row.version !== input.expectedVersion)
+          fail('MARKS_CORRECTION_VERSION_CONFLICT', 'The correction changed; reload before reviewing')
+        if (row.status !== 'pending')
+          fail('MARKS_CORRECTION_NOT_PENDING', 'This correction has already been resolved')
+        if (action === 'approve') {
+          const sheet = await this.repositories.assessments.findById(row.assessmentId)
+          if (!sheet || sheet.marksStatus !== 'submitted')
+            fail('MARKS_NOT_SUBMITTED', 'The evaluation must remain submitted')
+          await this.unlocked(row.changes.map(change => change.resultId))
+          const originals = new Map((await this.repositories.assessmentResults.findByIds(row.changes.map(change => change.resultId))).map(mark => [mark.id, mark]))
+          const policy = await assessmentGradingPolicy(this.repositories, sheet)
+          if ((row.baseGradingRevision ?? 0) !== (policy?.revision ?? 0))
+            fail('GRADING_REVISION_CONFLICT', 'Revise this correction using the current grading configuration')
+          const updated = row.changes.map((change) => {
+            const mark = originals.get(change.resultId)
+            if (!mark || mark.assessmentId !== sheet.id || mark.studentId !== change.studentId || mark.revision !== change.revision || JSON.stringify({ ...values(mark), ...(change.before.status === undefined ? { status: undefined } : {}) }) !== JSON.stringify(change.before))
+              fail('MARKS_REVISION_CONFLICT', 'A source mark changed; submit a new correction')
+            const result = captureGradeEntry(new ResultEntity({ ...mark.data, ...change.proposed, ...(policy && change.proposed.score !== null ? { originalEntry: { kind: 'numeric' as const, value: change.proposed.score, maximum: sheet.maxScore } } : {}), revision: mark.revision + 1 }), sheet, policy, mark)
+            this.validate(sheet, result)
+            return result
+          })
+          const updatedSheet = new AssessmentEntity({ ...sheet.data, marksRevision: sheet.marksRevision + 1 })
+          await this.repositories.assessmentResults.batchSave(updated)
+          await this.repositories.assessments.save(updatedSheet)
+          await this.repositories.assessmentDependencies.invalidateMarkDrafts(actor.schoolId, updated.map(mark => mark.id))
+          const students = new Map((await this.repositories.students.findByIds(updated.map(mark => mark.studentId))).map(student => [student.id, student]))
+          for (const result of updated) {
+            const student = students.get(result.studentId)
+            if (student)
+              await runWorkflowNotifications(this.base, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, { result, student, assessment: updatedSheet })
+          }
+        }
+        const decided: MarksCorrection = { ...row, status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'withdrawn', version: row.version + 1, decidedBy: actor.subjectId, decidedAt: new Date(), ...('reason' in input && typeof input.reason === 'string' ? { rejectionReason: input.reason } : {}) }
+        await this.repositories.marksCorrections.save(decided)
+        if (action !== 'withdraw') {
+          const sheet = await this.repositories.assessments.findById(row.assessmentId)
+          if (sheet)
+            await notifyTeacherCorrection(this.base, { ...decided, classGroupId: sheet.classGroupId }, action === 'approve' ? 'approved' : 'rejected', Permission.GRADE_VALIDATE)
+        }
+        return decided
+      },
+      persistResult: row => ({ id: row.id }),
+      replay: stored => this.require(stored.id),
+      audit: row => [{ event: command, resourceType: 'assessments', resourceId: row.assessmentId }],
+    })
+  }
+}

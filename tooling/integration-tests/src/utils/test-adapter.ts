@@ -1,9 +1,11 @@
 import type { ActorMetadata } from '@edaya/authorization'
+import type { AtomicExecutionPort } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
-import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy } from '@edaya/authorization'
-import { noOpFileStorage, noOpNotificationGateway, StaffMember } from '@edaya/core'
+import { PostgresCommandJournal } from '@edaya/adaptor-postgres'
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { noOpFileStorage, noOpNotificationGateway, School, StaffMember, withShortName } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
-import { effectiveGrantsForRoles } from './effective-grants'
+import { saveHumanFixture } from '../../../test-support/human-fixtures'
 
 export type FailableRepository
   = | 'classSubjectMatterRepository'
@@ -46,7 +48,7 @@ export function wrapSaveWithFailure<T extends { readonly id: string }>(
 }
 
 export function applyAllSaveFailureWraps(repos: any, getSaveFailure: () => any, clearSaveFailure: () => void) {
-  wrapSaveWithFailure('studentFeeRepository', repos.studentFees, getSaveFailure, clearSaveFailure)
+  wrapSaveWithFailure('studentFeeRepository', repos.studentCharges, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('lessonSessionRepository', repos.lessonSessions, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('classSubjectMatterRepository', repos.classSubjectMatters, getSaveFailure, clearSaveFailure)
   wrapSaveWithFailure('reportCardResultRepository', repos.results, getSaveFailure, clearSaveFailure)
@@ -55,18 +57,14 @@ export function applyAllSaveFailureWraps(repos: any, getSaveFailure: () => any, 
 }
 
 export function createDefaultTestActor(actor?: ActorMetadata): ActorMetadata {
-  return actor ?? {
-    kind: 'staff',
-    accountKind: 'human',
-    actorId: 'admin',
+  return actor ?? createStaffActorMetadata({
     subjectId: 'admin-user',
     staffMemberId: 'admin',
     schoolId: 'school',
-    effectiveGrants: effectiveGrantsForRoles(['admin']),
     requestId: 'integration-test',
-    authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+    authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Strong,
-  }
+  })
 }
 
 export function buildSchoolApplication(opts: {
@@ -76,28 +74,31 @@ export function buildSchoolApplication(opts: {
 }) {
   return new SchoolApplication({
     atomicExecution: opts.atomicExecution,
+    commandJournal: new PostgresCommandJournal(),
+
     repositories: opts.repositories,
     notificationGateway: noOpNotificationGateway,
     fileStorage: noOpFileStorage,
-    authorizationPolicy: createRepositoryAuthorizationPolicy({
-      repositories: opts.repositories,
-      staffAssignmentRepository: opts.repositories.staffAssignments,
-      staffMemberRepository: opts.repositories.staffMembers,
-      guardianRepository: opts.repositories.guardians,
-      guardianStudentLinkRepository: opts.repositories.guardianLinks,
-      studentRepository: opts.repositories.students,
-    }),
+
   })
 }
 
-export async function seedDefaultStaffMember(repos: any, actor: ActorMetadata) {
+export async function seedDefaultStaffMember(repos: SchoolRepositories, actor: ActorMetadata, owner: boolean, _atomic: AtomicExecutionPort) {
   if (actor.kind === 'staff') {
-    await repos.staffMembers.save(new StaffMember({
+    if (owner) {
+      await repos.schools.save(new School(withShortName({ id: actor.schoolId, name: 'Fixture school', timeZone: 'UTC', ownerSubjectId: actor.subjectId })))
+    }
+    const staff = new StaffMember({
       id: actor.staffMemberId,
       schoolId: actor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
-    }))
+      accountKind: actor.accountKind,
+      ...(actor.accountKind === 'human' ? { subjectId: actor.subjectId } : { serviceId: 'fixture-service', name: 'Fixture service', shortName: 'Fixture' }),
+    })
+    if (staff.accountKind === 'service')
+      await repos.staffMembers.save(staff)
+    else await saveHumanFixture(repos.staffMembers, staff)
   }
 }
 
@@ -125,14 +126,15 @@ export function buildTestRepositoriesMap(repos: any) {
     attendanceRepository: repos.attendance,
     assessmentResultRepository: repos.assessmentResults,
     gradeScaleRepository: repos.gradeScales,
-    reportCardDefinitionRepository: repos.definitions,
-    reportCardDefinitionSectionRepository: repos.sections,
+    reportModuleRepository: repos.reportModules,
     reportCardResultRepository: repos.results,
     announcementRepository: repos.announcements,
     announcementTargetRepository: repos.announcementTargets,
     messageDeliveryRepository: repos.messageDeliveries,
-    feeRepository: repos.fees,
-    studentFeeRepository: repos.studentFees,
+    catalogServiceRepository: repos.catalogServices,
+    studentChargeRepository: repos.studentCharges,
+    studentYearAccountRepository: repos.studentYearAccounts,
+    studentFeeRepository: repos.studentCharges,
     paymentRepository: repos.payments,
     scheduleRepository: repos.schedules,
     calendarEventRepository: repos.calendarEvents,

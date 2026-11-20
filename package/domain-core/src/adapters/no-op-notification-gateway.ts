@@ -3,8 +3,6 @@ import type { NotificationGatewayPort } from '../ports/gateways/notification-gat
 export const noOpNotificationGateway: NotificationGatewayPort = {
   enqueue: async () => {},
   cancel: async () => {},
-  upsertRecipient: async () => {},
-  removeRecipient: async () => {},
   registerPushDevice: async () => {},
   unregisterPushDevice: async () => {},
 }

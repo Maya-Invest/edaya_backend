@@ -1,24 +1,22 @@
 import type { ClassGroup } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, SchoolStructureOperations } from '@edaya/authorization'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
+import { classGradeBillingHooks } from '../../../../capabilities/finance/auto-billing-hooks'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/class-group.ts (PR3)
-export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkClassGroupAccess(actor, ids))
-
+export const classGroupConfig: EntityConfigFactory<ClassGroup> = (context) => {
+  const { repositories, atomicExecution } = context
   return config({
     repository: repositories.classGroups,
     tenant: directSchoolTenant(),
-    read: read(operationModule(SchoolStructureOperations.classGroupRead), readAccess),
-    write: write(
-      operationModule(SchoolStructureOperations.configure),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    resource: 'classGroups',
+    writeLockGroup: 'academic-state',
+    hooks: classGradeBillingHooks(context),
+
     gates: {
       preSave: validateClassGroupSave,
       preDelete: validateClassGroupDelete,
@@ -45,6 +43,10 @@ export async function validateClassGroupSave(
   }
   if (classGroup.homeroomStaffId && (!homeroomStaff || homeroomStaff.schoolId !== classGroup.schoolId)) {
     denyResourceAccess()
+  }
+  if (existing && (existing.gradeLevelId !== classGroup.gradeLevelId || existing.academicYearId !== classGroup.academicYearId)
+    && await repositories.classSubjects.count({ classGroupId: classGroup.id })) {
+    throw new BusinessRuleViolationError('CLASS_GROUP_CURRICULUM_PLACEMENT_IMMUTABLE', 'A class with subject offerings cannot move to another grade or academic year')
   }
   if (existing && classGroup.capacity !== undefined) {
     const activeEnrollmentCount = await repositories.enrollments.count({

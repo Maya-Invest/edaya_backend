@@ -1,5 +1,6 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { Environment } from "@/runtime/shared/env/schema";
+import type { IdentityClient } from "../identity/server/index";
 
 export type RuntimeKind = "in-memory" | "local" | "worker";
 
@@ -11,23 +12,11 @@ export interface DatabaseHandle {
   dispose: () => Promise<void>;
 }
 
-export interface AuthService {
-  handler: (request: Request) => Promise<Response>;
-  api: {
-    getSession: (args: { headers: Headers }) => Promise<unknown>;
-  };
-  $context?: Promise<{
-    internalAdapter: {
-      updateUser: (userId: string, data: { emailVerified?: boolean }) => Promise<unknown>;
-      updateUserByEmail: (email: string, data: { emailVerified?: boolean }) => Promise<unknown>;
-      findUserByEmail: (email: string) => Promise<{ id: string; emailVerified?: boolean } | null>;
-    };
-  }>;
-}
-
 export interface ApiRuntime {
+  getIdentityRuntime?: () => Promise<import("@/identity/runtime").IdentityRuntime>;
+  drainNotifications?: () => Promise<void>;
   readonly env: Environment;
   getSchoolApplication: () => Promise<ApiSchoolApplication>;
-  getAuth: () => AuthService;
+  getIdentityClient: () => IdentityClient;
   close: () => Promise<void>;
 }

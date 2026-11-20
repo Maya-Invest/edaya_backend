@@ -1,19 +1,14 @@
-import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
-import { normalizeAuthSession, resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
-import { conflictResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
+import { admitIdentityOnlyEntry } from "@/lib/school-api/identity-only-entry";
+import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
-import { AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError } from "@edaya/core";
+import { AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus } from "@edaya/core";
 import { hashInvitationToken, resolveInviteeDisplayName } from "@edaya/service";
-import { createSystemActorMetadata } from "@edaya/authorization";
 import type { AccountInvitation, Guardian, StaffMember, Student } from "@edaya/core";
-import type { ActorMetadata } from "@edaya/authorization";
 import type { SchoolRepositories } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
-import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
@@ -27,8 +22,23 @@ const invitationPreviewResponseSchema = z.object({
   inviteeName: z.string(),
   contactChannel: z.string(),
   contactEmail: z.string().email().optional(),
+  contactPhone: z.string().optional(),
   authAccountExists: z.boolean().optional(),
 }).openapi("InvitationPreviewResponse");
+
+const sessionInvitationSchema = z.object({
+  id: z.string(),
+  kind: z.literal(AccountInvitationKind.Guardian),
+  status: z.nativeEnum(AccountInvitationStatus),
+  expiresAt: z.coerce.date(),
+  schoolName: z.string(),
+  inviteeName: z.string(),
+  contactChannel: z.string(),
+}).openapi("SessionInvitation");
+
+const listMyInvitationsResponseSchema = z.object({
+  invitations: z.array(sessionInvitationSchema),
+}).openapi("ListMyInvitationsResponse");
 
 const acceptInvitationResponseSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -44,6 +54,49 @@ const acceptInvitationResponseSchema = z.discriminatedUnion("kind", [
     entity: z.record(z.unknown()),
   }),
 ]).openapi("AcceptInvitationResponse");
+
+export const listMyInvitationsRoute = createRoute({
+  method: "get",
+  path: "/public/me/invitations",
+  tags: ["Public Invitations"],
+  summary: "List pending guardian invitations for the signed-in identity",
+  ...clientRouteOperation({
+    namespace: "public",
+    clientKey: "listMyInvitations",
+    path: "public/me/invitations",
+    basePath: "root",
+    responseSchemaName: "ListMyInvitationsResponse",
+  }),
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(listMyInvitationsResponseSchema, "Pending invitations for this identity"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const acceptMyInvitationRoute = createRoute({
+  method: "post",
+  path: "/public/me/invitations/{invitationId}/accept",
+  tags: ["Public Invitations"],
+  summary: "Accept a pending guardian invitation for the signed-in identity",
+  ...clientRouteOperation({
+    namespace: "public",
+    clientKey: "acceptMyInvitation",
+    path: "public/me/invitations/{invitationId}/accept",
+    pathParams: ["invitationId"],
+    basePath: "root",
+    responseSchemaName: "AcceptInvitationResponse",
+  }),
+  request: {
+    params: z.object({
+      invitationId: z.string().min(1),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(acceptInvitationResponseSchema, "Linked actor"),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(createMessageObjectSchema(), "Invitation not found"),
+    ...coreRouteErrorResponses,
+  },
+});
 
 export const invitationPreviewRoute = createRoute({
   method: "get",
@@ -122,32 +175,66 @@ async function resolveInviteeName(
   return student ? resolveInviteeDisplayName(student) : "Student";
 }
 
-function actorMatchesInvitationTarget(actor: ActorMetadata, invitation: AccountInvitation): boolean {
-  switch (invitation.kind) {
-    case AccountInvitationKind.Staff:
-      return actor.kind === "staff" && actor.staffMemberId === invitation.targetId;
-    case AccountInvitationKind.Guardian:
-      return actor.kind === "guardian" && actor.guardianId === invitation.targetId;
-    case AccountInvitationKind.Student:
-      return actor.kind === "student" && actor.studentId === invitation.targetId;
-    case AccountInvitationKind.Teacher:
-      return actor.kind === "teacher" && actor.teacherId === invitation.targetId;
-  }
-  return false;
+async function toSessionInvitation(
+  repositories: SchoolRepositories,
+  invitation: AccountInvitation,
+): Promise<z.infer<typeof sessionInvitationSchema>> {
+  const school = await repositories.schools.findById(invitation.schoolId);
+  const inviteeName = await resolveInviteeName(repositories, invitation);
+  return {
+    id: invitation.id,
+    kind: AccountInvitationKind.Guardian,
+    status: invitation.status,
+    expiresAt: invitation.expiresAt,
+    schoolName: school?.name ?? "School",
+    inviteeName,
+    contactChannel: invitation.contactChannel,
+  };
 }
 
-function createInvitationSystemService(
-  schoolApp: ApiSchoolApplication,
-  schoolId: string,
-  requestId: string,
-) {
-  return schoolApp.forActor(createSystemActorMetadata({
-    schoolId,
-    systemId: "account-invitation-public",
-    requestId,
-    reason: "public-invitation-accept",
-  }));
-}
+export const listMyInvitationsHandler: AppRouteHandler<typeof listMyInvitationsRoute> = async (c) => {
+  const entry = await admitIdentityOnlyEntry({
+    headers: c.req.raw.headers,
+    identityClient: c.var.identityClient,
+    schoolApp: c.var.schoolApp,
+    selectedActor: c.var.actor,
+  });
+  if (!entry) {
+    return unauthorizedResponse(c);
+  }
+
+  const invitations = await entry.listMyInvitations();
+  const repositories = c.var.schoolApp.repositories;
+  return c.json({
+    invitations: await Promise.all(invitations.map(invitation => toSessionInvitation(repositories, invitation))),
+  }, HttpStatusCodes.OK);
+};
+
+export const acceptMyInvitationHandler: AppRouteHandler<typeof acceptMyInvitationRoute> = async (c) => {
+  const entry = await admitIdentityOnlyEntry({
+    headers: c.req.raw.headers,
+    identityClient: c.var.identityClient,
+    schoolApp: c.var.schoolApp,
+    selectedActor: c.var.actor,
+  });
+  if (!entry) {
+    return unauthorizedResponse(c);
+  }
+
+  try {
+    const result = await entry.acceptInvitationById(c.req.valid("param").invitationId);
+    if (!result) {
+      return c.json({ message: "Invitation not found" }, HttpStatusCodes.NOT_FOUND);
+    }
+    return c.json(
+      serializeCommandResult(result) as z.infer<typeof acceptInvitationResponseSchema>,
+      HttpStatusCodes.OK,
+    );
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
 
 export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewRoute> = async (c) => {
   const token = c.req.valid("param").token;
@@ -158,11 +245,6 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
 
   const school = await c.get("schoolApp").repositories.schools.findById(invitation.schoolId);
   const inviteeName = await resolveInviteeName(c.get("schoolApp").repositories, invitation);
-
-  let authAccountExists: boolean | undefined;
-  if (invitation.contactChannel === AccountInvitationContactChannel.Email && invitation.contactValue) {
-    authAccountExists = await c.get("schoolApp").hasAuthAccountForEmail(invitation.contactValue);
-  }
 
   return c.json({
     status: invitation.status,
@@ -175,45 +257,30 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
     ...(invitation.contactChannel === AccountInvitationContactChannel.Email
       ? {
           contactEmail: invitation.contactValue,
-          ...(authAccountExists !== undefined ? { authAccountExists } : {}),
         }
-      : {}),
+      : {
+          contactPhone: invitation.contactValue,
+          ...(invitation.contactValue ? { authAccountExists: await c.get("schoolApp").hasAuthAccountForPhone(invitation.contactValue) } : {}),
+        }),
   }, HttpStatusCodes.OK);
 };
 
 export const acceptInvitationHandler: AppRouteHandler<typeof acceptInvitationRoute> = async (c) => {
-  const session = await resolveAuthenticatedSession(
-    c.var.auth as AuthSessionProvider,
-    c.req.raw.headers,
-  );
-  const normalized = normalizeAuthSession(session);
-  if (!normalized?.user.email) {
+  const entry = await admitIdentityOnlyEntry({
+    headers: c.req.raw.headers,
+    identityClient: c.var.identityClient,
+    schoolApp: c.var.schoolApp,
+    selectedActor: c.var.actor,
+  });
+  if (!entry) {
     return unauthorizedResponse(c);
   }
 
-  const token = c.req.valid("param").token;
-  const invitation = await findInvitationByToken(c.get("schoolApp").repositories, token);
-  if (!invitation) {
-    return c.json({ message: "Invitation not found" }, HttpStatusCodes.NOT_FOUND);
-  }
-
-  const actor = c.get("actor");
-  if (actor && !actorMatchesInvitationTarget(actor, invitation)) {
-    return conflictResponse(c, new BusinessRuleViolationError(
-      "SUBJECT_ALREADY_LINKED",
-      "This account is already linked to a school actor",
-    ));
-  }
-
-  const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
-  const service = createInvitationSystemService(c.get("schoolApp"), invitation.schoolId, requestId);
-
   try {
-    const result = await service.accountInvitationWorkflow.acceptAccountInvitation({
-      token,
-      subjectId: normalized.user.id,
-      contactEmail: normalized.user.email,
-    });
+    const result = await entry.acceptInvitation(c.req.valid("param").token);
+    if (!result) {
+      return c.json({ message: "Invitation not found" }, HttpStatusCodes.NOT_FOUND);
+    }
     return c.json(
       serializeCommandResult(result) as z.infer<typeof acceptInvitationResponseSchema>,
       HttpStatusCodes.OK,

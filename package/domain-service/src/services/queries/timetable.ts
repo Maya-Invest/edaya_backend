@@ -1,5 +1,6 @@
-import type { ActivitySession, Assessment, LessonSession, OccurrenceStatus } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { ActivitySession, Assessment, Filter, LessonSession, OccurrenceStatus } from '@edaya/core'
+import type { SchoolRepositories } from '../../ports/school-repositories'
+import { effectiveAt } from '@edaya/authorization'
 import { AssessmentKind, normalizeDate, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 
 export type TimetableEventKind = 'lesson' | 'activity' | 'assessment'
@@ -38,25 +39,42 @@ export interface ClassGroupTimetable {
   events: TimetableEvent[]
 }
 
+export interface GetTeacherTimetableInput {
+  teacherId: string
+  startDate: Date
+  endDate: Date
+}
+
+export interface TeacherTimetable {
+  teacherId: string
+  startDate: string
+  endDate: string
+  events: TimetableEvent[]
+}
+
 export async function buildClassGroupTimetable(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
   input: GetClassGroupTimetableInput,
 ): Promise<ClassGroupTimetable> {
   const rangeStart = normalizeDate(input.startDate)
   const rangeEnd = endOfUtcDay(normalizeDate(input.endDate))
 
+  const lessons = repositories.lessonSessions.list({
+    classGroupId: input.classGroupId,
+    startsAt: { $gte: rangeStart, $lte: rangeEnd },
+    $orderBy: [{ field: 'startsAt', direction: 'asc' }],
+  })
   const [lessonSessions, activitySessions, assessments] = await Promise.all([
-    repositories.lessonSessions.list({
-      classGroupId: input.classGroupId,
-      startsAt: { $gte: rangeStart, $lte: rangeEnd },
-      $orderBy: [{ field: 'startsAt', direction: 'asc' }],
-    }),
+    lessons,
     repositories.activitySessions.list({
       classGroupId: input.classGroupId,
       startsAt: { $gte: rangeStart, $lte: rangeEnd },
       $orderBy: [{ field: 'startsAt', direction: 'asc' }],
     }),
-    repositories.assessments.list({ classGroupId: input.classGroupId }),
+    lessons.then(sessions => repositories.assessments.list({
+      classGroupId: input.classGroupId,
+      ...timetableAssessmentWindow(rangeStart, rangeEnd, sessions),
+    })),
   ])
 
   const lessonSessionById = new Map(lessonSessions.map(session => [session.id, session]))
@@ -80,7 +98,72 @@ export async function buildClassGroupTimetable(
   }
 }
 
-function lessonEventFromSession(session: LessonSession): TimetableEvent {
+export async function buildTeacherTimetable(
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
+  input: GetTeacherTimetableInput,
+): Promise<TeacherTimetable> {
+  const rangeStart = normalizeDate(input.startDate)
+  const rangeEnd = endOfUtcDay(normalizeDate(input.endDate))
+  const now = new Date()
+
+  const [lessonSessions, assignments] = await Promise.all([
+    repositories.lessonSessions.list({
+      startsAt: { $gte: rangeStart, $lte: rangeEnd },
+      $orderBy: [{ field: 'startsAt', direction: 'asc' }],
+    }),
+    repositories.teacherAssignments.list({ teacherId: input.teacherId }),
+  ])
+
+  const teacherLessons = lessonSessions.filter(session => session.timetableTeacherIds.includes(input.teacherId))
+  const activeSubjectClassIds = new Set(
+    assignments
+      .filter(assignment =>
+        assignment.status === TeacherAssignmentStatus.Active
+        && assignment.kind === TeacherAssignmentKind.Subject
+        && effectiveAt(assignment, now)
+        && assignment.classSubjectId,
+      )
+      .map(assignment => assignment.classSubjectId!),
+  )
+
+  const assessments = activeSubjectClassIds.size > 0
+    ? await repositories.assessments.list({
+        classSubjectId: { $in: [...activeSubjectClassIds] },
+        ...timetableAssessmentWindow(rangeStart, rangeEnd, lessonSessions),
+      })
+    : []
+
+  const lessonSessionById = new Map(lessonSessions.map(session => [session.id, session]))
+  const events: TimetableEvent[] = [
+    ...teacherLessons.map(lessonEventFromSession),
+    ...assessments
+      .filter(assessment => isInClassTimetableAssessment(assessment) && assessment.classSubjectId && activeSubjectClassIds.has(assessment.classSubjectId))
+      .flatMap(assessment => timetableEventsFromAssessment(assessment, lessonSessionById, rangeStart, rangeEnd)),
+  ]
+
+  events.sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
+
+  const eventsByClass = new Map<string, TimetableEvent[]>()
+  for (const event of events) {
+    const group = eventsByClass.get(event.classGroupId) ?? []
+    group.push(event)
+    eventsByClass.set(event.classGroupId, group)
+  }
+  await Promise.all(
+    [...eventsByClass.entries()].map(([classGroupId, classEvents]) =>
+      enrichTimetableEventPresentation(repositories, classGroupId, classEvents),
+    ),
+  )
+
+  return {
+    teacherId: input.teacherId,
+    startDate: toDateKey(rangeStart),
+    endDate: toDateKey(normalizeDate(input.endDate)),
+    events,
+  }
+}
+
+export function lessonEventFromSession(session: LessonSession): TimetableEvent {
   return {
     kind: 'lesson',
     id: session.id,
@@ -95,7 +178,7 @@ function lessonEventFromSession(session: LessonSession): TimetableEvent {
   }
 }
 
-function activityEventFromSession(session: ActivitySession): TimetableEvent {
+export function activityEventFromSession(session: ActivitySession): TimetableEvent {
   return {
     kind: 'activity',
     id: session.id,
@@ -109,7 +192,21 @@ function activityEventFromSession(session: ActivitySession): TimetableEvent {
   }
 }
 
-function isInClassTimetableAssessment(assessment: Assessment): boolean {
+function timetableAssessmentWindow(start: Date, end: Date, lessons: LessonSession[]): Filter<Assessment> {
+  const explicitDates: Filter<Assessment> = { startsAt: { $lt: end }, endsAt: { $gt: start } }
+  // Explicit assessment dates take precedence even if its linked lesson moved.
+  const anchor: Filter<Assessment> = {
+    lessonSessionId: { $in: lessons.map(lesson => lesson.id) },
+    $or: [{ startsAt: { $exists: false } }, { endsAt: { $exists: false } }],
+  }
+  return {
+    kind: { $ne: AssessmentKind.Homework },
+    dueAt: { $exists: false },
+    $or: lessons.length ? [explicitDates, anchor] : [explicitDates],
+  }
+}
+
+export function isInClassTimetableAssessment(assessment: Assessment): boolean {
   if (assessment.kind === AssessmentKind.Homework || assessment.dueAt) {
     return false
   }
@@ -125,23 +222,18 @@ function timetableEventsFromAssessment(
   rangeStart: Date,
   rangeEnd: Date,
 ): TimetableEvent[] {
-  if (assessment.startsAt && assessment.endsAt) {
-    if (!occurrenceOverlapsRange(assessment.startsAt, assessment.endsAt, rangeStart, rangeEnd)) {
-      return []
-    }
-    return [assessmentEvent(assessment, assessment.startsAt, assessment.endsAt)]
-  }
+  const event = selectedAssessmentEvent(assessment, assessment.lessonSessionId ? lessonSessionById.get(assessment.lessonSessionId) : undefined)
+  return event && occurrenceOverlapsRange(event.startsAt, event.endsAt, rangeStart, rangeEnd) ? [event] : []
+}
 
-  if (assessment.lessonSessionId) {
-    const lessonSession = lessonSessionById.get(assessment.lessonSessionId)
-      ?? undefined
-    if (!lessonSession || !occurrenceOverlapsRange(lessonSession.startsAt, lessonSession.endsAt, rangeStart, rangeEnd)) {
-      return []
-    }
-    return [assessmentEvent(assessment, lessonSession.startsAt, lessonSession.endsAt, assessment.lessonSessionId)]
-  }
-
-  return []
+export function selectedAssessmentEvent(assessment: Assessment, lesson?: LessonSession): TimetableEvent | undefined {
+  if (!isInClassTimetableAssessment(assessment))
+    return undefined
+  if (assessment.startsAt && assessment.endsAt)
+    return assessmentEvent(assessment, assessment.startsAt, assessment.endsAt)
+  if (lesson && lesson.id === assessment.lessonSessionId && lesson.classGroupId === assessment.classGroupId)
+    return assessmentEvent(assessment, lesson.startsAt, lesson.endsAt, lesson.id)
+  return undefined
 }
 
 function assessmentEvent(
@@ -182,7 +274,7 @@ function uniqueStrings(values: Iterable<string | undefined>): string[] {
 }
 
 async function enrichTimetableEventPresentation(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
   classGroupId: string,
   events: TimetableEvent[],
 ): Promise<void> {
@@ -213,10 +305,12 @@ async function enrichTimetableEventPresentation(
       : Promise.resolve([]),
   ])
 
+  const now = new Date()
   const activeSubjectAssignments = assignments.filter(
     assignment =>
       assignment.status === TeacherAssignmentStatus.Active
       && assignment.kind === TeacherAssignmentKind.Subject
+      && effectiveAt(assignment, now)
       && assignment.classSubjectId,
   )
   const snapshotTeacherIds = uniqueStrings(events.flatMap(event => event.timetableTeacherIds ?? []))
@@ -228,15 +322,17 @@ async function enrichTimetableEventPresentation(
   const teacherNameById = new Map(
     teachers.map(teacher => [teacher.id, teacher.fullName.trim()] as const),
   )
-  const teacherNameByClassSubjectId = new Map<string, string>()
+  const activeTeacherIds = new Set(teachers.filter(teacher => teacher.isActive).map(teacher => teacher.id))
+  const teacherNamesByClassSubjectId = new Map<string, Set<string>>()
   for (const assignment of activeSubjectAssignments) {
-    const classSubjectId = assignment.classSubjectId!
-    if (teacherNameByClassSubjectId.has(classSubjectId)) {
+    if (!activeTeacherIds.has(assignment.teacherId))
       continue
-    }
+    const classSubjectId = assignment.classSubjectId!
     const teacherName = teacherNameById.get(assignment.teacherId)
     if (teacherName) {
-      teacherNameByClassSubjectId.set(classSubjectId, teacherName)
+      const names = teacherNamesByClassSubjectId.get(classSubjectId) ?? new Set<string>()
+      names.add(teacherName)
+      teacherNamesByClassSubjectId.set(classSubjectId, names)
     }
   }
 
@@ -261,7 +357,7 @@ async function enrichTimetableEventPresentation(
       }
     }
     if (event.classSubjectId) {
-      event.teacherName = teacherNameByClassSubjectId.get(event.classSubjectId)
+      event.teacherName = [...teacherNamesByClassSubjectId.get(event.classSubjectId) ?? []].sort().join(', ') || undefined
     }
   }
 }

@@ -2,6 +2,7 @@ import type { AccountInvitationData } from "@edaya/core";
 import type { SchoolCommandKey, SchoolService } from "@edaya/service";
 import { toPublicAccountInvitationData } from "@edaya/core";
 import { dispatchSchoolCommand } from "@edaya/service";
+import { serializeNestedEntities, unwrapDomainEntity } from "../serialization";
 
 export type CoreCommandMethodName = SchoolCommandKey;
 
@@ -13,21 +14,11 @@ export function dispatchCoreCommand(
   return dispatchSchoolCommand(service.commands, methodName, payload);
 }
 
-function unwrapDomainEntity(entity: unknown): unknown {
-  if (
-    entity
-    && typeof entity === "object"
-    && "data" in entity
-    && entity.data
-    && typeof entity.data === "object"
-  ) {
-    return entity.data;
+export function serializeCommandResult(result: unknown): unknown {
+  if (Array.isArray(result)) {
+    return result.map(serializeCommandResult);
   }
 
-  return entity;
-}
-
-export function serializeCommandResult(result: unknown): unknown {
   if (!result || typeof result !== "object") {
     return result;
   }
@@ -35,7 +26,7 @@ export function serializeCommandResult(result: unknown): unknown {
   if ("kind" in result && "entity" in result) {
     return {
       kind: result.kind,
-      entity: unwrapDomainEntity(result.entity),
+      entity: serializeNestedEntities(unwrapDomainEntity(result.entity)),
     };
   }
 
@@ -55,5 +46,5 @@ export function serializeCommandResult(result: unknown): unknown {
     };
   }
 
-  return unwrapDomainEntity(result);
+  return serializeNestedEntities(unwrapDomainEntity(result));
 }

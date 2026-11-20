@@ -1,14 +1,20 @@
+env = false
+
 [test]
+preload = ["./tooling/test-support/unit-preload.ts"]
+# Allow bounded CLI/process tests alongside fast domain tests.
+timeout = 30_000
 pathIgnorePatterns = [
+  "**/*.integration.test.ts",
   "**/dist/**",
   "**/node_modules/**",
-  "package/generated-api-client/**",
+  "package/api-client/**",
   "tooling/integration-tests/**",
 ]
 coverageThreshold = 0
 coveragePathIgnorePatterns = [
   "**/index.ts",
-  "package/generated-api-client/**",
+  "package/api-client/**",
   "tooling/integration-tests/**",
 ]
 coverageReporters = [

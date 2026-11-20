@@ -1,4 +1,4 @@
-import type { AcademicPeriodType, AttendanceMode, DayOfWeek, SchoolType } from '@edaya/core'
+import type { AcademicPeriodType, AttendanceMode, DayOfWeek, StaffProfileRole } from '@edaya/core'
 
 export interface SchoolStructureSeedState {
   schoolIds: readonly string[]
@@ -9,16 +9,24 @@ export interface SchoolStructureSchoolRecord {
   id: string
   name: string
   timeZone: string
+  financeCurrency?: string
   ownerSubjectId?: string
-  type?: SchoolType
+  shortName?: string
   country?: string
   city?: string
+  issuingName?: string
+  postalAddress?: string
+  phone?: string
+  email?: string
+  schoolCode?: string
 }
 
 export interface GradeLevelSeedRecord {
   id: string
   schoolId: string
   name: string
+  /** Stem used to build class names (`6ème` → `6ème 1`). */
+  shortName: string
   order: number
   cycle?: string
 }
@@ -45,7 +53,7 @@ export interface PeriodDefinitionSeedRecord {
   id: string
   schoolId: string
   academicYearId: string
-  label: string
+  name: string
   dayOfWeek: DayOfWeek
   order: number
   startTime: string
@@ -60,7 +68,7 @@ export interface SchoolStructureStaffRecord {
   firstName: string
   lastName: string
   email?: string
-  subjectId?: string
+  profileRole?: StaffProfileRole
   sendAccountInvitation?: boolean
 }
 
@@ -78,8 +86,11 @@ export interface ClassGroupSeedRecord {
 export interface SchoolStructureSeedPort {
   inspectSeedState: (demoSchoolId: string) => Promise<SchoolStructureSeedState>
   registerSchool: (record: SchoolStructureSchoolRecord) => Promise<void>
+  /** Apply the fixture currency before later domains create financial records. */
+  configureFinanceCurrency: (schoolId: string, financeCurrency: string) => Promise<void>
   saveGradeLevel: (record: GradeLevelSeedRecord) => Promise<void>
   createAcademicYear: (record: AcademicYearSeedRecord) => Promise<void>
+  publishAcademicYear: (academicYearId: string) => Promise<void>
   createAcademicPeriod: (record: AcademicPeriodSeedRecord) => Promise<void>
   publishAcademicPeriod: (academicPeriodId: string) => Promise<void>
   savePeriodDefinition: (record: PeriodDefinitionSeedRecord) => Promise<void>

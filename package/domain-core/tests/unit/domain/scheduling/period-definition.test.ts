@@ -6,7 +6,7 @@ describe('PeriodDefinition entity', () => {
     id: 'per1',
     schoolId: 'sch1',
     academicYearId: 'yr1',
-    label: 'Period 1',
+    name: 'Period 1',
     dayOfWeek: DayOfWeek.Monday,
     order: 1,
     startTime: '08:00',
@@ -57,7 +57,7 @@ describe('PeriodDefinition entity', () => {
     const period = new PeriodDefinition({
       ...baseArgs,
       isBreak: true,
-      label: 'Recess',
+      name: 'Recess',
       startTime: '10:30',
       endTime: '10:45',
     })

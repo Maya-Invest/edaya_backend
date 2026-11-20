@@ -30,11 +30,11 @@ runtime/
     adapters/
       file-storage.ts
       notification-gateway.ts
+      document-renderer.ts
       invitation-delivery.ts
-      notification-delivery-webhook.ts
-      auth-otp-mailer.ts
+      notify-delivery-sink.ts
+      ../../identity/composition.ts
       auth-contact-resolver.ts
-      better-auth.ts
       pino-logger.ts
     create-api-runtime.ts
     school-application.ts
@@ -42,17 +42,18 @@ runtime/
     school-database.ts
 
   in-memory/
-    build-runtime.ts, auth-database.ts
+    build-runtime.ts
 
   local/
-    profile.ts, build-runtime.ts, school-database.ts, auth-database.ts
+    profile.ts, build-runtime.ts, school-database.ts
     registry.ts
     resolve-api-runtime.ts
 
   worker/
-    build-runtime.ts, school-database.ts, auth-database.ts
-    auth-service.ts
+    build-runtime.ts, school-database.ts
     resolve-api-runtime.ts
+    resolve-cron-job-dispatcher.ts
+    adapters/cloudflare-queue-cron-job-dispatcher.ts
 ```
 
 ## Runtime access

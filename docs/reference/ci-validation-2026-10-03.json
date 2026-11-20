@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-03T23:00:14.710294+00:00",
+  "scope": "Local validation of uncommitted CI changes; these are not new deployment commits",
+  "repositories": {
+    "backend": {
+      "baseCommit": "2eda0cac6c92e0c507ef4aa59fd7ff1a2e8b80ad",
+      "testedWorkingTreeSha256": "8e970b63044fed898d662638f627bbda8a15484171b55f63b29f15a8aff9621b",
+      "changedFiles": 27
+    },
+    "frontend": {
+      "baseCommit": "8f8eacf72e469852e1bc102c8df768c05ad211be",
+      "testedWorkingTreeSha256": "eb08ebd639fdb53983fb8b6fc4eec830d3b0e9cb3a08228deb7556be56dc625b",
+      "changedFiles": 33
+    },
+    "mobile": {
+      "baseCommit": "7f6ac02070a27fef31844d7505b22a2e17e81108",
+      "testedWorkingTreeSha256": "a31bfa152c46cd6e08ebea84636d7493caef60b91d1a2b062bd8aa20097e7c20",
+      "changedFiles": 20
+    }
+  },
+  "localGates": {
+    "backend": {
+      "unitAndToolingPassed": 2079,
+      "serviceAndHttpPassed": 57,
+      "seedHttpPassed": 8,
+      "nativePostgresPassed": 63,
+      "integrationPassed": 128,
+      "failures": 0,
+      "skipped": 0
+    },
+    "frontend": {
+      "unitAndToolingPassed": 940,
+      "browserPassed": 520,
+      "suites": {
+        "availability": 6,
+        "onboarding": 29,
+        "provisioned": 398,
+        "webadmin": 4,
+        "demo": 83
+      },
+      "failures": 0,
+      "skipped": 0
+    },
+    "mobile": {
+      "unitAndToolingPassed": 194,
+      "integrationPassed": 118,
+      "suites": {
+        "api": 47,
+        "guardian": 42,
+        "teacher": 29
+      },
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "additionalValidation": {
+    "workflowAndActionYamlParsed": 26,
+    "actionlint": "1.7.12",
+    "shellSyntax": "passed",
+    "committedLocks": "unchanged",
+    "bootstrapResetAndRetry": "passed on disposable native PostgreSQL",
+    "deploymentDryRuns": [
+      "api",
+      "webapp",
+      "webadmin"
+    ],
+    "developmentImageBuild": "passed",
+    "developmentImageSmoke": "passed; private OTP/internal routes rejected",
+    "signedApks": [
+      {
+        "app": "guardian",
+        "applicationId": "ca.maya-invest.edaya.guardian",
+        "certificateSha256": "c7efef9fff9673b6aa087eaea577f9323331c9a36984f2b17ee563ff1fa00d52",
+        "sha256": "91cdabf6a75dd925301c58b80393b421ec963675002e62fa6d89d33db17d1ae0"
+      },
+      {
+        "app": "teacher",
+        "applicationId": "ca.mayainvest.edaya.teacher",
+        "certificateSha256": "b4914d6b0aa952ef164c21732b2ba37e5331a551093aeb525aef29954182ef2d",
+        "sha256": "e514a0977f7865d31e837be6f1e54d1df84c3d7c87ab360c50dfa0e53e25fc17"
+      }
+    ],
+    "releaseManifestSchema": 4,
+    "apkProvenanceSchema": 3
+  },
+  "toolchains": {
+    "localPlatform": "macOS arm64",
+    "ciRunner": "Ubuntu 24.04",
+    "node": "22.15.0",
+    "python": "3.13.3",
+    "bun": "1.3.14",
+    "flutter": "3.44.8",
+    "melos": "8.0.0",
+    "java": "Temurin 17.0.20.1+1",
+    "localPostgres": "14.15",
+    "dockerEngine": "29.6.2"
+  },
+  "github": {
+    "freshWorkflowRun": false,
+    "updatedRevisionStatus": "Not run; no commit or push made",
+    "privateMergeProtection": "Unavailable/unverified under current GitHub plan"
+  },
+  "stagingReadiness": "blocked",
+  "blockers": [
+    "Retained Neon endpoint ownership/project/staging branch is unverified: ep-holy-mouse-awj7ghpf.c-12.us-east-1.aws.neon.tech",
+    "Dedicated edaya_identity database and role still require verification",
+    "Release credentials were not loaded into the local preflight; configuration failure evidence contains field names only",
+    "No committed revisions exist for these CI changes; no fresh GitHub result is available"
+  ],
+  "boundaries": {
+    "liveDeployment": false,
+    "publication": false,
+    "liveReset": false,
+    "rolloutDispatch": false,
+    "implementationCommit": false,
+    "gitHookChanges": false,
+    "billingOrVisibilityChanges": false
+  }
+}

@@ -11,6 +11,7 @@ export {
   resetApiRuntimesForTests,
   resetCoreRouteTestHarness,
   seedDevSchoolAndAuthLinks,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
+  testIdentityProvisioner,
 } from '@api-tests/support/core-route-harness'

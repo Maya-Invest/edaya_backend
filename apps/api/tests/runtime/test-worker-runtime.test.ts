@@ -4,7 +4,6 @@ import { createDependenciesInjection } from "@/http/dependency-injection";
 import {
   parseEnv,
   prepareRuntimeBindings,
-  resolveAuthDatabaseUrl,
   resolveDatabaseUrl,
   usesHyperdriveBinding,
 } from "@/runtime";
@@ -36,27 +35,6 @@ describe("resolveDatabaseUrl", () => {
   });
 });
 
-describe("resolveAuthDatabaseUrl", () => {
-  it("prefers HYPERDRIVE_AUTH on the worker runtime", () => {
-    const url = resolveAuthDatabaseUrl({
-      DATABASE_URL: "postgres://school",
-      HYPERDRIVE: { connectionString: "postgres://hyperdrive" },
-      HYPERDRIVE_AUTH: { connectionString: "postgres://hyperdrive-auth" },
-    }, "worker");
-
-    expect(url).toBe("postgres://hyperdrive-auth");
-  });
-
-  it("falls back to school Hyperdrive when auth binding is absent", () => {
-    const url = resolveAuthDatabaseUrl({
-      DATABASE_URL: "postgres://fallback",
-      HYPERDRIVE: { connectionString: "postgres://hyperdrive" },
-    }, "worker");
-
-    expect(url).toBe("postgres://hyperdrive");
-  });
-});
-
 describe("usesHyperdriveBinding", () => {
   it("returns true only for worker bindings with Hyperdrive", () => {
     expect(usesHyperdriveBinding({
@@ -70,7 +48,7 @@ describe("usesHyperdriveBinding", () => {
 });
 
 describe("prepareRuntimeBindings", () => {
-  it("injects resolved DATABASE_URL, AUTH_DATABASE_URL, and runtime kind", () => {
+  it("injects the resolved DATABASE_URL and runtime kind", () => {
     const bindings = prepareRuntimeBindings({
       RUNTIME: "worker",
       DATABASE_URL: "postgres://direct",
@@ -79,21 +57,7 @@ describe("prepareRuntimeBindings", () => {
 
     expect(bindings.RUNTIME).toBe("worker");
     expect(bindings.DATABASE_URL).toBe("postgres://direct");
-    expect(bindings.AUTH_DATABASE_URL).toBe("postgres://direct");
     expect(bindings.LOG_LEVEL).toBe("info");
-  });
-
-  it("resolves AUTH_DATABASE_URL from HYPERDRIVE_AUTH on worker", () => {
-    const bindings = prepareRuntimeBindings({
-      RUNTIME: "worker",
-      DATABASE_URL: "postgres://fallback",
-      HYPERDRIVE: { connectionString: "postgres://hyperdrive" },
-      HYPERDRIVE_AUTH: { connectionString: "postgres://hyperdrive-auth" },
-      LOG_LEVEL: "info",
-    }, "worker");
-
-    expect(bindings.DATABASE_URL).toBe("postgres://hyperdrive");
-    expect(bindings.AUTH_DATABASE_URL).toBe("postgres://hyperdrive-auth");
   });
 });
 

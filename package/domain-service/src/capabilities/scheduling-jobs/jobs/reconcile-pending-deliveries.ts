@@ -25,7 +25,7 @@ async function listDeliveriesForReconcile(
   status: MessageDeliveryStatus,
 ): Promise<Array<{ id: string, subjectId: string, status: MessageDeliveryStatus }>> {
   const { service, actor } = context
-  const deliveries = await service.baseService.repositories.messageDeliveries.list({
+  const deliveries = await service.baseService.entities.messageDeliveries.list({
     schoolId: actor.schoolId,
     status,
     $limit: RECONCILE_DELIVERY_LIMIT,
@@ -60,6 +60,7 @@ export async function reconcilePendingDeliveries(context: SchoolCronJobContext):
     const lookups = await gateway.lookupDeliveryStatuses(
       chunk.map(delivery => ({
         deliveryId: delivery.id,
+        schoolId: context.actor.schoolId,
         subjectId: delivery.subjectId,
       })),
     )

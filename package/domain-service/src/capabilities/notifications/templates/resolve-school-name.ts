@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import { resolveSchoolContext } from './resolve-school-context'
 
 export async function resolveSchoolName(

@@ -1,0 +1,29 @@
+name: branch_check
+on:
+  push:
+    branches-ignore: [main, staging]
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+concurrency:
+  group: branch-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source:
+    uses: ./.github/workflows/_prepare.yml
+    with:
+      target: staging
+      source_ref: ${{ github.sha }}
+  quality:
+    needs: source
+    uses: ./.github/workflows/_quality_check.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: staging
+  unit:
+    needs: source
+    uses: ./.github/workflows/_unit_test.yml
+    with:
+      source_ref: ${{ needs.source.outputs.source_sha }}
+      target: staging

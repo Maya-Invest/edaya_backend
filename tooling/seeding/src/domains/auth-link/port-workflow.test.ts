@@ -1,6 +1,6 @@
 import type { AuthProvisioner } from '../../support/types'
 import type { AuthLinkSeedPort } from './port'
-import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { demoCiSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
@@ -8,10 +8,7 @@ import {
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
-import { syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
-
-/* eslint-disable-next-line dot-notation -- process.env index signature */
-process.env['SEED_DATASET'] = 'demo'
+import { assignDevSchoolOwnerSubjectId, syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
 
 function subjectIdForEmail(email: string): string {
   return `subject:${email}`
@@ -29,6 +26,7 @@ function createMemoryPort(): {
   registeredStaff: string[]
   replacedGuardians: string[]
   replacedStaff: string[]
+  replacedTeachers: string[]
   state: {
     ownerSubjectId?: string
     guardians: Map<string, string | undefined>
@@ -38,6 +36,7 @@ function createMemoryPort(): {
 } {
   const firstStaff = DEV_AUTH_STAFF_ACCOUNTS[0]
   const firstGuardian = DEV_AUTH_GUARDIAN_ACCOUNTS[0]
+  const firstTeacher = DEV_AUTH_TEACHER_ACCOUNTS[0]
   const state = {
     ownerSubjectId: undefined as string | undefined,
     staff: new Map<string, string | undefined>(
@@ -56,10 +55,14 @@ function createMemoryPort(): {
   if (firstGuardian) {
     state.guardians.set(firstGuardian.guardianId, 'stale-guardian-subject')
   }
+  if (firstTeacher) {
+    state.teachers.set(firstTeacher.teacherId, 'stale-teacher-subject')
+  }
 
   const registeredStaff: string[] = []
   const replacedStaff: string[] = []
   const replacedGuardians: string[] = []
+  const replacedTeachers: string[] = []
 
   const port: AuthLinkSeedPort = {
     findSchoolById: async (id) => {
@@ -101,6 +104,10 @@ function createMemoryPort(): {
       replacedGuardians.push(guardianId)
       state.guardians.set(guardianId, subjectId)
     },
+    replaceTeacherSubjectId: async (teacherId, subjectId) => {
+      replacedTeachers.push(teacherId)
+      state.teachers.set(teacherId, subjectId)
+    },
     linkActorSubject: async (input) => {
       if (input.staffMemberId) {
         state.staff.set(input.staffMemberId, input.subjectId)
@@ -114,10 +121,34 @@ function createMemoryPort(): {
     },
   }
 
-  return { port, registeredStaff, replacedGuardians, replacedStaff, state }
+  return { port, registeredStaff, replacedGuardians, replacedStaff, replacedTeachers, state }
 }
 
 describe('auth-link seed port workflow', () => {
+  test('a mismatched persisted owner is reported and left unchanged', async () => {
+    const memory = createMemoryPort()
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoCiSchoolOwnerStaffId)
+    if (!owner) {
+      throw new Error('Dev auth fixtures must include the school owner')
+    }
+    memory.state.ownerSubjectId = 'persisted-owner'
+    memory.state.staff.set(owner.staffId, 'persisted-owner')
+
+    await expect(syncDevStaffAuthAndOwner(memory.port, createAuthProvisioner())).rejects.toThrow(
+      'Persisted school owner persisted-owner does not match fixture owner subject:a.kone@ecole-ci.edaya.dev',
+    )
+    expect(memory.state.ownerSubjectId).toBe('persisted-owner')
+    expect(memory.state.staff.get(owner.staffId)).toBe('persisted-owner')
+    expect(memory.replacedStaff).not.toContain(owner.staffId)
+  })
+  test('owner initialization never asks an adapter to replace an existing owner', async () => {
+    const memory = createMemoryPort()
+    memory.state.ownerSubjectId = 'current-owner'
+    await expect(assignDevSchoolOwnerSubjectId(memory.port, 'replacement-owner')).rejects.toThrow('cannot replace the current school owner')
+    expect(memory.state.ownerSubjectId).toBe('current-owner')
+    await assignDevSchoolOwnerSubjectId(memory.port, 'current-owner')
+    expect(memory.state.ownerSubjectId).toBe('current-owner')
+  })
   test('registers, links, replaces stale subjects, assigns owner, and stays idempotent', async () => {
     const memory = createMemoryPort()
     const auth = createAuthProvisioner()
@@ -130,8 +161,9 @@ describe('auth-link seed port workflow', () => {
     expect(memory.registeredStaff).toHaveLength(1)
     expect(memory.replacedStaff).toEqual([DEV_AUTH_STAFF_ACCOUNTS[0]?.staffId])
     expect(memory.replacedGuardians).toEqual([DEV_AUTH_GUARDIAN_ACCOUNTS[0]?.guardianId])
+    expect(memory.replacedTeachers).toEqual([DEV_AUTH_TEACHER_ACCOUNTS[0]?.teacherId])
 
-    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoSchoolOwnerStaffId)
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoCiSchoolOwnerStaffId)
     expect(memory.state.ownerSubjectId).toBe(owner ? subjectIdForEmail(owner.email) : undefined)
 
     const second = await syncDevStaffAuthAndOwner(memory.port, auth)

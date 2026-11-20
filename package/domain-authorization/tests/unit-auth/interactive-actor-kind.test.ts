@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { parseInteractiveActorKind } from '../../src/resolution/interactive-actor-kind'
+import { parseInteractiveActorKind } from '../../src/access/interactive-actor-kind'
 
 describe('parseInteractiveActorKind', () => {
   test('parses known actor kinds case-insensitively', () => {
@@ -7,6 +7,8 @@ describe('parseInteractiveActorKind', () => {
     expect(parseInteractiveActorKind(' GUARDIAN ')).toBe('guardian')
     expect(parseInteractiveActorKind('student')).toBe('student')
     expect(parseInteractiveActorKind('TEACHER')).toBe('teacher')
+    expect(parseInteractiveActorKind('platform')).toBe('platform')
+    expect(parseInteractiveActorKind(' PLATFORM ')).toBe('platform')
   })
 
   test('returns undefined for unknown or empty values', () => {

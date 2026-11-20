@@ -1,15 +1,16 @@
-import { Permission } from "@edaya/authorization";
+import { Permission, permissionScopeSelectionsSchema, shortNameSchema } from "@edaya/core";
 import { z } from "zod";
 
 export const serviceAccountPermissionAssignmentRequestSchema = z.object({
   permission: z.nativeEnum(Permission),
-  scopeIds: z.string(),
+  scopes: permissionScopeSelectionsSchema,
   academicYearId: z.string().trim().min(1),
 }).openapi("ServiceAccountPermissionAssignmentRequest");
 
 export const createServiceAccountRequestSchema = z.object({
   serviceId: z.string().trim().min(1),
-  displayName: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  shortName: shortNameSchema.optional(),
   permissionAssignments: z.array(serviceAccountPermissionAssignmentRequestSchema).optional(),
   elevated: z.boolean().optional(),
   apiKey: z.string().trim().min(1).optional(),
@@ -20,10 +21,11 @@ export const createServiceAccountRequestSchema = z.object({
 ).openapi("CreateServiceAccountRequest");
 
 export const updateServiceAccountRequestSchema = z.object({
-  displayName: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
+  shortName: shortNameSchema.optional(),
   permissionAssignments: z.array(serviceAccountPermissionAssignmentRequestSchema).optional(),
 }).refine(
-  data => data.displayName !== undefined
+  data => data.name !== undefined || data.shortName !== undefined
     || data.permissionAssignments !== undefined,
   { message: "At least one field must be provided" },
 ).openapi("UpdateServiceAccountRequest");
@@ -32,7 +34,8 @@ export const serviceAccountResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
   serviceId: z.string(),
-  displayName: z.string(),
+  name: z.string(),
+  shortName: z.string(),
   accountKind: z.literal("service"),
   serviceElevated: z.boolean(),
   isActive: z.boolean(),
@@ -55,6 +58,8 @@ export function serializeServiceAccount(staffMember: {
   id: string;
   schoolId: string;
   serviceId?: string;
+  name?: string;
+  shortName?: string;
   firstName: string;
   lastName: string;
   serviceElevated: boolean;
@@ -65,7 +70,8 @@ export function serializeServiceAccount(staffMember: {
     id: staffMember.id,
     schoolId: staffMember.schoolId,
     serviceId: staffMember.serviceId!,
-    displayName: `${staffMember.firstName} ${staffMember.lastName}`.trim(),
+    name: staffMember.name ?? `${staffMember.firstName} ${staffMember.lastName}`.trim(),
+    shortName: staffMember.shortName ?? staffMember.name ?? `${staffMember.firstName} ${staffMember.lastName}`.trim(),
     accountKind: "service" as const,
     serviceElevated: staffMember.serviceElevated,
     isActive: staffMember.isActive,

@@ -1,9 +1,9 @@
 import type { AnnouncementTarget } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { CommunicationsOperations, denyResourceAccess } from '@edaya/authorization'
-import { AnnouncementTargetKind } from '@edaya/core'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { AnnouncementStatus, AnnouncementTargetKind, BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
 
 import { announcementLinkedTenant } from '../../entity-config/tenant'
 // Extracted from domain/messaging/announcement-target.ts (PR3)
@@ -11,10 +11,11 @@ export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> =
   config({
     repository: repositories.announcementTargets,
     tenant: announcementLinkedTenant('announcementId'),
-    read: read(operationModule(CommunicationsOperations.read), noopReadAccess),
-    write: write(operationModule(CommunicationsOperations.create), noopSaveAccess, noopDeleteAccess),
+    resource: 'announcementTargets',
+
     gates: {
       preSave: validateAnnouncementTargetSave,
+      preDelete: validateAnnouncementTargetDelete,
     },
     atomicExecution,
   })
@@ -52,6 +53,22 @@ export async function validateAnnouncementTargetSave(
     case AnnouncementTargetKind.AllGuardians:
     case AnnouncementTargetKind.AllStudents:
       break
+  }
+}
+
+export async function validateAnnouncementTargetDelete(
+  target: AnnouncementTarget,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const announcement = await repositories.announcements.findById(target.announcementId)
+  if (!announcement) {
+    denyResourceAccess()
+  }
+  if (announcement.status !== AnnouncementStatus.Draft) {
+    throw new BusinessRuleViolationError(
+      'ANNOUNCEMENT_TARGET_NOT_DRAFT',
+      `Cannot delete target ${target.id}: announcement ${target.announcementId} is not a draft`,
+    )
   }
 }
 

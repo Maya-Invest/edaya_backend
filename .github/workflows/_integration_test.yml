@@ -1,0 +1,61 @@
+name: Integration tests
+on:
+  workflow_call:
+    inputs:
+      source_ref:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+      baseline_sha:
+        type: string
+        default: ''
+permissions:
+  contents: read
+  deployments: read
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        group: [services, adapters-http, seed-native]
+    env:
+      CI: 'true'
+      CI_TARGET: ${{ inputs.target }}
+      COMPATIBILITY_BASE_SHA: ${{ inputs.baseline_sha }}
+      GITHUB_TOKEN: ${{ github.token }}
+      EDAYA_TEST_POOL_METRICS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          source_sha: ${{ inputs.source_ref }}
+      - name: Set up native PostgreSQL
+        if: matrix.group == 'seed-native'
+        run: bun run repo ci setup
+      - name: Run integration group
+        env:
+          TEST_GROUP: ${{ matrix.group }}
+        run: bun run repo test integration --group "$TEST_GROUP"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: stage-integration-${{ matrix.group }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .ci-evidence/stages/integration-${{ matrix.group }}.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: integration-evidence-${{ matrix.group }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: .ci-evidence/

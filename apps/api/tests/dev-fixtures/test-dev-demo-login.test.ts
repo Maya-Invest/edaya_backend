@@ -32,7 +32,7 @@ describe("dev demo login accounts", () => {
       accessRoleId: "role-director",
     });
     expect(resolveDevDemoStaffRole("ci-st3")).toMatchObject({
-      role: "prof_principal",
+      role: "deputy_director",
       accessRoleId: "role-coordinator",
     });
     expect(resolveDevDemoStaffRole("ci-st7")).toMatchObject({

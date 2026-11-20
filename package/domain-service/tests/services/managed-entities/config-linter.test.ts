@@ -4,41 +4,26 @@ import { describe, expect, test } from 'bun:test'
 
 const configRoot = join(import.meta.dir, '../../../src/services/entities/config')
 
-const noopAccessExceptions = new Set([
-  'academics/class-subject-matter.ts',
-  'academics/grade-level-subject-matter.ts',
-  'academics/grade-level-subject.ts',
-  'academics/subject-matter.ts',
-  'assessments/report-card-definition-section.ts',
-  'assessments/report-card-definition.ts',
-  'messaging/announcement-target.ts',
-  'messaging/message-delivery.ts',
-  'school/academic-year.ts',
-  'school/grade-scale.ts',
-  'school/school.ts',
-])
-
 const indirectParentGateExceptions = new Set([
-  'academics/subject-matter.ts',
   'scheduling/attendance.ts',
 ])
 
 const directDeleteGateExceptions = new Set([
   'access/account-invitation.ts',
-  'academics/subject.ts',
   'messaging/message-delivery.ts',
   'messaging/school-notification-templates.ts',
   'scheduling/calendar-event.ts',
   'scheduling/period-definition.ts',
   'school/attachment.ts',
-  'school/grade-level.ts',
-  'school/grade-scale.ts',
   'school/school.ts',
-  'school/staff-permission-assignment.ts',
+  'school/staff-manual-permission-assignment.ts',
+  'school/staff-permission-profile-binding.ts',
+  'school/staff-permission-scope-defaults.ts',
   'students/disciplinary-action.ts',
   'students/guardian-student-link.ts',
   'students/student-health-profile.ts',
   'students/student-note.ts',
+  'students/student-photo-submission.ts',
 ])
 
 interface ConfigSource {
@@ -62,13 +47,13 @@ function listConfigSources(directory = configRoot): ConfigSource[] {
 }
 
 describe('entity config linter', () => {
-  test('keeps noop access usage behind explicit architectural exceptions', () => {
+  test('rejects authorization bypasses in entity configs', () => {
     const noopConfigs = listConfigSources()
       .filter(config => /noop(?:Save|Delete)Access/.test(config.source))
       .map(config => config.path)
       .sort()
 
-    expect(noopConfigs).toEqual([...noopAccessExceptions].sort())
+    expect(noopConfigs).toEqual([])
   })
 
   test('requires indirect tenant configs to declare parent save gates or explicit exceptions', () => {

@@ -37,6 +37,9 @@ export function createHttpAttendanceSeedPort(
     recordAttendance: record => withSeedPortError('attendance.recordAttendance', async () => {
       await postCoreCommand(requestOptions, 'recordAttendance', record)
     }),
+    recordClassDailyAttendance: input => withSeedPortError('attendance.recordClassDailyAttendance', async () => {
+      await postCoreCommand(requestOptions, 'recordClassDailyAttendance', input)
+    }),
     markJustificationPending: (recordId, fallbackReason) =>
       withSeedPortError('attendance.markJustificationPending', async () => {
         const existing = await postEntityFindById(requestOptions, 'attendance', recordId)

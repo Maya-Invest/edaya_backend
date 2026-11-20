@@ -1,0 +1,173 @@
+import { AuthorizationError } from '@edaya/authorization'
+import { AcademicDiscipline, AcademicYear, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, StaffPermissionAssignment, Subject, SubjectColor, SubjectMatter, withShortName } from '@edaya/core'
+import { describe, expect, test } from 'bun:test'
+import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
+import { createTestStaffActor } from '../../support/test-actor'
+
+async function createContext({ existingProgress = false, matterCompletedPercentage = 0, matterList, owner = true }: { existingProgress?: boolean, matterCompletedPercentage?: number, matterList?: Array<{ id: string, completedPercentage: number }>, owner?: boolean } = {}) {
+  const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner })
+  const repositories = fixture.schoolRepositories
+  await repositories.academicDisciplines.save(new AcademicDiscipline(withShortName({ id: 'test-discipline', schoolId: 'sch1', shortName: 'TEST', name: 'Test discipline' })))
+  await repositories.academicYears.save(new AcademicYear(withShortName({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+  await repositories.gradeLevels.save(new GradeLevel(withShortName({ id: 'gl1', schoolId: 'sch1', name: 'Grade', shortName: 'G', order: 1 })))
+  await repositories.classGroups.save(new ClassGroup(withShortName({ id: 'cg1', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Class' })))
+  for (const id of ['subj1', 'subj-math']) await repositories.subjects.save(new Subject(withShortName({ categoryId: 'test-category', gradeLevelId: 'gl1', academicYearId: 'ay1', id, schoolId: 'sch1', name: id })))
+  await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subj1', coefficient: 1, completedPercentage: 0 }))
+  const matters = matterList ?? [{ id: 'csm1', completedPercentage: matterCompletedPercentage }, { id: 'other-matter', completedPercentage: 50 }]
+  for (const matter of matters) {
+    await repositories.subjectMatters.save(new SubjectMatter(withShortName({ id: `sm-${matter.id}`, subjectId: 'subj1', name: matter.id, sequenceOrder: 1 })))
+    await repositories.classSubjectMatters.save(new ClassSubjectMatter({ ...matter, classSubjectId: 'cs1', subjectMatterId: `sm-${matter.id}`, status: matter.completedPercentage ? ClassSubjectMatterStatus.InProgress : ClassSubjectMatterStatus.NotStarted }))
+  }
+  await repositories.lessonSessions.save(new LessonSession({ id: 'sess1', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Lesson', startsAt: new Date('2026-02-01T09:00:00Z'), endsAt: new Date('2026-02-01T10:00:00Z') }))
+  await repositories.lessonSessions.save(new LessonSession({ ...(await repositories.lessonSessions.findById('sess1'))!.data, id: 'earlier', startsAt: new Date('2026-01-15T09:00:00Z'), endsAt: new Date('2026-01-15T10:00:00Z') }))
+  for (const matter of matters.filter(m => m.completedPercentage > 0))
+    await repositories.classSubjectProgress.save(new ClassSubjectProgress({ id: `prior-${matter.id}`, classSubjectMatterId: matter.id, lessonSessionId: 'earlier', completed: matter.completedPercentage === 100 }))
+  if (existingProgress)
+    await repositories.classSubjectProgress.save(new ClassSubjectProgress({ id: 'existing-progress', classSubjectMatterId: 'csm1', lessonSessionId: 'sess1', completed: false }))
+  return { ...fixture, service: fixture.app, repositories }
+}
+
+describe('SchoolService academics workflows', () => {
+  test('deleting a catalog chapter preserves existing teaching progress', async () => {
+    const { service, repositories } = await createContext({ existingProgress: true })
+    await expect(service.baseService.entities.subjectMatters.delete('sm-csm1')).rejects.toThrow('Curriculum with recorded progress cannot be deleted')
+    expect(await repositories.subjectMatters.findById('sm-csm1')).toBeDefined()
+    expect(await repositories.classSubjectMatters.findById('csm1')).toBeDefined()
+    expect(await repositories.classSubjectProgress.findById('existing-progress')).toBeDefined()
+  })
+
+  test('recordLessonSessionProgress records progress and updates aggregates through managed services', async () => {
+    const { repositories, service } = await createContext()
+
+    const result = await service.academicsWorkflow.recordLessonSessionProgress({
+      id: 'csp1',
+      classSubjectMatterId: 'csm1',
+      lessonSessionId: 'sess1',
+      completed: true,
+      notes: 'Completed',
+      recordedAt: new Date('2026-02-01T10:00:00Z'),
+    })
+
+    expect(result.id).toBe('csp1')
+    expect(result.completed).toBe(true)
+    expect(result.recordedByStaffId).toBe('user1')
+    expect((await repositories.classSubjectProgress.findById('csp1'))?.data).toMatchObject(result.data)
+    expect(await repositories.classSubjectMatters.findById('csm1')).toMatchObject({
+      completedPercentage: 100,
+    })
+    expect(await repositories.classSubjects.findById('cs1')).toMatchObject({
+      completedPercentage: 75,
+    })
+  })
+
+  test('recordLessonSessionProgress rejects duplicate progress records', async () => {
+    const { service } = await createContext({ existingProgress: true })
+
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({
+      id: 'csp1',
+      classSubjectMatterId: 'csm1',
+      lessonSessionId: 'sess1',
+      completed: true,
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('recordLessonSessionProgress rounds class-subject aggregate across multiple matters', async () => {
+    const { repositories, service } = await createContext({
+      matterList: [
+        { id: 'csm1', completedPercentage: 0 },
+        { id: 'csm2', completedPercentage: 0 },
+        { id: 'csm3', completedPercentage: 0 },
+        { id: 'csm4', completedPercentage: 0 },
+      ],
+    })
+
+    await service.academicsWorkflow.recordLessonSessionProgress({
+      id: 'csp1',
+      classSubjectMatterId: 'csm1',
+      lessonSessionId: 'sess1',
+      completed: false,
+    })
+
+    expect(await repositories.classSubjects.findById('cs1')).toMatchObject({
+      completedPercentage: 13,
+    })
+  })
+
+  test('recordLessonSessionProgress allows a review after earlier coverage', async () => {
+    const { service } = await createContext({ matterCompletedPercentage: 80 })
+
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({
+      id: 'csp1',
+      classSubjectMatterId: 'csm1',
+      lessonSessionId: 'sess1',
+      completed: false,
+    })).resolves.toMatchObject({ completed: false })
+  })
+
+  test('configureSubject and configureSubjectMatter persist school curriculum entities', async () => {
+    const { repositories, service } = await createContext()
+
+    const subject = await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Mathematics', categoryId: 'test-category', color: SubjectColor.Sky })
+    expect(subject.name).toBe('Mathematics')
+    expect((await repositories.subjects.findById(subject.id))?.data).toEqual(subject.data)
+
+    const matter = await service.academicsWorkflow.configureSubjectMatter({
+      id: 'sm-algebra',
+      subjectId: 'subj-math',
+      name: 'Algebra',
+      sequenceOrder: 1,
+    })
+    expect(matter.name).toBe('Algebra')
+    expect((await repositories.subjectMatters.findById(matter.id))?.data).toEqual(matter.data)
+  })
+
+  test('configureSubject and setClassSubjectOffered manage class offerings', async () => {
+    const { repositories, service } = await createContext()
+
+    await service.academicsWorkflow.configureSubject({ categoryId: 'test-category', disciplineId: 'test-discipline', id: 'new-math', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Math', coefficient: 2, classSubjectIdsByClassGroupId: { cg1: 'cs-custom' } })
+    expect((await repositories.classSubjects.findById('cs-custom'))?.isOffered).toBe(true)
+
+    const updated = await service.academicsWorkflow.setClassSubjectOffered({
+      classSubjectId: 'cs1',
+      expectedParticipationRevision: (await repositories.classSubjects.findById('cs1'))!.participationRevision,
+      isOffered: false,
+    })
+    expect(updated.isOffered).toBe(false)
+    expect((await repositories.classSubjects.findById('cs1'))?.isOffered).toBe(false)
+  })
+
+  test('recordLessonSessionProgress rejects lesson sessions for another class subject', async () => {
+    const { repositories, service } = await createContext()
+    await repositories.classSubjects.save(new ClassSubject({ id: 'cs-other', classGroupId: 'cg1', subjectId: 'subj-math', coefficient: 1 }))
+    const session = (await repositories.lessonSessions.findById('sess1'))!
+    await repositories.lessonSessions.save(session.copyWith({ classSubjectId: 'cs-other' }))
+
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({
+      id: 'csp1',
+      classSubjectMatterId: 'csm1',
+      lessonSessionId: 'sess1',
+      completed: true,
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('progress creation uses only its own action scope and immediately observes revocation', async () => {
+    const { service, repositories } = await createContext({ owner: false })
+    const input = { id: 'progress', classSubjectMatterId: 'csm1', lessonSessionId: 'sess1', completed: false }
+    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'read', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'user1', permission: Permission.CLASS_LOGBOOK_READ, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
+    await expect(service.academicsWorkflow.recordLessonSessionProgress(input)).rejects.toBeInstanceOf(AuthorizationError)
+    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'create', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'user1', permission: Permission.CLASS_LOGBOOK_MANAGE, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
+    expect((await service.academicsWorkflow.recordLessonSessionProgress(input)).completed).toBe(false)
+    await repositories.staffPermissionAssignments.delete('create')
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({ ...input, id: 'revoked', completed: true })).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await repositories.classSubjectProgress.count({ lessonSessionId: 'sess1' })).toBe(1)
+  })
+
+  test('a failed progress write preserves chapter and subject state', async () => {
+    const { service, repositories, failSaveOnAttempt } = await createContext()
+    failSaveOnAttempt('classSubjectProgressRepository')
+    await expect(service.academicsWorkflow.recordLessonSessionProgress({ id: 'progress', classSubjectMatterId: 'csm1', lessonSessionId: 'sess1', completed: true })).rejects.toThrow('Simulated')
+    expect(await repositories.classSubjectProgress.count({ lessonSessionId: 'sess1' })).toBe(0)
+    expect((await repositories.classSubjectMatters.findById('csm1'))?.completedPercentage).toBe(0)
+    expect((await repositories.classSubjects.findById('cs1'))?.completedPercentage).toBe(25)
+  })
+})

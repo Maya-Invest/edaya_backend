@@ -5,7 +5,7 @@ import type {
   StudentIncidentInvolvementSeedRecord,
 } from './port'
 import { CalendarEventScopeKind, IncidentInvolvementRole, IncidentKind } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevSchoolLife } from './workflow'
 
@@ -29,18 +29,18 @@ describe('school-life seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevSchoolLife(port, demoDataset)
+    const counts = await seedDevSchoolLife(port, demoCiDataset)
 
     expect(counts).toEqual({
       calendarEvents: calendarEvents.length,
-      incidents: demoDataset.entities.incidents?.length ?? 0,
+      incidents: demoCiDataset.entities.incidents?.length ?? 0,
     })
     expect(calendarEvents.length).toBeGreaterThan(0)
     expect(calendarEvents.some(event =>
-      event.scopeKind === CalendarEventScopeKind.ClassGroup && event.scopeId === '6a')).toBe(true)
+      event.scopeKind === CalendarEventScopeKind.ClassGroup && event.scopeId === 'ci-6a')).toBe(true)
     expect(calendarEvents[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
     expect(incidents.map(incident => incident.kind)).toContain(IncidentKind.MajorInfraction)
     expect(involvements.every(record => record.role === IncidentInvolvementRole.Subject)).toBe(true)
-    expect(operationOrder.slice(0, 2)).toEqual(['incident:i1', 'involvement:i1'])
+    expect(operationOrder.slice(0, 2)).toEqual(['incident:ci-i1', 'involvement:ci-i1'])
   })
 })

@@ -1,14 +1,6 @@
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
-import {
-  createServiceAccountRequestSchema,
-  createServiceAccountResponseSchema,
-  rotateServiceAccountKeyRequestSchema,
-  rotateServiceAccountKeyResponseSchema,
-  serializeServiceAccount,
-  serviceAccountResponseSchema,
-  updateServiceAccountRequestSchema,
-} from "@/lib/service-accounts/schemas";
+import { createServiceAccountRequestSchema, createServiceAccountResponseSchema, rotateServiceAccountKeyRequestSchema, rotateServiceAccountKeyResponseSchema, serializeServiceAccount, serviceAccountResponseSchema, updateServiceAccountRequestSchema } from "@/lib/service-accounts/schemas";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
@@ -60,7 +52,7 @@ export const updateServiceAccountRoute = createRoute({
   method: "patch",
   path: schoolApiPath("service-accounts", "{id}"),
   tags: ["Core Service Accounts"],
-  summary: "Update a service account display name, roles, or scope grants",
+  summary: "Update a service account display name or scoped permissions",
   ...clientRouteOperation({
     namespace: "serviceAccounts",
     clientKey: "update",
@@ -132,11 +124,11 @@ export const createServiceAccountHandler: AppRouteHandler<typeof createServiceAc
     const body = c.req.valid("json");
     const result = await createServiceAccount(c.get("schoolApp").repositories, actor, {
       serviceId: body.serviceId,
-      displayName: body.displayName,
+      name: body.name,
       ...(body.permissionAssignments ? { permissionAssignments: body.permissionAssignments } : {}),
       ...(body.elevated !== undefined ? { elevated: body.elevated } : {}),
       ...(body.apiKey ? { apiKey: body.apiKey } : {}),
-    });
+    }, c.get("schoolApp").atomicExecution);
 
     return c.json({
       ...serializeServiceAccount(result.staffMember),
@@ -173,9 +165,9 @@ export const updateServiceAccountHandler: AppRouteHandler<typeof updateServiceAc
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     const updated = await updateServiceAccount(c.get("schoolApp").repositories, actor, id, {
-      ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
+      ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.permissionAssignments !== undefined ? { permissionAssignments: body.permissionAssignments } : {}),
-    });
+    }, c.get("schoolApp").atomicExecution);
 
     return c.json(serializeServiceAccount(updated), HttpStatusCodes.OK);
   }
@@ -192,7 +184,7 @@ export const revokeServiceAccountHandler: AppRouteHandler<typeof revokeServiceAc
 
   try {
     const { id } = c.req.valid("param");
-    const revoked = await revokeServiceAccount(c.get("schoolApp").repositories, actor, id);
+    const revoked = await revokeServiceAccount(c.get("schoolApp").repositories, actor, id, c.get("schoolApp").atomicExecution);
     return c.json(serializeServiceAccount(revoked), HttpStatusCodes.OK);
   }
   catch (err) {
@@ -211,7 +203,7 @@ export const rotateServiceAccountKeyHandler: AppRouteHandler<typeof rotateServic
     const body = c.req.valid("json");
     const result = await rotateServiceAccountKey(c.get("schoolApp").repositories, actor, id, {
       ...(body.apiKey ? { apiKey: body.apiKey } : {}),
-    });
+    }, c.get("schoolApp").atomicExecution);
     return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {

@@ -1,7 +1,6 @@
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 
 const HYPERDRIVE_BINDING = "HYPERDRIVE";
-const HYPERDRIVE_AUTH_BINDING = "HYPERDRIVE_AUTH";
 
 function readHyperdriveConnectionString(
   source: RuntimeBindings,
@@ -35,28 +34,7 @@ export function resolveDatabaseUrl(source: RuntimeBindings, runtime: RuntimeKind
   throw new Error("DATABASE_URL is required");
 }
 
-/**
- * Auth/session DB URL for Worker: prefer cache-disabled Hyperdrive so Better Auth
- * read-after-write (sign-up → sign-in) is not served from Hyperdrive query cache.
- * Falls back to the school DATABASE_URL when the auth binding is absent.
- */
-export function resolveAuthDatabaseUrl(source: RuntimeBindings, runtime: RuntimeKind): string {
-  if (runtime === "worker") {
-    const authHyperdrive = readHyperdriveConnectionString(source, HYPERDRIVE_AUTH_BINDING);
-    if (authHyperdrive) {
-      return authHyperdrive;
-    }
-  }
-
-  return resolveDatabaseUrl(source, runtime);
-}
-
 export function usesHyperdriveBinding(source: RuntimeBindings, runtime: RuntimeKind): boolean {
   return runtime === "worker"
     && readHyperdriveConnectionString(source, HYPERDRIVE_BINDING) !== undefined;
-}
-
-export function usesAuthHyperdriveBinding(source: RuntimeBindings, runtime: RuntimeKind): boolean {
-  return runtime === "worker"
-    && readHyperdriveConnectionString(source, HYPERDRIVE_AUTH_BINDING) !== undefined;
 }

@@ -52,5 +52,31 @@ build/
 !.vscode/launch.json
 apps/api/secrets.prod.json
 apps/api/secrets.staging.json
+.ci/
 
 **/coverage/*
+
+# Sanitized local/CI test evidence
+.ci-evidence/
+__pycache__/
+
+# Wrangler local credentials and private configuration migration backups
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Recoverable migration-flatten backups
+/package/adaptor-postgres/drizzle.backup-*
+/package/adaptor-postgres/.migration-baseline-*
+
+.local-state/
+
+# Prepared clients, isolated checkouts, and release evidence
+.generated/
+.ci/
+.release/
+.ci-evidence/
+.cache/repo-tools/
+
+# Incremental quality data (never release evidence)
+.cache/quality/

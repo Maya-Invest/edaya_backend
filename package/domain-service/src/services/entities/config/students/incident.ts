@@ -1,85 +1,26 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { CoreEntityRepositories, Incident } from '@edaya/core'
+import type { Incident } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, DisciplineOperations } from '@edaya/authorization'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
 import { AttachmentOwnerKind, BusinessRuleViolationError, IncidentStatus } from '@edaya/core'
-import { authorizeDeleteWithOperation, authorizeSaveWithOperation, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { dateTime } from '../../entity-config/helper-utils'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/incident.ts (PR3)
-export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, policy, atomicExecution }) =>
+export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
-    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
-    write: write(
-      operationModule(DisciplineOperations.create),
-      authorizeSaveWithOperation(
-        DisciplineOperations.create,
-        resolveIncidentContext,
-        authorizeIncidentResource(policy),
-      ),
-      authorizeDeleteWithOperation(
-        DisciplineOperations.create,
-        (entity, repositories) => resolveIncidentContext(entity, undefined, repositories),
-        authorizeIncidentDeleteResource(policy),
-      ),
-    ),
+    resource: 'incidents',
+    writeLockGroup: 'academic-state',
+
     gates: {
       preSave: validateIncidentSave,
       preDelete: validateIncidentDelete,
     },
     atomicExecution,
   })
-
-async function resolveIncidentContext(
-  entity: Incident,
-  _existing: Incident | undefined,
-  repositories: CoreEntityRepositories,
-) {
-  if (entity.lessonSessionId) {
-    const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
-    if (!lessonSession) {
-      denyResourceAccess()
-    }
-    return {
-      classSubjectId: lessonSession.classSubjectId,
-      classGroupId: lessonSession.classGroupId,
-    }
-  }
-  if (entity.classGroupId) {
-    return { classGroupId: entity.classGroupId }
-  }
-  return {}
-}
-
-function authorizeIncidentResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<Incident>['authorizeSave'] {
-  return async (actor, entity) => {
-    if (entity.classGroupId) {
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    }
-    if (entity.lessonSessionId) {
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    }
-  }
-}
-
-function authorizeIncidentDeleteResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<Incident>['authorizeDelete'] {
-  return async (actor, entity) => {
-    if (entity.classGroupId) {
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    }
-    if (entity.lessonSessionId) {
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    }
-  }
-}
 
 async function validateIncidentSave(
   entity: Incident,

@@ -24,8 +24,7 @@ describe("CORS configuration", () => {
       PORT: 9999,
       LOG_LEVEL: "silent",
       DATABASE_URL: "pglite",
-      BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-      BETTER_AUTH_URL: "https://api.edaya.test",
+      API_ORIGIN: "https://api.school.edaya.test",
       TRUSTED_ORIGINS: "https://app.edaya.test",
     });
 
@@ -41,8 +40,6 @@ describe("CORS configuration", () => {
       PORT: 9999,
       LOG_LEVEL: "silent",
       DATABASE_URL: "pglite",
-      BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-      BETTER_AUTH_URL: "http://localhost:9999",
       TRUSTED_ORIGINS: "http://localhost:5173",
     });
 

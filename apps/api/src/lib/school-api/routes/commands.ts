@@ -4,7 +4,6 @@ import { executeSchoolCommand } from "@/lib/school-api/execute-command";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
 import { commandRouteOperation } from "@/lib/school-api/openapi/client-extensions";
-import { assertCommandActorKind } from "@edaya/authorization";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -57,13 +56,6 @@ export function buildCommandRoutes(): SchoolApiRoutePair[] {
       const actor = c.get("actor");
       if (!actor) {
         return unauthorizedResponse(c);
-      }
-
-      try {
-        assertCommandActorKind(actor, { serviceOnly: commandConfig.serviceOnly });
-      }
-      catch (err) {
-        return routeErrorResponse(c, err);
       }
 
       const service = c.get("schoolApp").forActor(actor);

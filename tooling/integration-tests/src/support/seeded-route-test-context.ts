@@ -4,11 +4,10 @@ import type { AuthenticatedRouteContext } from './api-route-harness'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
 import type { ApiRuntime } from '@/runtime'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
+import process from 'node:process'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
+import { DEMO_CI_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import {
-  createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,
   runDevAccessSeed,
   runDevAuthLinkWithPort,
@@ -16,16 +15,19 @@ import {
   runIntegrationLightSchoolSeed,
 } from '@edaya/seeding'
 import { afterAll, beforeAll, describe } from 'bun:test'
-import { apiPgliteEnv } from './api-pglite-env'
 import {
-
-  collectSetCookieHeaders,
-  createAppRequest,
   createCoreRouteTestApp,
   resetCoreRouteTestHarness,
+  signInWithBearerThroughApp,
+  testIdentityProvisioner,
 } from './api-route-harness'
 
 export type IntegrationFixtureKind = 'light' | 'full'
+
+// Full fixtures provision the complete demo dataset, identity links, access
+// assignments and private photos. Match the HTTP seed suite's setup allowance;
+// keep the smaller route fixtures and individual assertion deadlines unchanged.
+const FULL_SEED_SETUP_TIMEOUT = 600_000
 
 type FullSchoolSeedResult = DevSchoolSeedResult & { status: 'seeded' }
 type LightSchoolSeedResult = IntegrationLightSchoolSeedResult & { status: 'seeded' }
@@ -71,8 +73,6 @@ export interface SeededFixtureOptions {
 }
 
 const sharedContexts = new Map<IntegrationFixtureKind, {
-  schoolData?: SeededSchoolDataContext | LightSchoolDataContext
-  schoolDataPromise?: Promise<SeededSchoolDataContext | LightSchoolDataContext>
   route?: SeededRouteTestContext
   routePromise?: Promise<SeededRouteTestContext>
 }>()
@@ -89,14 +89,8 @@ function getSharedBucket(fixture: IntegrationFixtureKind) {
 async function resolveSharedSchoolDataContext(
   fixture: IntegrationFixtureKind,
 ): Promise<SeededSchoolDataContext | LightSchoolDataContext> {
-  const bucket = getSharedBucket(fixture)
-  if (bucket.schoolData) {
-    return bucket.schoolData
-  }
-
-  bucket.schoolDataPromise ??= provisionSeededSchoolDataContext(fixture)
-  bucket.schoolData = await bucket.schoolDataPromise
-  return bucket.schoolData
+  const route = await resolveSharedRouteContext(fixture)
+  return { runtime: route.runtime, application: route.application, seedResult: route.seedResult }
 }
 
 async function resolveSharedRouteContext(
@@ -115,16 +109,21 @@ async function resolveSharedRouteContext(
 /** Tear down shared fixtures once per test run (registered from bootstrap preload). */
 export async function releaseSharedSeededFixtures(): Promise<void> {
   const runtimes = [...sharedContexts.values()]
-    .flatMap(bucket => [bucket.route?.runtime, bucket.schoolData?.runtime])
+    .flatMap(bucket => [bucket.route?.runtime])
     .filter((runtime): runtime is ApiRuntime => runtime !== undefined)
 
   sharedContexts.clear()
 
-  for (const runtime of runtimes) {
-    await runtime.close()
+  const results = await Promise.allSettled([...new Set(runtimes)].map(runtime => runtime.close()))
+  try {
+    await resetCoreRouteTestHarness()
   }
-
-  await resetCoreRouteTestHarness()
+  catch (error) {
+    results.push({ status: 'rejected', reason: error })
+  }
+  const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+  if (failures.length)
+    throw new AggregateError(failures.map(result => result.reason), 'Failed to release seeded fixtures')
 }
 
 async function seedSchoolFixture(
@@ -135,56 +134,65 @@ async function seedSchoolFixture(
     return runIntegrationLightSchoolSeed(application)
   }
 
-  return runDevSchoolSeed(application)
+  return runDevSchoolSeed(application, { auth: testIdentityProvisioner })
 }
 
 export async function provisionSeededSchoolDataContext(
   fixture: IntegrationFixtureKind = 'full',
 ): Promise<SeededSchoolDataContext | LightSchoolDataContext> {
   const { runtime, application } = await createCoreRouteTestApp({ autoCleanup: false })
-  const seedResult = await seedSchoolFixture(application, fixture)
-  if (seedResult.status !== 'seeded') {
-    throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
-  }
+  try {
+    const seedResult = await seedSchoolFixture(application, fixture)
+    if (seedResult.status !== 'seeded') {
+      throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
+    }
 
-  return { runtime, application, seedResult }
+    return { runtime, application, seedResult }
+  }
+  catch (error) {
+    await runtime.close()
+    throw error
+  }
 }
 
 export async function provisionSeededRouteTestContext(
   fixture: IntegrationFixtureKind = 'full',
 ): Promise<SeededRouteTestContext> {
+  const started = performance.now()
   const routeContext = await createCoreRouteTestApp({ autoCleanup: false })
   const { app, runtime, application } = routeContext
-  const seedResult = await seedSchoolFixture(application, fixture)
-  if (seedResult.status !== 'seeded') {
-    throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
+  try {
+    const seedResult = await seedSchoolFixture(application, fixture)
+    if (seedResult.status !== 'seeded') {
+      throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
+    }
+
+    const auth = testIdentityProvisioner
+    await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth)
+    await runDevAccessSeed(application, {
+      auth,
+      includeClassSubjectStaffAssignments: fixture === 'full',
+    })
+
+    process.stdout.write(`[fixture bootstrap] ${JSON.stringify({ kind: fixture, durationMs: performance.now() - started })}\n`)
+    return {
+      app,
+      runtime,
+      application,
+      seedResult,
+      authHeaders: async (email = MINIMAL_AUTH_FIXTURE_STAFF_EMAIL) => {
+        const accessToken = await signInWithBearerThroughApp(app, { email })
+        return {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${accessToken}`,
+          'x-academic-year-id': DEMO_CI_ACADEMIC_YEAR_ID,
+        }
+      },
+    }
   }
-
-  const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
-  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth)
-  await runDevAccessSeed(application, {
-    auth,
-    includeClassSubjectStaffAssignments: fixture === 'full',
-  })
-
-  return {
-    app,
-    runtime,
-    application,
-    seedResult,
-    authHeaders: async (email = MINIMAL_AUTH_FIXTURE_STAFF_EMAIL) => {
-      const signIn = await app.request(createAppRequest('/auth/sign-in/email', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password: DEV_AUTH_PASSWORD }),
-      }))
-      const cookies = collectSetCookieHeaders(signIn)
-      return {
-        'content-type': 'application/json',
-        'cookie': cookies.join('; '),
-        'x-academic-year-id': DEMO_CENTRAL_ACADEMIC_YEAR_ID,
-      }
-    },
+  catch (error) {
+    await runtime.close()
+    throw error
   }
 }
 
@@ -201,7 +209,7 @@ function describeWithFixture(
       context = options.isolate
         ? await provisionSeededRouteTestContext(fixture)
         : await resolveSharedRouteContext(fixture)
-    }, fixture === 'light' ? 60_000 : 180_000)
+    }, fixture === 'light' ? 60_000 : FULL_SEED_SETUP_TIMEOUT)
 
     afterAll(async () => {
       if (!options.isolate) {
@@ -231,7 +239,7 @@ function describeWithSchoolDataFixture(
       context = options.isolate
         ? await provisionSeededSchoolDataContext(fixture)
         : await resolveSharedSchoolDataContext(fixture)
-    }, fixture === 'light' ? 45_000 : 120_000)
+    }, fixture === 'light' ? 45_000 : FULL_SEED_SETUP_TIMEOUT)
 
     afterAll(async () => {
       if (!options.isolate) {

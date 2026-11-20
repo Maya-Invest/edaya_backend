@@ -13,8 +13,6 @@ const baseEnv = parseEnv({
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgres://admin:admin@localhost:5432/test_db",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
 });
 
 describe("invitation preview route", () => {
@@ -77,7 +75,7 @@ describe("invitation preview route", () => {
     expect(body.inviteeName).toBe("Camille Moreau");
     expect(body.schoolName).toBe("Demo School");
     expect(body.contactEmail).toBe("staff@school.edu");
-    expect(body.authAccountExists).toBe(true);
+    expect(body).not.toHaveProperty("authAccountExists");
   });
 
   it("returns 404 when the invitation token is unknown", async () => {
@@ -137,16 +135,24 @@ describe("invitation preview route", () => {
           },
         },
         hasAuthAccountForEmail: async () => false,
+        hasAuthAccountForPhone: async () => false,
       } as never);
       await next();
     });
     app.route("/", indexRouter);
 
     const res = await app.request(`/public/invitations/${guardianToken}`);
-    const body = await res.json() as { inviteeName: string; contactEmail?: string };
+    const body = await res.json() as {
+      inviteeName: string;
+      contactEmail?: string;
+      contactPhone?: string;
+      authAccountExists?: boolean;
+    };
 
     expect(res.status).toBe(200);
     expect(body.inviteeName).toBe("Alice Parent");
     expect(body.contactEmail).toBeUndefined();
+    expect(body.contactPhone).toBe("+33600000000");
+    expect(body.authAccountExists).toBe(false);
   });
 });

@@ -1,10 +1,13 @@
 import type { StaffAccountKind } from './staff-account-kind'
+import type { StaffProfileRole } from './staff-profile-role'
 
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { optionalHumanIdentifierSchema, shortNameSchema } from '../shared/visible-identification'
 
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'
+import { STAFF_PROFILE_ROLES } from './staff-profile-role'
 
 function refineStaffMember(data: {
   accountKind?: StaffAccountKind
@@ -54,8 +57,12 @@ export const staffMemberBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
+  identifier: optionalHumanIdentifierSchema,
+  name: z.string().trim().min(1).optional(),
+  shortName: shortNameSchema.optional(),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   email: z.string().trim().min(1, 'email must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  phone: z.string().trim().min(1, 'phone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notificationEmail: z.string().trim().min(1, 'notificationEmail must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notificationPhone: z.string().trim().min(1, 'notificationPhone must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -66,6 +73,7 @@ export const staffMemberBaseSchema = z.object({
   isActive: z.boolean().default(true),
   onboardingWizardCompletedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   onboardingMaxReachedStep: z.number().int().min(1).max(4).nullable().optional().transform(v => v === null ? undefined : v),
+  profileRole: z.enum(STAFF_PROFILE_ROLES).nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -83,6 +91,8 @@ export const staffMemberUpdateSchema = staffMemberBaseSchema.partial().required(
 export class StaffMember {
   readonly data: StaffMemberData
 
+  copyWith(changes: Partial<StaffMemberInput>): StaffMember { return new StaffMember({ ...this.data, ...changes }) }
+
   constructor(args: StaffMemberInput) {
     this.data = parseDomain(staffMemberSchema, args)
   }
@@ -91,8 +101,12 @@ export class StaffMember {
   get schoolId() { return this.data.schoolId }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
+  get name() { return this.data.name }
+  get shortName() { return this.data.shortName ?? this.data.name }
+  get identifier() { return this.data.identifier }
   get photoUrl() { return this.data.photoUrl }
   get email() { return this.data.email }
+  get phone() { return this.data.phone }
   get notificationEmail() { return this.data.notificationEmail }
   get notificationPhone() { return this.data.notificationPhone }
   get subjectId() { return this.data.subjectId }
@@ -103,6 +117,7 @@ export class StaffMember {
   get isActive() { return this.data.isActive }
   get onboardingWizardCompletedAt() { return this.data.onboardingWizardCompletedAt }
   get onboardingMaxReachedStep() { return this.data.onboardingMaxReachedStep }
+  get profileRole(): StaffProfileRole | undefined { return this.data.profileRole }
   get createdAt() { return this.data.createdAt }
 
   get fullName(): string {

@@ -4,10 +4,10 @@ import { HttpSeedClient } from '@edaya/seeding/http'
 import { apiPgliteEnv } from './api-pglite-env'
 
 export function createHttpClientForApp(app: Hono<AppBindings>): HttpSeedClient {
-  const apiOrigin = new URL(apiPgliteEnv.BETTER_AUTH_URL).origin
+  const apiOrigin = new URL(apiPgliteEnv.API_ORIGIN).origin
 
   return new HttpSeedClient({
-    baseUrl: apiPgliteEnv.BETTER_AUTH_URL,
+    baseUrl: apiPgliteEnv.API_ORIGIN,
     fetch: async (input, init) => {
       const url = new URL(input.toString())
       if (url.origin !== apiOrigin) {

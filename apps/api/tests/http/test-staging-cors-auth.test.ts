@@ -1,11 +1,7 @@
+import { describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
-import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import createApp from "@/http/create-app";
-import { createBetterAuth, parseEnv } from "@/runtime";
-import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
+import { parseEnv } from "@/runtime";
 
 const stagingEnv = parseEnv({
   RUNTIME: "in-memory",
@@ -13,36 +9,11 @@ const stagingEnv = parseEnv({
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "https://api.edaya.test",
+  API_ORIGIN: "https://api.school.edaya.test",
   TRUSTED_ORIGINS: "https://app.edaya.test",
-  COOKIE_DOMAIN: "edaya.test",
 });
 
-function collectSetCookieHeaders(response: Response): string[] {
-  const headers = response.headers as Headers & { getSetCookie?: () => string[] };
-  if (typeof headers.getSetCookie === "function") {
-    return headers.getSetCookie();
-  }
-
-  const single = response.headers.get("set-cookie");
-  return single ? [single] : [];
-}
-
-describe("staging CORS and cross-subdomain auth cookies", () => {
-  let pglite: PGlite;
-  let db: ReturnType<typeof drizzle>;
-
-  beforeEach(async () => {
-    pglite = new PGlite();
-    db = drizzle(pglite);
-    await runAuthMigrations(db, { driver: "pglite" });
-  });
-
-  afterEach(async () => {
-    await pglite.close();
-  });
-
+describe("staging CORS", () => {
   it("allows credentialed requests from the trusted SPA origin", async () => {
     const app = createApp();
     app.route("/", indexRouter);
@@ -77,28 +48,5 @@ describe("staging CORS and cross-subdomain auth cookies", () => {
     expect(response.status).toBe(204);
     expect(response.headers.get("access-control-allow-headers")).toContain("X-Actor-Kind");
     expect(response.headers.get("access-control-allow-headers")).toContain("X-Academic-Year-Id");
-  });
-
-  it("sets Better Auth session cookies on the configured parent domain", async () => {
-    const auth = createBetterAuth(db, stagingEnv);
-
-    const signUpResponse = await auth.handler(new Request("https://api.edaya.test/auth/sign-up/email", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "origin": "https://app.edaya.test",
-      },
-      body: JSON.stringify({
-        email: "staging@school.edu",
-        password: DEV_AUTH_PASSWORD,
-        name: "Staging User",
-      }),
-    }));
-
-    expect(signUpResponse.status).toBe(200);
-
-    const cookies = collectSetCookieHeaders(signUpResponse);
-    expect(cookies.length).toBeGreaterThan(0);
-    expect(cookies.some(cookie => /domain=\.?edaya\.test/i.test(cookie))).toBe(true);
   });
 });

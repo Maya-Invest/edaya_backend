@@ -1,44 +1,11 @@
-import type { SubjectCategory, SubjectColor } from '@edaya/core'
+import type { AcademicDisciplineInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
 
-export interface SubjectSeedRecord {
-  id: string
-  schoolId: string
-  name: string
-  code?: string
-  defaultCoefficient?: number
-  category: SubjectCategory
-  color: SubjectColor
-}
-
-export interface SubjectMatterSeedRecord {
-  id: string
-  subjectId: string
-  name: string
-  description?: string
-  sequenceOrder: number
-  estimatedHours?: number
-}
-
-export interface GradeLevelSubjectSeedRecord {
-  id: string
-  gradeLevelId: string
-  academicYearId: string
-  subjectId: string
-  coefficient?: number
-  periodsPerWeek?: number
-  classSubjectIdsByClassGroupId?: Record<string, string>
-}
-
-export interface GradeLevelSubjectMatterSeedRecord {
-  id: string
-  gradeLevelSubjectId: string
-  subjectMatterId: string
-  classSubjectMatterIdsByClassGroupId?: Record<string, string>
-}
+export type SubjectSeedRecord = SubjectInput & { classSubjectIdsByClassGroupId?: Record<string, string> }
+export type SubjectMatterSeedRecord = SubjectMatterInput
 
 export interface CurriculumSeedPort {
+  saveSubjectCategory: (record: SubjectCategoryInput) => Promise<void>
+  saveAcademicDiscipline: (record: AcademicDisciplineInput) => Promise<void>
   saveSubject: (record: SubjectSeedRecord) => Promise<void>
   saveSubjectMatter: (record: SubjectMatterSeedRecord) => Promise<void>
-  offerSubjectToGradeLevel: (record: GradeLevelSubjectSeedRecord) => Promise<void>
-  assignMatterToGradeLevelSubject: (record: GradeLevelSubjectMatterSeedRecord) => Promise<void>
 }

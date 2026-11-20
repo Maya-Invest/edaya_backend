@@ -4,18 +4,18 @@ This inventory captures the seeding port architecture and the domain commands us
 
 ## Local dev (HTTP-only)
 
-CLI seeding (`bun repo seed`) always targets a **running API**:
+CLI seeding (`bun repo ops seed`) always targets a **running API**:
 
-1. Provision Better Auth users via `/auth/*`
+1. Provision Central Identity users through `SEED_API_URL`
 2. Bootstrap an owner session (`register-school` on a fresh database)
 3. Seed access roles, provision the seeding service account (profile API key from `@edaya/fixtures`)
 4. Load demo data through `/core/*` entity routes and commands
 
 There is **no** direct PGlite/SQLite write path from the seed CLI. If HTTP bootstrap fails, the CLI exits with instructions to wipe `.data` and reseed — do not write to the database while the API is running.
 
-`runHttpDevSeeds` is HTTP-only: it does not accept an in-process `SeedApplication`. In-process adapters under `domains/*/in-process.ts` remain for port-level unit tests and `@edaya/seeding` orchestration when a harness provides direct database access.
+`runHttpDevSeeds` is HTTP-only: it does not accept an in-process `SeedApplication`. In-process adapters under `domains/*/adapters/in-process.ts` remain for port-level unit tests and `@edaya/seeding` orchestration when a harness provides direct database access.
 
-After bootstrap, bulk seeding (including access assignments) uses the elevated **seeding service account API key** from `@edaya/fixtures` — no owner session re-sign-in. Use `bun repo seed --scope doctor` to diagnose partial local seed state; `bun repo seed --scope doctor --repair` runs the minimal HTTP repair chain (`auth:link`, `service-account`, `access`, `profile-pictures`) for common drift without wiping `.data`.
+After bootstrap, bulk seeding (including access assignments) uses the elevated **seeding service account API key** from `@edaya/fixtures` — no owner session re-sign-in. Use `bun repo ops seed --scope doctor` to diagnose partial local seed state; `bun repo ops seed --scope doctor --repair` runs the minimal HTTP repair chain (`auth:link`, `service-account`, `access`, `profile-pictures`) for common drift without wiping `.data`.
 
 ## Repository operations
 
@@ -43,7 +43,7 @@ Entity reads (`findById`, `list`) remain on `/core/entities/*` query routes wher
 
 The seed flows call these `SchoolService` workflows:
 
-`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignFeeToStudent`, `assignMatterToClassSubject`, `assignResourceToLessonSession`, `assignStaffPermission`, `assignStaffToClass`, `assignStaffToClassSubject`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `completeAssessment`, `configureActivity`, `configureDisciplinaryAction`, `configureGradeLevel`, `configurePeriodDefinition`, `configureResource`, `configureSubject`, `configureSubjectMatter`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createClassGroup`, `createFee`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `enrollStudentInActivity`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `registerAttachment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `relinkActorSubject`, `requestAttendanceJustification`, `rescheduleOccurrence`, `updateSchoolConfiguration`, `updateStudentDisciplinaryActionStatus`, and `upsertStudentHealthProfile`.
+`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignResourceToLessonSession`, `assignStaffPermission`, `assignStaffToClass`, `assignStaffToClassSubject`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `cancelStudentCharge`, `completeAssessment`, `configureActivity`, `configureDisciplinaryAction`, `configureGradeLevel`, `configurePeriodDefinition`, `configureResource`, `configureSubject`, `configureSubjectMatter`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createCatalogService`, `createClassGroup`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `enrollStudentInActivity`, `enrollStudentInService`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `refundAvailableBalance`, `registerAttachment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `relinkActorSubject`, `requestAttendanceJustification`, `requestDocumentIssuance`, `rescheduleOccurrence`, `reverseAllocation`, `reversePayment`, `updateSchoolConfiguration`, `updateStudentDisciplinaryActionStatus`, `upsertStudentHealthProfile`, and `waiveStudentCharge`.
 
 ## Migrated vertical ports
 
@@ -114,7 +114,11 @@ Report cards use a five-operation `ReportCardsSeedPort` for grade scales, defini
 
 ### Finance
 
-Finance uses a three-operation `FinanceSeedPort` for fee creation, student fee assignment, and payment recording. The workflow resolves one reference date for status-sensitive operations and maps fixture categories to domain enums. Installment, due, payment, and reference dates cross as ISO strings and are reconstructed only by the in-process adapter.
+Finance uses admitted catalog accounting commands: create catalog service, enroll a student, record a payment, then optional waive/cancel, allocation reversal, payment reversal, and refund. Allocation IDs are queried after FIFO receipts because they are generated. Dates cross as ISO strings and are reconstructed only by the in-process adapter.
+
+### Documents
+
+Documents use a three-operation `DocumentsSeedPort` for ready issuances (`requestDocumentIssuance` + render dispatch), failed UI rows, and a post-seed dispatch. Ready fixtures replay bulletin, receipt, and schooling-certificate commands after report-card publication and finance receipts. Failed fixtures are persisted only by the in-process adapter (no public failed-issuance command). The HTTP adapter requests the same identity instead so CLI seed stays command-only.
 
 ### Activities
 
@@ -149,10 +153,11 @@ Attachments use a one-operation `AttachmentsSeedPort`. The workflow maps fixture
 5. Scheduling and attendance: migrated.
 6. Assessments and report cards: migrated.
 7. Finance: migrated.
-8. Activities: migrated.
-9. Calendar events, incidents, and student involvements: migrated.
-10. Student health profiles and pedagogical notes: migrated.
-11. Communications, discipline, and attachments: migrated.
+8. Official documents: migrated.
+9. Activities: migrated.
+10. Calendar events, incidents, and student involvements: migrated.
+11. Student health profiles and pedagogical notes: migrated.
+12. Communications, discipline, and attachments: migrated.
 
 All dev-school seed domains now run through explicit ports. HTTP seeding no longer constructs a proxy `SeedApplication` or represents JSON responses as core domain services/repositories.
 

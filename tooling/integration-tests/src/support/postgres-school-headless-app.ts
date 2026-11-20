@@ -16,13 +16,14 @@ export function createPostgresAppBuilder(db: any, repos: any, AtomicExecutionCto
 
     const defaultActor = createDefaultTestActor(actor)
 
+    const atomicExecution = new AtomicExecutionCtor(db)
     const application = buildSchoolApplication({
-      atomicExecution: new AtomicExecutionCtor(db),
+      atomicExecution,
       repositories: repos,
       actor: defaultActor,
     })
 
-    await seedDefaultStaffMember(repos, defaultActor)
+    await seedDefaultStaffMember(repos, defaultActor, actor === undefined, atomicExecution)
 
     return {
       app: application.forActor(defaultActor),

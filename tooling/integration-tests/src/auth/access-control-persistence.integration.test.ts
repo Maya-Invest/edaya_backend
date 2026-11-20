@@ -1,45 +1,44 @@
-import { Permission } from '@edaya/authorization'
-import { StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { AccessPolicies, ActorAssuranceLevel, createStaffActorMetadata, describeActionGrants, Permission } from '@edaya/authorization'
+import { AcademicYear, ClassGroup, GradeLevel, StaffAssignment, StaffMember, StaffPermissionAssignment, withShortName } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import { createTestApp } from '../utils/test-adapter'
 
-describeIntegration('access control persistence', () => {
-  test('backfill and resolve grants from postgres', async () => {
-    const { schoolRepositories: repos } = await createTestApp()
+async function fixture() {
+  const { schoolRepositories: repos } = await createTestApp()
+  await repos.academicYears.save(new AcademicYear(withShortName({ id: 'year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' })))
+  await repos.gradeLevels.save(new GradeLevel(withShortName({ id: 'level', schoolId: 'school', name: 'Level', shortName: 'Level', order: 1 })))
+  for (const id of ['class', 'other'])
+    await repos.classGroups.save(new ClassGroup(withShortName({ id, schoolId: 'school', academicYearId: 'year', gradeLevelId: 'level', name: id })))
+  await repos.staffMembers.save(new StaffMember({ identifier: 'STAFF', id: 'staff', schoolId: 'school', firstName: 'Marie', lastName: 'Dupont', subjectId: 'person' }))
+  const actor = createStaffActorMetadata({ staffMemberId: 'staff', subjectId: 'person', schoolId: 'school', academicYearId: 'year', requestId: 'persistence-test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong })
+  return { repos, actor, access: () => new AccessPolicies(actor, repos) }
+}
 
-    await repos.staffMembers.save(new StaffMember({
-      id: 'staff-teacher-1',
-      schoolId: 'school',
-      firstName: 'Marie',
-      lastName: 'Dupont',
-    }))
+describeIntegration('typed staff authorization persistence', () => {
+  test('manual grants retain their action, placement, validity and provenance', async () => {
+    const { repos, actor, access } = await fixture()
+    const row = new StaffPermissionAssignment({ id: 'manual', staffId: 'staff', schoolId: 'school', academicYearId: 'year', permission: Permission.ATTENDANCE_RECORD, scopes: [{ kind: 'class_group', classGroupId: 'class' }], startsAt: new Date('2020-01-01'), endsAt: new Date('2099-01-01') })
+    await repos.staffPermissionAssignments.save(row)
+    expect((await repos.staffPermissionAssignments.findById(row.id))?.scopes).toEqual(row.scopes)
+    expect(await describeActionGrants(actor, repos)).toContainEqual(expect.objectContaining({ permission: row.permission, scopes: row.scopes, source: 'manual', startsAt: row.startsAt, endsAt: row.endsAt }))
+    await access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')
+    await expect(access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['other'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
+    await expect(access().assertResources(Permission.GRADE_MANAGE, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
+    await repos.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...row.data, endsAt: new Date('2021-01-01') }))
+    await expect(access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
+  })
 
-    await repos.staffAssignments.save(new StaffAssignment({
-      id: 'teaching-assign-1',
-      staffId: 'staff-teacher-1',
-      academicYearId: 'year-1',
-      responsibility: 'teacher',
-      classGroupId: 'class-6a',
-    }))
-
-    await repos.staffPermissionAssignments.save(new StaffPermissionAssignment({
-      id: 'spa-teacher-attendance',
-      staffId: 'staff-teacher-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-6a',
-      status: 'active',
-    }))
-
-    const grants = await repos.authorization.resolveEffectiveGrants({
-      staffMemberId: 'staff-teacher-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-    })
-
-    expect(grants.permissions.has(Permission.ATTENDANCE_RECORD)).toBe(true)
-    expect(grants.scopeIdsByPermission?.[Permission.ATTENDANCE_RECORD]).toBe('class-6a')
+  test('assignments supply authority directly; responsibility labels and deleted assignments supply none', async () => {
+    const { repos, actor, access } = await fixture()
+    const assignment = new StaffAssignment({ id: 'assignment', staffId: 'staff', academicYearId: 'year', responsibility: 'principal', classGroupId: 'class', permissions: [] })
+    await repos.staffAssignments.save(assignment)
+    await expect(access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
+    await repos.staffAssignments.save(new StaffAssignment({ ...assignment.data, permissions: [Permission.ATTENDANCE_RECORD] }))
+    await access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')
+    expect(await describeActionGrants(actor, repos)).toContainEqual(expect.objectContaining({ permission: Permission.ATTENDANCE_RECORD, source: 'assignment' }))
+    expect(await repos.staffPermissionAssignments.count()).toBe(0)
+    await repos.staffAssignments.delete(assignment.id)
+    await expect(access().assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', ['class'], 'write')).rejects.toMatchObject({ code: 'forbidden' })
   })
 })

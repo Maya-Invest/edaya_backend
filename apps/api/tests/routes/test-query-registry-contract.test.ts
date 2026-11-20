@@ -1,3 +1,4 @@
+import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { describe, expect, it } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -60,7 +61,7 @@ describe("core route registry contracts", () => {
         || !entity.querySchema
         || !entity.responseSchema
         || !entity.saveSchema
-        || typeof entity.allowDirectSave !== "boolean"
+        || Object.values(entity.publicOperations).some(value => typeof value !== "boolean")
         || typeof entity.createEntity !== "function",
       )
       .map(entity => entity.serviceName);
@@ -71,10 +72,37 @@ describe("core route registry contracts", () => {
     }
   });
 
-  it("generates command, query, and eight entity endpoints for every core registry entry", () => {
-    expect(coreRoutePairs).toHaveLength(
-      coreCommands.length + coreQueries.length + coreEntities.length * 8,
-    );
+  it("omits unavailable generic writes while retaining named commands", () => {
+    const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
+    for (const name of ["attachments", "students", "enrollments", "payments", "student-charges", "catalog-services", "student-year-accounts", "student-service-enrollments", "assessment-results", "results", "account-invitations", "document-issuances", "staff-permission-profile-bindings"]) {
+      for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
+        expect(paths.has(`/core/entities/${name}/${action}`)).toBe(false);
+      }
+      expect(paths.has(`/core/entities/${name}/list`)).toBe(true);
+    }
+    expect(paths.has("/core/commands/record-payment")).toBe(true);
+    expect(paths.has("/core/commands/cancel-student-fee")).toBe(true);
+    expect(paths.has("/core/entities/class-subjects/save")).toBe(false);
+    expect(paths.has("/core/entities/class-subjects/delete")).toBe(true);
+    expect(paths.has("/core/entities/staff-permission-profiles/save")).toBe(false);
+    expect(paths.has("/core/entities/staff-permission-profiles/delete")).toBe(true);
+    expect(paths.has("/core/commands/configure-permission-profile")).toBe(true);
+  });
+
+  it("does not expose family feedback through generic entity routes", () => {
+    const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
+    for (const name of [
+      "family-feedback-campaigns",
+      "family-feedback-slots",
+      "family-feedback-responses",
+      "family-feedback-snapshots",
+      "family-feedback-comment-read-audit",
+    ]) {
+      expect(paths.has(`/core/entities/${name}/list`)).toBe(false);
+      expect(paths.has(`/core/entities/${name}/one`)).toBe(false);
+    }
+    expect(CORE_ENTITY_KEYS.some(key => key.toLowerCase().includes("familyfeedback"))).toBe(false);
+    expect(coreEntities.some(entity => entity.serviceName.toLowerCase().includes("familyfeedback"))).toBe(false);
   });
 
   it("does not register duplicate public route names", () => {
@@ -113,14 +141,16 @@ describe("core route registry contracts", () => {
   });
 
   it("marks command-only entities as disallowing direct save", () => {
-    const commandOnlyEntities = coreEntities.filter(entity => !entity.allowDirectSave);
+    const commandOnlyEntities = coreEntities.filter(entity => !permitsPublicSave(entity.publicOperations));
     expect(commandOnlyEntities.map(entity => entity.serviceName)).toEqual(expect.arrayContaining([
       "students",
       "enrollments",
-      "studentFees",
+      "studentCharges",
+      "attachments",
       "payments",
       "assessmentResults",
       "results",
+      "documentIssuances",
     ]));
   });
 
@@ -130,6 +160,8 @@ describe("core route registry contracts", () => {
       "schoolId",
       "academicYearId",
       "status",
+      "sourceProfileBindingId",
+      "sourceManualAssignmentId",
     ]));
 
     expect(fieldsFor("resources")).toContain("kind");

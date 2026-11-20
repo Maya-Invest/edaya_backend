@@ -1,22 +1,17 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { ResourceAssignment } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, ResourceOperations } from '@edaya/authorization'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
-import { config, noopReadAccess, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
 
-// Extracted from domain/school/resource-assignment.ts (PR3)
-export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, policy, atomicExecution }) =>
+export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.resourceAssignments,
     tenant: resourceAssignmentTenant(),
-    read: read(operationModule(ResourceOperations.read), noopReadAccess),
-    write: write(operationModule(ResourceOperations.configure), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
-    gates: {
-      preSave: validateResourceAssignmentSave,
-    },
+    resource: 'resourceAssignments',
+    gates: { preSave: validateResourceAssignmentSave },
     atomicExecution,
   })
 
@@ -27,30 +22,44 @@ function resourceAssignmentTenant(): EntityTenantResolver<ResourceAssignment> {
   })
 }
 
-function authorizeResourceAssignment(policy: AuthorizationPolicy): EntityWriteAuthorization<ResourceAssignment>['authorizeSave'] {
-  return async (actor, entity) => {
-    if (entity.classGroupId)
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    if (entity.activitySessionId)
-      await policy.checkActivitySessionAccess(actor, [entity.activitySessionId])
-    if (entity.assessmentId)
-      await policy.checkAssessmentAccess(actor, [entity.assessmentId])
-  }
+interface ResourcePlacement {
+  kind: 'class' | 'lesson' | 'activity' | 'assessment'
+  id: string
+  classGroupId: string
+  startsAt?: Date
+  endsAt?: Date
 }
 
-function authorizeResourceAssignmentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<ResourceAssignment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    if (entity.classGroupId)
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    if (entity.activitySessionId)
-      await policy.checkActivitySessionAccess(actor, [entity.activitySessionId])
-    if (entity.assessmentId)
-      await policy.checkAssessmentAccess(actor, [entity.assessmentId])
+async function placement(assignment: ResourceAssignment, schoolId: string, repositories: SchoolRepositories): Promise<ResourcePlacement> {
+  let target: ResourcePlacement
+  if (assignment.classGroupId) {
+    target = { kind: 'class', id: assignment.classGroupId, classGroupId: assignment.classGroupId }
   }
+  else if (assignment.lessonSessionId) {
+    const lesson = await repositories.lessonSessions.findById(assignment.lessonSessionId)
+    if (!lesson)
+      return denyResourceAccess()
+    target = { kind: 'lesson', id: lesson.id, classGroupId: lesson.classGroupId, startsAt: lesson.startsAt, endsAt: lesson.endsAt }
+  }
+  else if (assignment.activitySessionId) {
+    const activity = await repositories.activitySessions.findById(assignment.activitySessionId)
+    if (!activity)
+      return denyResourceAccess()
+    target = { kind: 'activity', id: activity.id, classGroupId: activity.classGroupId, startsAt: activity.startsAt, endsAt: activity.endsAt }
+  }
+  else {
+    const assessment = assignment.assessmentId ? await repositories.assessments.findById(assignment.assessmentId) : undefined
+    if (!assessment)
+      return denyResourceAccess()
+    const lesson = assessment.lessonSessionId ? await repositories.lessonSessions.findById(assessment.lessonSessionId) : undefined
+    if (assessment.lessonSessionId && (!lesson || lesson.classGroupId !== assessment.classGroupId))
+      return denyResourceAccess()
+    target = { kind: 'assessment', id: assessment.id, classGroupId: assessment.classGroupId, startsAt: assessment.isHomework ? undefined : assessment.startsAt ?? lesson?.startsAt, endsAt: assessment.isHomework ? undefined : assessment.endsAt ?? lesson?.endsAt }
+  }
+  const group = await repositories.classGroups.findById(target.classGroupId)
+  if (!group || group.schoolId !== schoolId)
+    return denyResourceAccess()
+  return target
 }
 
 async function validateResourceAssignmentSave(
@@ -59,128 +68,23 @@ async function validateResourceAssignmentSave(
   repositories: SchoolRepositories,
 ): Promise<void> {
   const resource = await repositories.resources.findById(assignment.resourceId)
-  if (!resource) {
-    denyResourceAccess()
-  }
-  if (assignment.classGroupId) {
-    const classGroup = await repositories.classGroups.findById(assignment.classGroupId)
-    if (!classGroup || classGroup.schoolId !== resource.schoolId) {
-      denyResourceAccess()
-    }
-    await ensureResourceCanBeAssignedToClass(assignment, repositories)
-    return
-  }
-  if (assignment.lessonSessionId) {
-    const lessonSession = await repositories.lessonSessions.findById(assignment.lessonSessionId)
-    if (!lessonSession) {
-      denyResourceAccess()
-    }
-    const classGroup = await repositories.classGroups.findById(lessonSession.classGroupId)
-    if (!classGroup || classGroup.schoolId !== resource.schoolId) {
-      denyResourceAccess()
-    }
-    await ensureResourceCanBeAssignedToLessonSession(assignment, lessonSession, repositories)
-    return
-  }
-  if (assignment.activitySessionId) {
-    const activitySession = await repositories.activitySessions.findById(assignment.activitySessionId)
-    if (!activitySession) {
-      denyResourceAccess()
-    }
-    const classGroup = await repositories.classGroups.findById(activitySession.classGroupId)
-    if (!classGroup || classGroup.schoolId !== resource.schoolId) {
-      denyResourceAccess()
-    }
-    await ensureResourceCanBeAssignedToActivitySession(assignment, activitySession, repositories)
-  }
-}
-
-async function ensureResourceCanBeAssignedToClass(
-  assignment: ResourceAssignment,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const classAssignments = await repositories.resourceAssignments.list({
-    resourceId: assignment.resourceId,
-    classGroupId: { $exists: true },
-  })
-  const duplicate = classAssignments.find(existing =>
-    existing.id !== assignment.id && existing.classGroupId === assignment.classGroupId)
-  if (duplicate) {
-    throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${assignment.resourceId} is already assigned to class ${assignment.classGroupId}`)
-  }
-  const conflicting = classAssignments.find(existing =>
-    existing.id !== assignment.id && existing.classGroupId !== assignment.classGroupId)
-  if (conflicting) {
-    throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${assignment.resourceId} is already assigned to class ${conflicting.classGroupId}`)
-  }
-}
-
-async function ensureResourceCanBeAssignedToActivitySession(
-  assignment: ResourceAssignment,
-  activitySession: { id: string, classGroupId: string, startsAt: Date, endsAt: Date },
-  repositories: SchoolRepositories,
-): Promise<void> {
+  if (!resource)
+    return denyResourceAccess()
+  const proposed = await placement(assignment, resource.schoolId, repositories)
   const assignments = await repositories.resourceAssignments.list({ resourceId: assignment.resourceId })
   for (const existing of assignments) {
-    if (existing.id === assignment.id) {
+    if (existing.id === assignment.id)
       continue
+    const other = await placement(existing, resource.schoolId, repositories)
+    if ((proposed.kind === 'class' || other.kind === 'class') && proposed.classGroupId !== other.classGroupId)
+      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${resource.id} is reserved for another class`)
+    if (proposed.kind === other.kind && proposed.id === other.id) {
+      const code = { class: 'CLASS', lesson: 'LESSON_SESSION', activity: 'ACTIVITY_SESSION', assessment: 'ASSESSMENT' }[proposed.kind]
+      throw new BusinessRuleViolationError(`RESOURCE_ALREADY_ASSIGNED_TO_${code}`, `Resource ${resource.id} is already assigned to ${proposed.id}`)
     }
-    if (existing.activitySessionId === assignment.activitySessionId) {
-      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_ACTIVITY_SESSION', `Resource ${assignment.resourceId} is already assigned to activity session ${assignment.activitySessionId}`)
-    }
-    if (existing.classGroupId && existing.classGroupId !== activitySession.classGroupId) {
-      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${assignment.resourceId} is already assigned to class ${existing.classGroupId}`)
-    }
-    if (!existing.activitySessionId && !existing.lessonSessionId) {
-      continue
-    }
-    const existingOccurrence = existing.lessonSessionId
-      ? await repositories.lessonSessions.findById(existing.lessonSessionId)
-      : existing.activitySessionId
-        ? await repositories.activitySessions.findById(existing.activitySessionId)
-        : undefined
-    if (!existingOccurrence) {
-      denyResourceAccess()
-    }
-    if (occurrencesOverlap(activitySession, existingOccurrence)) {
-      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_OVERLAPPING', `Resource ${assignment.resourceId} is already assigned to overlapping occurrence ${existingOccurrence.id}`)
+    if (proposed.startsAt && proposed.endsAt && other.startsAt && other.endsAt
+      && proposed.startsAt < other.endsAt && other.startsAt < proposed.endsAt) {
+      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_OVERLAPPING', `Resource ${resource.id} is already assigned to overlapping occurrence ${other.id}`)
     }
   }
-}
-
-async function ensureResourceCanBeAssignedToLessonSession(
-  assignment: ResourceAssignment,
-  lessonSession: { id: string, classGroupId: string, startsAt: Date, endsAt: Date },
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const assignments = await repositories.resourceAssignments.list({ resourceId: assignment.resourceId })
-  for (const existing of assignments) {
-    if (existing.id === assignment.id) {
-      continue
-    }
-    if (existing.lessonSessionId === assignment.lessonSessionId) {
-      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_LESSON_SESSION', `Resource ${assignment.resourceId} is already assigned to lesson session ${assignment.lessonSessionId}`)
-    }
-    if (existing.classGroupId && existing.classGroupId !== lessonSession.classGroupId) {
-      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_TO_CLASS', `Resource ${assignment.resourceId} is already assigned to class ${existing.classGroupId}`)
-    }
-    if (!existing.lessonSessionId) {
-      continue
-    }
-    const existingLessonSession = await repositories.lessonSessions.findById(existing.lessonSessionId)
-    if (!existingLessonSession) {
-      denyResourceAccess()
-    }
-    if (occurrencesOverlap(lessonSession, existingLessonSession)) {
-      throw new BusinessRuleViolationError('RESOURCE_ALREADY_ASSIGNED_OVERLAPPING', `Resource ${assignment.resourceId} is already assigned to overlapping lesson session ${existingLessonSession.id}`)
-    }
-  }
-}
-
-function occurrencesOverlap(
-  left: { startsAt: Date, endsAt: Date },
-  right: { startsAt: Date, endsAt: Date },
-): boolean {
-  return left.startsAt.getTime() < right.endsAt.getTime()
-    && right.startsAt.getTime() < left.endsAt.getTime()
 }

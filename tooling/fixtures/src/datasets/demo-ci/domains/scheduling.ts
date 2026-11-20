@@ -7,7 +7,7 @@ export const demoCiResources = [
   {
     id: 'ci-r-salle-6a',
     schoolId: DEMO_CI_SCHOOL_ID,
-    name: 'Salle 6ème A',
+    name: 'Salle 6ème 1',
     kind: ResourceKind.Location,
     capacity: 35,
     description: 'Bâtiment principal · RDC',
@@ -15,7 +15,7 @@ export const demoCiResources = [
   {
     id: 'ci-r-salle-5a',
     schoolId: DEMO_CI_SCHOOL_ID,
-    name: 'Salle 5ème A',
+    name: 'Salle 5ème 1',
     kind: ResourceKind.Location,
     capacity: 35,
     description: 'Bâtiment principal · 1er étage',
@@ -43,7 +43,7 @@ export const demoCiClassResourceAssignments = [
   },
 ] as const satisfies readonly ResourceAssignmentInput[]
 
-/** Recurring lesson slots for Mme Touré (ci-t1) — math in 6ème A and 5ème A. */
+/** Recurring lesson slots for Mme Touré (ci-t1) — math in 6ème 1 and 5ème 1. */
 export const demoCiSchedulingSlots = [
   {
     slotId: 'ci-p-6a-math-mon',
@@ -149,7 +149,7 @@ export const demoCiSchedulingSessionProgressAnchors = [
     progress: {
       id: 'ci-csp-6a-math-fractions',
       classSubjectMatterId: 'csm-ci-cs-6a-math-ci-sm-math-fractions',
-      completedPercentage: 60,
+      completed: false,
       notes: 'Exercices sur les fractions irréductibles et les pourcentages.',
     },
     scheduleId: 'sch-ci-6a-math-mon',
@@ -160,7 +160,7 @@ export const demoCiSchedulingSessionProgressAnchors = [
     progress: {
       id: 'ci-csp-6a-math-geometrie',
       classSubjectMatterId: 'csm-ci-cs-6a-math-ci-sm-math-geometrie',
-      completedPercentage: 25,
+      completed: false,
       notes: 'Construction de triangles avec règle et compas.',
     },
     scheduleId: 'sch-ci-6a-math-wed',
@@ -171,7 +171,7 @@ export const demoCiSchedulingSessionProgressAnchors = [
     progress: {
       id: 'ci-csp-6b-fr-lecture',
       classSubjectMatterId: 'csm-ci-cs-6b-fr-ci-sm-fr-lecture',
-      completedPercentage: 40,
+      completed: false,
       notes: 'Analyse d\'un texte narratif — repérage des personnages.',
     },
     scheduleId: 'sch-ci-6b-fr-mon',

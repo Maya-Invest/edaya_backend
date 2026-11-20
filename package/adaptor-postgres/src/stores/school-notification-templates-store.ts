@@ -1,113 +1,102 @@
-import type { QueryOptions } from '@edaya/core'
-import type { SchoolNotificationTemplateDocument } from '@edaya/service'
+import type { Filter, QueryOptions } from '@edaya/core'
 import { SchoolNotificationTemplates } from '@edaya/core'
-import { buildDefaultNotificationTemplateDocument, mergeSchoolNotificationTemplateDocument } from '@edaya/service'
-import { asc, desc, eq, inArray } from 'drizzle-orm'
-import { buildWhereClause } from '../lib/filter'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 type SchoolNotificationTemplatesRow = typeof schema.schoolNotificationTemplates.$inferSelect
-const orderableColumns = {
-  id: schema.schoolNotificationTemplates.id,
-  schoolId: schema.schoolNotificationTemplates.id,
-  createdAt: schema.schoolNotificationTemplates.createdAt,
-  updatedAt: schema.schoolNotificationTemplates.updatedAt,
-}
-type SchoolNotificationTemplatesColumnKey = keyof typeof orderableColumns
+type SchoolNotificationTemplatesQuery
+  = QueryOptions<SchoolNotificationTemplates>
+    | Filter<SchoolNotificationTemplates>
 
-function schoolNotificationTemplatesColumn(field: string) {
-  const column = orderableColumns[field as SchoolNotificationTemplatesColumnKey]
-  if (!column) {
-    throw new Error(`Unsupported school notification templates sort field: ${field}`)
+export function normalizeSchoolNotificationTemplatesQuery(
+  options?: SchoolNotificationTemplatesQuery,
+): QueryOptions<SchoolNotificationTemplates> | undefined {
+  if (!options || typeof options !== 'object') {
+    return options
   }
-  return column
+
+  const { schoolId, ...rest } = options as QueryOptions<SchoolNotificationTemplates>
+  const normalized = { ...rest }
+  if (rest.$and)
+    normalized.$and = rest.$and.map(filter => normalizeSchoolNotificationTemplatesQuery(filter)!)
+  if (rest.$or)
+    normalized.$or = rest.$or.map(filter => normalizeSchoolNotificationTemplatesQuery(filter)!)
+  if (rest.$not)
+    normalized.$not = normalizeSchoolNotificationTemplatesQuery(rest.$not)!
+  if (rest.$orderBy)
+    normalized.$orderBy = rest.$orderBy.map(order => ({ ...order, field: order.field === 'schoolId' ? 'id' : order.field }))
+  if (schoolId === undefined)
+    return normalized
+  if (normalized.id === undefined)
+    return { ...normalized, id: schoolId }
+  return { ...normalized, $and: [...(normalized.$and ?? []), { id: schoolId }] }
 }
 
-export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates> {
+function packTemplateRow(entity: SchoolNotificationTemplates): SchoolNotificationTemplatesRow {
+  return {
+    id: entity.schoolId,
+    invitationSmsEnabled: entity.invitationSmsEnabled,
+    announcementPublished: entity.announcementPublished,
+    reportCardPublished: entity.reportCardPublished,
+    attendanceRecorded: entity.attendanceRecorded,
+    assessmentResultRecorded: entity.assessmentResultRecorded,
+    incidentRecorded: entity.incidentRecorded,
+    assessmentDueSoon: entity.assessmentDueSoon,
+    activityReminder: entity.activityReminder,
+    calendarEventReminder: entity.calendarEventReminder,
+    studentPhotoApproved: entity.studentPhotoApproved ?? null,
+    studentPhotoRejected: entity.studentPhotoRejected ?? null,
+    familyFeedbackOpened: entity.familyFeedbackOpened ?? null,
+    familyFeedbackReminder: entity.familyFeedbackReminder ?? null,
+    familyFeedbackPublished: entity.familyFeedbackPublished ?? null,
+    familyFeedbackPurgeReminder: entity.familyFeedbackPurgeReminder ?? null,
+    accountInvitation: entity.accountInvitation,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
+  }
+}
+
+function storedCatalog(row: SchoolNotificationTemplatesRow) {
+  return {
+    invitationSmsEnabled: row.invitationSmsEnabled,
+    announcementPublished: row.announcementPublished,
+    reportCardPublished: row.reportCardPublished,
+    attendanceRecorded: row.attendanceRecorded,
+    assessmentResultRecorded: row.assessmentResultRecorded,
+    incidentRecorded: row.incidentRecorded,
+    assessmentDueSoon: row.assessmentDueSoon,
+    activityReminder: row.activityReminder,
+    calendarEventReminder: row.calendarEventReminder,
+    studentPhotoApproved: row.studentPhotoApproved!,
+    studentPhotoRejected: row.studentPhotoRejected!,
+    familyFeedbackOpened: row.familyFeedbackOpened!,
+    familyFeedbackReminder: row.familyFeedbackReminder!,
+    familyFeedbackPublished: row.familyFeedbackPublished!,
+    familyFeedbackPurgeReminder: row.familyFeedbackPurgeReminder!,
+    accountInvitation: row.accountInvitation,
+  }
+}
+
+export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates, SchoolNotificationTemplatesRow> {
   constructor(db: unknown) {
     super(
-      db,
+      asStoreDatabase(db),
       schema.schoolNotificationTemplates,
-      (entity: SchoolNotificationTemplates) => ({
-        id: entity.schoolId,
-        templates: entity.templates as SchoolNotificationTemplateDocument,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-      }),
+      (entity: SchoolNotificationTemplates) => packTemplateRow(entity),
       (row: SchoolNotificationTemplatesRow) => new SchoolNotificationTemplates({
         schoolId: row.id,
-        templates: row.templates as SchoolNotificationTemplateDocument,
+        ...storedCatalog(row),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),
     )
   }
 
-  override async findById(id: string): Promise<SchoolNotificationTemplates | undefined> {
-    const rows = await this.getClient()
-      .select()
-      .from(schema.schoolNotificationTemplates)
-      .where(eq(schema.schoolNotificationTemplates.id, id))
-
-    const row = rows[0]
-    return row ? this.toDomainRow(row) : undefined
-  }
-
-  override async findByIds(ids: readonly string[]): Promise<SchoolNotificationTemplates[]> {
-    if (ids.length === 0) {
-      return []
-    }
-
-    const rows = await this.getClient()
-      .select()
-      .from(schema.schoolNotificationTemplates)
-      .where(inArray(schema.schoolNotificationTemplates.id, [...ids]))
-
-    return Promise.all(rows.map((row: SchoolNotificationTemplatesRow) => this.toDomainRow(row)))
-  }
-
   override async list(options?: QueryOptions<SchoolNotificationTemplates>): Promise<SchoolNotificationTemplates[]> {
-    let query = this.getClient().select().from(schema.schoolNotificationTemplates)
-
-    if (options) {
-      const whereClause = buildWhereClause(schema.schoolNotificationTemplates, options)
-      if (whereClause) {
-        query = query.where(whereClause)
-      }
-
-      if (options.$orderBy && options.$orderBy.length > 0) {
-        const orderByClauses = options.$orderBy.map(({ field, direction }) => {
-          const col = schoolNotificationTemplatesColumn(field)
-          return direction === 'asc' ? asc(col) : desc(col)
-        })
-        query = query.orderBy(...orderByClauses)
-      }
-
-      if (options.$limit !== undefined) {
-        query = query.limit(options.$limit)
-      }
-      if (options.$offset !== undefined) {
-        query = query.offset(options.$offset)
-      }
-    }
-
-    const rows = await query
-    return Promise.all(rows.map((row: SchoolNotificationTemplatesRow) => this.toDomainRow(row)))
+    return super.list(normalizeSchoolNotificationTemplatesQuery(options))
   }
 
-  private async toDomainRow(row: SchoolNotificationTemplatesRow): Promise<SchoolNotificationTemplates> {
-    const defaults = await buildDefaultNotificationTemplateDocument()
-    const templates = mergeSchoolNotificationTemplateDocument(
-      defaults,
-      row.templates as SchoolNotificationTemplateDocument,
-    )
-
-    return new SchoolNotificationTemplates({
-      schoolId: row.id,
-      templates,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })
+  override async count(filter?: Filter<SchoolNotificationTemplates>): Promise<number> {
+    return super.count(normalizeSchoolNotificationTemplatesQuery(filter))
   }
 }

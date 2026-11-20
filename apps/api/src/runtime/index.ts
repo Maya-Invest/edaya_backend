@@ -1,5 +1,3 @@
-export { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
-
 /**
  * Public runtime API — prefer importing from `@/runtime`.
  *
@@ -12,26 +10,26 @@ export { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
 export {
   type Environment,
   inferRuntimeKind,
-  loadDotenvFiles,
-  loadLocalProcessEnv,
   parseEnv,
   parseRuntimeEnv,
+  platformBootstrapEmails,
   prepareRuntimeBindings,
   resolveAccountInvitationsEnabled,
-  resolveAuthDatabaseUrl,
   resolveDatabaseUrl,
   resolveInviteBaseUrl,
   resolveRepoLocalDatabaseUrl,
   resolveRepoLocalDataPath,
   resolveRepoRoot,
+  resolveWebappOrigin,
   shouldAllowPublicSchoolRegistration,
-  usesAuthHyperdriveBinding,
   usesHyperdriveBinding,
 } from "@/runtime/shared/env";
 
+// Process-only helpers are deliberately absent from the shared Worker env barrel.
+export { loadDotenvFiles, loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
+
 export type {
   ApiRuntime,
-  AuthService,
   DatabaseHandle,
   RuntimeBindings,
   RuntimeKind,

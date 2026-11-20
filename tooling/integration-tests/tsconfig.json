@@ -5,15 +5,27 @@
     "rewriteRelativeImportExtensions": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["../../apps/api/src/*"],
-      "@/runtime/resolve-api-runtime": ["../../apps/api/src/runtime/local/resolve-api-runtime.ts"],
-      "@api-tests/*": ["../../apps/api/tests/*"]
+      "@/*": [
+        "../../apps/api/src/*"
+      ],
+      "@/runtime/resolve-api-runtime": [
+        "../../apps/api/src/runtime/local/resolve-api-runtime.ts"
+      ],
+      "@api-tests/*": [
+        "../../apps/api/tests/*"
+      ]
     }
   },
   "include": [
     "src/**/*",
+    "../repo/db/school/lib/assert-finance-reset-target.ts",
+    "../repo/db/school/lib/reset-finance-tables.ts",
     "../../apps/api/src/**/*",
-    "../../apps/api/tests/**/*"
+    "../../apps/api/tests/**/*",
+    "../repo/openapi/export.ts",
+    "../repo/openapi/update.ts",
+    "../repo/openapi/check-drift.ts",
+    "../repo/dev/r2-configure-cors.ts"
   ],
   "exclude": [
     "node_modules"

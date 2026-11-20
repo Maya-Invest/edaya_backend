@@ -1,27 +1,29 @@
 export interface StudentSeedRecord {
+  identifier?: string
+  globalIdentifier?: string
   id: string
   schoolId: string
   firstName: string
   lastName: string
   birthDate?: string
-  subjectId?: string
   sendAccountInvitation?: boolean
 }
 
 export interface EnrollmentSeedRecord {
+  enrolledAt?: string
   id: string
   studentId: string
   classGroupId: string
 }
 
 export interface GuardianSeedRecord {
+  identifier?: string
   id: string
   schoolId: string
   firstName: string
   lastName: string
   email?: string
   phone?: string
-  subjectId?: string
   sendAccountInvitation?: boolean
 }
 

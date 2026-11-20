@@ -2,6 +2,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner } from '../support/types'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { splitDisplayName } from '@edaya/fixtures/shared/people'
+import { SeedPortError } from '../support/seed-port-error'
 
 export interface DevStaffAuthSyncResult {
   linkedStaff: number
@@ -15,7 +16,7 @@ export interface DevStaffAuthSyncOptions {
   linkGuardians?: boolean
 }
 
-/** Dev-only: assign school owner without owner-transfer service gate (bootstrap / seeding). */
+/** Initialize the selected fixture owner through the adapter's admitted ownership operation. */
 export async function assignDevSchoolOwnerSubjectId(
   port: AuthLinkSeedPort,
   ownerSubjectId: string,
@@ -26,6 +27,8 @@ export async function assignDevSchoolOwnerSubjectId(
   if (!currentSchool || currentSchool.ownerSubjectId === ownerSubjectId) {
     return
   }
+  if (currentSchool.ownerSubjectId)
+    throw new SeedPortError('setSchoolOwnerSubjectId', { detail: 'Fixture initialization cannot replace the current school owner' })
 
   await port.setSchoolOwnerSubjectId(currentSchool.id, ownerSubjectId)
 }
@@ -52,6 +55,7 @@ async function ensureDevAuthStaffMembers(
       firstName,
       lastName,
       email: account.email,
+      profileRole: seedMember.profileRole ?? undefined,
     })
   }
 }
@@ -79,6 +83,12 @@ async function linkDevAuthTeachers(
       continue
     }
 
+    if (teacher.subjectId) {
+      await port.replaceTeacherSubjectId(teacher.id, subjectId)
+      linkedTeachers++
+      continue
+    }
+
     await port.linkActorSubject({
       subjectId,
       teacherId: account.teacherId,
@@ -95,6 +105,7 @@ async function linkDevAuthStaffAndGuardians(
   options: DevStaffAuthSyncOptions = {},
 ): Promise<Pick<DevStaffAuthSyncResult, 'linkedStaff' | 'linkedGuardians'>> {
   const context = resolveDevSeedContext()
+  const school = await port.findSchoolById(context.schoolId)
   const linkGuardians = options.linkGuardians ?? true
   let linkedStaff = 0
   let linkedGuardians = 0
@@ -112,6 +123,10 @@ async function linkDevAuthStaffAndGuardians(
     }, { preserveSession: true })
 
     if (staff.subjectId === subjectId) {
+      continue
+    }
+
+    if (staff.subjectId && school?.ownerSubjectId === staff.subjectId) {
       continue
     }
 
@@ -220,11 +235,21 @@ export async function syncDevStaffAuthAndOwner(
   }
 
   await ensureDevAuthStaffMembers(port)
-  const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(port, auth, options)
   const linkedTeachers = await linkDevAuthTeachers(port, auth)
+  const { linkedStaff, linkedGuardians } = await linkDevAuthStaffAndGuardians(port, auth, options)
 
   const resolvedOwnerSubjectId = await resolveDevSchoolOwnerSubjectId(port, auth, ownerSubjectId)
-  if (resolvedOwnerSubjectId) {
+  const currentSchool = await port.findSchoolById(context.schoolId)
+  if (
+    resolvedOwnerSubjectId
+    && currentSchool?.ownerSubjectId
+    && currentSchool.ownerSubjectId !== resolvedOwnerSubjectId
+  ) {
+    throw new SeedPortError('syncDevStaffAuthAndOwner', {
+      detail: `Persisted school owner ${currentSchool.ownerSubjectId} does not match fixture owner ${resolvedOwnerSubjectId}`,
+    })
+  }
+  if (resolvedOwnerSubjectId && !currentSchool?.ownerSubjectId) {
     await assignDevSchoolOwnerSubjectId(port, resolvedOwnerSubjectId, context.schoolId)
   }
 

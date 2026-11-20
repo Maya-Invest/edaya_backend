@@ -1,6 +1,11 @@
+import type { ResourceAccessScope } from './resource-access-scope'
+
 export type FieldFilter<V>
   = | V
     | ({
+      /** Candidate prefilter for normalized text matching; callers must compare normalizeImportKey on returned values. */
+      $normalizedCandidate?: NonNullable<V> extends string ? string : never
+      $contains?: NonNullable<V> extends string ? string : never
       $eq?: V
       $ne?: V
       $in?: V[]
@@ -35,6 +40,13 @@ export type QueryOptions<T> = Filter<T> & {
 }
 
 export interface BaseRepositoryInterface<T> {
+  /** Mandatory policy scope, independent of caller-provided filters. */
+  forAccess: (scope: ResourceAccessScope) => BaseRepositoryInterface<T>
+  /** Check proposed values using the same policy predicate as reads and writes. */
+  assertAccess: (entity: T) => Promise<void>
+  assertAccessBatch?: (entities: readonly T[]) => Promise<void>
+  /** Bind trusted school context independently of caller filters. Adapters must scope every operation. */
+  forSchool?: (schoolId: string) => BaseRepositoryInterface<T>
   findById: (id: string) => Promise<T | undefined>
   findOne: (options?: QueryOptions<T>, last?: boolean) => Promise<T | undefined>
   findByIds: (ids: readonly string[]) => Promise<T[]>

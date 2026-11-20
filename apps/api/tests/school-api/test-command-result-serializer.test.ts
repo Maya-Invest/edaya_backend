@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
-import { demoDataset } from "@edaya/fixtures";
+import { demoCiDataset } from "@edaya/fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, StaffMember } from "@edaya/core";
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, AttendanceRecord, AttendanceStatus, Guardian, LessonSession, StaffMember } from "@edaya/core";
 import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 
 describe("serializeCommandResult", () => {
@@ -27,8 +27,16 @@ describe("serializeCommandResult", () => {
     expect(serialized).not.toHaveProperty("data");
   });
 
+  it("serializes bulk attendance as the declared flat response list", () => {
+    const attendance = new AttendanceRecord({ id: "record-1", studentId: "student-1", attendanceId: "day-1", date: new Date("2026-09-28"), status: AttendanceStatus.Present });
+    const serialized = serializeCommandResult([attendance]);
+    expect(serialized).toEqual([attendance.data]);
+    expect(serialized).not.toEqual([{ data: attendance.data }]);
+    expect(serializeCommandResult([])).toEqual([]);
+  });
+
   it("flattens linkActorSubject responses", () => {
-    const guardianFixture = demoDataset.entities.guardians![0]!;
+    const guardianFixture = demoCiDataset.entities.guardians![0]!;
     const guardian = new Guardian({
       id: "g9",
       schoolId: SEED_SCHOOL_ID,
@@ -52,6 +60,45 @@ describe("serializeCommandResult", () => {
     expect(serialized.entity.id).toBe("g9");
     expect(serialized.entity.subjectId).toBe("auth-user-2");
     expect(serialized.entity).not.toHaveProperty("data");
+  });
+
+  it("serializes generated school timetable sessions as the declared flat response", () => {
+    const session = new LessonSession({
+      id: "lesson-1",
+      schoolId: SEED_SCHOOL_ID,
+      classGroupId: "class-1",
+      classSubjectId: "subject-1",
+      displayLabel: "Mathematics",
+      startsAt: new Date("2026-09-14T08:00:00.000Z"),
+      endsAt: new Date("2026-09-14T09:00:00.000Z"),
+      timetableGenerated: true,
+      timetableTeacherIds: ["teacher-1"],
+    });
+    const result = {
+      academicYearId: "year-1",
+      classGroups: [{ classGroupId: "class-1", sessions: [session], warnings: [] }],
+      skippedClassGroupIds: ["class-2"],
+    };
+
+    const serialized = serializeCommandResult(result);
+    expect(serialized).toEqual({
+      ...result,
+      classGroups: [{ classGroupId: "class-1", sessions: [session.data], warnings: [] }],
+    });
+    expect(JSON.parse(JSON.stringify(serialized)).classGroups[0].sessions[0]).toMatchObject({
+      id: "lesson-1",
+      startsAt: "2026-09-14T08:00:00.000Z",
+      endsAt: "2026-09-14T09:00:00.000Z",
+      timetableGenerated: true,
+    });
+  });
+
+  it("preserves dates and plain nested data envelopes", () => {
+    const result = {
+      completedAt: new Date("2026-09-14T09:00:00.000Z"),
+      metadata: { data: { count: 2 }, cursor: "next" },
+    };
+    expect(serializeCommandResult(result)).toEqual(result);
   });
 
   it("redacts invitation tokens from sendAccountInvitation responses", () => {
@@ -89,12 +136,12 @@ describe("serializeCommandResult", () => {
 
 describe("dispatchCoreCommand", () => {
   it("delegates to the school service command registry", async () => {
-    const activateAcademicYear = mock(async () => ({ id: "year-1" }));
+    const publishAcademicYear = mock(async () => ({ id: "year-1" }));
     const service = {
-      commands: { activateAcademicYear },
+      commands: { publishAcademicYear },
     } as never;
 
-    await expect(dispatchCoreCommand(service, "activateAcademicYear", {
+    await expect(dispatchCoreCommand(service, "publishAcademicYear", {
       academicYearId: "year-1",
     })).resolves.toEqual({ id: "year-1" });
   });

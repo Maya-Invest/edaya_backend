@@ -1,3 +1,5 @@
+import type { StaffProfileRole } from '@edaya/core'
+
 export interface AuthLinkTeacherRecord {
   id: string
   subjectId?: string
@@ -24,6 +26,7 @@ export interface RegisterSeedStaffInput {
   firstName: string
   lastName: string
   email: string
+  profileRole?: StaffProfileRole
 }
 
 export interface LinkSeedActorSubjectInput {
@@ -42,5 +45,6 @@ export interface AuthLinkSeedPort {
   findGuardianById: (id: string) => Promise<AuthLinkGuardianRecord | undefined>
   findTeacherById: (id: string) => Promise<AuthLinkTeacherRecord | undefined>
   replaceGuardianSubjectId: (guardianId: string, subjectId: string) => Promise<void>
+  replaceTeacherSubjectId: (teacherId: string, subjectId: string) => Promise<void>
   linkActorSubject: (input: LinkSeedActorSubjectInput) => Promise<void>
 }

@@ -1,8 +1,11 @@
-import type { AccountInvitationKind } from '@edaya/core'
+import type {
+  AccountInvitationKind,
+  FindPendingInvitationsByContactInput,
+} from '@edaya/core'
 import { AccountInvitation, AccountInvitationStatus } from '@edaya/core'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, gt } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 type AccountInvitationRow = typeof schema.accountInvitations.$inferSelect
 type AccountInvitationInsertRow = typeof schema.accountInvitations.$inferInsert
@@ -61,7 +64,7 @@ function toMutableUpdateSet(entity: AccountInvitation): Omit<AccountInvitationIn
   }
 }
 
-export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitation> {
+export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitation, AccountInvitationRow> {
   private readonly mapRow: (row: AccountInvitationRow) => AccountInvitation
 
   constructor(db: unknown) {
@@ -89,9 +92,9 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
     }
 
     super(
-      db,
+      asStoreDatabase(db),
       schema.accountInvitations,
-      entity => toInsertRow(entity),
+      entity => ({ ...toInsertRow(entity), acceptedAt: entity.acceptedAt ?? null, acceptedSubjectId: entity.acceptedSubjectId ?? null, lastSentAt: entity.lastSentAt ?? null }),
       mapRow,
     )
 
@@ -102,6 +105,11 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
     entity: AccountInvitation,
     options: SaveAccountInvitationOptions = {},
   ): Promise<void> {
+    if (this.schoolId) {
+      const existing = await this.findById(entity.id)
+      await this.saveScopedRow(toInsertRow(entity, options.tokenHash ?? existing?.tokenHash), ['tokenHash'])
+      return
+    }
     const existing = await this.getClient()
       .select({ id: schema.accountInvitations.id })
       .from(schema.accountInvitations)
@@ -151,5 +159,45 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
 
     const row = rows[0]
     return row ? this.mapRow(row) : undefined
+  }
+
+  async findPendingByContact(
+    input: FindPendingInvitationsByContactInput,
+  ): Promise<AccountInvitation[]> {
+    const rows = await this.getClient()
+      .select()
+      .from(schema.accountInvitations)
+      .where(and(
+        eq(schema.accountInvitations.contactChannel, input.contactChannel),
+        eq(schema.accountInvitations.contactValue, input.contactValue),
+        eq(schema.accountInvitations.kind, input.kind),
+        eq(schema.accountInvitations.status, AccountInvitationStatus.Pending),
+        gt(schema.accountInvitations.expiresAt, new Date()),
+      ))
+
+    return rows.map((row: AccountInvitationRow) => this.mapRow(row))
+  }
+
+  async compareAndSetStatus(
+    id: string,
+    expectedStatus: AccountInvitationStatus,
+    entity: AccountInvitation,
+    options: SaveAccountInvitationOptions = {},
+  ): Promise<boolean> {
+    const tokenHash = options.tokenHash ?? entity.tokenHash ?? entity.data.tokenHash
+    const rows = await this.getClient()
+      .update(schema.accountInvitations)
+      .set({
+        ...toMutableUpdateSet(entity),
+        ...(tokenHash ? { tokenHash } : {}),
+      })
+      .where(and(
+        eq(schema.accountInvitations.id, id),
+        eq(schema.accountInvitations.status, expectedStatus),
+        this.schoolId ? eq(schema.accountInvitations.schoolId, this.schoolId) : undefined,
+      ))
+      .returning({ id: schema.accountInvitations.id })
+
+    return rows.length === 1
   }
 }

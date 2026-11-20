@@ -1,0 +1,118 @@
+import { requestReviewedOnboarding } from "../support/reviewed-onboarding-request";
+import { describe, expect, it } from "bun:test";
+import {
+  createAppRequest,
+  createCoreRouteTestApp,
+  signInWithBearerThroughApp,
+  signUpAuthUser,
+} from "../support/core-route-harness";
+
+describe("onboarding invite-staff-members route", () => {
+  it("creates permission assignments and registers invited staff", async () => {
+    const { app, runtime, application } = await createCoreRouteTestApp();
+    const email = "staff-owner@school.edu";
+    const subjectId = await signUpAuthUser(runtime, {
+      email,
+      name: "Staff Owner",
+    });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
+
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        name: "Staff Invite School",
+        timeZone: "Europe/Paris",
+        city: "Paris",
+        country: "France",
+      }),
+    }));
+    expect(registerResponse.status).toBe(200);
+    const school = await registerResponse.json() as { id: string };
+
+    const yearResponse = await app.request(createAppRequest("/core/commands/create-academic-year", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        id: "2025",
+        schoolId: school.id,
+        name: "2025 — 2026",
+        startDate: "2025-09-01",
+        endDate: "2026-07-03",
+      }),
+    }));
+    expect(yearResponse.status).toBe(200);
+
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/invite-staff-members", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        invites: [
+          { email: "prof@school.edu", role: "secretary" },
+          { email: "cpe@school.edu", role: "cpe" },
+        ],
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+    const summary = await response.json() as { invitedCount: number; permissionAssignmentsEnsured: number };
+    expect(summary.invitedCount).toBe(2);
+    expect(summary.permissionAssignmentsEnsured).toBeGreaterThan(0);
+
+    const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
+    const schoolId = ownerStaff?.schoolId;
+    expect(schoolId).toBeTruthy();
+
+    const roles = await application.repositories.staffPermissionAssignments.list({ schoolId: schoolId! });
+    expect(roles.length).toBeGreaterThan(0);
+
+    const invitedStaff = await application.repositories.staffMembers.list({ schoolId: schoolId! });
+    expect(invitedStaff.find(member => member.email === "prof@school.edu")?.profileRole).toBe("secretary");
+    expect(invitedStaff.find(member => member.email === "cpe@school.edu")?.profileRole).toBe("cpe");
+  });
+
+  it("rejects inviting the school owner email", async () => {
+    const { app, runtime } = await createCoreRouteTestApp();
+    const email = "owner-invite@school.edu";
+    await signUpAuthUser(runtime, { email, name: "Owner Invite" });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
+
+    const registerResponse = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/register-school", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        name: "Owner Invite School",
+        timeZone: "Europe/Paris",
+        ownerEmail: email,
+      }),
+    }));
+    expect(registerResponse.status).toBe(200);
+
+    const response = await requestReviewedOnboarding(app, createAppRequest("/core/onboarding/invite-staff-members", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        invites: [{ email, role: "secretary" }],
+      }),
+    }));
+
+    expect(response.status).toBe(409);
+    const body = await response.json() as { code?: string };
+    expect(body.code).toBe("STAFF_INVITE_OWNER_EMAIL");
+  });
+});

@@ -1,6 +1,7 @@
 import type { StudentClassEnrollmentInput } from '@edaya/core'
 import type { FixtureDataset } from '../datasets/types'
-import { demoDataset } from '../datasets/demo'
+import { AnnouncementTargetKind, MessageDeliveryRecipientKind } from '@edaya/core'
+import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from './dev-auth-fixtures'
 
 export type ExpectedFixtureCounts = ReturnType<typeof resolveExpectedCounts>
 
@@ -14,6 +15,26 @@ export function countStudents(dataset: FixtureDataset): number {
 
 export function countGuardians(dataset: FixtureDataset): number {
   return countArray(dataset.entities.guardians)
+}
+
+/** Portraits live on people records; generic attachment lists hide purpose-restricted photos. */
+export function personHasPublishedPhoto(row: unknown): boolean {
+  if (!row || typeof row !== 'object') {
+    return false
+  }
+  const record = row as { photoUrl?: unknown, photoAttachmentId?: unknown }
+  const photoUrl = typeof record.photoUrl === 'string' ? record.photoUrl.trim() : ''
+  const photoAttachmentId = typeof record.photoAttachmentId === 'string' ? record.photoAttachmentId.trim() : ''
+  return photoUrl.length > 0 || photoAttachmentId.length > 0
+}
+
+export function countPublishedPhotosFromPeople(
+  students: readonly unknown[],
+  staffMembers: readonly unknown[],
+  guardians: readonly unknown[],
+  teachers: readonly unknown[],
+): number {
+  return [...students, ...staffMembers, ...guardians, ...teachers].filter(personHasPublishedPhoto).length
 }
 
 export function countGuardianLinks(dataset: FixtureDataset): number {
@@ -42,23 +63,6 @@ export function buildClassStudentIds(
   return buildClassStudentIdsFromEnrollments(dataset.entities.enrollments ?? [])
 }
 
-function countUniqueGradeLevelSubjects(dataset: FixtureDataset): number {
-  const classGroups = dataset.entities.classGroups ?? []
-  const classSubjects = dataset.entities.classSubjects ?? []
-  const gradeLevelByClassId = Object.fromEntries(
-    classGroups.map(classGroup => [classGroup.id, classGroup.gradeLevelId]),
-  )
-  const seen = new Set<string>()
-  for (const offering of classSubjects) {
-    const gradeLevelId = gradeLevelByClassId[offering.classGroupId]
-    if (!gradeLevelId) {
-      continue
-    }
-    seen.add(`${gradeLevelId}:${offering.subjectId}`)
-  }
-  return seen.size
-}
-
 function mattersBySubjectId(
   subjectMatters: NonNullable<FixtureDataset['entities']['subjectMatters']>,
 ): Map<string, NonNullable<FixtureDataset['entities']['subjectMatters']>[number][]> {
@@ -69,26 +73,6 @@ function mattersBySubjectId(
     grouped.set(matter.subjectId, existing)
   }
   return grouped
-}
-
-function countGradeLevelSubjectMatters(dataset: FixtureDataset): number {
-  const subjectMattersBySubjectId = mattersBySubjectId(dataset.entities.subjectMatters ?? [])
-  const classGroups = dataset.entities.classGroups ?? []
-  const classSubjects = dataset.entities.classSubjects ?? []
-  const gradeLevelByClassId = Object.fromEntries(
-    classGroups.map(classGroup => [classGroup.id, classGroup.gradeLevelId]),
-  )
-  const seen = new Set<string>()
-  for (const offering of classSubjects) {
-    const gradeLevelId = gradeLevelByClassId[offering.classGroupId]
-    if (!gradeLevelId) {
-      continue
-    }
-    for (const matter of subjectMattersBySubjectId.get(offering.subjectId) ?? []) {
-      seen.add(`${gradeLevelId}:${offering.subjectId}:${matter.id}`)
-    }
-  }
-  return seen.size
 }
 
 function countClassSubjectProgress(dataset: FixtureDataset): number {
@@ -135,18 +119,20 @@ function countAttendanceRecords(dataset: FixtureDataset): number {
   if (dataset.extensions?.skipLessonSessionSeeding) {
     return 0
   }
+  const dailyRecords = (dataset.extensions?.dailyAttendanceDays ?? [])
+    .reduce((total, day) => total + Object.keys(day.attendanceByStudent).length, 0)
   const attendanceRecords = dataset.entities.attendanceRecords
   if (attendanceRecords) {
-    return attendanceRecords.length
+    return attendanceRecords.length + dailyRecords
   }
   const sessions = dataset.extensions?.attendanceSessions
   if (!sessions) {
-    return 0
+    return dailyRecords
   }
   return sessions.absenceSessions.reduce(
     (total, session) => total + session.records.length,
     sessions.todaySession.records.length,
-  )
+  ) + dailyRecords
 }
 
 function countAssessmentResults(dataset: FixtureDataset): number {
@@ -163,12 +149,8 @@ function countAssessments(dataset: FixtureDataset): number {
 }
 
 function countReportCardSections(dataset: FixtureDataset): number {
-  return (dataset.extensions?.reportCardDefinitionFixtures ?? [])
-    .reduce((total, definition) => total + definition.sections.length, 0)
-}
-
-function countStudentFees(dataset: FixtureDataset): number {
-  return countArray(dataset.entities.studentFees)
+  return (dataset.extensions?.reportConfigurationFixtures ?? [])
+    .reduce((total, definition) => total + definition.modules.length, 0)
 }
 
 function countCalendarEvents(dataset: FixtureDataset): number {
@@ -184,21 +166,27 @@ function countAttachments(dataset: FixtureDataset): number {
 }
 
 export function countMessageDeliveriesMinimum(dataset: FixtureDataset): number {
-  const guardians = dataset.entities.guardians ?? []
-  const students = dataset.entities.students ?? []
-  const staff = dataset.entities.staffMembers ?? []
-  const explicit = countArray(dataset.entities.messageDeliveries)
+  const guardianAccounts = DEV_AUTH_GUARDIAN_ACCOUNTS
+  const staffAccounts = DEV_AUTH_STAFF_ACCOUNTS
+  const guardians = new Set((dataset.entities.guardians ?? [])
+    .filter(guardian => guardian.hasAccess !== false && guardianAccounts.some(account => account.guardianId === guardian.id))
+    .map(guardian => guardian.id))
+  const staff = new Set((dataset.entities.staffMembers ?? [])
+    .filter(member => member.isActive !== false && staffAccounts.some(account => account.staffId === member.id))
+    .map(member => member.id))
+  // Seed students have no provisioned login. Placeholder fixture subject IDs are not recipients.
+  const explicit = (dataset.entities.messageDeliveries ?? []).filter(delivery =>
+    delivery.recipientKind === MessageDeliveryRecipientKind.Guardian
+      ? guardians.has(delivery.recipientId ?? '')
+      : delivery.recipientKind === MessageDeliveryRecipientKind.Staff && staff.has(delivery.recipientId ?? ''),
+  ).length
   let materialized = 0
   for (const plan of dataset.extensions?.announcementMaterializePlans ?? []) {
-    if (plan.announcementId === 'ann-rentree') {
-      materialized += guardians.length
-    }
-    else if (plan.announcementId === 'ann-sports-day') {
-      materialized += students.length
-    }
-    else if (plan.announcementId === 'ann-staff-training') {
-      materialized += staff.length
-    }
+    const targets = (dataset.entities.announcementTargets ?? []).filter(target => target.announcementId === plan.announcementId)
+    if (targets.some(target => target.targetKind === AnnouncementTargetKind.AllGuardians))
+      materialized += guardians.size
+    if (targets.some(target => target.targetKind === AnnouncementTargetKind.AllStaff))
+      materialized += staff.size
   }
   return explicit + materialized
 }
@@ -224,8 +212,6 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'guardian-links': countGuardianLinks(dataset),
     'subjects': countArray(entities.subjects),
     'subject-matters': countArray(entities.subjectMatters),
-    'grade-level-subjects': countUniqueGradeLevelSubjects(dataset),
-    'grade-level-subject-matters': countGradeLevelSubjectMatters(dataset),
     'class-subjects': countArray(entities.classSubjects),
     'class-subject-matters': countClassSubjectMatters(dataset),
     'teachers': countArray(entities.teachers),
@@ -233,7 +219,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'resources': countArray(entities.resources),
     'schedules': countSchedulingSlots(dataset),
     'lesson-sessions': countLessonSessions(dataset),
-    'staff-assignments': 5 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
+    'staff-assignments': 2 + (dataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
     'resource-assignments': countResourceAssignments(dataset),
     'class-subject-progress': countClassSubjectProgress(dataset),
     'assessments': countAssessments(dataset),
@@ -246,12 +232,12 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'attendance': countAttendanceRecords(dataset),
     'student-health-profiles': countArray(entities.studentHealthProfiles),
     'student-notes': countArray(entities.studentNotes),
-    'fees': countArray(entities.fees),
-    'student-fees': countStudentFees(dataset),
+    'catalog-services': countArray(entities.catalogServices),
+    'student-service-enrollments': countArray(entities.studentServiceEnrollments),
     'payments': countArray(entities.payments),
+    'document-issuances': countArray(dataset.extensions?.documentIssuances),
     'grade-scales': countArray(entities.gradeScales),
-    'definitions': countArray(dataset.extensions?.reportCardDefinitionFixtures),
-    'sections': countReportCardSections(dataset),
+    'report-modules': countReportCardSections(dataset),
     'results': countArray(dataset.extensions?.reportCardResults),
     'staff-permission-assignments': 50,
     'announcements': countArray(entities.announcements),
@@ -260,6 +246,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'disciplinary-actions': countArray(entities.disciplinaryActions),
     'student-disciplinary-actions': countArray(entities.studentDisciplinaryActions),
     'attachments': countAttachments(dataset),
-    'profile-photos': staff + students + guardians,
+    'profile-photos': staff + students + guardians + countArray(entities.teachers),
+    'school-branding': entities.school ? 1 : 0,
   }
 }

@@ -8,7 +8,7 @@ const progress = new ClassSubjectProgress({
   id: 'progress-1',
   classSubjectMatterId: 'matter-1',
   lessonSessionId: 'session-1',
-  completedPercentage: 40,
+  completed: false,
 })
 
 function repositories(overrides: Record<string, unknown> = {}) {
@@ -38,26 +38,26 @@ function repositories(overrides: Record<string, unknown> = {}) {
 }
 
 describe('ClassSubjectProgress status derivation', () => {
-  test('maps completedPercentage to class subject matter status', () => {
+  test('maps the completion flag to class subject matter status', () => {
     expect(new ClassSubjectProgress({
       id: 'p0',
       classSubjectMatterId: 'matter-1',
       lessonSessionId: 'session-1',
-      completedPercentage: 0,
+      completed: null,
     }).status).toBe(ClassSubjectMatterStatus.NotStarted)
 
     expect(new ClassSubjectProgress({
       id: 'p50',
       classSubjectMatterId: 'matter-1',
       lessonSessionId: 'session-1',
-      completedPercentage: 50,
+      completed: false,
     }).status).toBe(ClassSubjectMatterStatus.InProgress)
 
     expect(new ClassSubjectProgress({
       id: 'p100',
       classSubjectMatterId: 'matter-1',
       lessonSessionId: 'session-1',
-      completedPercentage: 100,
+      completed: true,
     }).status).toBe(ClassSubjectMatterStatus.Completed)
   })
 })
@@ -96,29 +96,6 @@ describe('validateClassSubjectProgressSave', () => {
       },
     }))).rejects.toMatchObject({
       code: 'DUPLICATE_PROGRESS_RECORD',
-    } satisfies Partial<BusinessRuleViolationError>)
-  })
-
-  test('rejects progress percentages below the previous cumulative percentage', async () => {
-    const existing = new ClassSubjectProgress({
-      id: 'progress-1',
-      classSubjectMatterId: 'matter-1',
-      lessonSessionId: 'session-1',
-      completedPercentage: 50,
-    })
-
-    await expect(validateClassSubjectProgressSave(new ClassSubjectProgress({
-      ...existing.data,
-      completedPercentage: 30,
-    }), existing, repositories())).rejects.toMatchObject({
-      code: 'PROGRESS_PERCENTAGE_DECREASED',
-    } satisfies Partial<BusinessRuleViolationError>)
-
-    await expect(validateClassSubjectProgressSave(new ClassSubjectProgress({
-      ...progress.data,
-      completedPercentage: 10,
-    }), undefined, repositories())).rejects.toMatchObject({
-      code: 'PROGRESS_PERCENTAGE_DECREASED',
     } satisfies Partial<BusinessRuleViolationError>)
   })
 })

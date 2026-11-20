@@ -11,6 +11,7 @@ export interface AttachmentSeedRecord {
   sizeBytes?: number
   uploadedById?: string
   createdAt: string
+  body: Uint8Array
 }
 
 export interface AttachmentsSeedPort {

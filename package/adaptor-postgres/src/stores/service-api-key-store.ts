@@ -1,7 +1,7 @@
 import { ServiceApiKey } from '@edaya/core'
 import { and, eq, isNull } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 export class PostgresServiceApiKeyStore extends PostgresStore<ServiceApiKey> {
   private readonly mapRow: (row: any) => ServiceApiKey
@@ -21,7 +21,7 @@ export class PostgresServiceApiKeyStore extends PostgresStore<ServiceApiKey> {
     })
 
     super(
-      db,
+      asStoreDatabase(db),
       schema.serviceApiKeys,
       (entity: ServiceApiKey) => ({
         id: entity.id,

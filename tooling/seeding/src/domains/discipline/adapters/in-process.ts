@@ -12,9 +12,7 @@ export function createInProcessDisciplineSeedPort(
   return {
     saveDisciplinaryAction: record =>
       withSeedPortError('discipline.saveDisciplinaryAction', async () => {
-        await service.baseService.entities.disciplinaryActions.save(new DisciplinaryAction(record), {
-          moduleChecked: true,
-        })
+        await service.baseService.entities.disciplinaryActions.save(new DisciplinaryAction(record))
       }),
     applyDisciplinaryAction: record =>
       withSeedPortError('discipline.applyDisciplinaryAction', async () => {

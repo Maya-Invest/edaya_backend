@@ -1,50 +1,27 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { AttendanceAnchor, AttendanceRecord } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AttendanceOperations } from '@edaya/authorization'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { AttendanceJustificationStatus, AttendanceStatus, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
-import { config, operationModule, read, write } from '../../entity-config'
-import { dateTime, unique } from '../../entity-config/helper-utils'
+import { assessmentRoster } from '../../../../capabilities/academics/marks-state'
+
+import { loadParticipation, subjectRoster } from '../../../../capabilities/subject-enrollment/participation'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/scheduling/attendance-record.ts (PR3)
-export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, policy, atomicExecution }) =>
+export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.attendance,
     tenant: attendanceRecordTenant(),
-    read: read(
-      operationModule(AttendanceOperations.read),
-      async (actor, entities) => {
-        await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-      },
-    ),
-    write: write(
-      operationModule(AttendanceOperations.record),
-      authorizeAttendanceSave(policy),
-      authorizeAttendanceDelete(policy),
-    ),
+    resource: 'attendance',
+    writeLockGroup: 'academic-state',
+
     gates: {
       preSave: validateAttendanceSave,
     },
     atomicExecution,
   })
-
-function authorizeAttendanceSave(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AttendanceRecord>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkAttendanceRecordAccess(actor, [entity])
-  }
-}
-
-function authorizeAttendanceDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AttendanceRecord>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkAttendanceRecordAccess(actor, [entity])
-  }
-}
 
 function attendanceRecordTenant(): EntityTenantResolver<AttendanceRecord> {
   return indirectTenant(async (entity, repositories) => resolveAttendanceRecordSchoolId(repositories, entity))
@@ -53,7 +30,23 @@ function attendanceRecordTenant(): EntityTenantResolver<AttendanceRecord> {
 async function validateAttendanceSave(
   entity: AttendanceRecord,
   existing: AttendanceRecord | undefined,
+  repositories: SchoolRepositories,
 ): Promise<void> {
+  if (!existing || entity.studentId !== existing.studentId || entity.lessonSessionId !== existing.lessonSessionId || entity.assessmentId !== existing.assessmentId) {
+    let roster: string[] | undefined
+    if (entity.lessonSessionId) {
+      const lesson = await repositories.lessonSessions.findById(entity.lessonSessionId)
+      if (lesson?.classSubjectId)
+        roster = subjectRoster(await loadParticipation(repositories, [lesson.classGroupId]), lesson.classSubjectId, lesson.startsAt)
+    }
+    if (entity.assessmentId) {
+      const assessment = await repositories.assessments.findById(entity.assessmentId)
+      if (assessment)
+        roster = await assessmentRoster(assessment, repositories)
+    }
+    if (roster && !roster.includes(entity.studentId))
+      throw new BusinessRuleViolationError('SUBJECT_PARTICIPATION_REQUIRED', 'Student does not participate in this subject at the occurrence date')
+  }
   if (!existing)
     return
 
@@ -91,7 +84,7 @@ function attendanceJustificationChanged(entity: AttendanceRecord, existing: Atte
 }
 
 export async function findAttendanceRecordByAnchor(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'attendance'>,
   studentId: string,
   anchor: AttendanceAnchor,
 ): Promise<AttendanceRecord | undefined> {

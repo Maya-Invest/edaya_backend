@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
 
-import { permissionScope, validateScopeIds } from '../permissions'
+import { grantScopesSchema, validatePermissionScopes } from '../permissions/grant-scope'
 
 import { Permission } from '../permissions/permission'
 
@@ -15,17 +15,19 @@ export const staffPermissionAssignmentBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   permission: z.nativeEnum(Permission),
-  scopeIds: z.string().default(''),
+  scopes: grantScopesSchema,
   status: z.enum(['active', 'inactive', 'expired']).default('active'),
   startsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   endsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
-  sourceStaffAssignmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  sourceManualAssignmentId: z.string().trim().min(1).nullable().optional().transform(v => v ?? undefined),
+  sourceProfileBindingId: z.string().trim().min(1).nullable().optional().transform(v => v ?? undefined),
+  sourceProfileId: z.string().trim().min(1, 'sourceProfileId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
   updatedAt: zodDate().optional(),
 })
 
 function refineStaffPermissionAssignmentScope(
-  data: { permission?: Permission, scopeIds?: string, startsAt?: Date, endsAt?: Date },
+  data: { permission?: Permission, scopes?: z.infer<typeof grantScopesSchema>, startsAt?: Date, endsAt?: Date },
   ctx: z.RefinementCtx,
 ) {
   refineEndsAtNotBeforeStartsAtOptional(
@@ -33,18 +35,18 @@ function refineStaffPermissionAssignmentScope(
     ctx,
   )
 
-  if (data.permission === undefined || data.scopeIds === undefined) {
+  if (data.permission === undefined || data.scopes === undefined) {
     return
   }
 
   try {
-    validateScopeIds(data.scopeIds, permissionScope(data.permission))
+    validatePermissionScopes(data.permission, data.scopes)
   }
   catch (error) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: error instanceof Error ? error.message : 'Invalid scopeIds',
-      path: ['scopeIds'],
+      message: error instanceof Error ? error.message : 'Invalid grant scopes',
+      path: ['scopes'],
     })
   }
 }
@@ -62,7 +64,7 @@ export const staffPermissionAssignmentUpdateSchema = staffPermissionAssignmentBa
   .required({ id: true })
   .superRefine(refineStaffPermissionAssignmentScope)
 
-/** Direct staff capability grant (replaces role assignment rows in the target model). */
+/** Manual permission grant with typed scopes, validity and provenance. */
 export class StaffPermissionAssignment {
   readonly data: StaffPermissionAssignmentData
 
@@ -79,11 +81,13 @@ export class StaffPermissionAssignment {
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }
   get permission() { return this.data.permission }
-  get scopeIds() { return this.data.scopeIds }
+  get scopes() { return this.data.scopes }
   get status() { return this.data.status }
   get startsAt() { return this.data.startsAt }
   get endsAt() { return this.data.endsAt }
-  get sourceStaffAssignmentId() { return this.data.sourceStaffAssignmentId }
+  get sourceManualAssignmentId() { return this.data.sourceManualAssignmentId }
+  get sourceProfileBindingId() { return this.data.sourceProfileBindingId }
+  get sourceProfileId() { return this.data.sourceProfileId }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
 }

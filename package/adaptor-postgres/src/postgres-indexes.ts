@@ -1,4 +1,5 @@
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 function col(table: Record<string, AnyPgColumn>, name: string): AnyPgColumn {
@@ -10,7 +11,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'academic_years':
       return [
         index('academic_years_school_id_idx').on(col(table, 'schoolId')),
-        index('academic_years_school_active_idx').on(col(table, 'schoolId'), col(table, 'isActive')),
+        index('academic_years_school_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
       ]
     case 'academic_periods':
       return [
@@ -25,6 +26,10 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('staff_members_school_id_idx').on(col(table, 'schoolId')),
         index('staff_members_subject_id_idx').on(col(table, 'subjectId')),
+        uniqueIndex('staff_members_school_identifier_uidx').on(col(table, 'schoolId'), col(table, 'identifier')),
+        uniqueIndex('staff_members_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
       ]
     case 'service_api_keys':
       return [index('service_api_keys_staff_member_id_idx').on(col(table, 'staffMemberId'))]
@@ -38,6 +43,30 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('staff_permission_assignments_staff_id_idx').on(col(table, 'staffId')),
         index('staff_permission_assignments_school_id_idx').on(col(table, 'schoolId')),
         index('staff_permission_assignments_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('staff_permission_assignments_source_profile_id_idx').on(col(table, 'sourceProfileId')),
+      ]
+    case 'staff_permission_scope_defaults':
+      return [uniqueIndex('staff_permission_scope_defaults_staff_year_uidx').on(col(table, 'schoolId'), col(table, 'staffId'), col(table, 'academicYearId'))]
+    case 'staff_manual_permission_assignments':
+      return [index('staff_manual_permission_assignments_staff_year_idx').on(col(table, 'schoolId'), col(table, 'staffId'), col(table, 'academicYearId'))]
+    case 'staff_permission_profiles':
+      return [
+        index('staff_permission_profiles_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('staff_permission_profiles_source_key_uidx')
+          .on(col(table, 'schoolId'), col(table, 'sourceKey'))
+          .where(sql`${col(table, 'sourceKey')} is not null`),
+      ]
+    case 'staff_permission_profile_bindings':
+      return [
+        index('staff_permission_profile_bindings_school_id_idx').on(col(table, 'schoolId')),
+        index('staff_permission_profile_bindings_staff_id_idx').on(col(table, 'staffId')),
+        index('staff_permission_profile_bindings_profile_id_idx').on(col(table, 'profileId')),
+        uniqueIndex('staff_permission_profile_bindings_staff_profile_uidx').on(col(table, 'staffId'), col(table, 'profileId'), col(table, 'academicYearId')),
+        uniqueIndex('staff_permission_profile_bindings_sort_uidx').on(
+          col(table, 'staffId'),
+          col(table, 'academicYearId'),
+          col(table, 'sortOrder'),
+        ),
       ]
     case 'attachments':
       return [
@@ -48,19 +77,63 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [index('resources_school_id_idx').on(col(table, 'schoolId'))]
     case 'resource_assignments':
       return [index('resource_assignments_resource_id_idx').on(col(table, 'resourceId'))]
-    case 'fees':
+    case 'catalog_services':
       return [
-        index('fees_school_id_idx').on(col(table, 'schoolId')),
-        index('fees_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('catalog_services_school_id_idx').on(col(table, 'schoolId')),
+        index('catalog_services_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('catalog_services_school_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
       ]
-    case 'student_fees':
+    case 'student_service_enrollments':
       return [
-        index('student_fees_student_id_idx').on(col(table, 'studentId')),
-        index('student_fees_fee_id_idx').on(col(table, 'feeId')),
-        index('student_fees_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('student_service_enrollments_school_id_idx').on(col(table, 'schoolId')),
+        index('student_service_enrollments_student_id_idx').on(col(table, 'studentId')),
+        index('student_service_enrollments_catalog_service_id_idx').on(col(table, 'catalogServiceId')),
+        uniqueIndex('student_service_enrollments_active_uidx')
+          .on(col(table, 'studentId'), col(table, 'catalogServiceId'), col(table, 'academicYearId'))
+          .where(sql`${col(table, 'status')} = 'active'`),
+      ]
+    case 'student_charges':
+      return [
+        index('student_charges_school_id_idx').on(col(table, 'schoolId')),
+        index('student_charges_student_id_idx').on(col(table, 'studentId')),
+        uniqueIndex('student_charges_enrollment_uidx').on(col(table, 'enrollmentId')),
+        index('student_charges_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('student_charges_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+      ]
+    case 'student_year_accounts':
+      return [
+        index('student_year_accounts_school_id_idx').on(col(table, 'schoolId')),
+        index('student_year_accounts_student_id_idx').on(col(table, 'studentId')),
+        uniqueIndex('student_year_accounts_identity_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'studentId'),
+          col(table, 'academicYearId'),
+          col(table, 'currency'),
+        ),
       ]
     case 'payments':
-      return [index('payments_student_fee_id_idx').on(col(table, 'studentFeeId'))]
+      return [
+        index('payments_school_id_idx').on(col(table, 'schoolId')),
+        index('payments_account_id_idx').on(col(table, 'accountId')),
+        uniqueIndex('payments_reference_uidx')
+          .on(col(table, 'schoolId'), col(table, 'academicYearId'), col(table, 'reference'))
+          .where(sql`${col(table, 'reference')} is not null`),
+      ]
+    case 'allocations':
+      return [
+        index('allocations_school_id_idx').on(col(table, 'schoolId')),
+        index('allocations_account_id_idx').on(col(table, 'accountId')),
+        index('allocations_charge_id_idx').on(col(table, 'chargeId')),
+        uniqueIndex('allocations_reverse_uidx')
+          .on(col(table, 'reversesAllocationId'))
+          .where(sql`${col(table, 'kind')} = 'reverse'`),
+      ]
+    case 'student_account_entries':
+      return [
+        index('student_account_entries_school_id_idx').on(col(table, 'schoolId')),
+        index('student_account_entries_account_id_idx').on(col(table, 'accountId')),
+        index('student_account_entries_recorded_at_idx').on(col(table, 'accountId'), col(table, 'recordedAt')),
+      ]
     case 'schedules':
       return [
         index('schedules_class_group_id_idx').on(col(table, 'classGroupId')),
@@ -100,9 +173,18 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('message_deliveries_school_id_idx').on(col(table, 'schoolId')),
         index('message_deliveries_announcement_id_idx').on(col(table, 'announcementId')),
         index('message_deliveries_subject_id_idx').on(col(table, 'subjectId')),
+        uniqueIndex('message_deliveries_source_recipient_uidx').on(col(table, 'schoolId'), col(table, 'sourceKey'), col(table, 'subjectId'), col(table, 'recipientKind'), col(table, 'recipientId')),
+      ]
+    case 'subject_categories':
+      return [
+        index('subject_categories_school_id_idx').on(col(table, 'schoolId')),
       ]
     case 'subjects':
-      return [index('subjects_school_id_idx').on(col(table, 'schoolId'))]
+      return [
+        index('subjects_school_id_idx').on(col(table, 'schoolId')),
+        index('subjects_grade_year_idx').on(col(table, 'gradeLevelId'), col(table, 'academicYearId')),
+        index('subjects_category_id_idx').on(col(table, 'categoryId')),
+      ]
     case 'subject_matters':
       return [index('subject_matters_subject_id_idx').on(col(table, 'subjectId'))]
     case 'class_groups':
@@ -143,24 +225,31 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       ]
     case 'grade_scales':
       return [index('grade_scales_school_id_idx').on(col(table, 'schoolId'))]
-    case 'report_card_definitions':
-      return [
-        index('report_card_definitions_school_id_idx').on(col(table, 'schoolId')),
-        index('report_card_definitions_academic_year_id_idx').on(col(table, 'academicYearId')),
-      ]
-    case 'report_card_definition_sections':
-      return [
-        index('report_card_definition_sections_definition_id_idx').on(col(table, 'definitionId')),
-        index('report_card_definition_sections_parent_section_id_idx').on(col(table, 'parentSectionId')),
-      ]
+    case 'report_modules':
+      return [index('report_modules_scope_idx').on(col(table, 'schoolId'), col(table, 'gradeLevelId'), col(table, 'academicYearId'))]
     case 'report_card_results':
       return [
         index('report_card_results_student_id_idx').on(col(table, 'studentId')),
-        index('report_card_results_definition_id_idx').on(col(table, 'reportCardDefinitionId')),
+        uniqueIndex('report_card_results_student_period_unique').on(col(table, 'studentId'), col(table, 'periodId')),
         index('report_card_results_class_group_period_idx').on(col(table, 'classGroupId'), col(table, 'periodId')),
       ]
     case 'students':
-      return [index('students_school_id_idx').on(col(table, 'schoolId'))]
+      return [
+        index('students_school_id_idx').on(col(table, 'schoolId')),
+        index('students_photo_attachment_id_idx').on(col(table, 'photoAttachmentId')),
+        uniqueIndex('students_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
+      ]
+    case 'student_photo_submissions':
+      return [
+        index('student_photo_submissions_school_id_idx').on(col(table, 'schoolId')),
+        index('student_photo_submissions_student_id_idx').on(col(table, 'studentId')),
+        index('student_photo_submissions_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+        uniqueIndex('student_photo_submissions_one_pending_uidx')
+          .on(col(table, 'schoolId'), col(table, 'studentId'))
+          .where(sql`${col(table, 'status')} = 'pending'`),
+      ]
     case 'student_class_enrollments':
       return [
         index('student_class_enrollments_student_id_idx').on(col(table, 'studentId')),
@@ -171,7 +260,13 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('student_class_enrollments_student_class_group_idx').on(col(table, 'studentId'), col(table, 'classGroupId')),
       ]
     case 'guardians':
-      return [index('guardians_school_id_idx').on(col(table, 'schoolId'))]
+      return [
+        index('guardians_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('guardians_school_identifier_uidx').on(col(table, 'schoolId'), col(table, 'identifier')),
+        uniqueIndex('guardians_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
+      ]
     case 'guardian_student_links':
       return [
         index('guardian_student_links_guardian_id_idx').on(col(table, 'guardianId')),
@@ -212,6 +307,94 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('teacher_unavailabilities_teacher_id_idx').on(col(table, 'teacherId')),
         index('teacher_unavailabilities_academic_year_id_idx').on(col(table, 'academicYearId')),
+      ]
+    case 'teachers':
+      return [
+        index('teachers_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('teachers_school_identifier_uidx').on(col(table, 'schoolId'), col(table, 'identifier')),
+        uniqueIndex('teachers_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
+      ]
+    case 'platform_users':
+      return [
+        uniqueIndex('platform_users_subject_id_uidx').on(col(table, 'subjectId')),
+        uniqueIndex('platform_users_email_uidx').on(col(table, 'email')),
+      ]
+    case 's2s_clients':
+      return [
+        uniqueIndex('s2s_clients_key_hash_uidx').on(col(table, 'keyHash')),
+        index('s2s_clients_school_id_idx').on(col(table, 'schoolId')),
+        index('s2s_clients_school_client_idx').on(col(table, 'schoolId'), col(table, 'clientId')),
+      ]
+    case 'account_invitations':
+      return [
+        index('account_invitations_contact_status_idx').on(
+          col(table, 'contactChannel'),
+          col(table, 'contactValue'),
+          col(table, 'status'),
+        ),
+        uniqueIndex('account_invitations_token_hash_uidx').on(col(table, 'tokenHash')),
+        uniqueIndex('account_invitations_pending_target_uidx')
+          .on(col(table, 'schoolId'), col(table, 'kind'), col(table, 'targetId'))
+          .where(sql`${col(table, 'status')} = 'pending'`),
+      ]
+    case 'document_issuances':
+      return [
+        index('document_issuances_school_id_idx').on(col(table, 'schoolId')),
+        index('document_issuances_student_id_idx').on(col(table, 'studentId')),
+        index('document_issuances_class_group_id_idx').on(col(table, 'classGroupId')),
+        index('document_issuances_source_idx').on(col(table, 'schoolId'), col(table, 'templateKey'), col(table, 'sourceId')),
+        index('document_issuances_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+        uniqueIndex('document_issuances_request_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'templateKey'),
+          col(table, 'sourceId'),
+          col(table, 'requestId'),
+        ),
+      ]
+    case 'document_number_series':
+      return [
+        index('document_number_series_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('document_number_series_identity_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'documentKind'),
+          col(table, 'academicYearId'),
+        ),
+      ]
+    case 'family_feedback_campaigns':
+      return [
+        index('family_feedback_campaigns_school_id_idx').on(col(table, 'schoolId')),
+        index('family_feedback_campaigns_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+        index('family_feedback_campaigns_assignment_idx').on(
+          col(table, 'schoolId'),
+          col(table, 'teacherAssignmentId'),
+          col(table, 'academicPeriodId'),
+        ),
+      ]
+    case 'family_feedback_slots':
+      return [
+        uniqueIndex('family_feedback_slots_identity_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'campaignId'),
+          col(table, 'studentId'),
+          col(table, 'teacherAssignmentId'),
+        ),
+        index('family_feedback_slots_campaign_idx').on(col(table, 'schoolId'), col(table, 'campaignId'), col(table, 'status')),
+        index('family_feedback_slots_student_idx').on(col(table, 'schoolId'), col(table, 'studentId')),
+      ]
+    case 'family_feedback_responses':
+      return [
+        uniqueIndex('family_feedback_responses_slot_uidx').on(col(table, 'schoolId'), col(table, 'slotId')),
+        index('family_feedback_responses_campaign_idx').on(col(table, 'schoolId'), col(table, 'campaignId')),
+      ]
+    case 'family_feedback_snapshots':
+      return [
+        uniqueIndex('family_feedback_snapshots_campaign_uidx').on(col(table, 'schoolId'), col(table, 'campaignId')),
+      ]
+    case 'family_feedback_comment_read_audit':
+      return [
+        index('family_feedback_comment_read_audit_campaign_idx').on(col(table, 'schoolId'), col(table, 'campaignId')),
       ]
     default:
       return []

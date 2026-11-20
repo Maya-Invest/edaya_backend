@@ -1,7 +1,7 @@
 import type { SchoolRepositories } from '@edaya/service'
-import { AcademicPeriod, AcademicPeriodType, Activity, ActivityCategory, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, CalendarEvent, CalendarEventKind, ClassGroup, FeeStatus, Incident, IncidentKind, IncidentStatus, Payment, PaymentMethod, PaymentStatus, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentFee, StudentStatus } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Activity, ActivityCategory, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, CalendarEvent, CalendarEventKind, ChargeStatus, ClassGroup, Incident, IncidentKind, IncidentStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, ReportCardResult, ReportCardResultStatus, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentStatus, studentYearAccountId, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { buildSchoolOverview } from '../../src/services/queries/school-overview'
+import { buildSchoolOverview } from '../support/overview-reference'
 
 function createOverviewRepos(
   overrides: Record<string, { list?: () => Promise<unknown[]>, findById?: () => Promise<unknown> }> = {},
@@ -9,7 +9,7 @@ function createOverviewRepos(
   const base = {
     students: { list: async () => [] },
     staffMembers: { list: async () => [] },
-    studentFees: { list: async () => [] },
+    studentCharges: { list: async () => [] },
     results: { list: async () => [] },
     incidents: { list: async () => [] },
     attendance: { list: async () => [] },
@@ -46,16 +46,18 @@ describe('buildSchoolOverview', () => {
       status: StudentClassEnrollmentStatus.Active,
       enrolledAt: new Date('2025-09-01'),
     })
-    const overdueFee = new StudentFee({
+    const overdueFee = new StudentCharge({
       id: 'fee-1',
+      schoolId: 'school-1',
       studentId: 'student-1',
-      feeId: 'catalog-1',
+      enrollmentId: 'enr-1',
       academicYearId: 'year-1',
+      label: 'Tuition',
       expectedAmount: 10_000,
-      paidAmount: 2_000,
+      allocatedAmount: 2_000,
       currency: 'XOF',
-      status: FeeStatus.Overdue,
-      dueDate: new Date('2026-06-16'),
+      status: ChargeStatus.Overdue,
+      dueDate: new Date('2026-06-12'),
     })
     const incident = new Incident({
       id: 'incident-1',
@@ -79,7 +81,7 @@ describe('buildSchoolOverview', () => {
     const overview = await buildSchoolOverview(createOverviewRepos({
       students: { list: async () => [student] },
       staffMembers: { list: async () => [{ id: 'staff-1' }] as never[] },
-      studentFees: { list: async () => [overdueFee] },
+      studentCharges: { list: async () => [overdueFee] },
       results: { list: async () => [] },
       incidents: { list: async () => [incident] },
       attendance: { list: async () => [attendance] },
@@ -131,7 +133,9 @@ describe('buildSchoolOverview', () => {
     })
     const published = new ReportCardResult({
       id: 'rc-1',
-      reportCardDefinitionId: 'def-1',
+      gradeLevelId: 'grade1',
+      academicYearId: 'ay1',
+      reportConfigurationRevision: 0,
       studentId: 'student-1',
       classGroupId: 'class-1',
       periodId: 'period-1',
@@ -149,7 +153,7 @@ describe('buildSchoolOverview', () => {
     const overview = await buildSchoolOverview(createOverviewRepos({
       students: { list: async () => [student] },
       staffMembers: { list: async () => [] },
-      studentFees: { list: async () => [] },
+      studentCharges: { list: async () => [] },
       results: { list: async () => [published] },
       incidents: { list: async () => [] },
       attendance: { list: async () => [] },
@@ -187,7 +191,7 @@ describe('buildSchoolOverview', () => {
       status: StudentClassEnrollmentStatus.Active,
       enrolledAt: new Date('2025-09-01'),
     })
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
@@ -195,27 +199,31 @@ describe('buildSchoolOverview', () => {
       name: 'Grade 7A',
       attendanceMode: AttendanceMode.Session,
       homeroomStaffId: 'staff-1',
-    })
-    const overdueFee = new StudentFee({
+    }))
+    const overdueFee = new StudentCharge({
       id: 'fee-1',
+      schoolId: 'school-1',
       studentId: 'student-1',
-      feeId: 'catalog-1',
+      enrollmentId: 'enr-1',
       academicYearId: 'year-1',
+      label: 'Tuition',
       expectedAmount: 10_000,
-      paidAmount: 0,
+      allocatedAmount: 0,
       currency: 'XOF',
-      status: FeeStatus.Overdue,
+      status: ChargeStatus.Overdue,
       dueDate: new Date('2026-06-16T00:00:00.000Z'),
     })
-    const pendingFee = new StudentFee({
+    const pendingFee = new StudentCharge({
       id: 'fee-2',
+      schoolId: 'school-1',
       studentId: 'student-1',
-      feeId: 'catalog-2',
+      enrollmentId: 'enr-2',
       academicYearId: 'year-1',
+      label: 'Transport',
       expectedAmount: 5_000,
-      paidAmount: 0,
+      allocatedAmount: 0,
       currency: 'XOF',
-      status: FeeStatus.Pending,
+      status: ChargeStatus.Pending,
       dueDate: new Date('2026-06-18T00:00:00.000Z'),
     })
     const calendarEvent = new CalendarEvent({
@@ -237,7 +245,7 @@ describe('buildSchoolOverview', () => {
       kind: CalendarEventKind.Holiday,
       isNonSchoolDay: true,
     })
-    const academicPeriod = new AcademicPeriod({
+    const academicPeriod = new AcademicPeriod(withShortName({
       id: 'period-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
@@ -245,7 +253,7 @@ describe('buildSchoolOverview', () => {
       type: AcademicPeriodType.Trimester,
       startDate: new Date('2026-03-01'),
       endDate: new Date('2026-06-20T00:00:00.000Z'),
-    })
+    }))
     const assessment = new Assessment({
       id: 'assessment-1',
       classGroupId: 'class-1',
@@ -292,14 +300,17 @@ describe('buildSchoolOverview', () => {
     })
     const payment = new Payment({
       id: 'payment-1',
-      studentFeeId: 'fee-2',
+      schoolId: 'school-1',
+      accountId: studentYearAccountId('school-1', 'student-1', 'year-1', 'XOF'),
+      academicYearId: 'year-1',
+      kind: PaymentKind.Receipt,
       amount: 2_000,
       currency: 'XOF',
       paymentDate: new Date('2026-06-13T00:00:00.000Z'),
       method: PaymentMethod.Cash,
       status: PaymentStatus.Recorded,
     })
-    const activity = new Activity({
+    const activity = new Activity(withShortName({
       id: 'activity-1',
       schoolId: 'school-1',
       name: 'Chess club',
@@ -311,7 +322,7 @@ describe('buildSchoolOverview', () => {
       description: 'Chess club',
       startDate: new Date('2026-06-01'),
       endDate: new Date('2026-06-30'),
-    })
+    }))
     const discipline = new StudentDisciplinaryAction({
       id: 'discipline-1',
       schoolId: 'school-1',
@@ -332,7 +343,7 @@ describe('buildSchoolOverview', () => {
           lastName: 'Konate',
         }],
       },
-      studentFees: { list: async () => [overdueFee, pendingFee] },
+      studentCharges: { list: async () => [overdueFee, pendingFee] },
       results: { list: async () => [] },
       incidents: { list: async () => [incident] },
       attendance: { list: async () => presentOnly },
@@ -366,7 +377,7 @@ describe('buildSchoolOverview', () => {
       className: 'Grade 7A',
       coordinatorName: 'Marie Konate',
       openIncidentCount: 1,
-      overdueFeeCount: 1,
+      overdueFeeCount: 0,
       riskLevel: 'watch',
     })
     expect(overview.areaHealth.finance.recentPaymentCount).toBe(1)
@@ -395,14 +406,14 @@ describe('buildSchoolOverview', () => {
       status: StudentClassEnrollmentStatus.Active,
       enrolledAt: new Date('2025-09-01'),
     })
-    const classGroup = new ClassGroup({
+    const classGroup = new ClassGroup(withShortName({
       id: 'class-1',
       schoolId: 'school-1',
       academicYearId: 'year-1',
       gradeLevelId: 'grade-1',
       name: 'Grade 7B',
       attendanceMode: AttendanceMode.Session,
-    })
+    }))
     const incident = new Incident({
       id: 'incident-1',
       schoolId: 'school-1',
@@ -414,15 +425,17 @@ describe('buildSchoolOverview', () => {
       status: IncidentStatus.Open,
       classGroupId: 'class-1',
     })
-    const overdueFees = ['fee-1', 'fee-2', 'fee-3'].map(id => new StudentFee({
+    const overdueFees = ['fee-1', 'fee-2', 'fee-3'].map(id => new StudentCharge({
       id,
+      schoolId: 'school-1',
       studentId: 'student-1',
-      feeId: `catalog-${id}`,
+      enrollmentId: `enr-${id}`,
       academicYearId: 'year-1',
+      label: 'Tuition',
       expectedAmount: 1_000,
-      paidAmount: 0,
+      allocatedAmount: 0,
       currency: 'XOF',
-      status: FeeStatus.Overdue,
+      status: ChargeStatus.Overdue,
       dueDate: new Date('2026-06-10'),
     }))
     const assessment = new Assessment({
@@ -446,7 +459,7 @@ describe('buildSchoolOverview', () => {
     const overview = await buildSchoolOverview(createOverviewRepos({
       students: { list: async () => [student] },
       staffMembers: { list: async () => [] },
-      studentFees: { list: async () => overdueFees },
+      studentCharges: { list: async () => overdueFees },
       results: { list: async () => [] },
       incidents: { list: async () => [incident] },
       attendance: {

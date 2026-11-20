@@ -7,7 +7,8 @@ export type HttpFetch = (
 
 export interface HttpSeedClientOptions {
   baseUrl: string
-  /** Trusted webapp origin for Better Auth (Origin header). */
+  /** Central identity base URL for login, token exchange, and dev seed endpoints. */
+  /** Trusted webapp origin for identity requests (Origin header). */
   appOrigin?: string
   fetch?: HttpFetch
 }
@@ -31,6 +32,8 @@ const DEFAULT_REQUEST_RETRIES = 5
 const DEFAULT_RETRY_BASE_DELAY_MS = 500
 const STAGING_REQUEST_RETRIES = 12
 const STAGING_RETRY_BASE_DELAY_MS = 1500
+const IDENTITY_429_RETRIES = 2
+const IDENTITY_429_MAX_WAIT_MS = 65_000
 /** Min gap between staging API calls — kept low; retries handle transient Worker limits. */
 const STAGING_MIN_REQUEST_INTERVAL_MS = 5
 const STAGING_JSON_OUTER_RETRIES = 50
@@ -95,15 +98,32 @@ function formatHttpFailure(path: string, status: number, detail: string): string
   return `HTTP ${status} ${detail} (${path})`
 }
 
+function retryAfterDelayMs(response: Response, fallbackMs: number): number {
+  const header = response.headers.get('retry-after')
+  if (!header) {
+    return fallbackMs
+  }
+  const seconds = Number(header)
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return fallbackMs
+  }
+  return Math.min(seconds * 1000, IDENTITY_429_MAX_WAIT_MS)
+}
+
 export class HttpSeedClient {
   private readonly baseUrl: string
+  private readonly authUrl: string
   private readonly appOrigin?: string
   private readonly fetchImpl: HttpFetch
   private readonly cookies = new Map<string, string>()
+  private staffScope?: { schoolId: string, actorId: string }
+  private accessToken?: { value: string, expiresAt: number }
+  private exchange?: Promise<string | undefined>
   private lastRequestAt = 0
 
   constructor(options: HttpSeedClientOptions) {
     this.baseUrl = normalizeBaseUrl(options.baseUrl)
+    this.authUrl = normalizeBaseUrl(options.baseUrl)
     this.appOrigin = options.appOrigin?.replace(/\/+$/, '')
     this.fetchImpl = options.fetch ?? globalThis.fetch
   }
@@ -112,8 +132,19 @@ export class HttpSeedClient {
     return this.baseUrl
   }
 
+  get identityOrigin(): string {
+    return this.authUrl
+  }
+
+  selectStaffScope(scope?: { schoolId: string, actorId: string }): void {
+    this.staffScope = scope
+  }
+
   clearCookies(): void {
+    this.staffScope = undefined
     this.cookies.clear()
+    this.accessToken = undefined
+    this.exchange = undefined
   }
 
   private isStaging(): boolean {
@@ -130,7 +161,12 @@ export class HttpSeedClient {
 
   /** Run a callback while temporarily isolating auth cookie mutations. */
   async withCookieSnapshot<T>(fn: () => Promise<T>): Promise<T> {
+    // Preserve a usable token before nested account provisioning changes identity.
+    // Otherwise each snapshot can restore an empty cache and exhaust the renewal quota.
+    await this.getAccessToken()
+    const staffScope = this.staffScope
     const snapshot = new Map(this.cookies)
+    const accessToken = this.accessToken
     try {
       return await fn()
     }
@@ -139,6 +175,9 @@ export class HttpSeedClient {
       for (const [name, value] of snapshot) {
         this.cookies.set(name, value)
       }
+      this.staffScope = staffScope
+      this.accessToken = accessToken
+      this.exchange = undefined
     }
   }
 
@@ -154,6 +193,8 @@ export class HttpSeedClient {
     for (const setCookie of setCookies) {
       const parsed = parseSetCookie(setCookie)
       if (parsed) {
+        if (this.cookies.get(parsed.name) !== parsed.value)
+          this.accessToken = undefined
         this.cookies.set(parsed.name, parsed.value)
       }
     }
@@ -180,24 +221,80 @@ export class HttpSeedClient {
     }
   }
 
+  private async getAccessToken(): Promise<string | undefined> {
+    if (this.accessToken && this.accessToken.expiresAt > Date.now() + 30000)
+      return this.accessToken.value
+    if (!this.cookieHeader())
+      return undefined
+    this.exchange ??= (async () => {
+      const renewal = this.cookieHeader()
+      const response = await this.request('/auth/edaya/access-token', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ resource: new URL(this.baseUrl).origin }),
+      })
+      if (response.status === 401)
+        return undefined
+      if (!response.ok)
+        throw new Error(`Seed access-token exchange failed: HTTP ${response.status}`)
+      const token = await response.json() as { accessToken: string, expiresAt: string }
+      if (typeof token.accessToken !== 'string' || token.accessToken.length === 0
+        || !Number.isFinite(Date.parse(token.expiresAt))) {
+        throw new Error('Invalid seed access-token response')
+      }
+      if (renewal !== this.cookieHeader()) {
+        return undefined
+      }
+      this.accessToken = { value: token.accessToken, expiresAt: Date.parse(token.expiresAt) }
+      return token.accessToken
+    })().finally(() => { this.exchange = undefined })
+    return this.exchange
+  }
+
   async request(path: string, init: RequestInit = {}): Promise<Response> {
-    const url = path.startsWith('http') ? path : `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    const identityPath = normalizedPath.startsWith('/auth/')
+      || normalizedPath === '/dev/seed/mark-email-verified'
+    const url = path.startsWith('http')
+      ? path
+      : `${identityPath ? this.authUrl : this.baseUrl}${normalizedPath}`
     const headers = new Headers(init.headers)
     const cookieHeader = this.cookieHeader()
     const hasBearerAuth = headers.get('authorization')?.toLowerCase().startsWith('bearer ') ?? false
     // Presigned object-storage URLs (R2/S3) must not receive API session headers.
-    if (this.isApiRequest(url)) {
+    if (identityPath) {
       if (cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
         headers.set('cookie', cookieHeader)
       }
-      if (this.appOrigin && !headers.has('origin')) {
-        headers.set('origin', this.appOrigin)
+      if (!headers.has('origin')) {
+        headers.set('origin', this.appOrigin ?? new URL(this.authUrl).origin)
+      }
+    }
+    else if (this.isApiRequest(url)) {
+      headers.delete('cookie')
+      if (!headers.has('authorization')) {
+        const accessToken = await this.getAccessToken()
+        if (accessToken) {
+          headers.set('authorization', `Bearer ${accessToken}`)
+          if (this.staffScope && !['x-school-id', 'x-actor-kind', 'x-actor-id'].some(key => headers.has(key))) {
+            headers.set('x-school-id', this.staffScope.schoolId)
+            headers.set('x-actor-kind', 'staff')
+            headers.set('x-actor-id', this.staffScope.actorId)
+          }
+        }
+      }
+      if (!headers.has('origin')) {
+        headers.set('origin', this.appOrigin ?? new URL(this.baseUrl).origin)
       }
     }
 
-    const maxRetries = this.isStaging()
-      ? STAGING_REQUEST_RETRIES
-      : DEFAULT_REQUEST_RETRIES
+    const method = (init.method ?? 'GET').toUpperCase()
+    const mayRetryGet = ['GET', 'HEAD'].includes(method)
+    const maxRetries = mayRetryGet
+      ? (this.isStaging()
+          ? STAGING_REQUEST_RETRIES
+          : DEFAULT_REQUEST_RETRIES)
+      : (identityPath ? IDENTITY_429_RETRIES : 0)
     const retryBaseDelayMs = this.isStaging()
       ? STAGING_RETRY_BASE_DELAY_MS
       : DEFAULT_RETRY_BASE_DELAY_MS
@@ -214,21 +311,30 @@ export class HttpSeedClient {
         headers,
       })
 
-      if (!RETRYABLE_STATUS_CODES.has(response.status) || attempt === maxRetries) {
-        this.absorbCookies(response)
+      const retry429 = identityPath && response.status === 429
+      if ((!RETRYABLE_STATUS_CODES.has(response.status) && !retry429) || attempt === maxRetries) {
+        if (identityPath)
+          this.absorbCookies(response)
+        return response
+      }
+      if (!mayRetryGet && !retry429) {
+        if (identityPath)
+          this.absorbCookies(response)
         return response
       }
 
       lastResponse = response
-      await sleep(retryBaseDelayMs * (attempt + 1))
+      await sleep(retryAfterDelayMs(response, retryBaseDelayMs * (attempt + 1)))
     }
 
-    this.absorbCookies(lastResponse!)
+    if (identityPath)
+      this.absorbCookies(lastResponse!)
     return lastResponse!
   }
 
   async jsonRequest<T = unknown>(path: string, init: RequestInit = {}): Promise<{ response: Response, body: T | null }> {
-    const outerRetries = this.isStaging() ? STAGING_JSON_OUTER_RETRIES : 0
+    const mayRetry = ['GET', 'HEAD'].includes((init.method ?? 'GET').toUpperCase())
+    const outerRetries = mayRetry && this.isStaging() ? STAGING_JSON_OUTER_RETRIES : 0
 
     for (let outer = 0; outer <= outerRetries; outer++) {
       const response = await this.request(path, init)

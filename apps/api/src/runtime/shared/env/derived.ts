@@ -2,6 +2,11 @@ import type { Environment } from "@/runtime/shared/env/schema";
 
 const DEFAULT_WEBAPP_ORIGIN = "http://localhost:5173";
 
+export type WebappOriginEnv = Pick<
+  Partial<Environment>,
+  "WEBAPP_ORIGIN" | "TRUSTED_ORIGINS" | "NODE_ENV"
+>;
+
 export function shouldAllowPublicSchoolRegistration(env: Environment): boolean {
   if (env.ALLOW_PUBLIC_SCHOOL_REGISTRATION === true) {
     return true;
@@ -12,7 +17,7 @@ export function shouldAllowPublicSchoolRegistration(env: Environment): boolean {
   return env.NODE_ENV === "development";
 }
 
-export function resolveInviteBaseUrl(env: Environment | undefined): string | undefined {
+export function resolveWebappOrigin(env: WebappOriginEnv | undefined): string | undefined {
   const origin = env?.WEBAPP_ORIGIN?.trim()
     || env?.TRUSTED_ORIGINS?.split(",")[0]?.trim()
     || (env?.NODE_ENV === "development" ? DEFAULT_WEBAPP_ORIGIN : undefined);
@@ -21,9 +26,29 @@ export function resolveInviteBaseUrl(env: Environment | undefined): string | und
     return undefined;
   }
 
-  return `${origin.replace(/\/+$/, "")}/invite`;
+  return origin.replace(/\/+$/, "");
+}
+
+export function resolveInviteBaseUrl(env: Environment | undefined): string | undefined {
+  const origin = resolveWebappOrigin(env);
+  if (!origin) {
+    return undefined;
+  }
+
+  return `${origin}/invite`;
 }
 
 export function resolveAccountInvitationsEnabled(env: Environment | undefined): boolean {
   return env?.ACCOUNT_INVITATIONS_ENABLED !== false;
+}
+
+export function resolveProfilePhotoMaxBytes(env: Environment | undefined): number | undefined {
+  return env?.PROFILE_PHOTO_MAX_BYTES;
+}
+
+export function platformBootstrapEmails(env: Pick<Environment, "PLATFORM_BOOTSTRAP_EMAILS"> | undefined): string[] {
+  return (env?.PLATFORM_BOOTSTRAP_EMAILS ?? "")
+    .split(",")
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean);
 }

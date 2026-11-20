@@ -1,0 +1,55 @@
+{
+  // Local process configuration. Credentials belong in .env, not here.
+  // API_ORIGIN also supplies the identity issuer and first-party audience.
+  // Optional: ALLOW_PUBLIC_SCHOOL_REGISTRATION, WEBAPP_ORIGIN,
+  // ACCOUNT_INVITATIONS_ENABLED, PROFILE_PHOTO_MAX_BYTES, PLATFORM_BOOTSTRAP_EMAILS.
+  // LOCAL_OTP_CAPTURE=false opts out of development OTP capture.
+  // Local notifications use log transports unless explicitly configured.
+  // "EMAIL_TRANSPORT": "log",
+  // "SMS_TRANSPORT": "log",
+  // "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
+  // "CLOUDFLARE_EMAIL_ACCOUNT_ID": "YOUR_ACCOUNT_ID", // auth email REST; token in .env
+  // "LOCAL_FILES_URL": "http://localhost:9200",
+  // "LOCAL_FILES_ROOT": ".data/files",
+  // "GOTENBERG_URL": "http://localhost:3000",
+  // "CHROME_PATH": "", // blank selects the local stub when Gotenberg is absent
+  // "CRON_JOB_KEYS": "processDueNotifications,reconcilePendingDeliveries",
+  // Africa's Talking sandbox (local capture also sends through configured providers):
+  // "AFRICAS_TALKING_USERNAME": "sandbox",
+  // "AFRICAS_TALKING_SANDBOX": "true",
+  // Supply sandbox key in .env. Omit sender ID to use the provider default.
+  // Messages reach the simulator. For real phones use live credentials and sandbox=false.
+  // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
+  // AUTH_PROVIDER_GENERATION. Boolean settings use string values "true" / "false".
+  // SMS requires sms_routes plus AFRICAS_TALKING_USERNAME and API key.
+  // Optional sender ID must be registered; absent/blank uses the legacy default sender.
+  // "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
+  // "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID",
+  // WhatsApp requires sms_only prerequisites as fallback; then use whatsapp_first.
+  // Optional rendering: GOTENBERG_URL, DOCS_RENDER_ON_PUBLISH.
+  // See docs/reference/api-configuration.md and phone-verification.md.
+  "RUNTIME": "local",
+  "NODE_ENV": "development",
+  "ALLOW_PUBLIC_ACCOUNT_REGISTRATION": "true",
+  // Require acceptance of the draft terms during local sign-in.
+  "AUTH_TERMS_MODE": "live",
+  "PORT": "9999",
+  "LOG_LEVEL": "debug",
+  "DATABASE_URL": "pglite:.data/school",
+  "RUN_MIGRATIONS_ON_STARTUP": "true",
+  "API_ORIGIN": "http://localhost:9999",
+  "TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:4173,http://localhost:5175,http://127.0.0.1:5175",
+  "PLATFORM_BOOTSTRAP_EMAILS": "a.kone@ecole-ci.edaya.dev",
+  "AUTH_DATABASE_URL": "pglite:.data/identity",
+  "PHONE_AUTH_MODE": "whatsapp_first",
+  "WHATSAPP_PHONE_NUMBER_ID": "1351844414684255",
+  "WHATSAPP_BUSINESS_ACCOUNT_ID": "1418705638002811",
+  "WHATSAPP_API_VERSION": "v26.0",
+  "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"authentification_edaya\",\"language\":\"fr\"},\"en\":{\"name\":\"authentification_edaya_en\",\"language\":\"en\"}}",
+  "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
+  "AFRICAS_TALKING_USERNAME": "sandbox",
+  "AFRICAS_TALKING_SANDBOX": "true",
+  "ACCOUNT_SECURITY_KEY_VERSION": "v1",
+  "LOCAL_FILES_PORT": "9200",
+  "AUTH_PROVIDER_GENERATION": "better-auth:v1"
+}

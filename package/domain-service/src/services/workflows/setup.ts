@@ -1,77 +1,38 @@
-import type {
-  AcademicPeriod,
-  AcademicPeriodInput,
-  AcademicYear,
-  Activity,
-  ActivityEnrollment,
-  ActivityEnrollmentInput,
-  ActivityInput,
-  AttachmentInput,
-  ClassGroupInput,
-  GradeLevel,
-  GradeLevelInput,
-  PeriodDefinition,
-  PeriodDefinitionInput,
-  Resource,
-  ResourceAssignmentInput,
-  ResourceInput,
-  School,
-  SchoolInput,
-  StaffAssignment,
-  StaffAssignmentInput,
-  StaffMember,
-  StaffMemberInput,
-} from '@edaya/core'
+import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, HumanIdentifierGroup, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole, Teacher, TeacherInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
-import {
-  AttachmentOperations,
-  denyResourceAccess,
-  PlatformOperations,
-  SchoolStructureOperations,
-} from '@edaya/authorization'
-import {
-  AcademicPeriod as AcademicPeriodEntity,
-  AcademicYear as AcademicYearEntity,
-  AccountInvitationKind,
-  ActivityEnrollment as ActivityEnrollmentEntity,
-  Activity as ActivityEntity,
-  Attachment,
-  AttachmentStatus,
-  BusinessRuleViolationError,
-  ClassGroup,
-  GradeLevel as GradeLevelEntity,
-  MessageDeliveryRecipientKind,
-  PeriodDefinition as PeriodDefinitionEntity,
-  ResourceAssignment,
-  Resource as ResourceEntity,
-  School as SchoolEntity,
-  StaffAssignment as StaffAssignmentEntity,
-  StaffMember as StaffMemberEntity,
-} from '@edaya/core'
-import {
-  scheduleAccountInvitationIfEligible,
-} from '../../capabilities/invitations'
-import {
-  buildStaffRecipientProfile,
-  scheduleNotificationRecipientRemove,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
+import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { denyResourceAccess } from '@edaya/authorization'
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity, withShortName } from '@edaya/core'
+import { academicStateLock } from '../../capabilities/academics/marks-state'
+import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
+import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
+import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
+import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/profile-photo-uploads'
+import { removeAttachment } from '../../capabilities/files/remove-attachment'
+import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
-import { operationModule } from '../entities/entity-config'
+import { schoolCommandScope } from '../commands/school-command-scope'
+
 import { requireSchool } from '../require-school'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
-import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
+import { syncSubjectsToClassGroup } from './subject-sync'
 
 export interface CreateAcademicYearInput {
   id: string
   schoolId: string
   name: string
+  shortName?: string
   startDate: Date
   endDate: Date
   createdAt?: Date
 }
 
-export interface ActivateAcademicYearInput {
+export interface PublishAcademicYearInput {
+  academicYearId: string
+}
+
+export interface ArchiveAcademicYearInput {
   academicYearId: string
 }
 
@@ -93,8 +54,22 @@ export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupIn
   classGroupId: string
 }
 
-export type RegisterStaffMemberInput = StaffMemberInput & {
+export type RegisterStaffMemberInput = Omit<StaffMemberInput, 'id'> & {
+  requestId?: string
+  id?: string
   sendAccountInvitation?: boolean
+}
+
+export type RegisterTeacherInput = Omit<TeacherInput, 'id'> & {
+  requestId?: string
+  id?: string
+}
+
+export interface UpdateTeacherSelfProfileInput {
+  firstName: string
+  lastName: string
+  email?: string | null
+  phone?: string | null
 }
 
 export interface UpdateStaffMemberStatusInput {
@@ -103,11 +78,14 @@ export interface UpdateStaffMemberStatusInput {
 }
 
 export interface UpdateStaffMemberProfileInput {
+  phone?: string | null
   staffId: string
   firstName?: string
   lastName?: string
+  identifier?: string | null
   email?: string | null
   photoUrl?: string | null
+  profileRole?: StaffProfileRole | null
 }
 
 export type AssignStaffInput = StaffAssignmentInput
@@ -126,361 +104,480 @@ export type ConfigureResourceInput = ResourceInput & { schoolId?: string }
 export type ConfigureActivityInput = ActivityInput & { schoolId?: string }
 export type EnrollStudentInActivityInput = ActivityEnrollmentInput
 
+function patchOptionalText(existing: string | undefined, incoming: string | null | undefined): string | undefined {
+  if (incoming === undefined)
+    return existing
+  const value = incoming?.trim()
+  return value || undefined
+}
+
 export interface RemoveAttachmentInput {
   attachmentId?: string
   id?: string
 }
 
 export class SetupServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: SetupWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('setup', base.repositories)
+  }
+
+  async correctHumanIdentifier(input: { group: HumanIdentifierGroup, entityId: string, expectedIdentifier: string | null, identifier: string | null, requestId: string }): Promise<{
+    id: string
+    identifier: string | null
+  }> {
+    const base = this.baseService
+    const key = { students: 'students', teachers: 'teachers', guardians: 'guardians', staff: 'staffMembers' }[input.group] as 'students' | 'teachers' | 'guardians' | 'staffMembers'
+    const scope = await schoolCommandScope(base.actor, 'correctHumanIdentifier', input.requestId)
+    return base.commandExecution.execute({ scope, input, resultMode: 'ordinary', authorize: async () => {
+      await base.access.identities.assertCorrectIdentifier()
+    }, execute: () => base.atomicExecution.execute(async () => {
+      const current = await base.entities[key].findById(input.entityId)
+      if (!current || (current.identifier ?? null) !== input.expectedIdentifier)
+        throw new BusinessRuleViolationError('IDENTIFIER_REVIEW_STALE', 'The current identifier changed')
+      if ('accountKind' in current && current.accountKind === 'service')
+        throw new BusinessRuleViolationError('SERVICE_ACCOUNT_IDENTIFIER_FORBIDDEN', 'Service accounts use name and short name')
+      const updated = current.copyWith({ identifier: input.identifier })
+      await base.entities[key].save(updated as never, true)
+      return { id: current.id, identifier: updated.identifier ?? null }
+    }, { lockKeys: [`human-profile:${key}:${input.entityId}`] }), persistResult: result => result, replay: async result => result, audit: result => [{ event: 'human-identifier-corrected', resourceType: key, resourceId: result.id, details: { previousIdentifier: input.expectedIdentifier, identifier: result.identifier } }] })
   }
 
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
-    await operationModule(PlatformOperations.registerSchool)(this.baseService.actor)
-    const school = new SchoolEntity(input)
-    if (school.ownerSubjectId) {
-      await this.validateOwnerSubject(school.id, school.ownerSubjectId)
-    }
-    await this.baseService.entities.schools.save(school, { moduleChecked: true })
-    await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
-    return school
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.baseService.access.school.assertRegister()
+      const { consortiumId: _ignoredConsortiumId, ...schoolInput } = input
+      const school = new SchoolEntity(withShortName(schoolInput))
+      await this.baseService.entities.schools.save(school)
+      await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
+      await ensureSchoolPermissionProfiles(this.baseService.repositories, school.id)
+      return school
+    })
   }
 
   async updateSchoolConfiguration({ schoolId, ...changes }: UpdateSchoolConfigurationInput): Promise<School> {
-    const existing = await this.requireEntity(this.baseService.entities.schools, schoolId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
-    const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
-    if (ownerSubjectId !== existing.ownerSubjectId) {
-      await this.validateOwnerTransfer(existing, ownerSubjectId)
-    }
-    const school = new SchoolEntity({
-      id: existing.id,
-      name: changes.name ?? existing.name,
-      timeZone: changes.timeZone ?? existing.timeZone,
-      ownerSubjectId,
-      type: changes.type === undefined ? existing.type : changes.type,
-      country: changes.country === undefined ? existing.country : changes.country,
-      city: changes.city === undefined ? existing.city : changes.city,
-      enforceScheduleConflicts: changes.enforceScheduleConflicts ?? existing.enforceScheduleConflicts,
-      timetableEnforceWorkloadFulfillment: changes.timetableEnforceWorkloadFulfillment ?? existing.timetableEnforceWorkloadFulfillment,
-      timetableExcludeBreakSlots: changes.timetableExcludeBreakSlots ?? existing.timetableExcludeBreakSlots,
-      timetableMinDayGapSameSubject: changes.timetableMinDayGapSameSubject ?? existing.timetableMinDayGapSameSubject,
-      timetablePreferredPeriodDefinitionIds: changes.timetablePreferredPeriodDefinitionIds ?? existing.timetablePreferredPeriodDefinitionIds,
-      timetableAllowUnassignedTeacherPlacements: changes.timetableAllowUnassignedTeacherPlacements ?? existing.timetableAllowUnassignedTeacherPlacements,
-      timetableUseHomeroomTeacherFallback: changes.timetableUseHomeroomTeacherFallback ?? existing.timetableUseHomeroomTeacherFallback,
-      timetableGenerationMode: changes.timetableGenerationMode ?? existing.timetableGenerationMode,
-      timetableMinPeriodSpan: changes.timetableMinPeriodSpan ?? existing.timetableMinPeriodSpan,
-      timetableMaxPeriodSpan: changes.timetableMaxPeriodSpan ?? existing.timetableMaxPeriodSpan,
-      createdAt: existing.createdAt,
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.schools, schoolId)
+      await this.baseService.access.school.assertManageLifecycle()
+      const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
+      const school = new SchoolEntity(withShortName({
+        id: existing.id,
+        name: changes.name ?? existing.name,
+        timeZone: changes.timeZone ?? existing.timeZone,
+        financeCurrency: changes.financeCurrency ?? existing.financeCurrency,
+        ownerSubjectId,
+        consortiumId: existing.consortiumId,
+        pendingOwnerStaffId: changes.pendingOwnerStaffId === undefined
+          ? existing.pendingOwnerStaffId
+          : changes.pendingOwnerStaffId,
+        shortName: changes.shortName ?? existing.shortName,
+        country: changes.country === undefined ? existing.country : changes.country,
+        city: changes.city === undefined ? existing.city : changes.city,
+        enforceScheduleConflicts: changes.enforceScheduleConflicts ?? existing.enforceScheduleConflicts,
+        timetableEnforceWorkloadFulfillment: changes.timetableEnforceWorkloadFulfillment ?? existing.timetableEnforceWorkloadFulfillment,
+        timetableExcludeBreakSlots: changes.timetableExcludeBreakSlots ?? existing.timetableExcludeBreakSlots,
+        timetableMinDayGapSameSubject: changes.timetableMinDayGapSameSubject ?? existing.timetableMinDayGapSameSubject,
+        timetablePreferredPeriodDefinitionIds: changes.timetablePreferredPeriodDefinitionIds ?? existing.timetablePreferredPeriodDefinitionIds,
+        timetableAllowUnassignedTeacherPlacements: changes.timetableAllowUnassignedTeacherPlacements ?? existing.timetableAllowUnassignedTeacherPlacements,
+        timetableUseHomeroomTeacherFallback: changes.timetableUseHomeroomTeacherFallback ?? existing.timetableUseHomeroomTeacherFallback,
+        timetableGenerationMode: changes.timetableGenerationMode ?? existing.timetableGenerationMode,
+        timetableMinPeriodSpan: changes.timetableMinPeriodSpan ?? existing.timetableMinPeriodSpan,
+        timetableMaxPeriodSpan: changes.timetableMaxPeriodSpan ?? existing.timetableMaxPeriodSpan,
+        postalAddress: patchOptionalText(existing.postalAddress, changes.postalAddress),
+        phone: patchOptionalText(existing.phone, changes.phone),
+        email: patchOptionalText(existing.email, changes.email),
+        schoolCode: patchOptionalText(existing.schoolCode, changes.schoolCode),
+        issuingName: patchOptionalText(existing.issuingName, changes.issuingName),
+        logoAttachmentId: existing.logoAttachmentId,
+        crestAttachmentId: existing.crestAttachmentId,
+        stampAttachmentId: existing.stampAttachmentId,
+        signatureAttachmentId: existing.signatureAttachmentId,
+        issuanceAssetVersion: existing.issuanceAssetVersion,
+        publicBrandingPurposes: changes.publicBrandingPurposes === undefined
+          ? existing.publicBrandingPurposes
+          : changes.publicBrandingPurposes,
+        createdAt: existing.createdAt,
+      }))
+      await this.baseService.entities.schools.save(school)
+      return school
     })
-    await this.baseService.entities.schools.save(school, { moduleChecked: true })
-    return school
   }
 
   async createAcademicYear({
     id,
     schoolId,
     name,
+    shortName,
     startDate,
     endDate,
     createdAt,
   }: CreateAcademicYearInput): Promise<AcademicYear> {
-    this.checkActorSchool(schoolId)
-    await operationModule(SchoolStructureOperations.configure)(this.baseService.actor)
-    await requireSchool(this.baseService.repositories.schools, schoolId)
-
     return this.baseService.atomicExecution.execute(async () => {
-      const academicYear = new AcademicYearEntity({
-        id,
-        schoolId,
-        name,
-        startDate,
-        endDate,
-        isActive: true,
-        createdAt,
+      this.checkActorSchool(schoolId)
+      await this.baseService.access.school.assertConfigureStructure()
+      await requireSchool(this.repositories.schools, schoolId)
+
+      return this.baseService.atomicExecution.execute(async () => {
+        const academicYear = new AcademicYearEntity(withShortName({
+          id,
+          schoolId,
+          name,
+          shortName,
+          startDate,
+          endDate,
+          status: 'draft',
+          createdAt,
+        }))
+        await this.baseService.entities.academicYears.save(academicYear)
+        return academicYear
       })
-      await this.deactivateOtherAcademicYears(schoolId, academicYear.id)
-      await this.baseService.entities.academicYears.save(academicYear, { moduleChecked: true })
-      return academicYear
     })
   }
 
-  async activateAcademicYear({ academicYearId }: ActivateAcademicYearInput): Promise<AcademicYear> {
-    const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
-    if (!academicYear) {
-      denyResourceAccess()
-    }
-    this.checkActorSchool(academicYear.schoolId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
-
+  async publishAcademicYear({ academicYearId }: PublishAcademicYearInput): Promise<AcademicYear> {
     return this.baseService.atomicExecution.execute(async () => {
-      await this.deactivateOtherAcademicYears(academicYear.schoolId, academicYear.id)
-      const activated = new AcademicYearEntity({
-        id: academicYear.id,
-        schoolId: academicYear.schoolId,
-        name: academicYear.name,
-        startDate: academicYear.startDate,
-        endDate: academicYear.endDate,
-        isActive: true,
-        createdAt: academicYear.createdAt,
+      const academicYear = await this.repositories.academicYears.findById(academicYearId)
+      if (!academicYear) {
+        denyResourceAccess()
+      }
+      this.checkActorSchool(academicYear.schoolId)
+      await this.baseService.access.school.assertManageLifecycle()
+
+      if (academicYear.status !== 'draft') {
+        throw new BusinessRuleViolationError(
+          'ACADEMIC_YEAR_NOT_DRAFT',
+          `Academic year ${academicYearId} must be draft to publish`,
+        )
+      }
+
+      return this.baseService.atomicExecution.execute(async () => {
+        const publishedYears = await this.repositories.academicYears.list({
+          schoolId: academicYear.schoolId,
+          status: 'published',
+        })
+        if (publishedYears.length > 0) {
+          throw new BusinessRuleViolationError(
+            'ACADEMIC_YEAR_ALREADY_PUBLISHED',
+            'Another academic year is already published. Archive it before publishing a new one.',
+          )
+        }
+
+        const published = new AcademicYearEntity(withShortName({
+          id: academicYear.id,
+          schoolId: academicYear.schoolId,
+          name: academicYear.name,
+          shortName: academicYear.shortName,
+          startDate: academicYear.startDate,
+          endDate: academicYear.endDate,
+          status: 'published',
+          createdAt: academicYear.createdAt,
+        }))
+        await this.baseService.entities.academicYears.save(published)
+        return published
       })
-      await this.baseService.entities.academicYears.save(activated, { moduleChecked: true })
-      return activated
+    })
+  }
+
+  async archiveAcademicYear({ academicYearId }: ArchiveAcademicYearInput): Promise<AcademicYear> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const academicYear = await this.repositories.academicYears.findById(academicYearId)
+      if (!academicYear) {
+        denyResourceAccess()
+      }
+      this.checkActorSchool(academicYear.schoolId)
+      await this.baseService.access.school.assertManageLifecycle()
+
+      if (academicYear.status !== 'published') {
+        throw new BusinessRuleViolationError(
+          'ACADEMIC_YEAR_NOT_PUBLISHED',
+          `Academic year ${academicYearId} must be published to archive`,
+        )
+      }
+
+      return this.baseService.atomicExecution.execute(async () => {
+        const archived = new AcademicYearEntity(withShortName({
+          id: academicYear.id,
+          schoolId: academicYear.schoolId,
+          name: academicYear.name,
+          shortName: academicYear.shortName,
+          startDate: academicYear.startDate,
+          endDate: academicYear.endDate,
+          status: 'archived',
+          createdAt: academicYear.createdAt,
+        }))
+        await this.baseService.entities.academicYears.save(archived)
+        return archived
+      })
     })
   }
 
   async createAcademicPeriod(input: CreateAcademicPeriodInput): Promise<AcademicPeriod> {
-    const period = new AcademicPeriodEntity(input)
-    await this.baseService.entities.academicPeriods.save(period)
-    return period
+    return this.baseService.atomicExecution.execute(async () => {
+      const period = new AcademicPeriodEntity(withShortName(input))
+      await this.baseService.entities.academicPeriods.save(period)
+      return period
+    })
   }
 
   async publishAcademicPeriod({ academicPeriodId }: PublishAcademicPeriodInput): Promise<AcademicPeriod> {
-    const existing = await this.requireEntity(this.baseService.entities.academicPeriods, academicPeriodId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
-    const period = new AcademicPeriodEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      academicYearId: existing.academicYearId,
-      name: existing.name,
-      type: existing.type,
-      startDate: existing.startDate,
-      endDate: existing.endDate,
-      isPublished: true,
-      createdAt: existing.createdAt,
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.academicPeriods, academicPeriodId)
+      await this.baseService.access.school.assertManageLifecycle()
+      const period = new AcademicPeriodEntity(withShortName({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        academicYearId: existing.academicYearId,
+        name: existing.name,
+        shortName: existing.shortName,
+        type: existing.type,
+        startDate: existing.startDate,
+        endDate: existing.endDate,
+        isPublished: true,
+        createdAt: existing.createdAt,
+      }))
+      await this.baseService.entities.academicPeriods.save(period)
+      return period
     })
-    await this.baseService.entities.academicPeriods.save(period, { moduleChecked: true })
-    return period
   }
 
-  async createClassGroup(input: CreateClassGroupInput): Promise<ClassGroup> {
-    const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
-    await this.baseService.atomicExecution.execute(async () => {
-      await syncGradeLevelSubjectsToClassGroup(this.baseService, classGroup)
+  async createClassGroup(input: CreateClassGroupInput, mirroredOfferingIds: Record<string, string> = {}): Promise<ClassGroup> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(await this.namedInput('classGroups', input)))
+      await this.baseService.atomicExecution.execute(async () => {
+        await syncSubjectsToClassGroup(this.baseService, classGroup, Object.fromEntries(Object.entries(mirroredOfferingIds).map(([subjectId, classSubjectId]) => [subjectId, { classSubjectId }])))
+      })
+      return classGroup
     })
-    return classGroup
   }
 
   async updateClassGroupConfiguration({ classGroupId, ...changes }: UpdateClassGroupConfigurationInput): Promise<ClassGroup> {
-    const existing = await this.requireEntity(this.baseService.entities.classGroups, classGroupId)
-    const classGroup = existing.copyWith(changes)
-    await this.baseService.entities.classGroups.save(classGroup)
-    return classGroup
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.classGroups, classGroupId)
+      const classGroup = existing.copyWith(changes)
+      await this.baseService.entities.classGroups.save(classGroup)
+      return classGroup
+    })
   }
 
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
-    const { sendAccountInvitation, ...entityInput } = staffMemberInput
-    const staffMember = await this.saveConstructed(
-      this.baseService.entities.staffMembers,
-      new StaffMemberEntity(entityInput),
-    )
-    scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
-    scheduleAccountInvitationIfEligible(
-      this.baseService,
-      {
-        kind: AccountInvitationKind.Staff,
-        targetId: staffMember.id,
-        sendAccountInvitation,
-      },
-      staffMember,
-    )
-    return staffMember
+    return this.createHuman('staff', staffMemberInput, async (staffMemberInput) => {
+      const { sendAccountInvitation, ...entityInput } = staffMemberInput
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.staffMembers.findById(candidate),
+        entityInput.id,
+        'STAFF_MEMBER_ID_ALREADY_EXISTS',
+        'Staff member',
+      )
+      const staffMember = await this.saveConstructed(
+        this.baseService.entities.staffMembers,
+        new StaffMemberEntity({ ...entityInput, id }),
+      )
+
+      await scheduleAccountInvitationIfEligible(
+        this.baseService,
+        {
+          kind: AccountInvitationKind.Staff,
+          targetId: staffMember.id,
+          sendAccountInvitation,
+        },
+        staffMember,
+      )
+      return staffMember
+    })
   }
 
-  private async validateOwnerTransfer(existing: School, ownerSubjectId: string | null | undefined): Promise<void> {
-    if (!ownerSubjectId) {
-      denyResourceAccess()
-    }
-
-    const actor = this.baseService.actor
-    const isCurrentOwner = actor.kind === 'staff' && actor.subjectId === existing.ownerSubjectId
-    const canTransferOwner = actor.kind === 'system'
-      || isCurrentOwner
-      || (actor.kind === 'staff' && actor.effectiveGrants?.isElevated === true)
-
-    if (existing.ownerSubjectId && !canTransferOwner) {
-      denyResourceAccess()
-    }
-
-    await this.validateOwnerSubject(existing.id, ownerSubjectId)
+  async registerTeacher(teacherInput: RegisterTeacherInput): Promise<Teacher> {
+    return this.createHuman('teachers', teacherInput, async (teacherInput) => {
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.teachers.findById(candidate),
+        teacherInput.id,
+        'TEACHER_ID_ALREADY_EXISTS',
+        'Teacher',
+      )
+      return this.saveConstructed(
+        this.baseService.entities.teachers,
+        new TeacherEntity({ ...teacherInput, id }),
+      )
+    })
   }
 
-  private async validateOwnerSubject(schoolId: string, ownerSubjectId: string): Promise<void> {
-    const ownedSchool = await this.baseService.repositories.schools.findOne({ ownerSubjectId })
-    if (ownedSchool && ownedSchool.id !== schoolId) {
-      denyResourceAccess()
-    }
+  async updateTeacherSelfProfile(input: UpdateTeacherSelfProfileInput): Promise<Teacher> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const actor = this.baseService.actor
+      if (actor.kind !== 'teacher')
+        denyResourceAccess()
+      const existing = await this.requireEntity(this.baseService.entities.teachers, actor.teacherId)
+      const email = input.email === undefined ? existing.email : input.email?.trim() || undefined
+      const phone = input.phone === undefined ? existing.phone : input.phone?.trim() || undefined
+      return this.saveConstructed(this.baseService.entities.teachers, new TeacherEntity({
+        ...existing.data,
+        firstName: input.firstName.trim(),
+        lastName: input.lastName.trim(),
+        email,
+        phone,
+      }))
+    })
   }
 
   async updateStaffMemberStatus({ staffId, isActive }: UpdateStaffMemberStatusInput): Promise<StaffMember> {
-    const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
-    const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      subjectId: existing.subjectId,
-      isActive,
-      createdAt: existing.createdAt,
-    }))
-    if (!isActive && existing.subjectId) {
-      scheduleNotificationRecipientRemove(this.baseService, existing.schoolId, {
-        kind: MessageDeliveryRecipientKind.Staff,
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
+      const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
         id: existing.id,
+        schoolId: existing.schoolId,
+        firstName: existing.firstName,
+        lastName: existing.lastName,
+        identifier: existing.identifier,
+        name: existing.data.name,
+        shortName: existing.data.shortName,
+        email: existing.email,
+        phone: existing.phone,
+        photoUrl: existing.photoUrl,
+        notificationEmail: existing.notificationEmail,
+        notificationPhone: existing.notificationPhone,
         subjectId: existing.subjectId,
-      })
-    }
-    else {
-      scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
-    }
-    return staffMember
+        accountKind: existing.accountKind,
+        serviceId: existing.serviceId,
+        createdBySubjectId: existing.createdBySubjectId,
+        serviceElevated: existing.serviceElevated,
+        isActive,
+        profileRole: existing.profileRole,
+        onboardingWizardCompletedAt: existing.onboardingWizardCompletedAt,
+        onboardingMaxReachedStep: existing.onboardingMaxReachedStep,
+        createdAt: existing.createdAt,
+      }))
+      return staffMember
+    })
   }
 
   async updateStaffMemberProfile({ staffId, ...changes }: UpdateStaffMemberProfileInput): Promise<StaffMember> {
-    const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
-    const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: changes.firstName ?? existing.firstName,
-      lastName: changes.lastName ?? existing.lastName,
-      email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
-      photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: existing.subjectId,
-      accountKind: existing.accountKind,
-      serviceId: existing.serviceId,
-      createdBySubjectId: existing.createdBySubjectId,
-      serviceElevated: existing.serviceElevated,
-      isActive: existing.isActive,
-      createdAt: existing.createdAt,
-    }))
-    if (existing.subjectId) {
-      scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
-    }
-    return staffMember
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
+      await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Staff, staffId, changes.photoUrl)
+      const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        firstName: changes.firstName ?? existing.firstName,
+        lastName: changes.lastName ?? existing.lastName,
+        name: existing.data.name,
+        shortName: existing.data.shortName,
+        identifier: changes.identifier === undefined ? existing.identifier : (changes.identifier ?? undefined),
+        email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
+        phone: changes.phone === undefined ? existing.phone : (changes.phone ?? undefined),
+        photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
+        notificationEmail: existing.notificationEmail,
+        notificationPhone: existing.notificationPhone,
+        subjectId: existing.subjectId,
+        accountKind: existing.accountKind,
+        serviceId: existing.serviceId,
+        createdBySubjectId: existing.createdBySubjectId,
+        serviceElevated: existing.serviceElevated,
+        isActive: existing.isActive,
+        profileRole: changes.profileRole === undefined ? existing.profileRole : (changes.profileRole ?? undefined),
+        onboardingWizardCompletedAt: existing.onboardingWizardCompletedAt,
+        onboardingMaxReachedStep: existing.onboardingMaxReachedStep,
+        createdAt: existing.createdAt,
+      }))
+      return staffMember
+    })
   }
 
   async configureGradeLevel(input: GradeLevelInput): Promise<GradeLevel> {
-    this.checkActorSchool(input.schoolId)
-    return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity(input))
+    return this.baseService.atomicExecution.execute(async () => {
+      this.checkActorSchool(input.schoolId)
+      const scope = await this.baseService.access.entity('gradeLevels').readScope()
+      const existing = await this.repositories.gradeLevels.forAccess(scope).findById(input.id)
+      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity(await this.namedInput('gradeLevels', { ...input, gradingPolicies: existing?.gradingPolicies ?? [] })))
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   async configurePeriodDefinition(input: PeriodDefinitionInput & { schoolId?: string }): Promise<PeriodDefinition> {
-    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
-    this.checkActorSchool(schoolId)
-    return this.saveConstructed(
-      this.baseService.entities.periodDefinitions,
-      new PeriodDefinitionEntity({ ...input, schoolId }),
-    )
+    return this.baseService.atomicExecution.execute(async () => {
+      const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+      this.checkActorSchool(schoolId)
+      return this.saveConstructed(
+        this.baseService.entities.periodDefinitions,
+        new PeriodDefinitionEntity(await this.namedInput('periodDefinitions', { ...input, schoolId })),
+      )
+    })
   }
 
   async configureResource(input: ResourceInput & { schoolId?: string }): Promise<Resource> {
-    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
-    this.checkActorSchool(schoolId)
-    return this.saveConstructed(
-      this.baseService.entities.resources,
-      new ResourceEntity({ ...input, schoolId }),
-    )
+    return this.baseService.atomicExecution.execute(async () => {
+      const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+      this.checkActorSchool(schoolId)
+      return this.saveConstructed(
+        this.baseService.entities.resources,
+        new ResourceEntity(await this.namedInput('resources', { ...input, schoolId })),
+      )
+    })
   }
 
   async configureActivity(input: ActivityInput & { schoolId?: string }): Promise<Activity> {
-    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
-    this.checkActorSchool(schoolId)
-    return this.saveConstructed(
-      this.baseService.entities.activities,
-      new ActivityEntity({ ...input, schoolId }),
-    )
+    return this.baseService.atomicExecution.execute(async () => {
+      const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+      this.checkActorSchool(schoolId)
+      return this.saveConstructed(
+        this.baseService.entities.activities,
+        new ActivityEntity(await this.namedInput('activities', { ...input, schoolId })),
+      )
+    })
   }
 
   async enrollStudentInActivity(input: ActivityEnrollmentInput): Promise<ActivityEnrollment> {
-    return this.saveConstructed(
-      this.baseService.entities.activityEnrollments,
-      new ActivityEnrollmentEntity(input),
-    )
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.saveConstructed(
+        this.baseService.entities.activityEnrollments,
+        new ActivityEnrollmentEntity(input),
+      )
+    })
   }
 
   async assignStaffToClass(input: AssignStaffInput): Promise<StaffAssignment> {
-    return this.saveStaffAssignment(input)
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.saveStaffAssignment(input)
+    })
   }
 
   async assignStaffToClassSubject(input: AssignStaffInput): Promise<StaffAssignment> {
-    return this.saveStaffAssignment(input)
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.saveStaffAssignment(input)
+    })
   }
 
   async assignStaffToLessonSession(input: AssignStaffInput): Promise<StaffAssignment> {
-    return this.saveStaffAssignment(input)
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.saveStaffAssignment(input)
+    })
   }
 
   async assignResourceToClass(input: AssignResourceInput): Promise<ResourceAssignment> {
-    return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
+    })
   }
 
   async assignResourceToLessonSession(input: AssignResourceInput): Promise<ResourceAssignment> {
-    return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.saveConstructed(this.baseService.entities.resourceAssignments, new ResourceAssignment(input))
+    })
   }
 
   async removeResourceAssignment({ resourceAssignmentId, id }: RemoveResourceAssignmentInput): Promise<void> {
-    await this.baseService.entities.resourceAssignments.delete(resourceAssignmentId ?? id ?? '')
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.baseService.entities.resourceAssignments.delete(resourceAssignmentId ?? id ?? '')
+    })
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    await operationModule(AttachmentOperations.configure)(this.baseService.actor)
-    const attachment = new Attachment({
-      ...input,
-      status: input.storageKey ? AttachmentStatus.Ready : input.status,
-    })
-    if (attachment.storageKey) {
-      const stored = await this.baseService.fileStorage.headObject(attachment.storageKey)
-      if (!stored) {
-        throw new BusinessRuleViolationError(
-          'ATTACHMENT_OBJECT_NOT_FOUND',
-          'Uploaded object was not found in storage',
-        )
-      }
-      if (attachment.sizeBytes !== undefined && stored.sizeBytes !== attachment.sizeBytes) {
-        throw new BusinessRuleViolationError(
-          'ATTACHMENT_SIZE_MISMATCH',
-          'Uploaded object size does not match declared sizeBytes',
-        )
-      }
-      if (attachment.mimeType && stored.contentType && stored.contentType !== attachment.mimeType) {
-        throw new BusinessRuleViolationError(
-          'ATTACHMENT_MIME_TYPE_MISMATCH',
-          'Uploaded object content type does not match declared mimeType',
-        )
-      }
-    }
-    return this.saveConstructed(this.baseService.entities.attachments, attachment)
+    assertGenericAttachmentIsNotPortrait(input.purpose)
+    return completeAttachmentUpload(this.baseService, input)
   }
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
-    const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
-    await operationModule(AttachmentOperations.configure)(this.baseService.actor)
-    if (existing.storageKey) {
-      await this.baseService.fileStorage.deleteObject(existing.storageKey)
-    }
-    await this.baseService.entities.attachments.delete(existing.id)
-  }
-
-  private async deactivateOtherAcademicYears(schoolId: string, activeAcademicYearId: string): Promise<void> {
-    const activeAcademicYears = await this.baseService.repositories.academicYears.list({ schoolId, isActive: true })
-    for (const academicYear of activeAcademicYears) {
-      if (academicYear.id === activeAcademicYearId) {
-        continue
-      }
-      await this.baseService.entities.academicYears.save(new AcademicYearEntity({
-        id: academicYear.id,
-        schoolId: academicYear.schoolId,
-        name: academicYear.name,
-        startDate: academicYear.startDate,
-        endDate: academicYear.endDate,
-        isActive: false,
-        createdAt: academicYear.createdAt,
-      }), { moduleChecked: true })
-    }
+    return removeAttachment(this.baseService, attachmentId ?? id ?? '')
   }
 
   private async saveStaffAssignment(input: AssignStaffInput): Promise<StaffAssignment> {
@@ -489,7 +586,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async saveConstructed<T extends { id: string }>(
-    managedService: { save: (entity: T, options?: { moduleChecked?: boolean }) => Promise<void> },
+    managedService: { save: (entity: T) => Promise<void> },
     entity: T,
   ): Promise<T> {
     await managedService.save(entity)

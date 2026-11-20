@@ -1,4 +1,4 @@
-import { AssessmentKind, BusinessRuleViolationError, DayOfWeek, LessonSession, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
+import { AssessmentKind, BusinessRuleViolationError, DayOfWeek, LessonSession, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { validateLessonSessionSave } from '../../../src/services/entities/config/scheduling/lesson-session'
 import { assertNoClassGroupScheduleConflict, assertNoSessionConflict } from '../../../src/services/workflows/schedule-conflicts'
@@ -111,7 +111,7 @@ describe('assertNoClassGroupScheduleConflict', () => {
       startsAt: new Date('2026-05-28T08:00:00.000Z'),
       endsAt: new Date('2026-05-28T09:00:00.000Z'),
       displayLabel: 'Generated lesson',
-      timetableGenerated: TimetableGenerated.Draft,
+      timetableGenerated: true,
       timetableTeacherIds: ['teacher-1'],
     })
 
@@ -189,7 +189,7 @@ describe('assertNoClassGroupScheduleConflict', () => {
       code: 'SCHEDULE_CONFLICT',
     })
     await expect(validateLessonSessionSave(standalone.copyWith({
-      timetableGenerated: TimetableGenerated.Draft,
+      timetableGenerated: true,
     }), undefined, repositories)).rejects.toMatchObject({
       code: 'TIMETABLE_GENERATED_STATE_WORKFLOW_ONLY',
     })

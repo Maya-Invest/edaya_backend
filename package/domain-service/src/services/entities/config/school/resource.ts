@@ -1,9 +1,9 @@
 import type { Resource } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { ResourceOperations } from '@edaya/authorization'
+
 import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/resource.ts (PR3)
@@ -11,12 +11,8 @@ export const resourceConfig: EntityConfigFactory<Resource> = ({ repositories, at
   ...config({
     repository: repositories.resources,
     tenant: directSchoolTenant(),
-    read: read(operationModule(ResourceOperations.read), noopReadAccess),
-    write: write(
-      operationModule(ResourceOperations.configure),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
+    resource: 'resources',
+
     atomicExecution,
   }),
   gates: {

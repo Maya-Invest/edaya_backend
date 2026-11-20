@@ -9,10 +9,10 @@ describe('GradeScale entity', () => {
     minScore: 0,
     maxScore: 20,
     ranges: [
-      { letter: 'F', minScore: 0, maxScore: 9.99, isPassing: false },
-      { letter: 'C', minScore: 10, maxScore: 13.99, isPassing: true, gpaValue: 2.0 },
-      { letter: 'B', minScore: 14, maxScore: 15.99, isPassing: true, gpaValue: 3.0 },
-      { letter: 'A', minScore: 16, maxScore: 20, isPassing: true, gpaValue: 4.0 },
+      { letter: 'F', minScore: 0, maxScore: 9.99 },
+      { letter: 'C', minScore: 10, maxScore: 13.99, gpaValue: 2.0 },
+      { letter: 'B', minScore: 14, maxScore: 15.99, gpaValue: 3.0 },
+      { letter: 'A', minScore: 16, maxScore: 20, gpaValue: 4.0 },
     ],
   }
 
@@ -29,11 +29,6 @@ describe('GradeScale entity', () => {
     expect(scale.findRange(15)?.letter).toBe('B')
     expect(scale.findRange(16)?.letter).toBe('A')
     expect(scale.findRange(21)).toBeUndefined()
-  })
-
-  test('derives passingScore from first passing range', () => {
-    const scale = new GradeScale(baseArgs)
-    expect(scale.passingScore).toBe(10)
   })
 
   test('persists decimalPlaces and description', () => {
@@ -62,7 +57,7 @@ describe('GradeScale entity', () => {
     expect(() => {
       new GradeScale({
         ...baseArgs,
-        ranges: [{ letter: 'A', minScore: 10, maxScore: 5, isPassing: false }],
+        ranges: [{ letter: 'A', minScore: 10, maxScore: 5 }],
       })
     }).toThrow('ranges[0].minScore must not exceed its maxScore')
   })
@@ -73,14 +68,14 @@ describe('GradeScale entity', () => {
         ...baseArgs,
         minScore: 10,
         maxScore: 20,
-        ranges: [{ letter: 'A', minScore: 5, maxScore: 15, isPassing: false }],
+        ranges: [{ letter: 'A', minScore: 5, maxScore: 15 }],
       })
     }).toThrow('ranges[0] must fall within the grade scale bounds')
 
     expect(() => {
       new GradeScale({
         ...baseArgs,
-        ranges: [{ letter: 'A', minScore: 5, maxScore: 25, isPassing: false }],
+        ranges: [{ letter: 'A', minScore: 5, maxScore: 25 }],
       })
     }).toThrow('ranges[0] must fall within the grade scale bounds')
   })
@@ -90,8 +85,8 @@ describe('GradeScale entity', () => {
       new GradeScale({
         ...baseArgs,
         ranges: [
-          { letter: 'C', minScore: 10, maxScore: 13.99, isPassing: true },
-          { letter: 'F', minScore: 0, maxScore: 9.99, isPassing: false },
+          { letter: 'C', minScore: 10, maxScore: 13.99 },
+          { letter: 'F', minScore: 0, maxScore: 9.99 },
         ],
       })
     }).toThrow('ranges must be ordered by score and must not overlap')
@@ -102,8 +97,8 @@ describe('GradeScale entity', () => {
       new GradeScale({
         ...baseArgs,
         ranges: [
-          { letter: 'F', minScore: 0, maxScore: 10.5, isPassing: false },
-          { letter: 'C', minScore: 10, maxScore: 13.99, isPassing: true },
+          { letter: 'F', minScore: 0, maxScore: 10.5 },
+          { letter: 'C', minScore: 10, maxScore: 13.99 },
         ],
       })
     }).toThrow('ranges must be ordered by score and must not overlap')

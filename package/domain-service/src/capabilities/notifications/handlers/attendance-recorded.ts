@@ -24,6 +24,7 @@ const NOTIFY_STATUSES = new Set<AttendanceStatus>([
 export interface AttendanceRecordedPayload {
   records: AttendanceRecord[]
   schoolId: string
+  correction?: boolean
 }
 
 export async function handleAttendanceRecorded(
@@ -41,7 +42,7 @@ export async function handleAttendanceRecorded(
   }
 
   for (const record of payload.records) {
-    if (!NOTIFY_STATUSES.has(record.status)) {
+    if (!payload.correction && !NOTIFY_STATUSES.has(record.status)) {
       continue
     }
 
@@ -85,7 +86,7 @@ export async function handleAttendanceRecorded(
       },
     })
 
-    const idempotencyKeyPrefix = `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.anchorKey}:${record.status}`
+    const idempotencyKeyPrefix = `${ATTENDANCE_RECORDED_EVENT_KEY}:${record.studentId}:${record.anchorKey}:${record.status}${payload.correction ? `:${record.updatedAt.toISOString()}` : ''}`
     await deliverNotification(deps, {
       schoolId: payload.schoolId,
       kind: 'event',
@@ -159,8 +160,5 @@ async function resolveAttendanceGuardianRecipients(
 }
 
 function guardianAllowsNotifications(guardian: Guardian): boolean {
-  if (guardian.contactMethods.length === 0) {
-    return true
-  }
-  return guardian.contactMethods.some(method => method.allowsNotifications)
+  return guardian.hasAccess
 }

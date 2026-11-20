@@ -1,35 +1,21 @@
+export * from './access/access-policies'
+export * from './access/action-grants'
+export * from './access/activity-reminder-students'
+export * from './access/facts'
+export * from './access/grant-administration'
+export * from './access/identity'
+export { ImportAccessPolicy, importResources, resolveImportActor } from './access/import-policy'
+export * from './access/interactive-actor-kind'
+export * from './access/owner-authority'
+export * from './access/platform-policies'
+export * from './access/render-grant-scopes'
+export * from './access/staff-assignment-policy'
 export * from './bootstrap-actor'
-export * from './capabilities'
-export * from './engine'
-export * from './gates'
-export * from './grants'
-export * from './lifecycle'
-export * from './migration'
 export * from './model'
-export * from './operations'
-/**
- * Public authorization API.
- *
- * Export order matters: `permissions` and `model` must initialize before grant
- * resolution or policy modules that transitively touch domain entities.
- */
 export * from './permissions'
-export * from './policy'
-export {
-  authorizeReportCardCommentSave,
-  guardianReportCardResultAccess,
-  staffReportCardResultAccess,
-  studentSelfReportCardResultAccess,
-  teacherReportCardResultAccess,
-} from './policy/strategies/report-card-access'
-export { authorizeTeacherReportCardCommentSave, teacherCanReadReportCard } from './policy/strategies/report-card-access/comment-access'
-export {
-  dispatchAttendanceRecordAccess,
-  dispatchLessonSessionAccess,
-  dispatchLessonSessionReadAccess,
-} from './policy/strategies/scheduling-access'
+export * from './platform'
+
 export * from './ports'
-export * from './resolution'
-export * from './scope'
+
+export * from './s2s'
 export * from './service-accounts'
-export * from './sync'

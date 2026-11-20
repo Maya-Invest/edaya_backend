@@ -1,5 +1,5 @@
 import type { Assessment, LessonSession, TeacherAssignment } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AssessmentKind, BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 import { teacherUnavailabilityOverlaps } from './teacher-unavailability'
 
@@ -82,7 +82,7 @@ function assertNoAssessmentOverlap(
 }
 
 export async function assertNoSessionConflict(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'teacherUnavailabilities' | 'teacherAssignments'>,
   input: SessionConflictInput,
 ): Promise<void> {
   const [classLessons, classActivities, classAssessments] = await Promise.all([
@@ -156,7 +156,7 @@ export async function assertNoSessionConflict(
 }
 
 export async function assertNoClassGroupScheduleConflict(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'teacherUnavailabilities' | 'teacherAssignments'>,
   input: ClassGroupScheduleConflictInput,
 ): Promise<void> {
   await assertNoSessionConflict(repositories, {

@@ -1,48 +1,25 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { StudentDisciplinaryAction } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, DisciplineOperations } from '@edaya/authorization'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, StudentDisciplinaryActionStatus } from '@edaya/core'
-import { config, noopReadAccess, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student-disciplinary-action.ts (PR3)
-export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDisciplinaryAction> = ({ repositories, policy, atomicExecution }) =>
+export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDisciplinaryAction> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.studentDisciplinaryActions,
     tenant: directSchoolTenant(),
-    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
-    write: write(operationModule(DisciplineOperations.validate), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
+    resource: 'studentDisciplinaryActions',
+    writeLockGroup: 'academic-state',
+
     gates: {
       preSave: validateStudentDisciplinaryActionSave,
       preDelete: validateStudentDisciplinaryActionDelete,
     },
     atomicExecution,
   })
-
-function authorizeStudentDisciplinaryAction(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentDisciplinaryAction>['authorizeSave'] {
-  return async (actor, entity, existing, repositories) => {
-    if (existing && entity.status !== existing.status && existing.status !== StudentDisciplinaryActionStatus.Active) {
-      return
-    }
-    const incident = await repositories.incidents.findById(entity.incidentId)
-    if (!incident) {
-      denyResourceAccess()
-    }
-    if (incident.classGroupId)
-      await policy.checkClassGroupAccess(actor, [incident.classGroupId])
-    if (incident.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [incident.lessonSessionId])
-    await policy.checkStudentAccess(actor, [entity.studentId])
-  }
-}
-
-function authorizeStudentDisciplinaryActionDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentDisciplinaryAction>['authorizeDelete'] {
-  return async (actor, entity, repositories) => {
-    await authorizeStudentDisciplinaryAction(policy)(actor, entity, entity, repositories)
-  }
-}
 
 async function validateStudentDisciplinaryActionSave(
   entity: StudentDisciplinaryAction,

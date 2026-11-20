@@ -1,3 +1,4 @@
+import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import type { CoreCommandConfig, CoreEntityConfig, CoreQueryConfig } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 
@@ -18,12 +19,15 @@ export const X_EDAYA_BASE_PATH = "x-edaya-base-path";
 export const X_EDAYA_RESPONSE_IS_ARRAY = "x-edaya-response-is-array";
 
 export type ClientRouteNamespace
-  = | "authorization"
+  = | "auth"
+    | "authorization"
     | "onboarding"
     | "files"
+    | "imports"
     | "serviceAccounts"
-    | "public"
-    | "webhooks";
+    | "platformUsers"
+    | "s2sClients"
+    | "public";
 
 export type EntityRouteAction
   = | "list"
@@ -47,7 +51,7 @@ const ENTITY_ACTION_OPERATION_SUFFIX: Record<EntityRouteAction, string> = {
 };
 
 export function entityRouteOperation(
-  entity: Pick<CoreEntityConfig, "serviceName" | "publicName" | "responseSchema" | "allowDirectSave">,
+  entity: Pick<CoreEntityConfig, "serviceName" | "publicName" | "responseSchema" | "publicOperations">,
   action: EntityRouteAction,
 ): Record<string, unknown> {
   const operationId = `entities.${entity.serviceName}.${action}`;
@@ -62,7 +66,8 @@ export function entityRouteOperation(
     [X_EDAYA_ENTITY_KEY]: entity.serviceName,
     [X_EDAYA_ENTITY_PUBLIC_NAME]: entity.publicName,
     [X_EDAYA_RESPONSE_SCHEMA]: getOpenApiSchemaName(entity.responseSchema),
-    [X_EDAYA_ALLOW_DIRECT_SAVE]: entity.allowDirectSave,
+    [X_EDAYA_ALLOW_DIRECT_SAVE]: permitsPublicSave(entity.publicOperations),
+    "x-edaya-public-operations": entity.publicOperations,
   };
 }
 
@@ -84,8 +89,8 @@ export function commandRouteOperation(
 }
 
 export function queryRouteOperation(
-  query: Pick<CoreQueryConfig, "methodName" | "publicName" | "requestSchema" | "responseSchema">,
-): Record<string, unknown> {
+  query: Pick<CoreQueryConfig, "publicName" | "requestSchema" | "responseSchema"> & { methodName: string },
+) {
   return {
     operationId: `queries.${query.methodName}`,
     [X_EDAYA_KIND]: "query",

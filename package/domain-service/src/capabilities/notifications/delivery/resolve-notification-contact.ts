@@ -1,5 +1,4 @@
 import type { AuthContact, Guardian, NotificationRecipientProfile, StaffMember } from '@edaya/core'
-import { GuardianContactMethodType } from '@edaya/core'
 
 function normalizeOptional(value?: string | null): string | undefined {
   const trimmed = value?.trim()
@@ -27,35 +26,31 @@ export function resolveNotificationPhone(
 }
 
 export function guardianFallbackEmail(guardian: Guardian): string | undefined {
-  return guardian.contactMethods.find(method =>
-    method.type === GuardianContactMethodType.Email && method.allowsNotifications,
-  )?.value ?? guardian.email
+  return guardian.email
 }
 
 export function guardianFallbackPhone(guardian: Guardian): string | undefined {
-  return guardian.contactMethods.find(method =>
-    (
-      method.type === GuardianContactMethodType.Phone
-      || method.type === GuardianContactMethodType.Sms
-      || method.type === GuardianContactMethodType.Whatsapp
-    ) && method.allowsNotifications,
-  )?.value ?? guardian.phone
+  return guardian.phone
 }
 
 export function enrichRecipientProfile(
   profile: NotificationRecipientProfile,
   authContact?: AuthContact,
 ): NotificationRecipientProfile {
-  const email = resolveNotificationEmail(
-    profile.notificationEmail,
-    authContact,
-    profile.fallbackEmail,
-  )
-  const phone = resolveNotificationPhone(
-    profile.notificationPhone,
-    authContact,
-    profile.fallbackPhone,
-  )
+  const email = profile.recipient.kind === 'guardian'
+    ? normalizeOptional(profile.fallbackEmail)
+    : resolveNotificationEmail(
+        profile.notificationEmail,
+        authContact,
+        profile.fallbackEmail,
+      )
+  const phone = profile.recipient.kind === 'guardian'
+    ? normalizeOptional(profile.fallbackPhone)
+    : resolveNotificationPhone(
+        profile.notificationPhone,
+        authContact,
+        profile.fallbackPhone,
+      )
 
   return {
     ...profile,

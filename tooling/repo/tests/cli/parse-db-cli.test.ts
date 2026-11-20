@@ -3,30 +3,21 @@ import { dbMigrateScriptName, parseDbCliArgs } from '../../cli/parse-db-cli'
 
 describe('parseDbCliArgs', () => {
   it('parses migrate commands', () => {
-    expect(parseDbCliArgs(['migrate', 'local'])).toEqual({
+    expect(parseDbCliArgs(['migrate', 'school', 'local'])).toEqual({
       kind: 'migrate',
       target: 'local',
-      slice: 'full',
-    })
-    expect(parseDbCliArgs(['migrate', 'staging', '--auth'])).toEqual({
-      kind: 'migrate',
-      target: 'staging',
-      slice: 'auth',
-    })
-    expect(parseDbCliArgs(['migrate', 'staging', '--school'])).toEqual({
-      kind: 'migrate',
-      target: 'staging',
       slice: 'school',
     })
+    expect(() => parseDbCliArgs(['migrate', 'school', 'staging', '--auth'])).toThrow()
   })
 
   it('parses reset commands', () => {
-    expect(parseDbCliArgs(['reset', 'staging', '--yes'])).toEqual({
+    expect(parseDbCliArgs(['reset', 'school', 'staging', '--yes'])).toEqual({
       kind: 'reset',
       target: 'staging',
       yes: true,
     })
-    expect(parseDbCliArgs(['reset', 'production'])).toEqual({
+    expect(parseDbCliArgs(['reset', 'school', 'production'])).toEqual({
       kind: 'reset',
       target: 'production',
       yes: false,
@@ -38,10 +29,8 @@ describe('parseDbCliArgs', () => {
   })
 
   it('parses generate and browser', () => {
-    expect(parseDbCliArgs(['generate', '--auth'])).toEqual({
-      kind: 'generate',
-      auth: true,
-    })
+    expect(parseDbCliArgs(['generate'])).toEqual({ kind: 'generate' })
+    expect(() => parseDbCliArgs(['generate', '--auth'])).toThrow()
     expect(parseDbCliArgs(['browser', 'school'])).toEqual({
       kind: 'browser',
       target: 'school',

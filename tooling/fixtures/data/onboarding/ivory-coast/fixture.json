@@ -1,0 +1,248 @@
+{
+  "id": "ci-general-secondary",
+  "version": "1.0.0",
+  "schemaVersion": 1,
+  "countryCode": "CI",
+  "disciplines": [
+    {
+      "code": "MATH",
+      "name": "Mathématiques"
+    },
+    {
+      "code": "FR",
+      "name": "Français"
+    },
+    {
+      "code": "ANG",
+      "name": "Anglais"
+    },
+    {
+      "code": "HG",
+      "name": "Histoire-Géographie"
+    },
+    {
+      "code": "PC",
+      "name": "Physique-Chimie"
+    },
+    {
+      "code": "SVT",
+      "name": "Sciences de la Vie et de la Terre"
+    },
+    {
+      "code": "EDHC",
+      "name": "Éducation aux Droits de l'Homme et à la Citoyenneté"
+    },
+    {
+      "code": "EPS",
+      "name": "Éducation Physique et Sportive"
+    },
+    {
+      "code": "AP",
+      "name": "Arts Plastiques"
+    },
+    {
+      "code": "MUS",
+      "name": "Éducation Musicale"
+    },
+    {
+      "code": "TECH",
+      "name": "Technologie"
+    },
+    {
+      "code": "TICE",
+      "name": "TICE"
+    },
+    {
+      "code": "ALL",
+      "name": "Allemand"
+    },
+    {
+      "code": "ESP",
+      "name": "Espagnol"
+    },
+    {
+      "code": "PHILO",
+      "name": "Philosophie"
+    }
+  ],
+  "subjectCategories": [
+    {
+      "code": "SCIENTIFIC",
+      "name": "Scientifique"
+    },
+    {
+      "code": "LITERARY",
+      "name": "Littéraire"
+    },
+    {
+      "code": "LANGUAGES",
+      "name": "Langues"
+    },
+    {
+      "code": "HUMANITIES",
+      "name": "Sciences humaines"
+    },
+    {
+      "code": "SPORT",
+      "name": "Sport"
+    },
+    {
+      "code": "ARTS",
+      "name": "Arts"
+    }
+  ],
+  "gradeScales": [
+    {
+      "code": "NUMERIC_20",
+      "name": "Sur 20",
+      "minScore": 0,
+      "maxScore": 20,
+      "decimalPlaces": 2,
+      "roundingMode": "nearest",
+      "intervalConvention": "continuous",
+      "ranges": [
+        {
+          "code": "TF",
+          "minScore": 0,
+          "maxScore": 4,
+          "label": "Très-faible"
+        },
+        {
+          "code": "F",
+          "minScore": 4,
+          "maxScore": 6,
+          "label": "Faible"
+        },
+        {
+          "code": "TI",
+          "minScore": 6,
+          "maxScore": 8,
+          "label": "Très-insuffisant"
+        },
+        {
+          "code": "I",
+          "minScore": 8,
+          "maxScore": 10,
+          "label": "Insuffisant"
+        },
+        {
+          "code": "P",
+          "minScore": 10,
+          "maxScore": 12,
+          "label": "Passable"
+        },
+        {
+          "code": "AB",
+          "minScore": 12,
+          "maxScore": 14,
+          "label": "Assez-Bien"
+        },
+        {
+          "code": "B",
+          "minScore": 14,
+          "maxScore": 16,
+          "label": "Bien"
+        },
+        {
+          "code": "TB",
+          "minScore": 16,
+          "maxScore": 18,
+          "label": "Très-Bien"
+        },
+        {
+          "code": "EX",
+          "minScore": 18,
+          "maxScore": 20,
+          "label": "Excellent"
+        }
+      ]
+    }
+  ],
+  "calendarProfiles": [
+    {
+      "code": "TRIMESTERS",
+      "periodType": "trimester",
+      "periods": [
+        {
+          "code": "T1",
+          "name": "Trimestre 1",
+          "weight": 1
+        },
+        {
+          "code": "T2",
+          "name": "Trimestre 2",
+          "weight": 1
+        },
+        {
+          "code": "T3",
+          "name": "Trimestre 3",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "ci-college",
+      "label": "Côte d'Ivoire — Collège",
+      "description": "Lower Secondary Education (4 years)",
+      "cycle": "Collège",
+      "calendarProfileCode": "TRIMESTERS",
+      "reportPresentation": {
+        "includeSummary": false,
+        "includeComments": true
+      },
+      "gradeLevels": [
+        {
+          "file": "college/6eme.json"
+        },
+        {
+          "file": "college/5eme.json"
+        },
+        {
+          "file": "college/4eme.json"
+        },
+        {
+          "file": "college/3eme.json"
+        }
+      ]
+    },
+    {
+      "id": "ci-lycee",
+      "label": "Côte d'Ivoire — Lycée",
+      "description": "Upper Secondary Education (3 years)",
+      "cycle": "Lycée",
+      "calendarProfileCode": "TRIMESTERS",
+      "reportPresentation": {
+        "includeSummary": false,
+        "includeComments": true
+      },
+      "gradeLevels": [
+        {
+          "file": "lycee/2nda.json"
+        },
+        {
+          "file": "lycee/2ndc.json"
+        },
+        {
+          "file": "lycee/1era.json"
+        },
+        {
+          "file": "lycee/1erc.json"
+        },
+        {
+          "file": "lycee/1erd.json"
+        },
+        {
+          "file": "lycee/tlea.json"
+        },
+        {
+          "file": "lycee/tlec.json"
+        },
+        {
+          "file": "lycee/tled.json"
+        }
+      ]
+    }
+  ]
+}

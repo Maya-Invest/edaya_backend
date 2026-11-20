@@ -1,10 +1,10 @@
-import { School, SchoolType, TimetableGenerationMode } from '@edaya/core'
+import { School, TimetableGenerationMode } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('School entity', () => {
   const baseArgs = {
     id: 'sch1',
-    name: 'Edaya High School',
+    name: 'EDaya High School',
     timeZone: 'Africa/Douala',
   }
 
@@ -12,16 +12,16 @@ describe('School entity', () => {
     const school = new School({
       ...baseArgs,
       ownerSubjectId: 'staff-owner',
-      type: SchoolType.Secondary,
+      shortName: 'School',
       country: 'Cameroon',
       city: 'Douala',
     })
 
     expect(school.id).toBe('sch1')
-    expect(school.name).toBe('Edaya High School')
+    expect(school.name).toBe('EDaya High School')
     expect(school.timeZone).toBe('Africa/Douala')
     expect(school.ownerSubjectId).toBe('staff-owner')
-    expect(school.type).toBe(SchoolType.Secondary)
+    expect(school.shortName).toBe('School')
     expect(school.location).toBe('Douala, Cameroon')
     expect(school.timetableEnforceWorkloadFulfillment).toBe(true)
     expect(school.timetableExcludeBreakSlots).toBe(true)
@@ -69,5 +69,17 @@ describe('School entity', () => {
     expect(school.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
     expect(school.timetableAllowUnassignedTeacherPlacements).toBe(true)
     expect(school.timetableUseHomeroomTeacherFallback).toBe(true)
+  })
+
+  test('allowlists only logo and crest as public branding purposes', () => {
+    const school = new School({
+      ...baseArgs,
+      publicBrandingPurposes: ['school.logo', 'school.crest', 'school.logo'],
+    })
+    expect(school.publicBrandingPurposes).toEqual(['school.logo', 'school.crest'])
+    expect(() => new School({
+      ...baseArgs,
+      publicBrandingPurposes: ['school.stamp'] as never,
+    })).toThrow()
   })
 })

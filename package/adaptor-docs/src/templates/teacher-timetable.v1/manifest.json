@@ -1,0 +1,15 @@
+{
+  "key": "teacher-timetable.v1",
+  "formats": [
+    "pdf"
+  ],
+  "locales": [
+    "fr",
+    "en"
+  ],
+  "version": "1.0.0",
+  "title": {
+    "fr": "Emploi du temps enseignant",
+    "en": "Teacher timetable"
+  }
+}

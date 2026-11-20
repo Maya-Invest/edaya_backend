@@ -1,10 +1,10 @@
 import type { GradeScale } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { AcademicsOperations, GradeOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
+import { BusinessRuleViolationError, GradeScale as Scale, withShortName } from '@edaya/core'
+
 import { requireSchool } from '../../../require-school'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 
 import { directSchoolTenant } from '../../entity-config/tenant'
 // Extracted from domain/school/grade-scale.ts (PR3)
@@ -12,20 +12,30 @@ export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories
   config({
     repository: repositories.gradeScales,
     tenant: directSchoolTenant(),
-    read: read(operationModule(GradeOperations.read), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.examConfigure), noopSaveAccess, noopDeleteAccess),
+    resource: 'gradeScales',
+    writeLockGroup: 'academic-state',
+    hooks: { postSave: async (scale, existing, repos) => {
+      if (existing)
+        await repos.gradeScales.forSchool!(scale.schoolId).save(new Scale(withShortName({ ...scale.data, ranges: [...scale.ranges], revision: existing.revision + 1 })))
+    } },
+
     gates: {
       preSave: validateGradeScaleSave,
+      preDelete: validateGradeScaleDelete,
     },
     atomicExecution,
   })
 
 async function validateGradeScaleSave(
   gradeScale: GradeScale,
-  _existing: GradeScale | undefined,
+  existing: GradeScale | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
   await requireSchool(repositories.schools, gradeScale.schoolId)
+  if (existing && gradeScale.revision !== existing.revision)
+    throw new BusinessRuleViolationError('GRADE_SCALE_REVISION_CONFLICT', 'Reload the scale before saving')
+  if (!gradeScale.isComplete && (existing?.isDefault || await scaleIsUsed(gradeScale.id, repositories)))
+    throw new BusinessRuleViolationError('GRADE_SCALE_INCOMPLETE', 'A used or default scale must remain complete')
   if (!gradeScale.isDefault)
     return
 
@@ -39,4 +49,16 @@ async function validateGradeScaleSave(
       `School ${gradeScale.schoolId} already has a default grade scale`,
     )
   }
+}
+
+async function scaleIsUsed(id: string, repositories: SchoolRepositories): Promise<boolean> {
+  const scale = await repositories.gradeScales.findById(id)
+  if (!scale)
+    return false
+  const levels = await repositories.gradeLevels.list({ schoolId: scale.schoolId })
+  return levels.some(level => level.gradingPolicies.some(policy => policy.scale.id === id))
+}
+async function validateGradeScaleDelete(scale: GradeScale, repositories: SchoolRepositories): Promise<void> {
+  if (scale.isDefault || await scaleIsUsed(scale.id, repositories))
+    throw new BusinessRuleViolationError('GRADE_SCALE_IN_USE', 'A default or referenced scale cannot be deleted')
 }

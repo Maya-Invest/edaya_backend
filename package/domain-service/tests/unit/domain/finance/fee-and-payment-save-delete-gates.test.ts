@@ -1,122 +1,112 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
 import { AuthorizationError } from '@edaya/authorization'
-import { AttachmentOwnerKind, Fee, FeeCategory, FeeStatus, Payment, PaymentMethod, PaymentStatus } from '@edaya/core'
-import { validateFeeDelete, validateFeeSave, validatePaymentDelete, validatePaymentSave } from '@edaya/service'
+import { CatalogService, CatalogServiceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, studentYearAccountId, withShortName } from '@edaya/core'
+import { validateCatalogServiceDelete, validateCatalogServiceSave, validatePaymentDelete, validatePaymentSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 
-const fee = new Fee({
-  id: 'fee-1',
+const catalog = new CatalogService(withShortName({
+  id: 'cat-1',
   schoolId: 'school-1',
   academicYearId: 'year-1',
   name: 'Tuition',
-  category: FeeCategory.Tuition,
-  defaultAmount: 50_000,
+  defaultPrice: 50_000,
   currency: 'XAF',
-})
+  billingTerms: { kind: 'one_time', installments: [] },
+  status: CatalogServiceStatus.Draft,
+}))
 
+const accountId = studentYearAccountId('school-1', 'student-1', 'year-1', 'XAF')
 const payment = new Payment({
   id: 'payment-1',
-  studentFeeId: 'student-fee-1',
+  schoolId: 'school-1',
+  accountId,
+  academicYearId: 'year-1',
+  kind: PaymentKind.Receipt,
   amount: 10_000,
   currency: 'XAF',
   paymentDate: new Date('2026-06-01T00:00:00.000Z'),
   method: PaymentMethod.Cash,
 })
 
-describe('validateFeeSave', () => {
-  test('accepts fees whose academic year belongs to the same school', async () => {
-    await validateFeeSave(fee, undefined, {
-      schools: { findById: mock(async () => ({ id: 'school-1' })) },
+describe('validateCatalogServiceSave', () => {
+  test('accepts catalog services whose academic year belongs to the same school', async () => {
+    await validateCatalogServiceSave(catalog, undefined, {
+      schools: { findById: mock(async () => ({ id: 'school-1', financeCurrency: 'XAF' })) },
       academicYears: { findById: mock(async () => ({ id: 'year-1', schoolId: 'school-1' })) },
     } as never)
   })
 
-  test('rejects fees whose academic year belongs to another school', async () => {
-    await expect(validateFeeSave(fee, undefined, {
-      schools: { findById: mock(async () => ({ id: 'school-1' })) },
+  test('rejects catalog services whose academic year belongs to another school', async () => {
+    await expect(validateCatalogServiceSave(catalog, undefined, {
+      schools: { findById: mock(async () => ({ id: 'school-1', financeCurrency: 'XAF' })) },
       academicYears: { findById: mock(async () => ({ id: 'year-1', schoolId: 'other-school' })) },
     } as never)).rejects.toBeInstanceOf(AuthorizationError)
   })
 })
 
-describe('validateFeeDelete', () => {
-  test('allows delete when no student fee assignments exist', async () => {
-    await validateFeeDelete(fee, {
-      studentFees: { list: mock(async () => []) },
+describe('validateCatalogServiceDelete', () => {
+  test('allows delete when no enrollments exist', async () => {
+    await validateCatalogServiceDelete(catalog, {
+      studentServiceEnrollments: { list: mock(async () => []) },
     } as never)
   })
 
-  test('blocks delete while student fee assignments remain', async () => {
-    await expect(validateFeeDelete(fee, {
-      studentFees: { list: mock(async () => [{ id: 'student-fee-1' }]) },
+  test('blocks delete while enrollments remain', async () => {
+    await expect(validateCatalogServiceDelete(catalog, {
+      studentServiceEnrollments: { list: mock(async () => [{ id: 'enr-1' }]) },
     } as never)).rejects.toMatchObject({
-      code: 'FEE_HAS_DEPENDENCIES',
+      code: 'CATALOG_SERVICE_HAS_DEPENDENCIES',
     } satisfies Partial<BusinessRuleViolationError>)
   })
 })
 
 describe('validatePaymentSave', () => {
-  test('blocks new payments against cancelled student fees', async () => {
+  test('requires a matching student year account', async () => {
     await expect(validatePaymentSave(payment, undefined, {
-      studentFees: {
-        findById: mock(async () => ({ id: 'student-fee-1', status: FeeStatus.Cancelled })),
-      },
-    } as never)).rejects.toMatchObject({
-      code: 'CANCELLED_FEE_PAYMENT',
-    } satisfies Partial<BusinessRuleViolationError>)
+      schools: { findById: mock(async () => ({ id: 'school-1', financeCurrency: 'XAF' })) },
+      studentYearAccounts: { findById: mock(async () => undefined) },
+    } as never)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('allows reversing a recorded payment', async () => {
-    const existing = payment
-
+  test('allows reversing a recorded receipt', async () => {
     await validatePaymentSave(new Payment({
       id: 'payment-1',
-      studentFeeId: 'student-fee-1',
+      schoolId: 'school-1',
+      accountId,
+      academicYearId: 'year-1',
       amount: 10_000,
       currency: 'XAF',
       paymentDate: new Date('2026-06-01T00:00:00.000Z'),
       method: PaymentMethod.Cash,
       status: PaymentStatus.Reversed,
       reversedAt: new Date('2026-06-02T00:00:00.000Z'),
-      reversedById: 'admin-1',
-    }), existing, {
-      studentFees: {
-        findById: mock(async () => ({ id: 'student-fee-1', status: FeeStatus.Pending })),
+      reversedById: 'staff-1',
+    }), payment, {
+      schools: { findById: mock(async () => ({ id: 'school-1', financeCurrency: 'XAF' })) },
+      studentYearAccounts: {
+        findById: mock(async () => ({
+          id: accountId,
+          schoolId: 'school-1',
+          academicYearId: 'year-1',
+          currency: 'XAF',
+        })),
       },
     } as never)
   })
 })
 
 describe('validatePaymentDelete', () => {
-  test('allows delete for recorded payments without receipt attachments', async () => {
+  test('blocks delete when attachments exist', async () => {
+    await expect(validatePaymentDelete(payment, {
+      attachments: { list: mock(async () => [{ id: 'att-1' }]) },
+    } as never)).rejects.toMatchObject({
+      code: 'PAYMENT_DELETE_BLOCKED',
+    } satisfies Partial<BusinessRuleViolationError>)
+  })
+
+  test('allows delete of a recorded payment without attachments', async () => {
     await validatePaymentDelete(payment, {
       attachments: { list: mock(async () => []) },
     } as never)
-  })
-
-  test('blocks delete when receipts or non-recorded status remain', async () => {
-    await expect(validatePaymentDelete(new Payment({
-      id: 'payment-1',
-      studentFeeId: 'student-fee-1',
-      amount: 10_000,
-      currency: 'XAF',
-      paymentDate: new Date('2026-06-01T00:00:00.000Z'),
-      method: PaymentMethod.Cash,
-      status: PaymentStatus.Cancelled,
-      cancelledAt: new Date('2026-06-02T00:00:00.000Z'),
-      cancelledById: 'admin-1',
-    }), {
-      attachments: { list: mock(async () => []) },
-    } as never)).rejects.toMatchObject({
-      code: 'PAYMENT_DELETE_BLOCKED',
-    } satisfies Partial<BusinessRuleViolationError>)
-
-    await expect(validatePaymentDelete(payment, {
-      attachments: {
-        list: mock(async () => [{ id: 'att-1', ownerKind: AttachmentOwnerKind.Payment, ownerId: 'payment-1' }]),
-      },
-    } as never)).rejects.toMatchObject({
-      code: 'PAYMENT_DELETE_BLOCKED',
-    } satisfies Partial<BusinessRuleViolationError>)
   })
 })

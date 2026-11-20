@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="{{locale}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{classLabel}} — {{#if documentTitle}}{{documentTitle}}{{else}}{{labels.documentTitle}}{{/if}}</title>
+    <style>
+      :root {
+        --brand: {{primaryColor}};
+      }
+      {{{styles}}}
+    </style>
+  </head>
+  <body>
+    <header class="doc-header">
+      <div>
+        <p class="title-main">{{#if documentTitle}}{{documentTitle}}{{else}}{{labels.documentTitle}}{{/if}}</p>
+        <p class="title-meta">
+          {{labels.class}}: {{classLabel}}
+          {{#if periodLabel}} · {{periodLabel}}{{/if}}
+          {{#if schoolYear}} · {{labels.schoolYear}} {{schoolYear}}{{/if}}
+        </p>
+        {{#if dateFrom}}
+          <p class="title-meta">
+            {{labels.period}}
+            {{dateFrom}}{{#if dateTo}} — {{dateTo}}{{/if}}
+          </p>
+        {{/if}}
+      </div>
+      <div>
+        <p class="school-name">{{schoolName}}</p>
+        {{#if schoolCity}}<p class="meta-line">{{schoolCity}}</p>{{/if}}
+      </div>
+    </header>
+
+    {{#if summary}}
+      <div class="summary">
+        {{#if summary.subjectCount}}
+          <span>{{labels.subjects}}: {{summary.subjectCount}}</span>
+        {{/if}}
+        {{#if summary.sessionCount}}
+          <span>{{labels.sessions}}: {{summary.sessionCount}}</span>
+        {{/if}}
+      </div>
+    {{/if}}
+
+    {{#each subjects}}
+      <section class="subject-block">
+        <div class="subject-header">
+          <p class="subject-name">{{name}}</p>
+          {{#if teacherName}}
+            <p class="teacher-name">{{../labels.teacher}}: {{teacherName}}</p>
+          {{/if}}
+        </div>
+
+        {{#each entries}}
+          <article class="entry">
+            <div class="entry-head">
+              <span class="entry-date">
+                {{date}}{{#if timeLabel}} · {{timeLabel}}{{/if}}
+              </span>
+              {{#if status}}
+                <span>{{status}}</span>
+              {{/if}}
+            </div>
+
+            {{#if title}}
+              <p class="entry-title">{{title}}</p>
+            {{/if}}
+
+            {{#if content}}
+              <p class="entry-label">{{../../labels.content}}</p>
+              <p class="entry-content">{{content}}</p>
+            {{/if}}
+
+            {{#if chapters}}
+              <p class="entry-label">{{../../labels.chapters}}</p>
+              <ul class="chapters">
+                {{#each chapters}}
+                  <li class="chapter">
+                    <p class="chapter-name">{{name}}</p>
+                    {{#if coverageLabel}}<p class="chapter-meta">{{coverageLabel}}</p>{{/if}}
+                    {{#if completedPercentage}}
+                      <p class="chapter-meta">{{completedPercentage}}%</p>
+                    {{/if}}
+                    {{#if notes}}
+                      <p class="chapter-notes">{{notes}}</p>
+                    {{/if}}
+                  </li>
+                {{/each}}
+              </ul>
+            {{/if}}
+
+            {{#if homework}}
+              <p class="entry-label">{{../../labels.homework}}</p>
+              <p class="entry-homework">{{homework}}</p>
+            {{/if}}
+          </article>
+        {{/each}}
+      </section>
+    {{/each}}
+
+    <footer class="footer">{{labels.generatedBy}}</footer>
+  </body>
+</html>

@@ -1,12 +1,11 @@
-import { scheduleNotificationRecipientBackfillForActor } from "@edaya/service";
+import { authorityScopeSchema, Permission } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import type { AppRouteHandler } from "@/http/types";
 import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
-import { requireInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
-import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/entities";
+import { requireSchoolInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 
@@ -17,13 +16,14 @@ const effectiveGrantsResponseSchema = z.object({
   actorId: z.string(),
   schoolId: z.string(),
   assuranceLevel: z.enum(["standard", "verified", "strong", "service"]),
-  effectiveGrants: z.object({
-    permissions: z.array(z.string()),
-    scopeGrants: z.array(scopeGrantResponseSchema),
-    scopeIdsByPermission: z.record(z.string()),
-    isElevated: z.boolean(),
-    expiresAt: z.string().datetime().optional(),
-  }),
+  grants: z.array(z.object({
+    permission: z.nativeEnum(Permission),
+    scopes: z.array(authorityScopeSchema).min(1),
+    academicYearId: z.string().optional(),
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+    source: z.enum(["manual", "assignment", "relationship", "owner"]),
+  })),
 }).openapi("EffectiveGrantsResponse");
 
 export const getEffectiveGrantsRoute = createRoute({
@@ -51,16 +51,13 @@ export const getEffectiveGrantsHandler: AppRouteHandler<typeof getEffectiveGrant
     return unauthorizedResponse(c);
   }
 
-  const interactiveActor = requireInteractiveActor(actor);
+  const interactiveActor = requireSchoolInteractiveActor(actor);
   if (!interactiveActor) {
     return c.json({ message: "System actors cannot introspect grants" }, HttpStatusCodes.FORBIDDEN);
   }
 
   try {
-    const service = c.get("schoolApp").forActor(interactiveActor);
-    scheduleNotificationRecipientBackfillForActor(service.baseService, interactiveActor);
-
-    return c.json(serializeActorAuthorization(interactiveActor), HttpStatusCodes.OK);
+    return c.json(await serializeActorAuthorization(interactiveActor, c.get("schoolApp").repositories), HttpStatusCodes.OK);
   }
   catch (err) {
     return c.json({ message: getErrorMessage(err) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);

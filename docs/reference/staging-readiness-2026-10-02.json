@@ -1,0 +1,198 @@
+{
+  "status": "blocked",
+  "localCodeValidation": "passed",
+  "createdAt": "2026-10-03T03:00:42.388728+00:00",
+  "liveChanges": false,
+  "deployableCandidateCommits": null,
+  "workspaceSnapshots": {
+    "backend": {
+      "baseCommit": "d17cdc7221981ce03bcd6d1087d3483e23e1257e",
+      "dirty": true,
+      "workspaceSha256": "36b3f7d11465d625eaa5715ae2fccc965868af50d4b10ea0ff47830dab2844eb",
+      "fileCount": 3050
+    },
+    "frontend": {
+      "baseCommit": "78a57fa27b1551632e282fafcee2c59bf3d24938",
+      "dirty": true,
+      "workspaceSha256": "c45ed90e15e821370bc4c9f94636806ebd53f1779534a226eb68ff0fe41eb7f5",
+      "fileCount": 1862
+    },
+    "mobile": {
+      "baseCommit": "d5bdeaafb5a0ea4baf135edd50aec4424f9f9404",
+      "dirty": true,
+      "workspaceSha256": "a9cf1796f573ef847356d7ccf61a3a1813b205f3b7a1076bfbabb2848902ffa6",
+      "fileCount": 752
+    }
+  },
+  "snapshotMethod": "SHA-256 over sorted Git-tracked and non-ignored untracked paths plus their content digests; this report and its JSON are excluded. Ignored credentials/build outputs are excluded. Gitlinks/missing paths use a fixed marker. Base commits are not deployable revisions for dirty workspaces.",
+  "tests": {
+    "backend": {
+      "packageUnit": 2015,
+      "releaseTooling": 35,
+      "serviceAndHttp": 57,
+      "nativePostgres": 63,
+      "seedHttp": 8,
+      "bootstrapAndPreservedDataRetry": "passed"
+    },
+    "frontend": {
+      "webappUnit": 904,
+      "webadminUnit": 2,
+      "repoUnit": 3,
+      "rootToolingChecks": 3,
+      "availabilityBrowser": 6,
+      "onboardingBrowser": 29,
+      "provisionedBrowser": 398,
+      "webadminBrowser": 4,
+      "demoBrowser": 83,
+      "coverage": "passed"
+    },
+    "mobile": {
+      "unitAndWidget": 155,
+      "pythonTooling": 19,
+      "apkTooling": 3,
+      "localIntegration": 118,
+      "coverage": "passed"
+    }
+  },
+  "deploymentDryRuns": {
+    "identity": "passed",
+    "api": "passed",
+    "webapp": "passed",
+    "webadmin": "passed"
+  },
+  "androidArtifacts": [
+    {
+      "app": "guardian",
+      "applicationId": "ca.maya-invest.edaya.guardian",
+      "certificateSha256": "c7efef9fff9673b6aa087eaea577f9323331c9a36984f2b17ee563ff1fa00d52",
+      "sha256": "af726aa34b7a4b7316820ccfeaa9d717498aba3b764ac9e4aedbae8a6f7e45f0"
+    },
+    {
+      "app": "teacher",
+      "applicationId": "ca.mayainvest.edaya.teacher",
+      "certificateSha256": "b4914d6b0aa952ef164c21732b2ba37e5331a551093aeb525aef29954182ef2d",
+      "sha256": "825f94886c72cff2f27b76ea326faf3946fdc6bffefc40fb12eb0f1616b94962"
+    }
+  ],
+  "dependencyAndContractHashes": {
+    "lockSha256": {
+      "backend": "7dfe33b3578969e793fa751c4ce8ea36e6142ba47069d571de9af9c192017f76",
+      "frontend": "879ac6abe1e6ee450f6c9e43c11eb3ac795bf1ffc33b46940e95e967720feafe",
+      "mobile": "56a68b28166d7d3115b4f4dbfedb7d0d257064abe95cb1c55975f37e0634fc05"
+    },
+    "openapiSha256": {
+      "api": "216e09e431bd282b6afd125f9ffd11116de6751dde5a555a64df504156f8f176",
+      "identity": "17ba088decb433bfd4bb2d706b36bfa0ffdfaad506127daf91fd859ca0538fa9"
+    },
+    "wrangler": {
+      "api": "4.116.0",
+      "identity": "4.116.0",
+      "webapp": "4.110.0",
+      "webadmin": "4.110.0"
+    }
+  },
+  "toolchains": {
+    "bun": "1.3.14",
+    "node": "v25.2.1",
+    "flutter": {
+      "frameworkVersion": "3.44.8",
+      "channel": "stable",
+      "repositoryUrl": "https://github.com/flutter/flutter.git",
+      "frameworkRevision": "058e0af2c2b57e369d905a03ac9748b0ebf543c6",
+      "frameworkCommitDate": "2026-07-23 10:56:21 -0700",
+      "engineRevision": "0cd610717bde95fd88343c64f81c11ba4e5c0010",
+      "engineCommitDate": "2026-07-23 16:11:34.000Z",
+      "engineContentHash": "13ffd72b2f9a5ca4db2a74ea52d5353ec2e8f939",
+      "engineBuildDate": "2026-07-23 12:36:29.809",
+      "dartSdkVersion": "3.12.2",
+      "devToolsVersion": "2.57.0",
+      "flutterVersion": "3.44.8",
+      "flutterRoot": "/Users/atoumbre/devs/flutter"
+    }
+  },
+  "java": "17.0.6 (Android Studio JBR)",
+  "ciToolchainsNotExecuted": "The Actions coordinator pins Node 22 / Java 17 / Bun 1.3.14 / Flutter 3.44.8. Local Node metadata is recorded above; no workflow dispatch occurred.",
+  "infraPreflight": {
+    "target": "staging",
+    "endpoint": "ep-holy-mouse-awj7ghpf.c-12.us-east-1.aws.neon.tech",
+    "status": "blocked",
+    "checked": [],
+    "errors": [
+      "CLOUDFLARE_API_TOKEN: missing",
+      "STAGING_DATABASE_URL: missing",
+      "STAGING_AUTH_DATABASE_URL: missing",
+      "STAGING_API_SECRETS: missing",
+      "STAGING_IDENTITY_SECRETS: missing",
+      "STAGING_NEON_TARGET_CONFIRMED: missing",
+      "IDENTITY_CHECKOUT_TOKEN: missing",
+      "ANDROID_SIGNING_BUNDLE: missing",
+      "STAGING_NEON_TARGET_CONFIRMED: endpoint ownership must be verified",
+      "STAGING_DATABASE_URL: invalid target, role, TLS or release options",
+      "STAGING_AUTH_DATABASE_URL: invalid target, role, TLS or release options",
+      "STAGING_API_SECRETS: invalid JSON object",
+      "STAGING_IDENTITY_SECRETS: invalid JSON object",
+      "STAGING_API_SECRETS.IDENTITY_DIRECTORY_SECRET: missing",
+      "STAGING_API_SECRETS.R2_ENDPOINT: missing",
+      "STAGING_API_SECRETS.R2_ACCESS_KEY_ID: missing",
+      "STAGING_API_SECRETS.R2_SECRET_ACCESS_KEY: missing",
+      "STAGING_API_SECRETS.FCM_SERVICE_ACCOUNT_JSON: missing",
+      "STAGING_IDENTITY_SECRETS.BETTER_AUTH_SECRET: minimum 32 characters required",
+      "IDENTITY_DIRECTORY_SECRET: missing or mismatched between API and Identity",
+      "STAGING_IDENTITY_SECRETS.ACCOUNT_SECURITY_KEYS: invalid JSON object",
+      "ACCOUNT_SECURITY_KEY_VERSION: missing or invalid key version",
+      "STAGING_API_SECRETS.R2_ENDPOINT: HTTPS required",
+      "STAGING_API_SECRETS.FCM_SERVICE_ACCOUNT_JSON: invalid JSON object",
+      "FCM_SERVICE_ACCOUNT_JSON: project_id and client_email required",
+      "FCM_SERVICE_ACCOUNT_JSON.private_key: invalid private key",
+      "ANDROID_SIGNING_BUNDLE: invalid JSON object",
+      "ANDROID_SIGNING_BUNDLE.keystore: invalid base64",
+      "ANDROID_SIGNING_BUNDLE.apps.guardian.keyAlias: missing or invalid",
+      "ANDROID_SIGNING_BUNDLE.apps.guardian.keyPassword: missing or invalid",
+      "ANDROID_SIGNING_BUNDLE.apps.guardian.storePassword: missing or invalid",
+      "ANDROID_SIGNING_BUNDLE.apps.guardian.firebase: Firebase project or application ID mismatch",
+      "ANDROID_SIGNING_BUNDLE.apps.teacher.keyAlias: missing or invalid",
+      "ANDROID_SIGNING_BUNDLE.apps.teacher.keyPassword: missing or invalid",
+      "ANDROID_SIGNING_BUNDLE.apps.teacher.storePassword: missing or invalid",
+      "ANDROID_SIGNING_BUNDLE.apps.teacher.firebase: Firebase project or application ID mismatch"
+    ],
+    "createdAt": "2026-10-03T02:13:56.166Z"
+  },
+  "bootstrapRehearsal": {
+    "passed": true,
+    "at": "2026-10-03T02:18:42.612Z",
+    "databases": "disposable native PostgreSQL",
+    "separateIdentityRole": true,
+    "emailVerificationRequired": true,
+    "provisionedIdentityOnly": true,
+    "attachments": true,
+    "documentFixtures": true,
+    "explicitResetScripts": true,
+    "noResetPreservesData": true,
+    "idempotentIdentityFixtures": true
+  },
+  "blockers": [
+    {
+      "id": "neon-owner",
+      "detail": "Retained endpoint ownership has not been matched to an accessible Neon project and staging branch. Do not substitute the older endpoint or set STAGING_NEON_TARGET_CONFIRMED."
+    },
+    {
+      "id": "identity-database",
+      "detail": "Dedicated edaya_identity database/role and its direct TLS STAGING_AUTH_DATABASE_URL are not verified; provision only after endpoint ownership is confirmed."
+    },
+    {
+      "id": "credential-preflight",
+      "detail": "Local release credentials are unavailable. Repository/environment inspection did not expose STAGING_AUTH_DATABASE_URL, IDENTITY_CHECKOUT_TOKEN or STAGING_NEON_TARGET_CONFIRMED; organization inheritance is unverified. Existing secret names do not prove valid payloads or access. Full read-only preflight must pass with actual configured credentials."
+    },
+    {
+      "id": "candidate-commits",
+      "detail": "All three workspaces contain uncommitted changes. Commit the intended changes, then run validate_only=true against those immutable revisions before selecting a deployable release."
+    }
+  ],
+  "evidenceDirectory": "/private/tmp/edaya-staging-readiness-20261002-ftim739g",
+  "notExecuted": [
+    "Package publication or immutable registry reuse with live credentials",
+    "Worker deployment, migration/reset, fixture provisioning, rollout dispatch",
+    "Deployed native smoke (requires the later bootstrap and private sessions)",
+    "Installed-device delivery and native feature acceptance"
+  ]
+}

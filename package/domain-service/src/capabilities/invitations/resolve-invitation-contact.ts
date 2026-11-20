@@ -1,5 +1,5 @@
 import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
-import { AccountInvitationContactChannel, GuardianContactMethodType } from '@edaya/core'
+import { AccountInvitationContactChannel } from '@edaya/core'
 import { guardianFallbackEmail, staffFallbackEmail } from '../notifications/delivery/resolve-notification-contact'
 
 export function normalizeInvitationEmail(value: string | undefined): string | undefined {
@@ -13,13 +13,17 @@ export function resolveStaffInvitationEmail(staff: StaffMember): string | undefi
 
 export function resolveGuardianInvitationEmail(guardian: Guardian): string | undefined {
   return normalizeInvitationEmail(
-    guardian.notificationEmail
-    ?? guardianFallbackEmail(guardian),
+    guardianFallbackEmail(guardian),
   )
 }
 
 export function resolveTeacherInvitationEmail(teacher: Teacher): string | undefined {
   return normalizeInvitationEmail(teacher.notificationEmail ?? teacher.email)
+}
+
+export function normalizeInvitationPhone(value: string | undefined): string | undefined {
+  const normalized = value?.trim()
+  return normalized?.startsWith('+') ? normalized : undefined
 }
 
 export function resolveInvitationContact(
@@ -30,8 +34,10 @@ export function resolveInvitationContact(
   teacher?: Teacher,
 ): string | undefined {
   if (channel === AccountInvitationContactChannel.Phone) {
-    const phone = explicitValue?.trim()
-    return phone && phone.length > 0 ? phone : undefined
+    return normalizeInvitationPhone(explicitValue)
+      ?? normalizeInvitationPhone(staff?.notificationPhone)
+      ?? normalizeInvitationPhone(guardian?.phone)
+      ?? normalizeInvitationPhone(teacher?.phone)
   }
 
   const explicitEmail = normalizeInvitationEmail(explicitValue)
@@ -50,9 +56,18 @@ export function resolveInvitationContact(
   return undefined
 }
 
+export function resolveStudentInvitationContact(
+  channel: AccountInvitationContactChannel,
+  explicitValue: string | undefined,
+): string | undefined {
+  if (channel === AccountInvitationContactChannel.Phone) {
+    return normalizeInvitationPhone(explicitValue)
+  }
+  return normalizeInvitationEmail(explicitValue)
+}
+
 export function guardianHasEmailContact(guardian: Guardian): boolean {
-  return guardian.contactMethods.some(method => method.type === GuardianContactMethodType.Email)
-    || Boolean(guardian.email)
+  return Boolean(guardian.email)
 }
 
 export function resolveStudentInvitationEmail(explicitValue: string | undefined): string | undefined {

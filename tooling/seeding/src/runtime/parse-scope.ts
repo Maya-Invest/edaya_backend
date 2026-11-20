@@ -9,12 +9,14 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
 
   if (
     arg === 'school'
+    || arg === 'school-switching'
     || arg === 'auth'
     || arg === 'auth:link'
     || arg === 'access'
     || arg === 'profile-pictures'
     || arg === 'smoke'
     || arg === 'service-account'
+    || arg === 's2s-clients'
     || arg === 'validate'
     || arg === 'doctor'
   ) {
@@ -22,6 +24,6 @@ export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
   }
 
   throw new Error(
-    `Unknown HTTP seed scope: ${arg}. Valid scopes: all, school, auth, auth:link, access, profile-pictures, service-account, smoke, validate, doctor`,
+    `Unknown HTTP seed scope: ${arg}. Valid scopes: all, school, school-switching, auth, auth:link, access, profile-pictures, service-account, s2s-clients, smoke, validate, doctor`,
   )
 }

@@ -1,28 +1,22 @@
 import type { Attachment } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityReadAuthorization } from '../../entity-config'
-import { AttachmentOperations, denyResourceAccess } from '@edaya/authorization'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
 import { AttachmentOwnerKind, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, write } from '../../entity-config'
+import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/attachment.ts (PR3)
-export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess: EntityReadAuthorization<Attachment>['checkAccess'] = async (actor, entities) => {
-    await policy.checkAttachmentAccess(actor, entities)
-  }
-
+export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories, atomicExecution }) => {
   return config({
     repository: repositories.attachments,
     tenant: directSchoolTenant(),
-    read: read(operationModule(AttachmentOperations.read), readAccess),
-    write: write(
-      operationModule(AttachmentOperations.configure),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    resource: 'attachments',
+
     gates: {
-      preSave: validateAttachmentSave,
+      preSave: async () => {
+        throw new BusinessRuleViolationError('ATTACHMENT_COMMAND_REQUIRED', 'Attachments require an admitted upload completion or document command')
+      },
     },
     atomicExecution,
   })
@@ -30,9 +24,11 @@ export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories
 
 export async function validateAttachmentSave(
   attachment: Attachment,
-  _existing: Attachment | undefined,
+  existing: Attachment | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (existing && (existing.purpose !== attachment.purpose || existing.ownerKind !== attachment.ownerKind || existing.ownerId !== attachment.ownerId))
+    throw new BusinessRuleViolationError('ATTACHMENT_OWNER_PURPOSE_IMMUTABLE', 'Attachment owner and purpose cannot be changed')
   const context = await resolveAttachmentOwnerContext(attachment.ownerKind, attachment.ownerId, repositories)
   if (context.schoolId !== attachment.schoolId) {
     denyResourceAccess()
@@ -51,6 +47,8 @@ async function resolveAttachmentOwnerContext(
       return requireOwned(repositories.guardians.findById(ownerId))
     case AttachmentOwnerKind.Staff:
       return requireOwned(repositories.staffMembers.findById(ownerId))
+    case AttachmentOwnerKind.Teacher:
+      return requireOwned(repositories.teachers.findById(ownerId))
     case AttachmentOwnerKind.StudentHealthProfile: {
       const healthProfile = await repositories.studentHealthProfiles.findById(ownerId)
       if (!healthProfile) {
@@ -113,11 +111,25 @@ async function resolveAttachmentOwnerContext(
       if (!payment) {
         denyResourceAccess()
       }
-      const studentFee = await repositories.studentFees.findById(payment.studentFeeId)
-      if (!studentFee) {
+      const account = await repositories.studentYearAccounts.findById(payment.accountId)
+      if (!account) {
         denyResourceAccess()
       }
-      return resolveStudentOwner(studentFee.studentId, repositories)
+      return resolveStudentOwner(account.studentId, repositories)
+    }
+    case AttachmentOwnerKind.School: {
+      const school = await repositories.schools.findById(ownerId)
+      if (!school) {
+        denyResourceAccess()
+      }
+      return { schoolId: school.id }
+    }
+    case AttachmentOwnerKind.DocumentIssuance: {
+      const issuance = await repositories.documentIssuances.findById(ownerId)
+      if (!issuance) {
+        denyResourceAccess()
+      }
+      return { schoolId: issuance.schoolId }
     }
     case AttachmentOwnerKind.Other:
       throw new BusinessRuleViolationError('UNSUPPORTED_ATTACHMENT_OWNER', 'Attachment owner kind other is not supported by the selected public contract')

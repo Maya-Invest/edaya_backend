@@ -1,14 +1,14 @@
-import type { ActorMetadata } from '@edaya/authorization'
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { NotificationGatewayPort } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
 import type { NotificationTemplateService } from '../../../capabilities/notifications/templates/notification-template-service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { BaseSchoolService } from '../../../services/base-school-service'
 
 export interface WorkflowNotificationContext {
   notificationGateway: NotificationGatewayPort
   repositories: SchoolRepositories
   templateService: NotificationTemplateService
-  actor: ActorMetadata
+  actor: SchoolScopedActorMetadata
 }
 
 export type WorkflowNotificationHandler<T = unknown> = (

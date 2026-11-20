@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { describe, expect, it } from 'bun:test'
 import {
   extractClientBindingsFromOpenApi,
   X_EDAYA_KIND,
-} from '@edaya/client-codegen'
-import { describe, expect, it } from 'bun:test'
+} from '../codegen/src/index'
 
 const openApiPath = resolve(
   import.meta.dirname,
@@ -23,6 +23,7 @@ describe('extractClientBindingsFromOpenApi', () => {
       publicName: 'schools',
       schemaName: 'School',
       allowDirectSave: true,
+      publicOperations: { create: true, update: true, delete: true, batchCreate: true, batchUpdate: true, batchDelete: true },
     })
     expect(bindings.commands.registerSchool.publicName).toBe('register-school')
     expect(bindings.queries.getOverdueFeeCount.publicName).toBe(

@@ -1,16 +1,19 @@
-import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import { ImportFormatAdapter } from "@edaya/adaptor-import-format";
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
+import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
+import type { DirectoryClient } from "../../identity/server/index";
+import type { Environment } from "@/runtime/shared/env/schema";
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresImportStore, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import type { SQL } from "drizzle-orm";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
-import { apiAuthCacheInvalidationPort } from "@/lib/authorization/auth-cache-invalidation-port";
-import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
+import { resolveDocumentRenderer } from "@/runtime/shared/adapters/document-renderer";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
 import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-delivery";
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
-import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
-import type { Environment } from "@/runtime/shared/env/schema";
-import { createRepositoryAuthorizationPolicy } from "@edaya/authorization";
-import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
+import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
+import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl, resolveProfilePhotoMaxBytes } from "@/runtime/shared/env/derived";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
@@ -18,7 +21,8 @@ export interface BuildSchoolApplicationOptions {
   notificationGateway?: NotificationGatewayPort;
   fileStorage?: FileStoragePort;
   invitationDelivery?: InvitationDeliveryPort;
-  authDb?: unknown;
+  notifyRuntime?: NotifyRuntime;
+  identityDirectory?: DirectoryClient;
   runMigrations?: boolean;
 }
 
@@ -42,31 +46,30 @@ export async function buildSchoolApplication(
     ? createAppLogger(options.env)
     : undefined;
   const notificationGateway = options.notificationGateway
-    ?? resolveNotificationGateway(options.env, logger);
+    ?? resolveNotificationGateway(options.env, logger, { runtime: options.notifyRuntime });
   const fileStorage = options.fileStorage
     ?? resolveFileStorage(options.env, logger);
   const invitationDelivery = options.invitationDelivery
-    ?? resolveInvitationDelivery(options.env);
+    ?? resolveInvitationDelivery(options.env, { runtime: options.notifyRuntime });
 
   return new ApiSchoolApplication({
     atomicExecution,
+    importPersistence: new PostgresImportStore(),
+    importFormat: new ImportFormatAdapter(),
+    commandJournal: new PostgresCommandJournal(),
+
+    durableWork: new PostgresDurableWork(db as PostgresTransactionalDb & { execute: (query: SQL) => Promise<unknown> }),
+    documentRenderer: resolveDocumentRenderer(options.env, logger),
     notificationGateway,
     fileStorage,
     invitationDelivery,
-    authCacheInvalidation: apiAuthCacheInvalidationPort,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
-    authContactResolver: options.authDb
-      ? createAuthContactResolver(options.authDb as Parameters<typeof createAuthContactResolver>[0])
+    profilePhotoMaxBytes: resolveProfilePhotoMaxBytes(options.env),
+    authContactResolver: options.identityDirectory
+      ? createAuthContactResolver(options.identityDirectory)
       : undefined,
     repositories: repos,
-    authorizationPolicy: createRepositoryAuthorizationPolicy({
-      repositories: repos,
-      staffAssignmentRepository: repos.staffAssignments,
-      staffMemberRepository: repos.staffMembers,
-      guardianRepository: repos.guardians,
-      guardianStudentLinkRepository: repos.guardianLinks,
-      studentRepository: repos.students,
-    }),
+
   });
 }

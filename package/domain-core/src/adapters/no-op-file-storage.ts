@@ -1,9 +1,14 @@
 import type { FileStoragePort } from '../ports/gateways/file-storage'
+import { assertStorageReadLimit } from '../shared/bounded-storage-read'
 
 export const noOpFileStorage: FileStoragePort = {
   putObject: async () => ({ sizeBytes: 0 }),
   deleteObject: async () => {},
   headObject: async () => null,
+  readObject: async (_key, { maxBytes }) => {
+    assertStorageReadLimit(maxBytes)
+    return null
+  },
   createPresignedUpload: async input => ({
     key: input.key,
     uploadUrl: `noop://upload/${encodeURIComponent(input.key)}`,

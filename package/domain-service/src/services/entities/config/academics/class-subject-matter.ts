@@ -1,20 +1,21 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { ClassSubjectMatter } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AcademicsOperations, denyResourceAccess } from '@edaya/authorization'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
 import { indirectTenant, resolveClassSubjectSchoolId } from '../../entity-config/tenant'
 
 // Extracted from domain/academics/class-subject-matter.ts (PR3)
-export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> = ({ repositories, policy, atomicExecution }) =>
+export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.classSubjectMatters,
     tenant: classSubjectMatterTenant(),
-    read: read(operationModule(AcademicsOperations.curriculumRead), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.programUpdate), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
+    resource: 'classSubjectMatters',
+
     gates: {
       preSave: validateClassSubjectMatterSave,
+      preDelete: validateClassSubjectMatterDelete,
     },
     atomicExecution,
   })
@@ -40,10 +41,8 @@ async function validateClassSubjectMatterSave(
   }
 }
 
-function authorizeClassSubjectMatter(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectMatter>['authorizeSave'] {
-  return noopSaveAccess
-}
-
-function authorizeClassSubjectMatterDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectMatter>['authorizeDelete'] {
-  return noopDeleteAccess
+export async function validateClassSubjectMatterDelete(matter: ClassSubjectMatter, repositories: SchoolRepositories): Promise<void> {
+  if (await repositories.classSubjectProgress.findOne({ classSubjectMatterId: matter.id })) {
+    throw new BusinessRuleViolationError('CLASS_SUBJECT_MATTER_HAS_PROGRESS', 'Curriculum with recorded progress cannot be deleted')
+  }
 }

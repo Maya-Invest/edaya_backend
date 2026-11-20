@@ -17,4 +17,5 @@ export interface ProfilePicturesSeedPort {
   setStudentPhotoUrl: (studentId: string, photoUrl: string) => Promise<void>
   setGuardianPhotoUrl: (guardianId: string, photoUrl: string) => Promise<void>
   setStaffPhotoUrl: (staffId: string, photoUrl: string) => Promise<void>
+  setTeacherPhotoUrl: (teacherId: string, photoUrl: string) => Promise<void>
 }

@@ -1,6 +1,6 @@
-import type { FileStoragePort } from "@edaya/core";
-import type { SchoolRepositories, SchoolService } from "@edaya/service";
 import type { ActorMetadata } from "@edaya/authorization";
+import type { AtomicExecutionPort, DurableWorkPort, FileStoragePort } from "@edaya/core";
+import type { CommandExecution, SchoolRepositories, SchoolService } from "@edaya/service";
 import { SchoolApplication as CoreSchoolApplication } from "@edaya/service";
 
 type CoreSchoolApplicationArgs = ConstructorParameters<typeof CoreSchoolApplication>[0];
@@ -12,8 +12,24 @@ export class ApiSchoolApplication {
     this.application = new CoreSchoolApplication(args);
   }
 
+  get importPersistence(): import("@edaya/core").ImportPersistencePort {
+    return this.application.importPersistence;
+  }
+
   get repositories(): SchoolRepositories {
     return this.application.repositories;
+  }
+
+  get atomicExecution(): AtomicExecutionPort {
+    return this.application.atomicExecution;
+  }
+
+  get commandExecution(): CommandExecution {
+    return this.application.commandExecution;
+  }
+
+  get durableWork(): DurableWorkPort {
+    return this.application.durableWork;
   }
 
   get fileStorage(): FileStoragePort {
@@ -26,5 +42,9 @@ export class ApiSchoolApplication {
 
   hasAuthAccountForEmail(email: string): Promise<boolean> {
     return this.application.hasAuthAccountForEmail(email);
+  }
+
+  hasAuthAccountForPhone(phone: string): Promise<boolean> {
+    return this.application.hasAuthAccountForPhone(phone);
   }
 }

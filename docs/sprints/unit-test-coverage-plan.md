@@ -1,12 +1,16 @@
 # Unit Test Coverage — Sprint Plan
 
-> **Status:** In progress — **U0 ✅ · U1 ✅ · U2 ✅ · U3 ✅ · U4 ✅ · U5 ✅ · U6 ✅** · **U7 in progress** (batch 1–4)  
+> **Historical (2026-09-25):** This epic chased line coverage. That goal is closed. [unit-test-coverage.md](../reference/unit-test-coverage.md) is the current rule: add a unit test only when it is the cheapest lock on a branch no lower layer already asserts. Line coverage is not a reason to add or keep a test. Coverage numbers below are a snapshot, not a target to extend.
+
+> **Superseded for identity (2026-09-11):** `@edaya/adaptor-auth` moved to sibling `edaya_identity`. Coverage numbers for that package in this plan are historical.
+
+> **Status:** Historical — **U0 ✅ · U1 ✅ · U2 ✅ · U3 ✅ · U4 ✅ · U5 ✅ · U6 ✅** · **U7 closed as historical** (do not continue the fold for coverage)  
 > **Last updated:** 2026-07-07  
 > **Created:** 2026-07-07  
 > **Scope:** Raise backend **unit** test line coverage as close to 100% as is practical, without duplicating integration-test responsibilities  
 > **Depends on:** Stable `bun test --coverage` across workspaces; authorization operation matrices (G0–G7) complete  
 > **Out of scope:** Replacing `@edaya/integration-tests`, Playwright/mobile E2E, OpenAPI/codegen correctness, load testing  
-> **Related:** [authorization-operations-plan.md](./authorization-operations-plan.md), [AGENTS.md](../../AGENTS.md), `bunfig.toml` coverage config
+> **Related:** [authorization-operations-plan.md](./archive/authorization-operations-plan.md), [AGENTS.md](../../AGENTS.md), `bunfig.toml` coverage config
 
 ---
 

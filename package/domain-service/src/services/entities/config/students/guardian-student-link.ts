@@ -1,26 +1,18 @@
 import type { GuardianStudentLink } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, GuardianOperations } from '@edaya/authorization'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, write } from '../../entity-config'
-import { unique } from '../../entity-config/helper-utils'
+import { denyResourceAccess } from '@edaya/authorization'
+import { config } from '../../entity-config'
+
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/guardian-student-link.ts (PR3)
-export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = async (actor: Parameters<typeof policy.checkStudentAccess>[0], entities: readonly GuardianStudentLink[]) => {
-    await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-  }
-
+export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = ({ repositories, atomicExecution }) => {
   return config({
     repository: repositories.guardianLinks,
     tenant: directSchoolTenant(),
-    read: read(operationModule(GuardianOperations.read), readAccess),
-    write: write(
-      operationModule(GuardianOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    resource: 'guardianLinks',
+
     gates: {
       preSave: validateGuardianStudentLinkSave,
     },
@@ -40,6 +32,10 @@ export async function validateGuardianStudentLinkSave(
   if (!guardian || !student || guardian.schoolId !== link.schoolId || student.schoolId !== link.schoolId) {
     denyResourceAccess()
   }
+  const enrollments = await repositories.enrollments.list({ studentId: link.studentId })
+  const groups = await repositories.classGroups.findByIds(enrollments.map(enrollment => enrollment.classGroupId))
+  if (!groups.some(group => group.schoolId === link.schoolId))
+    denyResourceAccess()
   if (existing && (existing.guardianId !== link.guardianId || existing.studentId !== link.studentId)) {
     denyResourceAccess()
   }

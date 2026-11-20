@@ -1,22 +1,21 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { ReportCardsSeedPort } from './port'
-import { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionStatus } from '@edaya/core'
+import { rangesFromThresholds } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
 
 export interface DevReportCardSeedCounts {
   gradeScales: number
-  definitions: number
-  sections: number
+  modules: number
+  assignments: number
   results: number
 }
 
-export async function seedDevReportCards(
+export async function seedDevReportCardConfiguration(
   port: ReportCardsSeedPort,
   dataset: FixtureDataset,
-): Promise<DevReportCardSeedCounts> {
+): Promise<Omit<DevReportCardSeedCounts, 'results'>> {
   const gradeScaleFixtures = dataset.extensions?.reportCardGradeScaleFixtures ?? []
-  const definitionFixtures = dataset.extensions?.reportCardDefinitionFixtures ?? []
-  const results = dataset.extensions?.reportCardResults ?? []
+  const definitionFixtures = dataset.extensions?.reportConfigurationFixtures ?? []
 
   for (const fixture of gradeScaleFixtures) {
     const scale = fixture.scale
@@ -27,70 +26,39 @@ export async function seedDevReportCards(
       minScore: scale.minScore,
       maxScore: scale.maxScore,
       decimalPlaces: scale.decimalPlaces ?? 1,
+      intervalConvention: 'continuous',
+      roundingMode: scale.roundingMode ?? 'nearest',
       description: scale.description ?? undefined,
       isDefault: scale.isDefault ?? false,
-      ranges: (scale.ranges ?? []).map(range => ({
+      ranges: rangesFromThresholds((scale.ranges ?? []).map(range => ({
+        id: range.id ?? `${scale.id}-${range.letter}`,
+        gpaValue: range.gpaValue ?? undefined,
         letter: range.letter,
         minScore: range.minScore,
-        maxScore: range.maxScore,
-        isPassing: range.isPassing,
+
         interpretation: range.interpretation ?? undefined,
-      })),
+      })), scale.maxScore).map(range => ({ ...range, id: range.id! })),
     })
   }
 
-  let sectionCount = 0
-
+  let moduleCount = 0
+  let assignmentCount = 0
   for (const fixture of definitionFixtures) {
-    const definition = fixture.definition
-    await port.createReportCardDefinition({
-      id: definition.id,
-      schoolId: definition.schoolId,
-      academicYearId: definition.academicYearId,
-      gradeLevelId: definition.gradeLevelId,
-      gradeScaleId: definition.gradeScaleId,
-      name: definition.name,
-      kind: definition.kind ?? ReportCardDefinitionKind.Default,
-      status: definition.status ?? ReportCardDefinitionStatus.Draft,
-      isDefault: definition.isDefault ?? false,
-      description: definition.description ?? definition.name,
-    })
-
-    for (const section of fixture.sections) {
-      await port.createReportCardSection({
-        id: section.id,
-        reportCardDefinitionId: definition.id,
-        name: section.name,
-        kind: ReportCardDefinitionSectionKind.Group,
-        role: section.role,
-        coefficient: section.coefficient,
-        order: section.order,
-        weight: section.weight > 0 ? section.weight : 1,
-      })
-      sectionCount += 1
-
-      for (const subjectId of section.subjectIds) {
-        await port.createReportCardSection({
-          id: `${section.id}-${subjectId}`,
-          reportCardDefinitionId: definition.id,
-          name: subjectId,
-          kind: ReportCardDefinitionSectionKind.Subject,
-          order: 1,
-          weight: 1,
-          parentSectionId: section.id,
-          subjectId,
-        })
-        sectionCount += 1
-      }
-    }
+    await port.configureGrading({ gradeLevelId: fixture.gradeLevelId, academicYearId: fixture.academicYearId, scaleId: fixture.gradeScaleId, mode: 'numeric-first', aggregateLabel: 'Moyenne générale' })
+    await port.configureReport(fixture)
+    moduleCount += fixture.modules.length
+    assignmentCount += fixture.modules.reduce((sum, module) => sum + module.subjectIds.length, 0)
   }
+  return { gradeScales: gradeScaleFixtures.length, modules: moduleCount, assignments: assignmentCount }
+}
 
+export async function seedDevReportCardResults(port: ReportCardsSeedPort, dataset: FixtureDataset): Promise<Pick<DevReportCardSeedCounts, 'results'>> {
+  const results = dataset.extensions?.reportCardResults ?? []
   for (const result of results) {
     const record = {
       id: result.id,
       studentId: result.studentId,
       periodId: result.periodId,
-      reportCardDefinitionId: result.reportCardDefinitionId,
       generatedAt: seedDateTime(result.generatedAt),
     }
     await port.generateReportCardResult(record)
@@ -110,10 +78,5 @@ export async function seedDevReportCards(
     }
   }
 
-  return {
-    gradeScales: gradeScaleFixtures.length,
-    definitions: definitionFixtures.length,
-    sections: sectionCount,
-    results: results.length,
-  }
+  return { results: results.length }
 }

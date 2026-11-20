@@ -1,5 +1,5 @@
 import type { Filter, QueryOptions } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityTenantResolver } from '../../entities/managed-entity-service'
 import type { EntityWithSchoolId } from './config'
 
@@ -25,6 +25,7 @@ export function directSchoolTenant<T extends EntityWithSchoolId>(): EntityTenant
   return {
     resolve: entity => entity.schoolId,
     resolveFromFilter: resolveSchoolIdFromFilter,
+    scopeFilter: schoolId => ({ schoolId } as Filter<T>),
   }
 }
 
@@ -65,7 +66,10 @@ export function resolveStringFilterValue(value: unknown): string | undefined {
   const fieldFilter = value as { $eq?: unknown, $in?: unknown }
   if (typeof fieldFilter.$eq === 'string')
     return fieldFilter.$eq
-  if (Array.isArray(fieldFilter.$in) && typeof fieldFilter.$in[0] === 'string')
-    return fieldFilter.$in[0]
+  const values = fieldFilter.$in
+  if (Array.isArray(values) && typeof values[0] === 'string'
+    && values.every(value => value === values[0])) {
+    return values[0]
+  }
   return undefined
 }

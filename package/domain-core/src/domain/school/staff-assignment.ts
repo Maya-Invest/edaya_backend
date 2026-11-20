@@ -48,7 +48,7 @@ export const staffAssignmentUpdateSchema = staffAssignmentBaseSchema.partial().r
 
 /**
  * Assigns a staff member (with a free-form responsibility label) to a class, subject, or occurrence.
- * Optional `permissions` sync derived `StaffPermissionAssignment` rows on save/delete.
+ * Policies derive the listed permissions directly from this assignment and its placement.
  */
 export class StaffAssignment {
   readonly data: StaffAssignmentData

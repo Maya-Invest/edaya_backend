@@ -1,17 +1,18 @@
 import type { Hono } from 'hono'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { createSchoolBootstrapActor } from '@edaya/authorization'
 import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
+import { humanFixture } from '../../../test-support/human-fixtures'
 import {
   createAppRequest,
   grantAccessControlAssign,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
 } from '../support/api-route-harness'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
@@ -24,19 +25,18 @@ async function registerUnlinkedStaff(
   application: ApiSchoolApplication,
   input: { id: string, email: string, firstName: string, lastName: string },
 ) {
-  const bootstrapActor = createBootstrapStaffActorMetadata({
+  const bootstrapActor = createSchoolBootstrapActor({
     schoolId: SEED_SCHOOL_ID,
     requestId: `register-${input.id}`,
-    staffMemberId: `register-${input.id}`,
   })
   const service = application.forActor(bootstrapActor)
-  await service.setupWorkflow.registerStaffMember({
+  await humanFixture({
     id: input.id,
     schoolId: SEED_SCHOOL_ID,
     firstName: input.firstName,
     lastName: input.lastName,
     email: input.email,
-  })
+  }).then(prepared => service.setupWorkflow.registerStaffMember(prepared))
 }
 
 async function sendStaffInvitation(
@@ -76,7 +76,7 @@ async function previewInvitation(app: Hono<AppBindings>, token: string) {
       inviteeName: string
       schoolName: string
       contactEmail: string
-      authAccountExists: boolean
+      authAccountExists?: boolean
     },
   }
 }
@@ -110,20 +110,20 @@ describeWithLightSchool('account invitation public link flow', (getContext) => {
     expect(preview.body.targetId).toBe(UNLINKED_STAFF_ID)
     expect(preview.body.inviteeName).toContain('Paul')
     expect(preview.body.contactEmail).toBe(INVITEE_EMAIL)
-    expect(preview.body.authAccountExists).toBe(false)
+    expect(preview.body).not.toHaveProperty('authAccountExists')
 
     await signUpAuthUser(runtime, {
       email: INVITEE_EMAIL,
       name: 'Paul Martin',
     })
-    const inviteeCookies = await signInThroughApp(app, { email: INVITEE_EMAIL })
+    const inviteeAccessToken = await signInWithBearerThroughApp(app, { email: INVITEE_EMAIL })
 
     const acceptResponse = await app.request(createAppRequest(
       `/public/invitations/${encodeURIComponent(token)}/accept`,
       {
         method: 'POST',
         headers: {
-          cookie: inviteeCookies.join('; '),
+          authorization: `Bearer ${inviteeAccessToken}`,
         },
       },
     ))
@@ -194,7 +194,7 @@ describeWithLightSchool('account invitation public link flow', (getContext) => {
     expect(preview.status).toBe(404)
   })
 
-  it('reports when the invited email already has an auth account', async () => {
+  it('keeps account existence private when the invited email already has an account', async () => {
     const { app, runtime, application, authHeaders } = getContext()
     const existingEmail = 'existing.invite-e2e@school.edu'
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
@@ -218,7 +218,7 @@ describeWithLightSchool('account invitation public link flow', (getContext) => {
 
     const preview = await previewInvitation(app, token)
     expect(preview.status).toBe(200)
-    expect(preview.body.authAccountExists).toBe(true)
+    expect(preview.body).not.toHaveProperty('authAccountExists')
   })
 
   it('returns 401 when accepting without a session', async () => {

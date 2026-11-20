@@ -2,7 +2,6 @@ export interface LocalFileStorageEnvironment {
   LOCAL_FILES_URL?: string;
   LOCAL_FILES_ROOT?: string;
   LOCAL_FILES_SECRET?: string;
-  BETTER_AUTH_SECRET?: string;
   TRUSTED_ORIGINS?: string;
 }
 
