@@ -1,5 +1,5 @@
 import type { NotificationEnqueueInput } from '@edaya/core'
-import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Guardian, GuardianStudentLink, Permission, StaffMember, StaffPermissionAssignment, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 import { dispatchConversationNotifications, resolveNotificationDispatchRecipient } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
@@ -62,6 +62,7 @@ describe('guardian messaging through native SQL and workflow boundaries', () => 
     expect(recipients.teachers[0]?.subjects).toContain('Math')
     const started = await f.guardian.conversationsWorkflow.start(teacherMessage)
     expect((await f.teacher.listConversations({})).unreadCount).toBe(1)
+    expect(await f.teacher.getUnreadConversationCount()).toEqual({ count: 1 })
     await f.teacher.conversationsWorkflow.markRead({ conversationId: started.id, throughSequence: 1 })
     const replied = await f.teacher.conversationsWorkflow.reply({ conversationId: started.id, expectedVersion: 1, requestId: 'teacher-reply', body: 'Please complete exercise 3.' })
     expect(replied.lastSequence).toBe(2)
@@ -70,9 +71,11 @@ describe('guardian messaging through native SQL and workflow boundaries', () => 
     expect(detail.conversation.allowedActions.reply).toBe(true)
     await f.guardian.conversationsWorkflow.markRead({ conversationId: started.id, throughSequence: 1 })
     expect((await f.guardian.listConversations({})).unreadCount).toBe(1)
+    expect(await f.guardian.getUnreadConversationCount()).toEqual({ count: 1 })
     await f.guardian.conversationsWorkflow.markRead({ conversationId: started.id, throughSequence: 2 })
     await f.guardian.conversationsWorkflow.markRead({ conversationId: started.id, throughSequence: 1 })
     expect((await f.guardian.listConversations({})).unreadCount).toBe(0)
+    expect(await f.guardian.getUnreadConversationCount()).toEqual({ count: 0 })
     await expect(f.guardian.conversationsWorkflow.markRead({ conversationId: started.id, throughSequence: 3 })).rejects.toThrow('future')
   })
   test('former teachers lose access, guardian retains history, oversight cannot reply or consume participant read state', async () => {
@@ -165,6 +168,17 @@ describe('guardian messaging through native SQL and workflow boundaries', () => 
     await expect(f.guardian.conversationsWorkflow.start(schoolMessage)).rejects.toThrow('unavailable')
     expect((await f.guardian.listConversations({})).total).toBe(0)
   })
+  test('a subsequent detail read observes revoked staff actions and read access', async () => {
+    const f = await fixture()
+    const thread = await f.guardian.conversationsWorkflow.start(schoolMessage)
+    const detail = () => f.secretary.getConversation({ conversationId: thread.id })
+    expect((await detail()).conversation.allowedActions.reply).toBe(true)
+    await f.repositories.staffPermissionAssignments.delete(Permission.SCHOOL_MESSAGES_REPLY)
+    expect((await detail()).conversation.allowedActions.reply).toBe(false)
+    await f.repositories.staffPermissionAssignments.delete(Permission.SCHOOL_MESSAGES_READ)
+    await expect(detail()).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
   test('childless school history and guardian alerts disappear when family access is revoked', async () => {
     const f = await fixture()
     const thread = await f.guardian.conversationsWorkflow.start(schoolMessage)

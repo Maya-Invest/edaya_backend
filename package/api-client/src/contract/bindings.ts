@@ -21,6 +21,7 @@ export interface ClientCommandBinding {
 }
 
 export interface ClientQueryBinding {
+	getPath?: string
 	publicName: string
 	requestSchemaName: string
 	responseSchemaName: string

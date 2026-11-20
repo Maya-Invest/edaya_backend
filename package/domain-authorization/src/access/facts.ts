@@ -41,8 +41,12 @@ export class AccessFacts {
     return repo.forSchool(this.actor.schoolId) as unknown as BaseRepositoryInterface<CoreEntityMap[K]>
   }
 
+  async find<K extends CoreEntityKey>(key: K, id: string) {
+    return this.remember(`one:${key}:${id}`, () => this.repository(key).findById(id))
+  }
+
   async one<K extends CoreEntityKey>(key: K, id: string): Promise<CoreEntityMap[K]> {
-    return this.remember(`one:${key}:${id}`, async () => await this.repository(key).findById(id) ?? denied())
+    return await this.find(key, id) ?? denied()
   }
 
   async list<K extends CoreEntityKey>(key: K, filter: Filter<CoreEntityMap[K]>): Promise<CoreEntityMap[K][]> {
@@ -88,7 +92,7 @@ export class AccessFacts {
     const selected = this.actor.kind === 'system' ? undefined : this.actor.academicYearId
     if (selected)
       return (await this.one('academicYears', selected)).id
-    return (await this.repository('academicYears').findOne({ status: 'published' }))?.id
+    return this.remember('publishedAcademicYear', async () => (await this.repository('academicYears').findOne({ status: 'published' }))?.id)
   }
 
   async owner(): Promise<boolean> {
@@ -144,7 +148,7 @@ export class AccessFacts {
     return target
   }
 
-  async teaching(teacherId = this.actor.kind === 'teacher' ? this.actor.teacherId : undefined): Promise<{ year: string | undefined, subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }>, homerooms: string[] }> {
+  async teaching(teacherId = this.actor.kind === 'teacher' ? this.actor.teacherId : undefined, classSubjectId?: string): Promise<{ year: string | undefined, subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }>, homerooms: string[] }> {
     if (!teacherId)
       return { year: undefined, subjects: [], homerooms: [] }
     const year = await this.academicYear()
@@ -154,6 +158,7 @@ export class AccessFacts {
       teacherId,
       academicYearId: year,
       status: TeacherAssignmentStatus.Active,
+      ...(classSubjectId ? { classSubjectId, kind: TeacherAssignmentKind.Subject } : {}),
     })).filter(assignment => effectiveAt(assignment, this.now))
     const subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }> = []
     const homerooms: string[] = []
@@ -180,9 +185,12 @@ export class AccessFacts {
       return [this.actor.studentId]
     if (this.actor.kind !== 'guardian')
       return []
-    const links = await this.list('guardianLinks', { guardianId: this.actor.guardianId })
-    const students = await this.repository('students').findByIds([...new Set(links.map(link => link.studentId))])
-    return students.map(student => student.id)
+    const guardianId = this.actor.guardianId
+    return this.remember('linkedStudents', async () => {
+      const links = await this.list('guardianLinks', { guardianId })
+      const students = await this.repository('students').findByIds([...new Set(links.map(link => link.studentId))])
+      return students.map(student => student.id)
+    })
   }
 
   async communicationAudience(actorKind: 'staff' | 'teacher' | 'guardian' | 'student', actorId: string): Promise<Extract<AccessTarget, { kind: 'audience' }>> {

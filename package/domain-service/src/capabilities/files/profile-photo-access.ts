@@ -1,3 +1,4 @@
+import type { AccessPolicies } from '@edaya/authorization'
 import type { Attachment, ResourceAccessScope } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
 import type { AttachmentReadPolicy, AttachmentUploadPolicy } from './attachment-purpose-access'
@@ -23,16 +24,17 @@ export async function requireCurrentGuardianStudentLink(
   base: BaseSchoolService,
   guardianId: string,
   studentId: string,
+  access?: AccessPolicies,
 ) {
   const [guardian, student] = await Promise.all([
-    base.entities.guardians.findById(guardianId),
-    base.entities.students.findById(studentId),
+    base.entities.guardians.findById(guardianId, access),
+    base.entities.students.findById(studentId, access),
   ])
   if (!guardian || !guardian.hasAccess || guardian.schoolId !== base.actor.schoolId)
     denyResourceAccess()
   if (!student || student.schoolId !== guardian.schoolId)
     denyResourceAccess()
-  const links = await base.entities.guardianLinks.list({ guardianId, studentId })
+  const links = await base.entities.guardianLinks.list({ guardianId, studentId }, access)
   const link = links.find(row => row.schoolId === guardian.schoolId)
   if (!link)
     denyResourceAccess()
@@ -119,6 +121,10 @@ export async function profilePhotoUploadPolicy(
   }
 }
 
+export function publishedStudentPortraitScope(schoolId: string, studentId: string, attachmentId: string) {
+  return ownerAttachmentScope(schoolId, AttachmentOwnerKind.Student, studentId, STUDENT_PORTRAIT_PURPOSE, [attachmentId])
+}
+
 async function studentPortraitReadScope(base: BaseSchoolService, attachment: Attachment): Promise<ResourceAccessScope> {
   const student = await base.repositories.students.forSchool!(base.actor.schoolId).findById(attachment.ownerId)
   if (!student || student.schoolId !== base.actor.schoolId || attachment.ownerKind !== AttachmentOwnerKind.Student)
@@ -127,7 +133,7 @@ async function studentPortraitReadScope(base: BaseSchoolService, attachment: Att
   if (student.photoAttachmentId === attachment.id) {
     if (!await base.entities.students.findById(student.id))
       denyResourceAccess()
-    return ownerAttachmentScope(base.actor.schoolId, AttachmentOwnerKind.Student, student.id, STUDENT_PORTRAIT_PURPOSE, [attachment.id])
+    return publishedStudentPortraitScope(base.actor.schoolId, student.id, attachment.id)
   }
 
   const submissions = await base.repositories.studentPhotoSubmissions.forSchool!(base.actor.schoolId).list({

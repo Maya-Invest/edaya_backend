@@ -6,25 +6,39 @@ import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
 import { asStoreDatabase } from './postgres-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
+import { PostgresActivityMembershipCounts } from './stores/activity-membership-counts'
 import { PostgresAssessmentDependencies } from './stores/assessment-dependencies-store'
 import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
 import { PostgresAutoBilling } from './stores/auto-billing-store'
+import { PostgresClassReportRoster } from './stores/class-report-roster'
 import { PostgresConversations } from './stores/conversations-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { PostgresDashboardProjections } from './stores/dashboard-projections-store'
+import { PostgresDeliveryInbox } from './stores/delivery-inbox'
 import { createEntityStores } from './stores/entity-stores'
 import { createDocumentNumberSeriesStore } from './stores/entity-stores-documents'
 import { createFamilyFeedbackStores } from './stores/entity-stores-family-feedback'
 import { createFinanceLedgerStores } from './stores/entity-stores-finance-ledger'
 import { PostgresFinanceProjections } from './stores/finance-projections-store'
+import { PostgresGuardianChildProfile } from './stores/guardian-child-profile'
+import { PostgresGuardianHome } from './stores/guardian-home'
+import { PostgresIncidentLessonOptions } from './stores/incident-lesson-options'
 import { PostgresMarksCorrections } from './stores/marks-corrections-store'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
 import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
 import { PostgresS2sClientStore } from './stores/s2s-client-store'
 import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
+import { PostgresStaffActivityPupils } from './stores/staff-activity-pupils'
+import { PostgresStaffFeedbackHistory } from './stores/staff-feedback-history'
+import { PostgresStaffFeedbackOptions } from './stores/staff-feedback-options'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
+import { PostgresStudentDirectory } from './stores/student-directory'
+import { PostgresStudentHistory } from './stores/student-history'
 import { PostgresTeacherCorrections } from './stores/teacher-corrections-store'
+import { PostgresTeacherFeedbackSummaries } from './stores/teacher-feedback-summaries'
+import { PostgresTeacherIncidents } from './stores/teacher-incidents'
+import { PostgresTeacherLogbook } from './stores/teacher-logbook'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly autoBilling: PostgresAutoBilling
@@ -34,6 +48,20 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly teacherAcademicYearProfiles: PostgresStore<TeacherAcademicYearProfile>
 
   public readonly financeProjections: PostgresFinanceProjections
+  public readonly studentHistory: PostgresStudentHistory
+  public readonly deliveryInbox: PostgresDeliveryInbox
+  public readonly guardianHome: PostgresGuardianHome
+  public readonly teacherIncidents: PostgresTeacherIncidents
+  public readonly teacherLogbook: PostgresTeacherLogbook
+  public readonly staffFeedbackOptions: PostgresStaffFeedbackOptions
+  public readonly guardianChildProfile: PostgresGuardianChildProfile
+  public readonly classReportRoster: PostgresClassReportRoster
+  public readonly staffActivityPupils: PostgresStaffActivityPupils
+  public readonly incidentLessonOptions: PostgresIncidentLessonOptions
+  public readonly activityMembershipCounts: PostgresActivityMembershipCounts
+  public readonly staffFeedbackHistory: PostgresStaffFeedbackHistory
+  public readonly teacherFeedbackSummaries: PostgresTeacherFeedbackSummaries
+  public readonly studentDirectory: PostgresStudentDirectory
   public readonly dashboardProjections: PostgresDashboardProjections
   public readonly conversations: PostgresConversations
   public readonly teacherCorrections: PostgresTeacherCorrections
@@ -123,6 +151,20 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.db = db
     this.autoBilling = new PostgresAutoBilling(db)
     this.financeProjections = new PostgresFinanceProjections(db)
+    this.studentHistory = new PostgresStudentHistory(db)
+    this.deliveryInbox = new PostgresDeliveryInbox(db)
+    this.guardianHome = new PostgresGuardianHome(db)
+    this.teacherIncidents = new PostgresTeacherIncidents(db)
+    this.teacherLogbook = new PostgresTeacherLogbook(db)
+    this.staffFeedbackOptions = new PostgresStaffFeedbackOptions(db)
+    this.guardianChildProfile = new PostgresGuardianChildProfile(db)
+    this.classReportRoster = new PostgresClassReportRoster(db)
+    this.staffActivityPupils = new PostgresStaffActivityPupils(db)
+    this.incidentLessonOptions = new PostgresIncidentLessonOptions(db)
+    this.activityMembershipCounts = new PostgresActivityMembershipCounts(db)
+    this.staffFeedbackHistory = new PostgresStaffFeedbackHistory(db)
+    this.teacherFeedbackSummaries = new PostgresTeacherFeedbackSummaries(db)
+    this.studentDirectory = new PostgresStudentDirectory(db)
     this.dashboardProjections = new PostgresDashboardProjections(db)
     this.conversations = new PostgresConversations(db)
     this.teacherCorrections = new PostgresTeacherCorrections(db)

@@ -316,3 +316,9 @@ export function documentTemplatesVisibleTo(actorKind: string): readonly Document
     return true
   })
 }
+
+const papers: DocumentTemplateKey[] = ['schooling-certificate.v1', 'enrollment-record.v1', 'student-id-card.v1', 'withdrawal-certificate.v1', 'convocation.v1']
+
+export function familyPaperTemplates() {
+  return papers.filter(key => getDocumentTemplateCatalogEntry(key).familyDownload)
+}

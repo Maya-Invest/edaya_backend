@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createSystemActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, ClassGroup, ClassSubject, EnrollmentEndReason, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, FamilyFeedbackCampaignStatus, FamilyFeedbackSlotStatus, GradeLevel, Guardian, GuardianStudentLink, Permission, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, ClassGroup, ClassSubject, EnrollmentEndReason, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, FamilyFeedbackCampaign, FamilyFeedbackCampaignStatus, FamilyFeedbackSlotStatus, GradeLevel, Guardian, GuardianStudentLink, Permission, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { runCronJobs } from '../../../src/capabilities/scheduling-jobs/cron-job-runner'
 import { createCurriculumTestApp as createTestApp } from '../../support/create-test-app'
@@ -380,9 +380,93 @@ describe('FamilyFeedbackServiceWorkflow', () => {
       teacherAssignmentId: 'ta1',
       moderatorStaffId: 'admin',
     })
+    const query = { academicYearId: 'ay1' }
+    const [ownerRow] = await owner.getStaffFeedbackCampaigns(query)
+    const moderator = await fixture.schoolRepositories.staffMembers.findById('admin')
+    expect(ownerRow).toMatchObject({
+      id: 'camp-grant',
+      assignment: { teacherName: 'Marie Curie', subjectName: 'Mathematics', classGroupId: 'cg1' },
+      moderatorName: `${moderator!.firstName} ${moderator!.lastName}`,
+    })
+    expect(await owner.getStaffFeedbackCampaigns({ ...query, campaignId: 'absent' })).toEqual([])
+    expect(await owner.getStaffFeedbackCampaigns({ ...query, campaignId: 'camp-grant' })).toEqual([ownerRow!])
+    expect((await owner.getStaffFeedbackCampaigns({ academicYearId: 'another-year' }))[0]).toMatchObject({ id: 'camp-grant', assignment: undefined })
+    expect((await reader.getStaffFeedbackCampaigns(query))[0]).toMatchObject({
+      id: 'camp-grant',
+      assignment: undefined,
+      moderatorName: undefined,
+    })
+    const history = { ...query, lang: 'en' as const }
+    const restricted = fixture.forActor(readerActor)
+    expect(await restricted.getStaffFeedbackHistory({ ...history, q: 'Curie' })).toMatchObject({ items: [], total: 0 })
+    expect(await restricted.getStaffFeedbackHistoryExport({ ...history, q: 'ta1' })).toMatchObject({ items: [{ id: 'camp-grant', title: 'ta1' }] })
+    expect((await fixture.app.getStaffFeedbackHistory(history)).items[0]).toMatchObject({ id: 'camp-grant', title: 'Marie Curie · Mathematics · CM1 A' })
+    await fixture.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      id: 'grant-staff',
+      schoolId: SCHOOL,
+      staffId: 'reader',
+      academicYearId: 'ay1',
+      permission: Permission.STAFF_READ,
+      scopes: [{ kind: 'school' }],
+    }))
+    expect((await reader.getStaffFeedbackCampaigns(query))[0]).toMatchObject({
+      assignment: { teacherName: 'Marie Curie', subjectName: undefined },
+      moderatorName: `${moderator!.firstName} ${moderator!.lastName}`,
+    })
+    const options = { ...query, picker: 'both' as const }
+    const manager = fixture.forActor(readerActor)
+    await expect(manager.getStaffFeedbackOptions(options)).rejects.toBeInstanceOf(AuthorizationError)
+    const choices = await fixture.app.getStaffFeedbackOptions(options)
+    expect(choices.assignments).toEqual([{ id: 'ta1', teacherName: 'Marie Curie', subjectName: 'Mathematics', classGroupId: 'cg1' }])
+    expect(choices.moderators).toContainEqual({ id: 'reader', name: 'Pat Reader' })
+    expect((await fixture.app.getStaffFeedbackOptions({ ...options, academicYearId: 'another-year' })).assignments).toEqual([])
+    expect((await fixture.app.getStaffFeedbackOptions({ ...options, picker: 'moderators', q: 'PAT READ' })).moderators).toEqual([{ id: 'reader', name: 'Pat Reader' }])
+    await fixture.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      id: 'grant-manage',
+      schoolId: SCHOOL,
+      staffId: 'reader',
+      academicYearId: 'ay1',
+      permission: Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE,
+      scopes: [{ kind: 'school' }],
+    }))
+    const partial = await manager.getStaffFeedbackOptions(options)
+    expect(partial.assignments).toEqual([{ id: 'ta1', teacherName: 'Marie Curie', subjectName: null, classGroupId: null }])
+    expect((await manager.getStaffFeedbackOptions({ ...options, picker: 'assignments', q: 'math' })).assignments).toEqual([])
+    expect((await manager.getStaffFeedbackOptions({ ...options, picker: 'assignments', q: 'Curie' })).assignments).toEqual(partial.assignments)
+    await fixture.schoolRepositories.staffPermissionAssignments.delete('grant-manage')
+    await expect(manager.getStaffFeedbackOptions(options)).rejects.toBeInstanceOf(AuthorizationError)
+    const teacher = (await fixture.schoolRepositories.teachers.findById('teacher1'))!
+    await fixture.schoolRepositories.teachers.save(new Teacher({ ...teacher.data, lastName: 'Renamed' }))
+    expect((await owner.getStaffFeedbackCampaigns(query))[0]).toMatchObject({ assignment: { teacherName: 'Marie Renamed' } })
+    const template = (await fixture.schoolRepositories.familyFeedbackCampaigns.findById('camp-grant'))!
+    for (let i = 0; i < 31; i++) {
+      await fixture.schoolRepositories.familyFeedbackCampaigns.save(new FamilyFeedbackCampaign({
+        ...template.data,
+        id: `history-${String(i).padStart(2, '0')}`,
+        themeDraft: 'detail only',
+      }))
+    }
+    const first = await restricted.getStaffFeedbackHistory(history)
+    expect(first.total).toBe(32)
+    expect(first.items).toHaveLength(30)
+    expect(first.items[0]!.title).toContain('Marie Renamed')
+    expect(first.items[0]).not.toHaveProperty('themeDraft')
+    const after = { ...history, cursor: first.nextCursor! }
+    const second = await restricted.getStaffFeedbackHistory(after)
+    expect(second.nextCursor).toBeNull()
+    expect(new Set([...first.items, ...second.items].map(row => row.id)).size).toBe(32)
+    expect((await restricted.getStaffFeedbackHistoryExport(history)).items).toEqual([...first.items, ...second.items])
+    await expect(restricted.getStaffFeedbackHistory({ ...after, q: 'different' })).rejects.toThrow('Invalid campaign history cursor')
+    await fixture.schoolRepositories.staffPermissionAssignments.delete('grant-staff')
+    await expect(restricted.getStaffFeedbackHistory(after)).rejects.toThrow('Invalid campaign history cursor')
+    expect((await restricted.getStaffFeedbackHistory({ ...history, q: 'Renamed' })).total).toBe(0)
     const listed = await reader.listFamilyFeedbackCampaigns()
     expect(listed.map(campaign => campaign.id)).toContain('camp-grant')
     await expect(reader.listFamilyFeedbackComments({ id: 'camp-grant' })).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.schoolRepositories.staffPermissionAssignments.delete('grant-read')
+    await expect(restricted.getStaffFeedbackHistory(after)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(restricted.getStaffFeedbackHistoryExport(history)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(reader.getStaffFeedbackCampaigns(query)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('fixture-seed can create a draft campaign', async () => {

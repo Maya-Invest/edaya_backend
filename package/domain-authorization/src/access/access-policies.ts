@@ -2,7 +2,7 @@ import type { Attachment, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap,
 import type { SchoolScopedActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { DelegatedGrant } from './grant-administration'
-import { assertCommentOnlyReportCardUpdate, assertDraftReportCardForTeacherComment, BusinessRuleViolationError, collectCommentChanges, Permission as P, resourceAccessScope } from '@edaya/core'
+import { APP_SHELL_RESOURCES, assertCommentOnlyReportCardUpdate, assertDraftReportCardForTeacherComment, BusinessRuleViolationError, collectCommentChanges, Permission as P, resourceAccessScope } from '@edaya/core'
 import { AuthorizationError } from '../model/errors'
 import { assertHumanOnlyPermission, assertPermissionAssurance } from '../permissions/permission-assurance'
 import { s2sMayExercise } from '../s2s/access-class'
@@ -400,17 +400,30 @@ export class AccessPolicies {
       }
       return
     }
-    const teaching = await this.facts().teaching()
+    const teaching = await this.teacherReportCommentTargets(after.classGroupId)
     for (const change of collectCommentChanges(before, after)) {
       if (change.kind === 'subject') {
-        if (!teaching.subjects.some(subject => subject.classSubjectId === change.classSubjectId
-          && subject.classGroupId === after.classGroupId)) {
+        if (!teaching.subjects.has(change.classSubjectId)) {
           denied()
         }
       }
-      else if (!teaching.homerooms.includes(after.classGroupId)) {
+      else if (!teaching.homeroom) {
         denied()
       }
+    }
+  }
+
+  /** Current subject and homeroom assignments shared by comment reads and writes. */
+  async teacherReportCommentTargets(classGroupId: string) {
+    if (this.actor.kind !== 'teacher')
+      denied()
+    const facts = this.facts()
+    await facts.validateActor()
+    const teaching = await facts.teaching()
+    return {
+      year: teaching.year,
+      subjects: new Set(teaching.subjects.filter(row => row.classGroupId === classGroupId).map(row => row.classSubjectId)),
+      homeroom: teaching.homerooms.includes(classGroupId),
     }
   }
 
@@ -507,10 +520,14 @@ export class AccessPolicies {
         if (!(error instanceof AuthorizationError))
           throw error
       }
+      const placementScope = { ...participantScope, resource: 'classActivityEnrollments' } as const
       return {
+        candidateScope,
+        participantScope,
+        placementScope,
         participants: this.repositories.activityEnrollments.forAccess(participantScope),
         classes: candidateScope ? this.repositories.classGroups.forAccess(candidateScope) : undefined,
-        placements: this.repositories.classActivityEnrollments.forAccess({ ...participantScope, resource: 'classActivityEnrollments' }),
+        placements: this.repositories.classActivityEnrollments.forAccess(placementScope),
         enrollments: this.repositories.enrollments.forSchool!(this.actor.schoolId),
         students: this.repositories.students.forSchool!(this.actor.schoolId),
       }
@@ -851,6 +868,11 @@ export class AccessPolicies {
     }
   }
 
+  private async selectOverviewScopes<K extends keyof DashboardScopes>(resources: readonly K[]): Promise<Pick<DashboardScopes, K>> {
+    const entries = await Promise.all(resources.map(async resource => [resource, await this.overviewResourceScope(resource)] as const))
+    return Object.fromEntries(entries) as Pick<DashboardScopes, K>
+  }
+
   readonly overview = {
     assertContext: async (input: { academicYearId?: string, academicPeriodId?: string, classGroupIds?: readonly string[] }) => {
       await this.assertSchool(P.WORKSPACE_ACCESS)
@@ -865,9 +887,11 @@ export class AccessPolicies {
       if (input.classGroupIds?.length)
         await this.assertResources(P.CLASS_READ, 'classGroups', input.classGroupIds, 'read')
     },
-    scopes: async (): Promise<DashboardScopes> => {
+    scopes: (): Promise<DashboardScopes> => this.forOperation().selectOverviewScopes(OVERVIEW_RESOURCES),
+    shellScopes: async (input: { classGroupIds?: readonly string[] }) => {
       const access = this.forOperation()
-      return Object.fromEntries(await Promise.all(OVERVIEW_RESOURCES.map(async resource => [resource, await access.overviewResourceScope(resource)]))) as DashboardScopes
+      await access.overview.assertContext(input)
+      return access.selectOverviewScopes(APP_SHELL_RESOURCES)
     },
     repositories: async (): Promise<OverviewRepositories> => {
       const entries = await Promise.all(OVERVIEW_RESOURCES.map(async resource => [resource, this.repositories[resource].forAccess(await this.overviewResourceScope(resource))] as const))

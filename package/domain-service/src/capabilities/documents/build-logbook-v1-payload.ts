@@ -1,4 +1,5 @@
 import type { OccurrenceStatus } from '@edaya/core'
+import { guardianLogbookText } from '../academics/guardian-logbook-text'
 
 export interface LogbookSessionSource {
   id: string
@@ -119,27 +120,6 @@ function normalizeStatus(
     return status
   }
   return undefined
-}
-
-function guardianLogbookText(sessionNote: string | undefined): string | undefined {
-  const value = sessionNote?.trim()
-  if (!value)
-    return undefined
-  if (!value.startsWith('{"edayaLogbook":'))
-    return value
-  try {
-    const decoded = JSON.parse(value) as { edayaLogbook?: { content?: string, objectives?: string[], homework?: string } }
-    const envelope = decoded.edayaLogbook
-    if (!envelope)
-      return value
-    return [envelope.content, ...(envelope.objectives ?? []), envelope.homework]
-      .map(part => part?.trim())
-      .filter((part): part is string => Boolean(part))
-      .join('\n') || undefined
-  }
-  catch {
-    return value
-  }
 }
 
 function hasLogbookContent(input: {

@@ -2,6 +2,27 @@ import { importClientBindings } from "@/lib/school-api/import-client-bindings";
 import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
+import { X_EDAYA_QUERY_KEY, X_EDAYA_QUERY_PUBLIC_NAME, X_EDAYA_REQUEST_SCHEMA, X_EDAYA_RESPONSE_SCHEMA } from "@/lib/school-api/openapi/client-extensions";
+import { conversationCountRoute } from "@/routes/conversation-count.route";
+import { teacherIncidentDetailRoute, teacherIncidentsRoute } from "@/routes/teacher-incidents.route";
+import { teacherLogbookRoute } from "@/routes/teacher-logbook.route";
+import { guardianChildPhotoRoute, guardianPapersRoute } from "@/routes/guardian-child-profile.route";
+import { classReportRosterRoute } from "@/routes/class-report-roster.route";
+import { staffActivityMembersRoute } from "@/routes/staff-activity-members.route";
+import { staffActivityPupilOptionsRoute } from "@/routes/staff-activity-pupil-options.route";
+import { incidentLessonOptionsRoute } from "@/routes/incident-lesson-options.route";
+import { activityListExportRoute, activityListRoute, activityProfileRoute } from "@/routes/staff-activity-list.route";
+import { historyExportRoute, historyRoute } from "@/routes/staff-feedback-history.route";
+import { guardianOccurrenceRoute } from "@/routes/guardian-occurrence.route";
+import { guardianFeesRoute, guardianPaymentRoute, guardianSettlementsRoute } from "@/routes/guardian-payment.route";
+import { attendanceRoute, gradeRoute } from "@/routes/student-history.route";
+import { deliveryRoute, unreadRoute } from "@/routes/delivery-inbox.route";
+import { guardianFeedbackRoute, staffFeedbackRoute, staffOptionsRoute, teacherFeedbackRoute } from "@/routes/family-feedback-lists.route";
+import { choicesRoute, highlightsRoute } from "@/routes/guardian-home.routes";
+import { overviewRoute, subjectRoute } from "@/routes/guardian-period-reads.route";
+import { classRosterMembersRoute, studentDirectoryRoute } from "@/routes/student-directory.route";
+import { portraitGrantsRoute } from "@/routes/student-portrait-grants.route";
+import { dailyAttendanceStatusRoute } from "@/routes/teacher-daily-attendance-status.route";
 import type { ClientBindingsDocument } from "@maya-invest/edaya-api-client/contract";
 import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@maya-invest/edaya-api-client/contract";
 
@@ -233,6 +254,44 @@ const manualClientRoutes: Pick<
   },
 };
 
+const dedicatedQueryRoutes = [
+  teacherLogbookRoute,
+  teacherIncidentsRoute,
+  teacherIncidentDetailRoute,
+  guardianOccurrenceRoute,
+  guardianPaymentRoute,
+  guardianFeesRoute,
+  guardianSettlementsRoute,
+  conversationCountRoute,
+  attendanceRoute,
+  gradeRoute,
+  deliveryRoute,
+  unreadRoute,
+  guardianFeedbackRoute,
+  staffFeedbackRoute,
+  activityListRoute,
+  activityListExportRoute,
+  activityProfileRoute,
+  guardianChildPhotoRoute,
+  guardianPapersRoute,
+  classReportRosterRoute,
+  staffActivityMembersRoute,
+  staffActivityPupilOptionsRoute,
+  incidentLessonOptionsRoute,
+  historyRoute,
+  historyExportRoute,
+  staffOptionsRoute,
+  teacherFeedbackRoute,
+  choicesRoute,
+  highlightsRoute,
+  overviewRoute,
+  subjectRoute,
+  classRosterMembersRoute,
+  studentDirectoryRoute,
+  portraitGrantsRoute,
+  dailyAttendanceStatusRoute,
+] as const;
+
 export function buildClientBindings(): ClientBindingsDocument {
   return {
     entities: Object.fromEntries(
@@ -260,18 +319,19 @@ export function buildClientBindings(): ClientBindingsDocument {
         ];
       }),
     ),
-    queries: Object.fromEntries(
-      coreQueries.map((query) => {
-        return [
-          query.methodName,
-          {
-            publicName: query.publicName,
-            requestSchemaName: getOpenApiSchemaName(query.requestSchema),
-            responseSchemaName: getOpenApiSchemaName(query.responseSchema),
-          },
-        ];
-      }),
-    ),
+    queries: {
+      ...Object.fromEntries(coreQueries.map(query => [query.methodName, {
+        publicName: query.publicName,
+        requestSchemaName: getOpenApiSchemaName(query.requestSchema),
+        responseSchemaName: getOpenApiSchemaName(query.responseSchema),
+      }])),
+      ...Object.fromEntries(dedicatedQueryRoutes.map(route => [route[X_EDAYA_QUERY_KEY], {
+        publicName: route[X_EDAYA_QUERY_PUBLIC_NAME],
+        requestSchemaName: route[X_EDAYA_REQUEST_SCHEMA],
+        responseSchemaName: route[X_EDAYA_RESPONSE_SCHEMA],
+        ...(route.method === "get" ? { getPath: route.path } : {}),
+      }])),
+    },
     ...manualClientRoutes,
   };
 }

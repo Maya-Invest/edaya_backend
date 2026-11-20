@@ -41,6 +41,8 @@ export const teacherCorrectionSchema = z.object({
   revisions: z.array(z.object({ version: z.number().int().nonnegative(), reason: z.string(), before: correctionProposalSchema, proposal: correctionProposalSchema, at: zodDate() })).default([]),
 })
 export type TeacherCorrection = z.infer<typeof teacherCorrectionSchema>
+export const dailyAttendanceStatusInput = z.object({ classGroupId: id, date: z.string().date() })
+
 export const attendanceCallSchema = z.object({
   requestId: id.max(200),
   expectedVersion: z.number().int().nonnegative(),

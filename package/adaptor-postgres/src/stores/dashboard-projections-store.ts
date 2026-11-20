@@ -1,5 +1,5 @@
 /* eslint-disable dot-notation -- SQL result and filter dictionaries have explicit index signatures. */
-import type { AppShellCounts, DashboardClassRiskRow, DashboardProjectionPort, DashboardScopes, DashboardUpcomingItem, GetSchoolOverviewInput, SchoolOverview } from '@edaya/core'
+import type { AppShellCounts, AppShellScopes, DashboardClassRiskRow, DashboardProjectionPort, DashboardScopes, DashboardUpcomingItem, GetSchoolOverviewInput, SchoolOverview } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { sql } from 'drizzle-orm'
@@ -35,12 +35,12 @@ const rate = (present: number, total: number) => total ? Math.round(1000 * prese
 export class PostgresDashboardProjections implements DashboardProjectionPort {
   constructor(private readonly db: Executor) {}
   private executor(): Executor { return transactionContext.getStore() as Executor | undefined ?? this.db }
-  private source(resource: keyof DashboardScopes, scope: DashboardScopes, extra: SQL = sql`true`): SQL {
+  private source<K extends keyof DashboardScopes>(resource: K, scope: Pick<DashboardScopes, K>, extra: SQL = sql`true`): SQL {
     const table = resources[resource]
     return sql`select * from ${table} where ${compileResourceAccess(table, scope[resource])} and ${extra}`
   }
 
-  async appShell(input: { schoolId: string, classGroupIds?: readonly string[] }, scopes: DashboardScopes): Promise<AppShellCounts> {
+  async appShell(input: { schoolId: string, classGroupIds?: readonly string[] }, scopes: AppShellScopes): Promise<AppShellCounts> {
     const ids = [...new Set(input.classGroupIds ?? [])]
     const counts = await this.executor().execute(sql`
       select (select count(*) from (${this.source('students', scopes)}) s) as students,

@@ -1,12 +1,37 @@
-import type { ConversationPlacement, ConversationReadScope } from '@edaya/core'
+import type { ConversationCollectionScope, ConversationPlacement, ConversationReadScope } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
 import { Permission, StudentClassEnrollmentStatus, StudentStatus, TeacherAssignmentStatus } from '@edaya/core'
 import { AuthorizationError } from '../model/errors'
 import { AccessFacts, denied } from './facts'
 
 export class ConversationAccessPolicy {
-  constructor(private readonly access: AccessPolicies) {}
-  private facts() { return new AccessFacts(this.access.actor, this.access.repositories) }
+  constructor(private readonly access: AccessPolicies, private readonly operationFacts?: AccessFacts) {}
+  private facts() { return this.operationFacts ?? new AccessFacts(this.access.actor, this.access.repositories) }
+  forReadOperation() {
+    return new ConversationAccessPolicy(this.access.forOperation(), this.facts())
+  }
+
+  async collectionScope(): Promise<ConversationCollectionScope> {
+    const actor = this.access.actor
+    const facts = this.facts()
+    await facts.validateActor()
+    if (actor.kind !== 'guardian' && actor.kind !== 'teacher' && actor.kind !== 'staff')
+      return denied()
+    const base = { schoolId: actor.schoolId, profileId: actor.actorId }
+    if (actor.kind === 'guardian')
+      return { ...base, profileKind: actor.kind, guardianId: actor.guardianId }
+    if (actor.kind === 'teacher')
+      return { ...base, profileKind: actor.kind, teacherId: actor.teacherId, at: facts.now }
+    if (actor.kind === 'staff' && actor.accountKind === 'human') {
+      const [schoolMessages, teacherMessages] = await Promise.all([
+        this.staffCan(Permission.SCHOOL_MESSAGES_READ),
+        this.staffCan(Permission.TEACHER_MESSAGES_REVIEW),
+      ])
+      return { ...base, profileKind: actor.kind, schoolMessages, teacherMessages }
+    }
+    return denied()
+  }
+
   async staffCan(action: Permission): Promise<boolean> {
     if (this.access.actor.kind !== 'staff' || this.access.actor.accountKind !== 'human')
       return false
@@ -22,12 +47,12 @@ export class ConversationAccessPolicy {
   }
 
   async family(guardianId: string, studentId?: string, facts = this.facts()): Promise<boolean> {
-    const guardian = await facts.repository('guardians').findById(guardianId)
+    const guardian = await facts.find('guardians', guardianId)
     if (!guardian?.hasAccess || !guardian.subjectId)
       return false
     const links = await facts.list('guardianLinks', { guardianId })
     for (const link of links.filter(row => !studentId || row.studentId === studentId)) {
-      const student = await facts.repository('students').findById(link.studentId)
+      const student = await facts.find('students', link.studentId)
       if (student?.status !== StudentStatus.Active)
         continue
       const enrollments = await facts.list('enrollments', { studentId: link.studentId, status: StudentClassEnrollmentStatus.Active })
@@ -40,17 +65,17 @@ export class ConversationAccessPolicy {
   async teaching(row: Pick<ConversationPlacement, 'teacherId' | 'studentId' | 'assignmentIds'>, facts = this.facts()): Promise<boolean> {
     if (!row.teacherId || !row.studentId)
       return false
-    const teacher = await facts.repository('teachers').findById(row.teacherId)
+    const teacher = await facts.find('teachers', row.teacherId)
     if (!teacher?.isActive || !teacher.subjectId)
       return false
     const enrollments = await facts.list('enrollments', { studentId: row.studentId, status: StudentClassEnrollmentStatus.Active })
     for (const assignmentId of row.assignmentIds) {
-      const assignment = await facts.repository('teacherAssignments').findById(assignmentId)
+      const assignment = await facts.find('teacherAssignments', assignmentId)
       if (!assignment || assignment.teacherId !== teacher.id || assignment.status !== TeacherAssignmentStatus.Active
         || (assignment.startsAt && assignment.startsAt > facts.now) || (assignment.endsAt && assignment.endsAt <= facts.now)) {
         continue
       }
-      const subject = assignment.classSubjectId ? await facts.repository('classSubjects').findById(assignment.classSubjectId) : undefined
+      const subject = assignment.classSubjectId ? await facts.find('classSubjects', assignment.classSubjectId) : undefined
       const classId = assignment.classGroupId ?? subject?.classGroupId
       if (classId && enrollments.some(e => e.classGroupId === classId && e.academicYearId === assignment.academicYearId))
         return true
@@ -139,13 +164,13 @@ export class ConversationAccessPolicy {
     await facts.validateActor()
     if (actor.kind !== 'teacher')
       return denied()
-    const student = await facts.repository('students').findById(studentId)
+    const student = await facts.find('students', studentId)
     if (student?.status !== StudentStatus.Active)
       return denied()
     const assignments = await facts.list('teacherAssignments', { teacherId: actor.teacherId, status: TeacherAssignmentStatus.Active })
     const assignmentIds: string[] = []
     for (const assignment of assignments) {
-      const subject = assignment.classSubjectId ? await facts.repository('classSubjects').findById(assignment.classSubjectId) : undefined
+      const subject = assignment.classSubjectId ? await facts.find('classSubjects', assignment.classSubjectId) : undefined
       if ((assignment.classGroupId ?? subject?.classGroupId) !== classGroupId)
         continue
       if (await this.teaching({ teacherId: actor.teacherId, studentId, assignmentIds: [assignment.id] }, facts))
@@ -156,7 +181,7 @@ export class ConversationAccessPolicy {
     const links = await facts.list('guardianLinks', { studentId })
     const guardians = []
     for (const guardianId of new Set(links.map(link => link.guardianId))) {
-      const guardian = await facts.repository('guardians').findById(guardianId)
+      const guardian = await facts.find('guardians', guardianId)
       if (guardian?.hasAccess && guardian.subjectId)
         guardians.push({ id: guardian.id, name: guardian.fullName })
     }
@@ -176,14 +201,14 @@ export class ConversationAccessPolicy {
     for (const a of assignments) {
       if ((a.startsAt && a.startsAt > facts.now) || (a.endsAt && a.endsAt <= facts.now))
         continue
-      const subject = a.classSubjectId ? await facts.repository('classSubjects').findById(a.classSubjectId) : undefined
+      const subject = a.classSubjectId ? await facts.find('classSubjects', a.classSubjectId) : undefined
       const classId = a.classGroupId ?? subject?.classGroupId
       if (!classId || !enrollments.some(e => e.classGroupId === classId && e.academicYearId === a.academicYearId))
         continue
-      const teacher = await facts.repository('teachers').findById(a.teacherId)
+      const teacher = await facts.find('teachers', a.teacherId)
       if (!teacher?.isActive || !teacher.subjectId)
         continue
-      const label = subject ? (await facts.repository('subjects').findById(subject.subjectId))?.name : undefined
+      const label = subject ? (await facts.find('subjects', subject.subjectId))?.name : undefined
       const row = result.get(teacher.id) ?? { id: teacher.id, name: teacher.fullName, subjects: [], assignmentIds: [] }
       row.assignmentIds.push(a.id)
       if (label && !row.subjects.includes(label))

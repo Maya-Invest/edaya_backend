@@ -79,3 +79,11 @@ export type Conversation = z.infer<typeof conversationSchema>
 export type ConversationMessage = z.infer<typeof conversationMessageSchema>
 export type ConversationPlacement = Pick<Conversation, 'id' | 'schoolId' | 'guardianId' | 'destination' | 'teacherId' | 'studentId' | 'assignmentIds'>
 export interface ConversationReadScope { schoolId: string, ids: readonly string[], profileKind: 'guardian' | 'teacher' | 'staff', profileId: string }
+
+/** Collection selectors are produced only after validating the active actor.
+ * Single-thread writes continue to require an explicitly authorized ID. */
+export type ConversationCollectionScope = { schoolId: string, profileId: string } & (
+  | { profileKind: 'staff', schoolMessages: boolean, teacherMessages: boolean }
+  | { profileKind: 'guardian', guardianId: string }
+  | { profileKind: 'teacher', teacherId: string, at: Date }
+)

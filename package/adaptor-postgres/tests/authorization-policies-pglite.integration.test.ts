@@ -4,7 +4,7 @@ import type { PostgresSchoolRepositories } from '../src/postgres-school-reposito
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher, withShortName } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
 import { hashInvitationToken } from '../../domain-service/src/capabilities/invitations/invitation-token'
 import { PostgresAtomicExecution } from '../src/lib/transaction'
@@ -58,6 +58,143 @@ describe('authorization policies against native repository scopes', () => {
       ...extra,
     }))
   }
+
+  test('guardian home and picker restrict both totals and choices to current children', async () => {
+    const family = schoolService(guardian)
+    const input = { studentId: 'student-a', academicYearId: 'year-a', classGroupId: 'class-a', day: '2026-05-01' }
+    const foreignOperation = schoolService(teacher).baseService.access.forOperation()
+    await expect(family.baseService.entities.students.findById('student-a', foreignOperation)).rejects.toThrow(AuthorizationError)
+    const choices = await family.getGuardianChildChoices()
+    expect(choices.school.id).toBe(guardian.schoolId)
+    expect(choices.guardianId).toBe(guardian.guardianId)
+    expect(choices.children.map(row => row.id)).toEqual(['student-a'])
+    const year = await repositories.academicYears.findById(input.academicYearId)
+    expect(choices.years.find(row => row.id === input.academicYearId)).toMatchObject({
+      startDate: year!.startDate.toISOString(),
+      endDate: year!.endDate.toISOString(),
+    })
+    expect(choices.enrollments.map(row => row.classGroupId)).toEqual(['class-a'])
+    const result = await family.getGuardianHighlights(input)
+    expect(result.cards).toMatchObject({ absent: 0, late: 0, surveys: 0, reports: 0, marks: 0 })
+    await db.exec('update assessments set marks_status=\'submitted\' where id=\'assessment-math\'')
+    const visibleMarks = await family.baseService.entities.assessmentResults.list({ studentId: 'student-a' })
+    expect(visibleMarks).toHaveLength(1)
+    expect((await family.getGuardianHighlights(input)).cards.marks).toBe(visibleMarks.length)
+    expect(result.attendance).toEqual({})
+    await expect(family.getGuardianHighlights({ ...input, studentId: 'student-other' })).rejects.toThrow()
+    await expect(family.getGuardianHighlights({ ...input, studentId: 'student-b' })).rejects.toThrow()
+    await expect(schoolService().getGuardianHighlights(input)).rejects.toThrow()
+    await expect(schoolService(teacher).getGuardianChildChoices()).rejects.toThrow()
+    await repositories.guardianLinks.delete('guardian-link')
+    await expect(family.getGuardianHighlights(input)).rejects.toThrow()
+    expect((await family.getGuardianChildChoices()).children).toEqual([])
+  })
+
+  test('directory revalidation skips projection and follows committed writes and current access', async () => {
+    const service = schoolService()
+    await addGrant(Permission.STUDENT_READ)
+    const query = spyOn(repositories.studentDirectory, 'page')
+    try {
+      const initial = await service.revalidateStudentDirectory({})
+      expect(initial.page?.total).toBe(1)
+      expect((await service.revalidateStudentDirectory({}, `W/${initial.etag}`)).page).toBeUndefined()
+      await db.exec('update students set last_name=\'Elsewhere\' where id=\'student-b\'')
+      await db.exec('begin; update students set last_name=\'Undone\' where id=\'student-a\'; rollback;')
+      expect((await service.revalidateStudentDirectory({}, initial.etag)).page).toBeUndefined()
+      expect(query).toHaveBeenCalledTimes(1)
+      await db.exec('update students set last_name=\'Changed\' where id=\'student-a\'')
+      const updated = await service.revalidateStudentDirectory({}, initial.etag)
+      expect(updated.page?.rows[0]?.lastName).toBe('Changed')
+      expect(updated.etag).not.toBe(initial.etag)
+      expect((await service.revalidateStudentDirectory({ q: 'Changed' }, updated.etag)).page).toBeDefined()
+      await db.exec('delete from staff_permission_assignments where staff_id=\'staff-a\'')
+      await expect(service.revalidateStudentDirectory({}, updated.etag)).rejects.toThrow()
+      expect(query).toHaveBeenCalledTimes(3)
+    }
+    finally {
+      query.mockRestore()
+    }
+  })
+
+  test('student directory scopes rows, joins and totals before paging', async () => {
+    const service = schoolService()
+    await expect(service.getStudentDirectory({})).rejects.toThrow()
+    await addGrant(Permission.STUDENT_READ)
+    await db.exec('update students set first_name=\'Étienne_%\' where id=\'student-a\'')
+    const page = await service.getStudentDirectory({ q: '_%', limit: 1, sort: 'name' })
+    expect(page.total).toBe(1)
+    expect(page.rows).toHaveLength(1)
+    expect(page.rows[0]).toMatchObject({ id: 'student-a', firstName: 'Étienne_%', average: null, guardianName: null, attendance: null })
+    expect(await service.getStudentDirectory({ offset: 5 })).toMatchObject({ total: 1, rows: [] })
+    expect(await service.getStudentDirectory({ q: 'other' })).toMatchObject({ total: 0, rows: [] })
+    await expect(service.getStudentDirectory({ sort: 'average' })).rejects.toThrow()
+    await expect(schoolService(guardian).getStudentDirectory({})).rejects.toThrow()
+    await addGrant(Permission.ENROLLMENT_READ)
+    expect((await service.getStudentDirectory({ classGroupId: 'class-a' })).rows[0]?.classId).toBe('class-a')
+    expect((await service.getStudentDirectory({ classGroupId: 'class-b' })).total).toBe(0)
+    await addGrant(Permission.GRADE_READ)
+    expect((await service.getStudentDirectory({ sort: 'average' })).rows[0]?.average).toBe(11)
+  })
+
+  test('class roster pages and export use the same scoped active membership and literal name search', async () => {
+    const service = schoolService()
+    const input = { classGroupId: 'class-a', view: 'class-roster' as const }
+    await expect(service.getClassRosterMemberIds(input)).rejects.toThrow()
+    await addGrant(Permission.STUDENT_READ)
+    await addGrant(Permission.ENROLLMENT_READ)
+    await expect(service.getStudentDirectory({ view: 'class-roster' })).rejects.toThrow()
+    await db.exec(`update students set first_name='A_%' where id='student-a';
+      insert into students(id, identifier, school_id, first_name, last_name, status, created_at)
+        select 'extra-' || lpad(i::text, 2, '0'), 'EXTRA-' || i, 'school-a', 'Extra', i::text, 'active', now() from generate_series(1,60) i;
+      insert into student_class_enrollments(id, student_id, class_group_id, academic_year_id, enrollment_index, status, enrolled_at, created_at)
+        select 'extra-enrollment-' || (61-i), 'extra-' || lpad(i::text, 2, '0'), 'class-a', 'year-a', 1, 'active', '2026-01-01', now() from generate_series(1,60) i`)
+    const members = (await service.getClassRosterMemberIds(input)).studentIds
+    const pages = []
+    for (const offset of [0, 30, 60])
+      pages.push(await service.getStudentDirectory({ ...input, offset, limit: 30 }))
+    expect(pages.map(p => [p.total, p.rows.length])).toEqual([[61, 30], [61, 30], [61, 1]])
+    expect(pages.flatMap(p => p.rows.map(r => r.id))).toEqual(members)
+    expect(new Set(members).size).toBe(61)
+    expect(await service.getClassRosterMemberIds({ ...input, q: '_%' })).toEqual({ studentIds: ['student-a'] })
+    expect(await service.getClassRosterMemberIds({ ...input, q: 'STUDENT-A' })).toEqual({ studentIds: [] })
+    expect(await service.getClassRosterMemberIds({ ...input, q: ' A_%' })).toEqual({ studentIds: [] })
+    expect((await service.getStudentDirectory({ q: ' STUDENT-A ' })).total).toBe(1)
+    expect(await service.getClassRosterMemberIds({ ...input, status: 'inactive' })).toEqual({ studentIds: [] })
+    expect(await service.getClassRosterMemberIds({ classGroupId: 'class-b' })).toEqual({ studentIds: [] })
+    expect((await service.getStudentDirectory({ ...input, q: '_%' })).rows[0]?.average).toBeNull()
+    await addGrant(Permission.GRADE_READ)
+    expect((await service.getStudentDirectory({ ...input, q: '_%' })).rows[0]?.average).toBe(0)
+    expect((await service.getStudentDirectory({ ...input, q: '_%', periodId: 'period-a' })).rows[0]?.average).toBe(11)
+    const school = await service.revalidateStudentDirectory({ classGroupId: input.classGroupId })
+    expect((await service.revalidateStudentDirectory(input, school.etag)).page).toBeDefined()
+    await repositories.enrollments.delete('extra-enrollment-1')
+    expect((await service.getClassRosterMemberIds(input)).studentIds).toHaveLength(60)
+    await db.exec('delete from staff_permission_assignments where staff_id=\'staff-a\'')
+    await expect(service.getClassRosterMemberIds(input)).rejects.toThrow()
+    await expect(schoolService(guardian).getClassRosterMemberIds(input)).rejects.toThrow()
+  })
+
+  test('directory grouped sorts preserve permitted order, weighting, nulls and page ties', async () => {
+    for (const permission of [Permission.STUDENT_READ, Permission.CLASS_READ, Permission.ENROLLMENT_READ, Permission.GRADE_READ, Permission.ATTENDANCE_READ]) {
+      await addGrant(permission, 'class-a')
+      await addGrant(permission, 'class-other')
+    }
+    const service = schoolService()
+    await db.exec(`update students set first_name = case id when 'student-a' then 'Émile' else 'Zoé' end where school_id='school-a';
+      update class_groups set name = case id when 'class-a' then 'Zulu' else 'École' end where id in ('class-a','class-other');
+      update assessments set coefficient=2, max_score=10 where id='assessment-math'`)
+    const names = await service.getStudentDirectory({ sort: 'name' })
+    expect(names.rows.map(row => row.id)).toEqual(['student-a', 'student-other'])
+    const classes = await service.getStudentDirectory({ sort: 'class' })
+    expect(classes.rows.map(row => row.classId)).toEqual(['class-other', 'class-a'])
+    const marks = await service.getStudentDirectory({ sort: 'average', sortDir: 'desc' })
+    expect(marks.rows.map(row => [row.id, row.average])).toEqual([['student-a', 17.33], ['student-other', 14]])
+    expect((await service.getStudentDirectory({ sort: 'average', periodId: 'period-b' })).rows.map(row => row.average)).toEqual([0, 0])
+    const attendance = await service.getStudentDirectory({ sort: 'attendance', offset: 1, limit: 1 })
+    expect(attendance).toMatchObject({ total: 2, rows: [{ id: 'student-other', attendance: null }] })
+    await repositories.staffPermissionAssignments.delete(`${Permission.STUDENT_READ}-class-other`)
+    expect((await service.getStudentDirectory({ sort: 'average' })).rows.map(row => row.id)).toEqual(['student-a'])
+  })
 
   test('many selected classes support dashboard and roster reads without expanding every relationship tree', async () => {
     const classIds = ['class-a', 'class-other']
@@ -149,6 +286,40 @@ describe('authorization policies against native repository scopes', () => {
     expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([{ assessmentId: 'assessment-math', rosterCount: 1, results: [] }])
     await repositories.staffPermissionAssignments.delete(`${Permission.GRADE_READ}-math`)
     expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([])
+  })
+
+  test('staff pupil histories scope summaries, labels, continuations and direct links independently', async () => {
+    await addGrant(Permission.STUDENT_READ)
+    await addGrant(Permission.GRADE_READ, 'math', { scopes: [{ kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math' }] })
+    await addGrant(Permission.ASSESSMENT_READ)
+    await addGrant(Permission.ATTENDANCE_READ)
+    await db.exec(`
+      update subjects set name='Restricted catalogue label' where id='math';
+      insert into assessments select (jsonb_populate_record(null::assessments,to_jsonb(a)||'{"id":"exam-second"}')).*
+        from assessments a where a.id='assessment-math';
+      insert into assessment_results(id,student_id,assessment_id,score,created_at) values ('second','student-a','exam-second',0,now());
+      insert into attendance_records(id,student_id,assessment_id,date,status,justification_status,created_at,updated_at)
+        values ('owned','student-a','assessment-math','2026-05-01','present','none',now(),now()),
+               ('elsewhere','student-other','assessment-other','2026-05-01','absent','none',now(),now());
+    `)
+    const service = schoolService()
+    const input = { studentId: 'student-a', limit: 1 }
+    const grade = await service.getStudentGradeHistory(input)
+    expect(grade).toMatchObject({ total: 2, graded: 2, average: 5 })
+    expect(grade.subjects.map(group => group.subject)).toEqual(['Math'])
+    expect(grade.items[0]!.id).toBe('second')
+    const next = await service.getStudentGradeHistory({ ...input, cursor: grade.nextCursor! })
+    expect(next.items.map(row => row.id)).toEqual(['1-math'])
+    const attendance = await service.getStudentAttendanceHistory(input)
+    expect(attendance).toMatchObject({ present: 1, absent: 0, late: 0 })
+    expect(attendance.items.map(row => row.label)).toEqual(['Math'])
+    for (const studentId of ['student-other', 'student-b', 'missing']) {
+      await expect(service.getStudentGradeHistory({ studentId })).rejects.toThrow()
+      await expect(service.getStudentAttendanceHistory({ studentId })).rejects.toThrow()
+    }
+    await repositories.staffPermissionAssignments.delete(`${Permission.GRADE_READ}-math`)
+    await expect(service.getStudentGradeHistory({ ...input, cursor: grade.nextCursor! })).rejects.toThrow()
+    expect((await service.getStudentAttendanceHistory(input)).present).toBe(1)
   })
 
   test('assessment setup and mark entry remain independent business actions', async () => {

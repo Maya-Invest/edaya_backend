@@ -6,13 +6,13 @@ import { sql } from 'drizzle-orm'
 export const transactionContext = new AsyncLocalStorage<unknown>()
 
 export interface PostgresTransactionalDb {
-  transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown>
+  transaction: (fn: (tx: unknown) => Promise<unknown>, config?: { isolationLevel: 'repeatable read', accessMode: 'read only' }) => Promise<unknown>
 }
 
 export class PostgresAtomicExecution implements AtomicExecutionPort {
   constructor(private readonly db: PostgresTransactionalDb) {}
 
-  async execute<T>(operation: () => Promise<T>, options?: { lockKeys?: readonly string[] }): Promise<T> {
+  async execute<T>(operation: () => Promise<T>, options?: { lockKeys?: readonly string[], readSnapshot?: boolean }): Promise<T> {
     const run = async (tx: unknown) => {
       // Stable ordering and transaction-scoped locks work across API instances.
       // Hash collisions only serialize unrelated operations; they cannot bypass a lock.
@@ -31,6 +31,6 @@ export class PostgresAtomicExecution implements AtomicExecutionPort {
       return await transactionContext.run(tx, async () => {
         return await run(tx)
       })
-    }) as T
+    }, options?.readSnapshot ? { isolationLevel: 'repeatable read', accessMode: 'read only' } : undefined) as T
   }
 }

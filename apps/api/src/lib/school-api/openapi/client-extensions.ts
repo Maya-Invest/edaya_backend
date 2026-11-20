@@ -89,8 +89,8 @@ export function commandRouteOperation(
 }
 
 export function queryRouteOperation(
-  query: Pick<CoreQueryConfig, "methodName" | "publicName" | "requestSchema" | "responseSchema">,
-): Record<string, unknown> {
+  query: Pick<CoreQueryConfig, "publicName" | "requestSchema" | "responseSchema"> & { methodName: string },
+) {
   return {
     operationId: `queries.${query.methodName}`,
     [X_EDAYA_KIND]: "query",
