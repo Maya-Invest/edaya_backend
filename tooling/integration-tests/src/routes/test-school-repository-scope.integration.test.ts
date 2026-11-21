@@ -2,9 +2,9 @@ import type { BaseRepositoryInterface } from '@edaya/core'
 import { Subject, SubjectCategoryEntity, SubjectMatter, withShortName } from '@edaya/core'
 import { CORE_ENTITY_KEYS } from '@edaya/service'
 import { expect, it } from 'bun:test'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithStaffSchool } from '../support/seeded-route-test-context'
 
-describeWithLightSchool('trusted school repository scope', (getContext) => {
+describeWithStaffSchool('trusted school repository scope', (getContext) => {
   it('provides a working SQL scope for every managed entity, including custom stores', async () => {
     const { application } = getContext()
     const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
@@ -94,4 +94,4 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     expect(await scoped.count({ $and: [{ schoolId: school.id }, { id: 'other-school' }] })).toBe(0)
     expect(await scoped.findById('other-school')).toBeUndefined()
   })
-}, { isolate: true })
+})

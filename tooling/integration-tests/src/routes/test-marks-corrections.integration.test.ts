@@ -4,9 +4,9 @@ import { DEV_AUTH_STAFF_ACCOUNTS, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@eday
 import { createSchoolClient } from '@maya-invest/edaya-api-client'
 import { expect, it } from 'bun:test'
 import { createInProcessTransport } from '../support/in-process-school-client'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithStaffSchool } from '../support/seeded-route-test-context'
 
-describeWithLightSchool('submitted marks correction HTTP contract', (getContext) => {
+describeWithStaffSchool('submitted marks correction HTTP contract', (getContext) => {
   it('submits, proposes, independently reviews, and serializes official marks through the generated client', async () => {
     const { application, app, authHeaders } = getContext()
     const repositories = application.repositories
@@ -45,4 +45,4 @@ describeWithLightSchool('submitted marks correction HTTP contract', (getContext)
     expect(typeof approved.decidedAt).toBe('string')
     expect(await editor.entities.assessmentResults.get('correction-route-result')).toMatchObject({ score: 85, revision: 2, notes: 'Verified total' })
   })
-}, { isolate: true })
+})

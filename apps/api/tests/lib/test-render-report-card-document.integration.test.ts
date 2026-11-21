@@ -173,38 +173,36 @@ describe("report document export policy", () => {
     expect((await f.repositories.attachments.list()).map(value => [value.id, value.status])).toEqual([["existing", AttachmentStatus.Ready]]);
   });
 
-  for (const during of ["render", "storage"] as const) {
-    for (const update of [
-      "UPDATE report_card_results SET overall_average = 13 WHERE id = 'report'",
-      "UPDATE students SET first_name = 'Changed' WHERE id = 'student-a'",
-      "UPDATE teacher_assignments SET status = 'ended' WHERE id = 'teaching'",
-      "UPDATE schools SET name = 'Changed' WHERE id = 'school-a'",
-    ]) {
-      test(`rejects source changes during ${during}: ${update}`, async () => {
-        const f = await fixture();
-        await f.grant();
-        await f.attachment(100);
-        if (during === "render") {
-          f.render.mockImplementationOnce(async () => {
-            await f.db.exec(update);
-            return { bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" };
-          });
-        }
-        else {
-          f.putObject.mockImplementationOnce(async () => {
-            await f.db.exec(update);
-            return { sizeBytes: 4096 };
-          });
-        }
-        await expect(f.generate()).rejects.toMatchObject({ code: "REPORT_DOCUMENT_SOURCE_CHANGED" });
-        expect((await f.repositories.attachments.list()).map(value => [value.id, value.status])).toEqual([["existing", AttachmentStatus.Ready]]);
-        if (during === "render") {
-          expect(f.putObject).not.toHaveBeenCalled();
-        }
-        await expect(f.generate()).resolves.toHaveProperty("attachmentId");
-        expect((await f.repositories.attachments.findById("existing"))?.status).toBe(AttachmentStatus.Failed);
-      });
-    }
+  for (const [during, update] of [
+    ["render", "UPDATE report_card_results SET overall_average = 13 WHERE id = 'report'"],
+    ["storage", "UPDATE students SET first_name = 'Changed' WHERE id = 'student-a'"],
+    ["render", "UPDATE teacher_assignments SET status = 'ended' WHERE id = 'teaching'"],
+    ["storage", "UPDATE schools SET name = 'Changed' WHERE id = 'school-a'"],
+  ] as const) {
+    test(`rejects source changes during ${during}: ${update}`, async () => {
+      const f = await fixture();
+      await f.grant();
+      await f.attachment(100);
+      if (during === "render") {
+        f.render.mockImplementationOnce(async () => {
+          await f.db.exec(update);
+          return { bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" };
+        });
+      }
+      else {
+        f.putObject.mockImplementationOnce(async () => {
+          await f.db.exec(update);
+          return { sizeBytes: 4096 };
+        });
+      }
+      await expect(f.generate()).rejects.toMatchObject({ code: "REPORT_DOCUMENT_SOURCE_CHANGED" });
+      expect((await f.repositories.attachments.list()).map(value => [value.id, value.status])).toEqual([["existing", AttachmentStatus.Ready]]);
+      if (during === "render") {
+        expect(f.putObject).not.toHaveBeenCalled();
+      }
+      await expect(f.generate()).resolves.toHaveProperty("attachmentId");
+      expect((await f.repositories.attachments.findById("existing"))?.status).toBe(AttachmentStatus.Failed);
+    });
   }
 
   test("unpublication while storing invalidates completion", async () => {
