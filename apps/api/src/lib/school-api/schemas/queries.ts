@@ -632,8 +632,12 @@ export const assessmentMarksReviewsResponseSchema = z.object({
 export const getAssessmentEditorContextQuerySchema = z.object({ classGroupId: z.string().min(1), periodId: z.string().min(1) }).openapi("GetAssessmentEditorContextQuery");
 export const assessmentEditorContextResponseSchema = z.object({ assessmentsRaw: z.array(assessmentResponseSchema), classSubjectsRaw: z.array(classSubjectResponseSchema), subjectsRaw: z.array(subjectResponseSchema), classSize: z.number().int().nonnegative(), markResults: z.array(z.object({ assessmentId: z.string(), rosterCount: z.number().int().nonnegative(), results: z.array(assessmentResultResponseSchema) })) }).openapi("AssessmentEditorContextResponse");
 
-export const getActivityRosterQuerySchema = z.object({ activityId: z.string().min(1) }).openapi("GetActivityRosterQuery");
+export const getActivityRosterQuerySchema = z.object({ activityId: z.string().min(1), includeMemberships: z.boolean().optional() }).openapi("GetActivityRosterQuery");
 export const activityRosterResponseSchema = z.object({
+  membership: z.object({
+    enrollments: z.array(z.object({ id: z.string(), studentId: z.string(), status: z.enum(["approved", "denied", "pending"]) })),
+    linkedClassIds: z.array(z.string()),
+  }).optional(),
   students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), identifier: z.string().optional(), classGroupId: z.string().optional() })),
   eligibleStudentIds: z.array(z.string()),
   classes: z.array(z.object({ id: z.string(), name: z.string() })),

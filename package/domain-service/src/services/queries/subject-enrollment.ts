@@ -1,9 +1,12 @@
+import type { AccessPolicies } from '@edaya/authorization'
+import type { StudentClassEnrollment, StudentSubjectEnrollment } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import type { TimetableEvent } from './timetable'
 import { denyResourceAccess } from '@edaya/authorization'
 import { assessmentDate } from '../../capabilities/academics/marks-state'
-import { loadInBatches } from '../../capabilities/shared/bounded-reads'
+import { groupByKey, loadInBatches } from '../../capabilities/shared/bounded-reads'
 import { schoolDayStart } from '../../capabilities/subject-enrollment/dates'
-import { loadParticipation, placementEffectiveAt, subjectRoster } from '../../capabilities/subject-enrollment/participation'
+import { placementEffectiveAt, subjectRoster } from '../../capabilities/subject-enrollment/participation'
 import { buildClassGroupTimetable } from './timetable'
 
 export async function getStudentSubjectEnrollments(base: BaseSchoolService, input: { studentId: string, academicYearId?: string }) {
@@ -45,8 +48,8 @@ export async function getClassSubjectRoster(base: BaseSchoolService, input: { cl
   return { classSubjectId: offering.id, at: input.at, revision: offering.participationRevision, count: students.length, basis: 'current_selection' as const, periods, students: students.map(row => ({ id: row.id, firstName: row.firstName, lastName: row.lastName })), enrollments: rows.filter(row => row.effectiveAt(input.at)).map(row => row.data) }
 }
 
-export async function getStudentTimetable(base: BaseSchoolService, input: { studentId: string, startDate: Date, endDate: Date }, includeUnrecordedHistory = false) {
-  const eventRepositories = await base.access.timetable.studentEventRepositories(input.studentId)
+export async function getStudentTimetable(base: BaseSchoolService, input: { studentId: string, startDate: Date, endDate: Date }, includeUnrecordedHistory = false, authorizedEvents?: Awaited<ReturnType<AccessPolicies['timetable']['studentEventRepositories']>>) {
+  const eventRepositories = authorizedEvents ?? await base.access.timetable.studentEventRepositories(input.studentId)
   const student = await base.repositories.students.findById(input.studentId)
   if (!student)
     denyResourceAccess()
@@ -55,42 +58,71 @@ export async function getStudentTimetable(base: BaseSchoolService, input: { stud
   const rangeEnd = schoolDayStart(input.endDate, school?.timeZone ?? 'UTC', 1)
   const placements = eventRepositories.placements
   const groups = [...new Set(placements.filter(row => row.enrolledAt < rangeEnd && (!row.endedAt || row.endedAt > rangeStart)).map(row => row.classGroupId))]
-  const context = await loadParticipation(base.repositories, groups)
   const timetables = await Promise.all(groups.map(classGroupId => buildClassGroupTimetable(eventRepositories, { startDate: rangeStart, endDate: new Date(rangeEnd.getTime() - 1), classGroupId })))
   const candidates = timetables.flatMap(t => t.events).filter(event => event.startsAt >= rangeStart && event.startsAt < rangeEnd)
-  const assessments = await loadInBatches(candidates.filter(event => event.kind === 'assessment').map(event => event.id), ids => base.repositories.assessments.findByIds(ids))
-  const sessions = new Map((await loadInBatches(assessments.flatMap(row => row.lessonSessionId ? [row.lessonSessionId] : []), ids => base.repositories.lessonSessions.findByIds(ids))).map(row => [row.id, row]))
-  const assessmentDates = new Map(await Promise.all(assessments.map(async row => [row.id, await assessmentDate(row, { lessonSessions: { findById: async id => sessions.get(id) } })] as const)))
-  const now = new Date()
-  const past = candidates.filter(event => event.startsAt < now)
-  const [attendance, marks, calls, linkedAssessments] = await Promise.all([
-    base.repositories.attendance.list({ studentId: student.id }),
-    base.repositories.assessmentResults.list({ studentId: student.id }),
-    Promise.all(past.filter(event => event.kind === 'lesson').map(async event => [event.id, await base.repositories.teacherCorrections.state(student.schoolId, 'attendance', `lesson:${event.id}`)] as const)),
-    loadInBatches(past.filter(event => event.kind === 'lesson').map(event => event.id), ids => base.repositories.assessments.list({ lessonSessionId: { $in: ids } })),
-  ])
-  const savedLessons = new Set(attendance.flatMap(row => row.lessonSessionId ? [row.lessonSessionId] : []))
-  for (const [id, call] of calls) {
-    const { entries: savedEntries = [], rosterStudentIds = [] } = call?.payload ?? {}
-    const entries = savedEntries as Array<{ studentId: string }>
-    const roster = rosterStudentIds as string[]
-    if (entries.some(row => row.studentId === student.id) || (call?.locked && roster.includes(student.id)))
-      savedLessons.add(id)
+  const events = await filterStudentTimetableEvents(base, student.id, placements, candidates, includeUnrecordedHistory)
+  events.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
+  return { studentId: student.id, startDate: input.startDate.toISOString().slice(0, 10), endDate: input.endDate.toISOString().slice(0, 10), events }
+}
+
+export async function filterStudentTimetableEvents(
+  base: BaseSchoolService,
+  studentId: string,
+  placements: StudentClassEnrollment[],
+  candidates: TimetableEvent[],
+  includeUnrecordedHistory: boolean,
+  now = new Date(),
+) {
+  const past = candidates.filter(event => event.startsAt < now && event.classSubjectId)
+  const pastLessonIds = past.filter(event => event.kind === 'lesson').map(event => event.id)
+  const placementById = new Map(placements.map(row => [row.id, row]))
+  const needsParticipation = candidates.some(event => event.classSubjectId && (includeUnrecordedHistory || event.startsAt >= now))
+  const only = candidates.length === 1 ? candidates[0] : undefined
+  const selectionRead = loadInBatches(needsParticipation ? [...placementById.keys()] : [], ids => base.repositories.subjectEnrollments.list({
+    studentClassEnrollmentId: { $in: ids },
+    ...(only?.classSubjectId ? { classSubjectId: only.classSubjectId } : {}),
+  }))
+  function effective(row: StudentSubjectEnrollment, at: Date) {
+    const placement = placementById.get(row.studentClassEnrollmentId)
+    return placement !== undefined && placementEffectiveAt(placement, at) && row.effectiveAt(at)
   }
-  const savedAssessments = new Set([...marks.map(row => row.assessmentId), ...attendance.flatMap(row => row.assessmentId ? [row.assessmentId] : []), ...[...assessments, ...linkedAssessments].filter(row => row.marksStatus !== 'draft' && row.marksReview.rosterStudentIds.includes(student.id)).map(row => row.id)])
+  // A lesson already proved by selection needs no separate saved-register or marks evidence.
+  if (only?.kind === 'lesson' && includeUnrecordedHistory && only.classSubjectId && (await selectionRead).some(row => effective(row, only.startsAt)))
+    return candidates
+  const [assessments, linkedAssessments, enrollments, lessonRecords, callStates] = await Promise.all([
+    loadInBatches(candidates.filter(event => event.kind === 'assessment').map(event => event.id), ids => base.repositories.assessments.findByIds(ids)),
+    loadInBatches(pastLessonIds, ids => base.repositories.assessments.list({ lessonSessionId: { $in: ids } })),
+    selectionRead,
+    loadInBatches(pastLessonIds, ids => base.repositories.attendance.list({ studentId, lessonSessionId: { $in: ids } })),
+    loadInBatches(pastLessonIds, ids => base.repositories.teacherCorrections.attendanceLessonStates(base.actor.schoolId, ids, studentId)),
+  ])
+  const pastAssessmentIds = new Set(past.filter(event => event.kind === 'assessment').map(event => event.id))
+  const evidenceAssessments = [...assessments.filter(row => pastAssessmentIds.has(row.id)), ...linkedAssessments]
+  const evidenceIds = evidenceAssessments.map(row => row.id)
+  const [sessions, marks, assessmentRecords] = await Promise.all([
+    loadInBatches(assessments.flatMap(row => row.lessonSessionId ? [row.lessonSessionId] : []), ids => base.repositories.lessonSessions.findByIds(ids)),
+    loadInBatches(evidenceIds, ids => base.repositories.assessmentResults.list({ studentId, assessmentId: { $in: ids } })),
+    loadInBatches(evidenceIds, ids => base.repositories.attendance.list({ studentId, assessmentId: { $in: ids } })),
+  ])
+  const sessionsById = new Map(sessions.map(row => [row.id, row]))
+  const assessmentDates = new Map(await Promise.all(assessments.map(async row => [row.id, await assessmentDate(row, { lessonSessions: { findById: async id => sessionsById.get(id) } })] as const)))
+  const savedLessons = new Set([...lessonRecords.flatMap(row => row.lessonSessionId ? [row.lessonSessionId] : []), ...callStates.filter(row => row.includesStudent).map(row => row.lessonId)])
+  const savedAssessments = new Set([...marks.map(row => row.assessmentId), ...assessmentRecords.map(row => row.assessmentId), ...evidenceAssessments.filter(row => row.marksStatus !== 'draft' && row.marksReview.rosterStudentIds.includes(studentId)).map(row => row.id)])
   for (const assessment of linkedAssessments) {
     if (assessment.lessonSessionId && savedAssessments.has(assessment.id))
       savedLessons.add(assessment.lessonSessionId)
   }
-  const events = candidates.filter((event) => {
+  const byOffering = groupByKey(enrollments, row => row.classSubjectId)
+  function participates(offeringId: string, at: Date): boolean {
+    return (byOffering.get(offeringId) ?? []).some(row => effective(row, at))
+  }
+  return candidates.filter((event) => {
     if (!event.classSubjectId)
       return placements.some(row => row.classGroupId === event.classGroupId && placementEffectiveAt(row, event.startsAt))
     if (event.startsAt < now) {
       const saved = event.kind === 'assessment' ? savedAssessments.has(event.id) : savedLessons.has(event.id)
-      return saved || (includeUnrecordedHistory && subjectRoster(context, event.classSubjectId, assessmentDates.get(event.id) ?? event.startsAt).includes(student.id))
+      return saved || (includeUnrecordedHistory && participates(event.classSubjectId, assessmentDates.get(event.id) ?? event.startsAt))
     }
-    return subjectRoster(context, event.classSubjectId, assessmentDates.get(event.id) ?? event.startsAt).includes(student.id)
+    return participates(event.classSubjectId, assessmentDates.get(event.id) ?? event.startsAt)
   })
-  events.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
-  return { studentId: student.id, startDate: input.startDate.toISOString().slice(0, 10), endDate: input.endDate.toISOString().slice(0, 10), events }
 }

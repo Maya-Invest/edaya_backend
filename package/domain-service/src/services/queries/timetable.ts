@@ -1,4 +1,4 @@
-import type { ActivitySession, Assessment, LessonSession, OccurrenceStatus } from '@edaya/core'
+import type { ActivitySession, Assessment, Filter, LessonSession, OccurrenceStatus } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { effectiveAt } from '@edaya/authorization'
 import { AssessmentKind, normalizeDate, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
@@ -59,18 +59,22 @@ export async function buildClassGroupTimetable(
   const rangeStart = normalizeDate(input.startDate)
   const rangeEnd = endOfUtcDay(normalizeDate(input.endDate))
 
+  const lessons = repositories.lessonSessions.list({
+    classGroupId: input.classGroupId,
+    startsAt: { $gte: rangeStart, $lte: rangeEnd },
+    $orderBy: [{ field: 'startsAt', direction: 'asc' }],
+  })
   const [lessonSessions, activitySessions, assessments] = await Promise.all([
-    repositories.lessonSessions.list({
-      classGroupId: input.classGroupId,
-      startsAt: { $gte: rangeStart, $lte: rangeEnd },
-      $orderBy: [{ field: 'startsAt', direction: 'asc' }],
-    }),
+    lessons,
     repositories.activitySessions.list({
       classGroupId: input.classGroupId,
       startsAt: { $gte: rangeStart, $lte: rangeEnd },
       $orderBy: [{ field: 'startsAt', direction: 'asc' }],
     }),
-    repositories.assessments.list({ classGroupId: input.classGroupId }),
+    lessons.then(sessions => repositories.assessments.list({
+      classGroupId: input.classGroupId,
+      ...timetableAssessmentWindow(rangeStart, rangeEnd, sessions),
+    })),
   ])
 
   const lessonSessionById = new Map(lessonSessions.map(session => [session.id, session]))
@@ -123,7 +127,10 @@ export async function buildTeacherTimetable(
   )
 
   const assessments = activeSubjectClassIds.size > 0
-    ? await repositories.assessments.list({ classSubjectId: { $in: [...activeSubjectClassIds] } })
+    ? await repositories.assessments.list({
+        classSubjectId: { $in: [...activeSubjectClassIds] },
+        ...timetableAssessmentWindow(rangeStart, rangeEnd, lessonSessions),
+      })
     : []
 
   const lessonSessionById = new Map(lessonSessions.map(session => [session.id, session]))
@@ -156,7 +163,7 @@ export async function buildTeacherTimetable(
   }
 }
 
-function lessonEventFromSession(session: LessonSession): TimetableEvent {
+export function lessonEventFromSession(session: LessonSession): TimetableEvent {
   return {
     kind: 'lesson',
     id: session.id,
@@ -171,7 +178,7 @@ function lessonEventFromSession(session: LessonSession): TimetableEvent {
   }
 }
 
-function activityEventFromSession(session: ActivitySession): TimetableEvent {
+export function activityEventFromSession(session: ActivitySession): TimetableEvent {
   return {
     kind: 'activity',
     id: session.id,
@@ -185,7 +192,21 @@ function activityEventFromSession(session: ActivitySession): TimetableEvent {
   }
 }
 
-function isInClassTimetableAssessment(assessment: Assessment): boolean {
+function timetableAssessmentWindow(start: Date, end: Date, lessons: LessonSession[]): Filter<Assessment> {
+  const explicitDates: Filter<Assessment> = { startsAt: { $lt: end }, endsAt: { $gt: start } }
+  // Explicit assessment dates take precedence even if its linked lesson moved.
+  const anchor: Filter<Assessment> = {
+    lessonSessionId: { $in: lessons.map(lesson => lesson.id) },
+    $or: [{ startsAt: { $exists: false } }, { endsAt: { $exists: false } }],
+  }
+  return {
+    kind: { $ne: AssessmentKind.Homework },
+    dueAt: { $exists: false },
+    $or: lessons.length ? [explicitDates, anchor] : [explicitDates],
+  }
+}
+
+export function isInClassTimetableAssessment(assessment: Assessment): boolean {
   if (assessment.kind === AssessmentKind.Homework || assessment.dueAt) {
     return false
   }
@@ -201,23 +222,18 @@ function timetableEventsFromAssessment(
   rangeStart: Date,
   rangeEnd: Date,
 ): TimetableEvent[] {
-  if (assessment.startsAt && assessment.endsAt) {
-    if (!occurrenceOverlapsRange(assessment.startsAt, assessment.endsAt, rangeStart, rangeEnd)) {
-      return []
-    }
-    return [assessmentEvent(assessment, assessment.startsAt, assessment.endsAt)]
-  }
+  const event = selectedAssessmentEvent(assessment, assessment.lessonSessionId ? lessonSessionById.get(assessment.lessonSessionId) : undefined)
+  return event && occurrenceOverlapsRange(event.startsAt, event.endsAt, rangeStart, rangeEnd) ? [event] : []
+}
 
-  if (assessment.lessonSessionId) {
-    const lessonSession = lessonSessionById.get(assessment.lessonSessionId)
-      ?? undefined
-    if (!lessonSession || !occurrenceOverlapsRange(lessonSession.startsAt, lessonSession.endsAt, rangeStart, rangeEnd)) {
-      return []
-    }
-    return [assessmentEvent(assessment, lessonSession.startsAt, lessonSession.endsAt, assessment.lessonSessionId)]
-  }
-
-  return []
+export function selectedAssessmentEvent(assessment: Assessment, lesson?: LessonSession): TimetableEvent | undefined {
+  if (!isInClassTimetableAssessment(assessment))
+    return undefined
+  if (assessment.startsAt && assessment.endsAt)
+    return assessmentEvent(assessment, assessment.startsAt, assessment.endsAt)
+  if (lesson && lesson.id === assessment.lessonSessionId && lesson.classGroupId === assessment.classGroupId)
+    return assessmentEvent(assessment, lesson.startsAt, lesson.endsAt, lesson.id)
+  return undefined
 }
 
 function assessmentEvent(

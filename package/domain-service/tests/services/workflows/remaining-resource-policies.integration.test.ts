@@ -160,6 +160,161 @@ describe('remaining resource policies against native SQL and transactions', () =
     }
   })
 
+  test('teacher logbook pages visible notes and chapters in the current offering', async () => {
+    const app = service(teacher)
+    const query = { classGroupId: 'class-a', classSubjectId: 'math-a', view: 'recorded' as const }
+    expect(await app.getTeacherLogbook(query)).toEqual({ items: [], nextCursor: null })
+    await fixture.db.exec(`
+      insert into lesson_sessions(id, school_id, class_group_id, class_subject_id, status, is_exception, starts_at, ends_at, calendar_date, display_label, session_note, created_at)
+      select 's'||lpad(i::text,2,'0'), 'school-a','class-a','math-a','completed',false,
+        timestamp '2026-01-01 09:00:00' + (i/2)*interval '1 microsecond',now(),now(),'Lesson '||i,
+        case when i=0 then null when i=1 then '{"edayaLogbook":{"content":""}}' when i<5 then E' \t' else 'Plain note' end,now() from generate_series(0,34) i;
+      insert into class_subject_matters(id,class_subject_id,subject_matter_id,updated_at) values ('chapter-a','math-a','a',now()),('chapter-b','math-other','b',now());
+      insert into class_subject_progress(id,lesson_session_id,class_subject_matter_id,completed,recorded_at) values
+        ('chapter-only','s00','chapter-a',false,now()),('mismatched-offering','s02','chapter-b',true,now());
+    `)
+    const first = await app.getTeacherLogbook(query)
+    expect(first.items.map(row => row.id)).toEqual(Array.from({ length: 30 }, (_, i) => `s${String(34 - i).padStart(2, '0')}`))
+    expect(first.items.every(row => row.recorded)).toBe(true)
+    expect(first.items[0]?.startsAt).toBe('2026-01-01T09:00:00.000017Z')
+    const next = { ...query, cursor: first.nextCursor! }
+    expect((await app.getTeacherLogbook(next)).items.map(row => row.id)).toEqual(['s01', 's00'])
+    expect((await app.getTeacherLogbook(next)).nextCursor).toBeNull()
+    await expect(app.getTeacherLogbook({ ...next, view: 'all' })).rejects.toThrow('Invalid teacher logbook cursor')
+    await expect(app.getTeacherLogbook({ ...query, cursor: 'invalid' })).rejects.toThrow('Invalid teacher logbook cursor')
+    const all = await app.getTeacherLogbook({ ...query, view: 'all' })
+    const tail = await app.getTeacherLogbook({ ...query, cursor: all.nextCursor!, view: 'all' })
+    expect(tail.items.map(r => [r.id, r.recorded])).toEqual([['s04', false], ['s03', false], ['s02', false], ['s01', true], ['s00', true]])
+    await fixture.db.exec('update lesson_sessions set session_note=\'Saved note\' where id=\'s04\'')
+    expect((await app.getTeacherLogbook(next)).items[0]?.id).toBe('s04')
+    for (const selection of [{ classSubjectId: 'french-a' }, { classGroupId: 'class-other' }, { classSubjectId: 'math-b', classGroupId: 'class-b' }])
+      await expect(app.getTeacherLogbook({ ...query, ...selection })).rejects.toBeInstanceOf(AuthorizationError)
+    const archivedYear = createTeacherActorMetadata({ ...identity, academicYearId: 'year-old', teacherId: 'teacher-a' })
+    for (const other of [staff, guardian, student, archivedYear])
+      await expect(service(other).getTeacherLogbook(query)).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.db.exec('update teachers set is_active=false where id=\'teacher-a\'')
+    await expect(app.getTeacherLogbook(next)).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.db.exec('update teachers set is_active=true where id=\'teacher-a\'')
+    await fixture.db.exec('update teacher_assignments set status=\'ended\' where id=\'teaching\'')
+    await expect(app.getTeacherLogbook(next)).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('guardian child profile selects the current photo decision and pages only downloadable family papers', async () => {
+    const app = service(guardian)
+    const input = { studentId: 'student-a', academicYearId: 'year-a' }
+    await fixture.db.exec(`
+      insert into student_photo_submissions(id,school_id,student_id,attachment_id,submitter_guardian_id,status,version,reviewed_at,rejection_reason,created_at,updated_at)
+      select 'photo-'||lpad(i::text,2,'0'),'school-a','student-a','file-'||i,'guardian-a',case when i=51 then 'pending' else 'rejected' end,2,
+      timestamp '2026-10-01', 'reason-'||i, timestamp '2026-09-01',timestamp '2026-10-01' from generate_series(1,51) i;
+      insert into document_issuances(id,school_id,template_key,template_version,locale,academic_year_id,source_type,source_id,source_version,student_id,snapshot,issuer_actor_id,audience,request_id,status,created_at)
+      select 'doc-'||lpad(i::text,2,'0'),'school-a',case when i=35 then 'report-card.v1' else 'schooling-certificate.v1' end,'1','fr',
+      case when i=36 then 'year-old' else 'year-a' end,'enrollment','source-'||i,'1',case when i=37 then 'student-other' else 'student-a' end,
+      '{"facts":{},"sourceVersion":"1","locale":"fr","timeZone":"UTC"}','issuer','family','request-'||i,case when i=34 then 'superseded' else 'ready' end,now()
+      from generate_series(1,37) i
+    `)
+    expect((await app.getGuardianChildPhoto(input)).decision).toEqual({ status: 'pending', ownSubmission: { id: 'photo-51', attachmentId: 'file-51', version: 2 } })
+    await fixture.db.exec('update student_photo_submissions set submitter_guardian_id=\'other-parent\' where id=\'photo-51\'')
+    expect((await app.getGuardianChildPhoto(input)).decision).toEqual({ status: 'pending', ownSubmission: null })
+    await fixture.db.exec('update student_photo_submissions set status=\'withdrawn\' where id=\'photo-51\'')
+    expect((await app.getGuardianChildPhoto(input)).decision).toEqual({ status: 'rejected', reason: 'reason-50' })
+    await fixture.db.exec('update student_photo_submissions set reviewed_at=\'2026-10-03\',submitter_guardian_id=\'other-parent\' where id=\'photo-01\'')
+    expect((await app.getGuardianChildPhoto(input)).decision).toEqual({ status: 'none' })
+    await fixture.db.exec('update student_photo_submissions set status=\'approved\',submitter_guardian_id=\'guardian-a\' where id=\'photo-01\'')
+    expect((await app.getGuardianChildPhoto(input)).decision).toEqual({ status: 'none' })
+    const first = await app.getGuardianPapers(input)
+    expect(first.items).toHaveLength(30)
+    const next = await app.getGuardianPapers({ ...input, cursor: first.nextCursor! })
+    expect(next.nextCursor).toBeNull()
+    expect([...first.items, ...next.items].map(r => r.id)).toEqual(Array.from({ length: 33 }, (_, i) => `doc-${String(i + 1).padStart(2, '0')}`))
+    expect(first.items[0]).not.toHaveProperty('snapshot')
+    await expect(app.getGuardianPapers({ ...input, cursor: 'invalid' })).rejects.toThrow('Invalid family paper cursor')
+    for (const inaccessible of [{ ...input, studentId: 'student-other' }, { ...input, academicYearId: 'year-old' }]) {
+      await expect(app.getGuardianChildPhoto(inaccessible)).rejects.toBeInstanceOf(AuthorizationError)
+      await expect(app.getGuardianPapers(inaccessible)).rejects.toBeInstanceOf(AuthorizationError)
+    }
+    for (const actor of [teacher, student, staff]) {
+      await expect(service(actor).getGuardianChildPhoto(input)).rejects.toBeInstanceOf(AuthorizationError)
+      await expect(service(actor).getGuardianPapers(input)).rejects.toBeInstanceOf(AuthorizationError)
+    }
+    await fixture.db.exec('update guardians set has_access=false where id=\'guardian-a\'')
+    await expect(app.getGuardianChildPhoto(input)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(app.getGuardianPapers(input)).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.db.exec('update guardians set has_access=true where id=\'guardian-a\'')
+    await fixture.db.exec('delete from guardian_student_links where id=\'guardian-link\'')
+    await expect(app.getGuardianPapers({ ...input, cursor: first.nextCursor! })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(app.getGuardianChildPhoto(input)).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('incident lesson options preserve class authority, selection and literal search across pages', async () => {
+    const app = service()
+    const input = { classGroupId: 'class-a' }
+    await fixture.db.exec(`
+      insert into lesson_sessions(id,school_id,class_group_id,class_subject_id,status,is_exception,starts_at,ends_at,calendar_date,display_label,created_at)
+      select 's'||lpad(i::text,2,'0'), 'school-a', case when i=35 then 'class-other' else 'class-a' end,
+        case when i=35 then 'math-other' else 'math-a' end,'completed',false,
+        timestamp '2026-10-07 09:00',timestamp '2026-10-07 10:00',date '2026-10-07',
+        case when i=34 then 'Rare 50%_offer' else 'Math' end,now() from generate_series(1,35) i
+    `)
+    await expect(app.getIncidentLessonOptions(input)).rejects.toBeInstanceOf(AuthorizationError)
+    await grant(Permission.TIMETABLE_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    const first = await app.getIncidentLessonOptions({ ...input, selectedId: 's34' })
+    expect(first.items.map(row => row.id)).toEqual(Array.from({ length: 30 }, (_, i) => `s${String(i + 1).padStart(2, '0')}`))
+    expect(first.selected).toEqual({ id: 's34', displayLabel: 'Rare 50%_offer', startsAt: '2026-10-07T09:00:00.000Z' })
+    const next = await app.getIncidentLessonOptions({ ...input, cursor: first.nextCursor!, selectedId: 's35' })
+    expect(next.items.map(row => row.id)).toEqual(['s31', 's32', 's33', 's34'])
+    expect(next.selected).toBeNull()
+    expect(next.nextCursor).toBeNull()
+    expect(await app.getIncidentLessonOptions({ classGroupId: 'class-other', selectedId: 's35' })).toEqual({ items: [], selected: null, nextCursor: null })
+    expect((await app.getIncidentLessonOptions({ ...input, q: '%_OFFER' })).items).toEqual([first.selected!])
+    expect((await app.getIncidentLessonOptions({ ...input, q: '09:00:00', selectedId: 'missing' })).selected).toBeNull()
+    expect((await app.getIncidentLessonOptions({ ...input, q: '2026-10-07' })).items).toHaveLength(30)
+    for (const variant of [{ q: 'rare' }, { classGroupId: 'class-other' }])
+      await expect(app.getIncidentLessonOptions({ ...input, ...variant, cursor: first.nextCursor! })).rejects.toThrow('Invalid incident lesson cursor')
+    for (const actor of [student, guardian, teacher])
+      await expect(service(actor).getIncidentLessonOptions(input)).rejects.toBeInstanceOf(AuthorizationError)
+    await expire(Permission.TIMETABLE_READ)
+    await expect(app.getIncidentLessonOptions({ ...input, cursor: first.nextCursor! })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('staff activity pages and exports count only memberships visible in the selected grant', async () => {
+    await activities()
+    const app = service()
+    const filter = { category: 'Arts' }
+    await expect(app.getStaffActivityList(filter)).rejects.toBeInstanceOf(AuthorizationError)
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'activity', activityId: 'club', classGroupId: 'class-a' }])
+    for (const classGroupId of ['class-a', 'class-other'])
+      await fixture.repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id: classGroupId, activityId: 'club', classGroupId }))
+    for (const [id, studentId, status] of [['own', 'student-a', ActivityEnrollmentStatus.Pending], ['other', 'student-other', ActivityEnrollmentStatus.Denied]] as const)
+      await fixture.repositories.activityEnrollments.save(new ActivityEnrollment({ id, activityId: 'club', studentId, status }))
+    const page = await app.getStaffActivityList(filter)
+    expect(page).toEqual({ items: [expect.objectContaining({ id: 'club', enrollmentCount: 1 })], total: 1, nextCursor: null })
+    expect((await app.getStaffActivityProfile({ activityId: 'club' })).activity).toEqual(page.items[0]!)
+    expect((await app.getStaffActivityProfile({ activityId: 'other-club' })).activity).toBeNull()
+    expect((await app.getStaffActivityProfile({ activityId: 'foreign-club' })).activity).toBeNull()
+    const { membership } = await app.getActivityRoster({ activityId: 'club', includeMemberships: true })
+    expect(membership).toEqual({ enrollments: [{ id: 'own', studentId: 'student-a', status: ActivityEnrollmentStatus.Pending }], linkedClassIds: ['class-a'] })
+    expect(await app.getActivityRoster({ activityId: 'club' })).not.toHaveProperty('membership')
+    await grant(Permission.TIMETABLE_READ, [{ kind: 'class_group', classGroupId: 'class-other' }])
+    const mixed = await app.getActivityRoster({ activityId: 'club', includeMemberships: true })
+    const entities = app.baseService.entities
+    expect(mixed.membership?.enrollments.map(r => r.id)).toEqual((await entities.activityEnrollments.list({ activityId: 'club' })).map(r => r.id))
+    expect(mixed.membership?.linkedClassIds).toEqual((await entities.classActivityEnrollments.list({ activityId: 'club' })).map(r => r.classGroupId))
+    expect(mixed.students.some(r => r.id === 'student-other')).toBe(false)
+    const members = await app.getStaffActivityMembers({ activityId: 'club', selectedId: 'other' })
+    expect(members.total).toBe(2)
+    expect(members.selected).toMatchObject({ id: 'other', student: null })
+    expect(members.items.find(row => row.id === 'own')?.student).toMatchObject({ id: 'student-a', classGroupId: null })
+    expect(members.canAdd).toBe(false)
+    await expect(service(guardian).getStaffActivityMembers({ activityId: 'club' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expire(Permission.TIMETABLE_READ)
+    expect((await app.getStaffActivityListExport(filter)).items).toEqual(page.items)
+    expect((await app.getStaffActivityList({ q: 'other-club' })).total).toBe(0)
+    await expect(app.getStaffActivityList({ cursor: '' })).rejects.toThrow('cursor')
+    await expire(Permission.ACTIVITY_READ)
+    await expect(app.getStaffActivityListExport(filter)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service(guardian).getStaffActivityList(filter)).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
   test('activity roster exposes bounded identities and eligible students without dossier authority', async () => {
     await activities()
     for (const [id, activityId, classGroupId] of [['a', 'club', 'class-a'], ['other', 'club', 'class-other'], ['b', 'other-club', 'class-other']] as const)
@@ -169,11 +324,20 @@ describe('remaining resource policies against native SQL and transactions', () =
     const roster = await service().getActivityRoster({ activityId: 'club' })
     expect(roster.eligibleStudentIds).toEqual(['student-a'])
     expect(roster.classes.map(row => row.id)).toEqual(['class-a'])
+    const input = { activityId: 'club' }
+    const options = await service().getStaffActivityPupilOptions(input)
+    expect(options.classGroupIds).toEqual(['class-a'])
+    expect(options.items.map(row => row.id)).toEqual(['student-a'])
+    expect((await service().getStaffActivityPupilOptions({ ...input, classGroupId: 'class-other' })).items).toEqual([])
+    expect((await service().getStaffActivityMembers(input)).canAdd).toBe(true)
+    await expect(service(teacher).getStaffActivityPupilOptions(input)).rejects.toBeInstanceOf(AuthorizationError)
     expect(roster.students).toEqual([{ id: 'student-a', firstName: expect.any(String), lastName: expect.any(String), identifier: 'STUDENT-A', classGroupId: 'class-a' }])
     await expect(service().baseService.entities.students.findById('student-a')).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service().getActivityRoster({ activityId: 'foreign-club' })).rejects.toBeInstanceOf(AuthorizationError)
     await expire(Permission.ACTIVITY_ENROLLMENT_MANAGE)
     expect((await service().getActivityRoster({ activityId: 'club' })).eligibleStudentIds).toEqual([])
+    expect(await service().getStaffActivityPupilOptions(input)).toEqual({ items: [], classGroupIds: [], nextClassCursor: null, nextCursor: null })
+    expect((await service().getStaffActivityMembers(input)).canAdd).toBe(false)
     await expire(Permission.ACTIVITY_READ)
     await expect(service().getActivityRoster({ activityId: 'club' })).rejects.toBeInstanceOf(AuthorizationError)
   })

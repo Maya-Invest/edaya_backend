@@ -121,7 +121,9 @@ export interface AppShellCounts {
 }
 export interface DashboardProjectionPort {
   overview: (input: GetSchoolOverviewInput, scopes: DashboardScopes) => Promise<Omit<SchoolOverview, 'actionItems'>>
-  appShell: (input: { schoolId: string, classGroupIds?: readonly string[] }, scopes: DashboardScopes) => Promise<AppShellCounts>
+  appShell: (input: { schoolId: string, classGroupIds?: readonly string[] }, scopes: AppShellScopes) => Promise<AppShellCounts>
 }
 export const DASHBOARD_RESOURCES = ['students', 'guardians', 'staffMembers', 'teachers', 'studentCharges', 'results', 'incidents', 'attendance', 'assessments', 'assessmentResults', 'enrollments', 'calendarEvents', 'classGroups', 'payments', 'studentDisciplinaryActions', 'activities', 'academicPeriods'] as const
 export type DashboardScopes = Record<typeof DASHBOARD_RESOURCES[number], ResourceAccessScope>
+export const APP_SHELL_RESOURCES = ['students', 'guardians', 'staffMembers', 'teachers', 'enrollments'] as const satisfies readonly (keyof DashboardScopes)[]
+export type AppShellScopes = Pick<DashboardScopes, typeof APP_SHELL_RESOURCES[number]>

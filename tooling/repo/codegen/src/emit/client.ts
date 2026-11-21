@@ -154,7 +154,7 @@ import type { PublicEntityOperations, PublicEntityResource } from '${runtimeImpo
 import type { Transport } from '${runtimeImports.transport}'
 import { EntityResource } from '${runtimeImports.entityResource}'
 import { clientBindings } from './client-bindings'
-import { resolveClientRoutePath } from '${runtimeImports.paths}'
+import { readQueryPath, resolveClientRoutePath } from '${runtimeImports.paths}'
 
 type SchemaName<TSchemas extends Record<string, unknown>, TName extends string>
   = TName extends keyof TSchemas ? TSchemas[TName] : never
@@ -180,6 +180,7 @@ type CommandClients<TSchemas extends Record<string, unknown>> = {
 type QueryClients<TSchemas extends Record<string, unknown>> = {
   [K in keyof typeof clientBindings.queries]: (
     payload: SchemaName<TSchemas, typeof clientBindings.queries[K]['requestSchemaName']>,
+    options?: { signal?: AbortSignal },
   ) => Promise<SchemaName<TSchemas, typeof clientBindings.queries[K]['responseSchemaName']>>
 }
 
@@ -217,12 +218,16 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
   const queries = Object.fromEntries(
     Object.entries(clientBindings.queries).map(([key, binding]) => [
       key,
-      (payload: unknown) =>
-        transport.request(
+      (payload: unknown, options?: { signal?: AbortSignal }) => {
+        if ('getPath' in binding && typeof binding.getPath === 'string') {
+          return transport.request('GET', readQueryPath(binding.getPath, payload), options)
+        }
+        return transport.request(
           'POST',
           resolveClientRoutePath(\`queries/\${binding.publicName}\`),
-          { body: payload },
-        ),
+          { ...options, body: payload },
+        )
+      },
     ]),
   ) as QueryClients<TSchemas>
 

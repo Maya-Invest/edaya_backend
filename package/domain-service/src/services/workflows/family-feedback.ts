@@ -23,6 +23,7 @@ import {
 import { requireCurrentGuardianStudentLink } from '../../capabilities/files/profile-photo-access'
 import { formatPersonName } from '../../capabilities/notifications/templates/format-notification-variables'
 import { schoolCommandScope } from '../commands/school-command-scope'
+import { decorateStaffFeedbackCampaigns, feedbackSlotState, readGuardianFeedbackCampaigns, readTeacherFeedbackResults } from '../queries/family-feedback-lists'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 
 function fail(code: string, message: string): never {
@@ -515,6 +516,17 @@ export class FamilyFeedbackServiceWorkflow {
     return campaigns.map(campaign => projectCampaign(campaign, true))
   }
 
+  async getStaffFeedbackCampaigns(input: { academicYearId?: string, campaignId?: string }) {
+    return this.baseService.atomicExecution.execute(async () => {
+      await assertFamilyFeedbackRead(this.baseService)
+      const campaigns = await this.campaigns().list({
+        ...(input.campaignId ? { id: input.campaignId } : {}),
+        $orderBy: [{ field: 'createdAt', direction: 'desc' }],
+      })
+      return decorateStaffFeedbackCampaigns(this.baseService, campaigns.map(c => projectCampaign(c, true)), input.academicYearId)
+    }, { readSnapshot: true })
+  }
+
   async getFamilyFeedbackCampaign(input: { id: string }): Promise<FamilyFeedbackCampaignProjection> {
     await assertFamilyFeedbackRead(this.baseService)
     return projectCampaign(await this.requireCampaign(input.id), true)
@@ -569,34 +581,8 @@ export class FamilyFeedbackServiceWorkflow {
     return familyFeedbackInstrumentCopy(input.locale)
   }
 
-  async listGuardianFamilyFeedbackCampaigns(): Promise<Array<{
-    campaignId: string
-    studentId: string
-    slotState: string
-    closesAt?: string
-    context: FamilyFeedbackContextLabels
-  }>> {
-    if (this.baseService.actor.kind !== 'guardian')
-      denyResourceAccess()
-    const guardianId = this.baseService.actor.guardianId
-    const links = await this.baseService.entities.guardianLinks.list({ guardianId })
-    const items = []
-    for (const link of links) {
-      const slots = await this.slots().list({ studentId: link.studentId })
-      for (const slot of slots) {
-        const campaign = await this.campaigns().findById(slot.campaignId)
-        if (!campaign || campaign.status === FamilyFeedbackCampaignStatus.Draft || campaign.status === FamilyFeedbackCampaignStatus.Scheduled)
-          continue
-        items.push({
-          campaignId: campaign.id,
-          studentId: slot.studentId,
-          slotState: await this.guardianSlotState(campaign, slot, guardianId),
-          closesAt: iso(campaign.closesAt),
-          context: await this.instrumentVars(campaign, slot.studentId),
-        })
-      }
-    }
-    return items
+  listGuardianFamilyFeedbackCampaigns(input: { studentId?: string } = {}) {
+    return readGuardianFeedbackCampaigns(this.baseService, input.studentId)
   }
 
   async getGuardianFamilyFeedbackQuestionnaire(input: { campaignId: string, studentId: string, locale: FamilyFeedbackLocale }) {
@@ -656,21 +642,8 @@ export class FamilyFeedbackServiceWorkflow {
     return { campaignId: campaign.id, status: campaign.status, ...await this.computeAggregates(campaign) }
   }
 
-  async listTeacherFamilyFeedbackResults() {
-    if (this.baseService.actor.kind !== 'teacher')
-      denyResourceAccess()
-    const campaigns = await this.campaigns().list({
-      teacherId: this.baseService.actor.teacherId,
-      status: FamilyFeedbackCampaignStatus.Published,
-    })
-    const items = []
-    for (const campaign of campaigns) {
-      const snapshot = await this.snapshots().findById(familyFeedbackSnapshotId(campaign.id))
-      if (!snapshot)
-        continue
-      items.push({ ...snapshot.payload, campaignId: campaign.id, academicYearId: campaign.academicYearId, academicPeriodId: campaign.academicPeriodId, classGroupId: campaign.classGroupId, classSubjectId: campaign.classSubjectId })
-    }
-    return items
+  listTeacherFamilyFeedbackResults() {
+    return readTeacherFeedbackResults(this.baseService)
   }
 
   async getTeacherFamilyFeedbackResult(input: { id: string }) {
@@ -826,7 +799,7 @@ export class FamilyFeedbackServiceWorkflow {
 
   private async guardianSlotState(campaign: FamilyFeedbackCampaign, slot: FamilyFeedbackSlot, guardianId: string): Promise<string> {
     if (slot.isCompleted)
-      return slot.completingGuardianId === guardianId ? 'completed' : 'already_completed'
+      return feedbackSlotState(campaign, slot, guardianId, false)
     try {
       await requireCurrentGuardianStudentLink(this.baseService, guardianId, slot.studentId)
       await this.assertCurrentEnrollment(campaign, slot.studentId)
@@ -834,9 +807,7 @@ export class FamilyFeedbackServiceWorkflow {
     catch {
       return 'revoked'
     }
-    if (campaign.status !== FamilyFeedbackCampaignStatus.Open)
-      return 'closed'
-    return 'open'
+    return feedbackSlotState(campaign, slot, guardianId, true)
   }
 
   private async assertCurrentEnrollment(campaign: FamilyFeedbackCampaign, studentId: string): Promise<void> {

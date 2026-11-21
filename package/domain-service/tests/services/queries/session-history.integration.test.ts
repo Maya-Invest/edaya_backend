@@ -1,5 +1,5 @@
 import { AuthorizationError, createGuardianActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Attendance, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, LessonSession, noOpNotificationGateway } from '@edaya/core'
+import { ActivitySession, Attendance, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, LessonSession, noOpNotificationGateway } from '@edaya/core'
 import { expect, setSystemTime, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
@@ -104,4 +104,51 @@ test('sessions ending now enter History while future sessions stay out', async (
     setSystemTime()
     await releaseDatabase(fixture.db)
   }
+}, 30000)
+
+test('Guardian occurrence reads isolate one pupil and preserve logbook, attendance, activity and submitted ranks', async () => {
+  const fixture = await createAuthorizationDatabase()
+  try {
+    await seedAuthorizationRelationships(fixture.db)
+    await fixture.db.exec('UPDATE schools SET time_zone=\'America/Toronto\' WHERE id=\'school-a\'')
+    const identity = { schoolId: 'school-a', subjectId: 'person-a', academicYearId: 'year-a', requestId: 'history', authenticatedAt: new Date() }
+    const base = { repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage }
+    const guardian = new SchoolService({ commandJournal: new PostgresCommandJournal(), ...base, actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) })
+    const teacher = new SchoolService({ commandJournal: new PostgresCommandJournal(), ...base, actor: createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }) })
+    for (const [id, hour, note] of [['missing', '01', ''], ['saved', '02', 'Covered fractions']] as const) {
+      await fixture.repositories.lessonSessions.save(new LessonSession({ id, schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', timetableTeacherIds: ['teacher-a'], displayLabel: id, startsAt: new Date(`2026-05-03T${hour}:00:00Z`), endsAt: new Date(`2026-05-03T${hour}:30:00Z`), sessionNote: note || undefined }))
+    }
+    await fixture.repositories.attendance.save(new AttendanceRecord({ id: 'saved-attendance', studentId: 'student-a', lessonSessionId: 'saved', date: new Date('2026-05-03T02:00:00Z'), status: AttendanceStatus.Late, reason: 'Bus', justificationStatus: AttendanceJustificationStatus.Pending }))
+    const pupil = { academicYearId: 'year-a', studentId: 'student-a' }
+    const detail = (occurrenceId: string, kind?: 'lesson' | 'activity' | 'assessment') => guardian.getGuardianOccurrenceDetail({ ...pupil, occurrenceId, kind })
+    expect((await detail('saved', 'activity')).occurrence).toMatchObject({ id: 'saved', kind: 'lesson', attendance: { id: 'saved-attendance', reason: 'Bus', lessonSessionId: 'saved' }, logbook: { content: 'Covered fractions', chapters: [] } })
+    expect((await detail('missing')).occurrence?.id).toBe('missing')
+    expect((await detail('absent')).occurrence).toBeNull()
+    expect((await detail('assessment-math')).occurrence).toBeNull() // Homework is outside the calendar.
+    await expect(teacher.getGuardianOccurrenceDetail({ ...pupil, occurrenceId: 'saved' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(guardian.getGuardianOccurrenceDetail({ ...pupil, studentId: 'student-other', occurrenceId: 'saved' })).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.db.exec(`INSERT INTO guardian_student_links(id, school_id, guardian_id, student_id, relationship, is_primary, created_at)
+      VALUES ('sibling-link','school-a','guardian-a','student-other','parent',true,now())`)
+    expect((await guardian.getGuardianOccurrenceDetail({ ...pupil, studentId: 'student-other', occurrenceId: 'saved' })).occurrence).toBeNull()
+    await fixture.db.exec(`INSERT INTO activities(id,school_id,name,short_name,category,coach,schedule,participants,capacity,description,start_date,end_date,created_at)
+      VALUES ('club','school-a','Choir','Choir','music','Coach','May',2,10,'Practice','2026-05-01','2026-05-31',now());
+      INSERT INTO schedules(id,school_id,class_group_id,schedule_kind,activity_id,title,is_recurring,start_time,end_time,created_at)
+      SELECT 'schedule-' || id,'school-a',id,'activity','club','Choir',false,'01:00','02:00',now() FROM class_groups WHERE id IN ('class-a','class-other')`)
+    for (const [id, group] of [['ours', 'class-a'], ['theirs', 'class-other']] as const) {
+      await fixture.repositories.activitySessions.save(new ActivitySession({ id, schoolId: 'school-a', classGroupId: group, activityId: 'club', scheduleId: `schedule-${group}`, displayLabel: 'Choir', notes: 'Rehearsal', startsAt: new Date('2026-05-03T01:00Z'), endsAt: new Date('2026-05-03T02:00Z') }))
+    }
+    expect((await detail('ours')).occurrence).toMatchObject({ kind: 'activity', activityNotes: 'Rehearsal' })
+    expect((await detail('theirs', 'activity')).occurrence).toBeNull()
+    await fixture.db.exec(`UPDATE assessments SET kind='quiz', due_at=null, lesson_session_id='saved' WHERE id='assessment-math'`)
+    const assessment = (await detail('assessment-math')).occurrence
+    expect(assessment).toMatchObject({ kind: 'assessment', startsAt: '2026-05-03T02:00:00.000Z', endsAt: '2026-05-03T02:30:00.000Z', assessment: { mark: null } })
+    await fixture.db.exec(`UPDATE assessments SET marks_status='submitted', marks_review='{"rosterStudentIds":["student-a"]}' WHERE id='assessment-math'`)
+    expect((await detail('assessment-math', 'assessment')).occurrence?.assessment?.mark).toMatchObject({ score: 10, rank: 1, participantCount: 1 })
+    await fixture.db.exec('UPDATE student_subject_enrollments SET ended_at=\'2026-04-01\' WHERE student_class_enrollment_id=\'enrollment-a\'')
+    expect((await detail('saved')).occurrence?.id).toBe('saved')
+    expect((await detail('missing')).occurrence).toBeNull()
+    await fixture.db.exec('DELETE FROM guardian_student_links WHERE student_id=\'student-a\'')
+    await expect(detail('saved')).rejects.toBeInstanceOf(AuthorizationError)
+  }
+  finally { await releaseDatabase(fixture.db) }
 }, 30000)

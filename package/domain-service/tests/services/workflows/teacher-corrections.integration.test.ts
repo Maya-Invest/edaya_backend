@@ -1,6 +1,6 @@
 import type { AttendanceRecord, DocumentRendererPort } from '@edaya/core'
 /* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
-import { ActorAssuranceLevel, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { AcademicYear, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, ClassGroup, ClassSubjectMatter, ClassSubjectMatterStatus, DocumentIssuanceStatus, EnrollmentEndReason, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, Permission, ReportCardResult, ReportCardResultSection, ReportCardResultSectionKind, ReportCardResultStatus, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentIncidentInvolvement, StudentSubjectEnrollment, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, withShortName } from '@edaya/core'
 import { dispatchDocumentRender } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
@@ -67,15 +67,26 @@ describe('teacher corrections across workflows', () => {
     await f.repositories.students.save(new Student({ id: 'daily-pupil', schoolId: 'sch1', firstName: 'Daily', lastName: 'Pupil' }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ id: 'daily-enrollment', studentId: 'daily-pupil', classGroupId: 'cg1', academicYearId: 'ay1', enrollmentIndex: 2, enrolledAt: new Date(now.getTime() - 86400000) }))
     const anchor = { kind: 'daily' as const, classGroupId: 'cg1', date: now }
+    const statusInput = { classGroupId: 'cg1', date: now.toISOString().slice(0, 10) }
+    expect(await f.teacher.getTeacherDailyAttendanceStatus(statusInput)).toEqual({ submitted: false })
+    await expect(f.reviewer.getTeacherDailyAttendanceStatus(statusInput)).rejects.toBeInstanceOf(AuthorizationError)
     const { students } = await f.teacher.getTeacherAttendanceCall({ anchor })
     await f.teacher.teacherCorrectionsWorkflow.attendanceCall('submit', { requestId: 'daily-finish', expectedVersion: 0, anchor, entries: students.map(s => ({ studentId: s.id, status: 'present' })) })
     const before = await f.teacher.getTeacherAttendanceCall({ anchor })
+    expect(await f.teacher.getTeacherDailyAttendanceStatus(statusInput)).toEqual({ submitted: before.submitted })
     const record = before.records.find(r => r.studentId === 'daily-pupil')!
     const time = new Date()
     await f.teacher.teacherCorrectionsWorkflow.recordDeparture({ requestId: 'daily-left', recordId: record.id, expectedVersion: record.workflowVersion, occurredAt: time })
     const after = await f.teacher.getTeacherAttendanceCall({ anchor })
     expect(after.records.filter(r => r.departedAt)).toHaveLength(1)
     expect(after.records.find(r => r.id === record.id)).toMatchObject({ status: 'present', departedAt: time.toISOString() })
+    // Legacy registers fall back to official records only when no explicit lock exists.
+    const state = (await f.repositories.teacherCorrections.state('sch1', 'attendance', before.key))!
+    await f.repositories.teacherCorrections.saveState({ ...state, locked: false })
+    expect(await f.teacher.getTeacherDailyAttendanceStatus(statusInput)).toEqual({ submitted: false })
+    expect((await f.teacher.getTeacherAttendanceCall({ anchor })).submitted).toBe(false)
+    await f.repositories.teacherAssignments.delete('homeroom')
+    await expect(f.teacher.getTeacherDailyAttendanceStatus(statusInput)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('reviewed attendance requires consequence confirmation and retains the original decision', async () => {

@@ -7,6 +7,8 @@ import { sql } from 'drizzle-orm'
 import { buildSchoolOverview as referenceOverview } from '../../../../package/domain-service/tests/support/overview-reference'
 import { fixture } from '../native/support/marks-fixture'
 
+import { seedDirectoryCohorts } from './support/directory-cohorts'
+
 const output = process.env.EDAYA_BENCHMARK_OUTPUT
 const evidence: unknown[] = []
 if (!output)
@@ -16,21 +18,9 @@ for (const size of [30, 300, 3000]) {
     const f = await fixture(`benchmark-${size}`)
     const db = f.handles[0]!.db as { execute: (query: SQL) => Promise<{ rows: Record<string, unknown>[] }> }
     // Thirty students per class, one submitted sheet and one partially settled charge per student.
-    await db.execute(sql`insert into class_groups (id,school_id,academic_year_id,grade_level_id,name,created_at)
-      select ${f.id('cohort-')}||i,${f.id('school')},${f.id('year')},${f.id('grade')},'Class '||i,now() from generate_series(1,${Math.ceil(size / 30)}) i`)
-    await db.execute(sql`insert into students (id,school_id,first_name,last_name,status,created_at)
-      select ${f.id('pupil-')}||i,${f.id('school')},'Student',i::text,'active',now() from generate_series(1,${size}) i`)
-    await db.execute(sql`insert into student_class_enrollments (id,student_id,class_group_id,academic_year_id,enrollment_index,status,enrolled_at,created_at)
-      select ${f.id('placement-')}||i,${f.id('pupil-')}||i,${f.id('cohort-')}||((i-1)/30+1),${f.id('year')},1,'active','2026-01-01',now() from generate_series(1,${size}) i`)
-    await db.execute(sql`insert into class_subjects (id,class_group_id,subject_id,coefficient,is_offered,completed_percentage,created_at)
-      select ${f.id('subject-')}||i,${f.id('cohort-')}||i,${f.id('math')},1,true,0,now() from generate_series(1,${Math.ceil(size / 30)}) i`)
-    await db.execute(sql`insert into assessments (id,class_group_id,class_subject_id,period_id,title,kind,max_score,coefficient,starts_at,ends_at,marks_status,marks_review,created_at)
-      select ${f.id('quiz-')}||i,${f.id('cohort-')}||i,${f.id('subject-')}||i,${f.id('period')},'Quiz','quiz',20,1,'2026-02-01','2026-02-01 01:00','submitted',
-        jsonb_build_object('rosterStudentIds',(select jsonb_agg(student_id) from student_class_enrollments where class_group_id=${f.id('cohort-')}||i),'editedBySubjectIds','[]'::jsonb,'history','[]'::jsonb),now() from generate_series(1,${Math.ceil(size / 30)}) i`)
-    await db.execute(sql`insert into assessment_results (id,student_id,assessment_id,score,designation,created_at)
-      select ${f.id('score-')}||i,${f.id('pupil-')}||i,${f.id('quiz-')}||((i-1)/30+1),12.75,'scored',now() from generate_series(1,${size}) i`)
-    await db.execute(sql`insert into catalog_services (id,school_id,academic_year_id,name,category,auto_billing,billing_kind,default_price,currency,billing_terms,status,created_at)
-      values (${f.id('catalog')},${f.id('school')},${f.id('year')},'Tuition','tuition','{"mode":"off"}'::jsonb,'one_time',10000,'XOF','{"kind":"one_time","installments":[]}'::jsonb,'active',now())`)
+    await seedDirectoryCohorts(db, f.id, size)
+    await db.execute(sql`insert into catalog_services (id,school_id,academic_year_id,name,short_name,category,auto_billing,billing_kind,default_price,currency,billing_terms,status,created_at)
+      values (${f.id('catalog')},${f.id('school')},${f.id('year')},'Tuition','Tuition','tuition','{"mode":"off"}'::jsonb,'one_time',10000,'XOF','{"kind":"one_time","installments":[]}'::jsonb,'active',now())`)
     await db.execute(sql`insert into student_service_enrollments (id,school_id,student_id,catalog_service_id,academic_year_id,status,source,accepted_terms,enrolled_at,created_at)
       select ${f.id('service-')}||i,${f.id('school')},${f.id('pupil-')}||i,${f.id('catalog')},${f.id('year')},'active','manual','{}'::jsonb,'2026-01-01',now() from generate_series(1,${size}) i`)
     await db.execute(sql`insert into student_charges (id,school_id,student_id,enrollment_id,academic_year_id,label,expected_amount,allocated_amount,adjustment_amount,waiver_amount,currency,due_date,status,installments,created_at)

@@ -20,17 +20,17 @@ export class ConversationsWorkflow {
   }
 
   private async placement(id: string) { return await this.store.placement(this.actor.schoolId, id) ?? denyResourceAccess() }
-  private async read(id: string): Promise<{ row: Conversation, scope: ConversationReadScope }> {
-    const scope = await this.access.readScope([await this.placement(id)])
+  private async read(id: string, access = this.access): Promise<{ row: Conversation, scope: ConversationReadScope }> {
+    const scope = await access.readScope([await this.placement(id)])
     return { row: await this.store.find(scope, id) ?? denyResourceAccess(), scope }
   }
 
-  private async actions(row: ConversationPlacement) {
+  private async actions(row: ConversationPlacement, access = this.access, hasSchoolRecipient = async () => (await this.schoolRecipients()).length > 0) {
     let reply = false
     let resolve = false
     let reason: string | null = null
     try {
-      await this.access.assertReply(row)
+      await access.assertReply(row)
       reply = true
     }
     catch (e) {
@@ -38,12 +38,12 @@ export class ConversationsWorkflow {
         throw e
       reason = e.message
     }
-    if (row.destination === 'school' && this.actor.kind === 'guardian' && !(await this.schoolRecipients()).length) {
+    if (row.destination === 'school' && this.actor.kind === 'guardian' && !await hasSchoolRecipient()) {
       reply = false
       reason = 'School messaging is currently unavailable'
     }
     try {
-      await this.access.assertResolve(row)
+      await access.assertResolve(row)
       resolve = true
     }
     catch (e) {
@@ -128,18 +128,30 @@ export class ConversationsWorkflow {
 
   async list(input: z.input<typeof conversationsQuerySchema>) {
     const query = conversationsQuerySchema.parse(input)
-    const scope = await this.access.readScope(await this.store.placements(this.actor.schoolId))
+    const access = this.access.forReadOperation()
+    const scope = await access.collectionScope()
     const page = await this.store.list(scope, query)
-    const items = await Promise.all(page.items.map(async row => ({ ...row, allowedActions: await this.actions(row) })))
+    let recipients: Promise<boolean> | undefined
+    const hasSchoolRecipient = () => recipients ??= this.schoolRecipients().then(rows => rows.length > 0)
+    const items = await Promise.all(page.items.map(async row => ({ ...row, allowedActions: await this.actions(row, access, hasSchoolRecipient) })))
     return { ...page, items, offset: query.offset, limit: query.limit }
+  }
+
+  async unreadCount() {
+    return { count: await this.store.unreadCount(await this.access.forReadOperation().collectionScope()) }
+  }
+
+  async unresolvedCount() {
+    return { count: await this.store.unresolvedCount(await this.access.forReadOperation().collectionScope()) }
   }
 
   async detail(input: z.input<typeof conversationDetailQuerySchema>) {
     const query = conversationDetailQuerySchema.parse(input)
-    const { row, scope } = await this.read(query.conversationId)
+    const access = this.access.forReadOperation()
+    const { row, scope } = await this.read(query.conversationId, access)
     const messages = await this.store.messages(scope, row.id, query.beforeSequence, query.limit + 1)
     const hasMore = messages.length > query.limit
-    return { conversation: { ...row, unread: await this.store.unread(scope, row.id), allowedActions: await this.actions(row) }, messages: hasMore ? messages.slice(1) : messages, hasMore }
+    return { conversation: { ...row, unread: await this.store.unread(scope, row.id), allowedActions: await this.actions(row, access) }, messages: hasMore ? messages.slice(1) : messages, hasMore }
   }
 
   private async author() {

@@ -202,7 +202,7 @@ export function extractClientBindingsFromOpenApi(
 ): ClientBindingsDocument {
 	const bindings = createEmptyClientBindingsDocument()
 
-	for (const pathItem of Object.values(openApi.paths ?? {})) {
+	for (const [path, pathItem] of Object.entries(openApi.paths ?? {})) {
 		for (const method of HTTP_METHODS) {
 			const operation = pathItem[method]
 			if (!operation) {
@@ -222,6 +222,8 @@ export function extractClientBindingsFromOpenApi(
 			}
 			if (kind === 'query') {
 				const [key, binding] = extractQueryBinding(operation)
+				if (method === 'get')
+					binding.getPath = path
 				bindings.queries[key] = binding
 				continue
 			}

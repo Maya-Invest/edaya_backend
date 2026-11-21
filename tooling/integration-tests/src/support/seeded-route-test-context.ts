@@ -18,8 +18,10 @@ import { afterAll, beforeAll, describe } from 'bun:test'
 import {
   createCoreRouteTestApp,
   resetCoreRouteTestHarness,
+  seedDevSchoolAndAuthLinks,
   signInWithBearerThroughApp,
   testIdentityProvisioner,
+  withAcademicYearHeaders,
 } from './api-route-harness'
 
 export type IntegrationFixtureKind = 'light' | 'full'
@@ -309,5 +311,26 @@ export function describeWithSharedRouteApp(
     })
 
     suite(() => context)
+  })
+}
+
+/** Isolated light school with linked staff. Each suite installs any additional grants it exercises. */
+export function describeWithStaffSchool(
+  name: string,
+  suite: (getContext: () => AuthenticatedRouteContext & Pick<SeededRouteTestContext, 'authHeaders'>) => void,
+): void {
+  describeWithSharedRouteApp(name, (getApp) => {
+    beforeAll(async () => {
+      const { application, runtime } = getApp()
+      await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false })
+    }, 60_000)
+    suite(() => {
+      const context = getApp()
+      return { ...context, authHeaders: async (email = MINIMAL_AUTH_FIXTURE_STAFF_EMAIL) =>
+        withAcademicYearHeaders({
+          'authorization': `Bearer ${await signInWithBearerThroughApp(context.app, { email })}`,
+          'content-type': 'application/json',
+        }) }
+    })
   })
 }

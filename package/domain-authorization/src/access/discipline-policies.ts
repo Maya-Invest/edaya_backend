@@ -1,10 +1,19 @@
 import type { AccessPolicies } from './access-policies'
 import { Permission } from '@edaya/core'
-import { AccessFacts } from './facts'
+import { AccessFacts, denied } from './facts'
 
 /** Incident and participant authority always belong to the same business action. */
 export class DisciplineAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
+
+  async authoredIncidentScopes(classGroupId: string) {
+    if (this.access.actor.kind !== 'teacher')
+      denied()
+    await this.access.assertResources(Permission.DISCIPLINE_CREATE, 'classGroups', [classGroupId])
+    const read = await this.access.entity('incidents').readScope()
+    const edit = await this.access.scope(Permission.DISCIPLINE_CREATE, 'incidents', 'write')
+    return { read, edit, actor: this.access.actor }
+  }
 
   assertAddInvolvement(input: { incidentId: string, studentId: string }) {
     return this.assertParticipant(Permission.DISCIPLINE_CREATE, input)

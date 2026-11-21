@@ -2,11 +2,13 @@ import type { AssessmentDependenciesPort } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
 import type { RankingInput } from './report-rankings'
 import { sql } from 'drizzle-orm'
+import { compileResourceAccess } from '../lib/resource-access-scope'
 import { transactionContext } from '../lib/transaction'
+import { assessmentResults } from '../postgres-schema'
 import { refreshReportRankings } from './report-rankings'
 
 interface ProjectionExecutor {
-  execute: (query: SQL) => Promise<{ rows: Array<{ id?: unknown, payload?: unknown, total?: unknown }> }>
+  execute: (query: SQL) => Promise<{ rows: Array<{ id?: unknown, assessment_id?: unknown, subject_id?: unknown, payload?: unknown, total?: unknown }> }>
 }
 
 export class PostgresAssessmentDependencies implements AssessmentDependenciesPort {
@@ -56,6 +58,33 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
         as patch(id text, revised boolean, rank integer, size integer, sections jsonb, previous_version integer, version integer)
       where r.id=patch.id and coalesce((r.revised_draft->>'version')::integer, r.version)=patch.previous_version
         and (r.status='draft' or patch.revised)`)
+  }
+
+  async guardianSubjectMarks(...[scope, input]: Parameters<AssessmentDependenciesPort['guardianSubjectMarks']>) {
+    if (!input.periodIds.length || (!input.subjectId && !input.classSubjectId))
+      return []
+    const date = sql`date_trunc('milliseconds', coalesce(a.starts_at, a.due_at))`
+    const id = sql`${assessmentResults.id} collate "C"`
+    const after = input.after
+    const later = !after
+      ? sql`true`
+      : after.date === null
+        ? sql`${date} is null and ${id} > ${after.id}`
+        : sql`(${date} is null or ${date} < ${after.date}::timestamp
+          or (${date} = ${after.date}::timestamp and ${id} > ${after.id}))`
+    const { rows } = await this.executor().execute(sql`
+      select ${assessmentResults.id} as id, a.id as assessment_id, s.id as subject_id
+      from ${assessmentResults} join assessments a on a.id=${assessmentResults.assessmentId}
+      join class_subjects cs on cs.id=a.class_subject_id join subjects s on s.id=cs.subject_id
+      join class_groups g on g.id=a.class_group_id
+      where ${compileResourceAccess(assessmentResults, scope)} and ${assessmentResults.studentId}=${input.studentId}
+        and g.school_id=${input.schoolId} and s.grade_level_id=${input.gradeLevelId} and s.academic_year_id=${input.academicYearId}
+        and (s.id=${input.subjectId ?? null} or cs.id=${input.classSubjectId ?? null})
+        and a.period_id in (${sql.join(input.periodIds.map(id => sql`${id}`), sql`, `)})
+        and a.marks_status='submitted' and (a.marks_review->'rosterStudentIds') ? ${input.studentId}
+        and (${later}) ${input.markId ? sql`and ${assessmentResults.id}=${input.markId}` : sql``}
+      order by ${date} desc nulls last, ${id} asc limit ${input.limit}`)
+    return rows.map(row => ({ id: String(row.id), assessmentId: String(row.assessment_id), subjectId: String(row.subject_id) }))
   }
 
   async reportAssessmentIds(schoolId: string, studentId: string, periodIds: readonly string[]): Promise<string[]> {

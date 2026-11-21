@@ -1,11 +1,50 @@
 import type { Attachment, DocumentTeacher, GradeLevel, ReportCardResultSection } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
-import { assertAnnualReportCardSources, AttachmentOwnerKind, BusinessRuleViolationError, Permission, publishedReportSource, ReportCardResultStatus, TeacherAssignmentKind } from '@edaya/core'
+import { assertAnnualReportCardSources, AttachmentOwnerKind, BusinessRuleViolationError, Permission, publishedReportSource, ReportCardResultStatus, resourceAccessScope, TeacherAssignmentKind } from '@edaya/core'
+import { AuthorizationError } from '../model/errors'
 import { AccessFacts, denied } from './facts'
 
 /** Publication authorizes the document and its supporting data as one business action. */
 export class ReportCardAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
+
+  async classRosterScopes(classGroupId: string, periodId: string) {
+    const { actor } = this.access
+    if (actor.kind !== 'staff' && actor.kind !== 'teacher')
+      return denied()
+    const facts = new AccessFacts(actor, this.access.repositories)
+    await facts.validateActor()
+    const group = await facts.one('classGroups', classGroupId)
+    const period = await facts.one('academicPeriods', periodId)
+    if (period.academicYearId !== group.academicYearId || (actor.academicYearId && actor.academicYearId !== period.academicYearId))
+      return denied()
+    const teaching = actor.kind === 'teacher' ? await this.access.teacherReportCommentTargets(classGroupId) : undefined
+    if (teaching && (teaching.year !== group.academicYearId || (!teaching.homeroom && !teaching.subjects.size)))
+      return denied()
+    const read = async (key: 'enrollments' | 'students' | 'results') => {
+      try {
+        return await this.access.entity(key).readScope()
+      }
+      catch (error) {
+        if (error instanceof AuthorizationError)
+          return resourceAccessScope(actor.schoolId, key, [])
+        throw error
+      }
+    }
+    const students = await read('students')
+    const enrollments = await read('enrollments')
+    const results = await read('results')
+    if (!results.clauses.length && !(students.clauses.length && enrollments.clauses.length))
+      return denied()
+    return { academicYearId: period.academicYearId, students, enrollments, results, isTeacher: actor.kind === 'teacher', homeroom: teaching?.homeroom ?? false, subjectIds: [...teaching?.subjects ?? []].sort() }
+  }
+
+  /** Published proposals are visible in a teacher's gradebook only on results they can comment on. */
+  teacherCommentProposalScope() {
+    if (this.access.actor.kind !== 'teacher')
+      denied()
+    return this.access.scope(Permission.REPORT_CARD_COMMENT, 'results', 'write', 'command')
+  }
 
   assertConfigureGrading(level: GradeLevel, existing: GradeLevel) {
     return this.access.assertSave(Permission.REPORT_CARD_CONFIGURE, 'gradeLevels', level, existing)
