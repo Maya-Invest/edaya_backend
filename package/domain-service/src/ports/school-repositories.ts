@@ -3,6 +3,20 @@ import type { CronJobSchedulePort } from './platform/cron-job-schedule'
 
 export interface SchoolRepositories extends CoreEntityRepositories {
   readonly autoBilling: import('@edaya/core').AutoBillingPort
+  readonly studentHistory: import('@edaya/core').StudentHistoryPort
+  readonly deliveryInbox: import('@edaya/core').DeliveryInboxPort
+  readonly guardianHome: import('@edaya/core').GuardianHomePort
+  readonly teacherIncidents: import('@edaya/core').TeacherIncidentsPort
+  readonly teacherLogbook: import('@edaya/core').TeacherLogbookPort
+  readonly staffFeedbackOptions: import('@edaya/core').StaffFeedbackOptionsPort
+  readonly guardianChildProfile: import('@edaya/core').GuardianChildProfilePort
+  readonly classReportRoster: import('@edaya/core').ClassReportRosterPort
+  readonly staffActivityPupils: import('@edaya/core').StaffActivityPupilsPort
+  readonly incidentLessonOptions: import('@edaya/core').IncidentLessonOptionsPort
+  readonly activityMembershipCounts: import('@edaya/core').ActivityMembershipCounts
+  readonly staffFeedbackHistory: import('@edaya/core').StaffFeedbackHistoryPort
+  readonly teacherFeedbackSummaries: import('@edaya/core').TeacherFeedbackSummariesPort
+  readonly studentDirectory: import('@edaya/core').StudentDirectoryPort
   readonly financeProjections: FinanceProjectionPort
   readonly dashboardProjections: DashboardProjectionPort
   readonly conversations: import('@edaya/core').ConversationsPort

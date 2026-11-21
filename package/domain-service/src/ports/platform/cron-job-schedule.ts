@@ -24,6 +24,7 @@ export interface CronJobSchedulePort {
   /** Re-arm accepted deliveries whose execution is still due, preserving retry budgets. */
   recoverDeliveries: () => Promise<void>
   findById: (id: string) => Promise<CronJobSchedule | null>
+  hasOccurrence: (schoolId: string, scheduleId: string, at: Date) => Promise<boolean>
   saveOccurrence: (occurrence: CronOccurrence) => Promise<void>
   findOccurrence: (id: string) => Promise<CronOccurrence | null>
   listDue: (asOf: Date) => Promise<readonly CronJobSchedule[]>

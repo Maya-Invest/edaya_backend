@@ -1,6 +1,5 @@
-import type { AttendanceRecord } from '@edaya/core'
+import type { AttendanceRecord, Filter } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
-import type { TimetableEvent } from './timetable'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { loadInBatches } from '../../capabilities/shared/bounded-reads'
@@ -13,8 +12,8 @@ export interface SessionHistoryInput {
   endDate: Date
 }
 
-async function historyContext(base: BaseSchoolService, input: SessionHistoryInput) {
-  const scope = await base.access.entity('academicYears').readScope()
+async function historyContext(base: BaseSchoolService, input: SessionHistoryInput, access = base.access) {
+  const scope = await access.entity('academicYears').readScope()
   const year = await base.repositories.academicYears.forAccess(scope).findById(input.academicYearId)
   if (!year)
     denyResourceAccess()
@@ -24,7 +23,8 @@ async function historyContext(base: BaseSchoolService, input: SessionHistoryInpu
   const school = await base.repositories.schools.findById(base.actor.schoolId)
   const timeZone = school?.timeZone ?? 'UTC'
   const now = new Date()
-  const localDay = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
+  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+  const localDay = (date: Date) => formatter.format(date)
   const startDate = [day(input.startDate), day(year.startDate)].sort().at(-1)!
   const endDate = [day(input.endDate), day(year.endDate), localDay(now)].sort()[0]!
   return { startDate, endDate, timeZone, now, localDay, hasMore: startDate > day(year.startDate) }
@@ -46,15 +46,20 @@ function logbookHasContent(raw: string | undefined) {
   catch { return true }
 }
 
-export async function getStudentSessionHistory(base: BaseSchoolService, input: SessionHistoryInput & { studentId: string }) {
+export function getStudentSessionHistory(base: BaseSchoolService, input: SessionHistoryInput & { studentId: string }) {
+  return base.atomicExecution.execute(() => readStudentHistory(base, input), { readSnapshot: true })
+}
+
+async function readStudentHistory(base: BaseSchoolService, input: SessionHistoryInput & { studentId: string }) {
+  const access = base.access.forOperation()
   // Authenticate the exact child even when the requested date window is empty.
-  await base.access.timetable.studentEventRepositories(input.studentId)
-  const context = await historyContext(base, input)
+  const eventRepositories = await access.timetable.studentEventRepositories(input.studentId)
+  const context = await historyContext(base, input, access)
   const { startDate, endDate, timeZone, hasMore, now } = context
   if (endDate < startDate)
     return { startDate, endDate, timeZone, hasMore: false, entries: [] }
-  const timetable = await getStudentTimetable(base, { studentId: input.studentId, startDate: new Date(startDate), endDate: new Date(endDate) }, true)
-  const attendanceScope = await base.access.entity('attendance').readScope()
+  const timetable = await getStudentTimetable(base, { studentId: input.studentId, startDate: new Date(startDate), endDate: new Date(endDate) }, true, eventRepositories)
+  const attendanceScope = await access.entity('attendance').readScope()
   const scopedAttendance = base.repositories.attendance.forAccess(attendanceScope)
   const groups = await base.repositories.classGroups.findByIds([...new Set(timetable.events.map(e => e.classGroupId))])
   const yearGroups = new Set(groups.filter(g => g.academicYearId === input.academicYearId).map(g => g.id))
@@ -64,26 +69,36 @@ export async function getStudentSessionHistory(base: BaseSchoolService, input: S
   // so school-local start times on a different UTC day still match.
   const anchorFields = { lesson: 'lessonSessionId', activity: 'activitySessionId', assessment: 'assessmentId' } as const
   const byOccurrence = new Map<string, AttendanceRecord>()
-  const loadOccurrences = async (kind: TimetableEvent['kind']) => {
-    const field = anchorFields[kind]
-    const ids = events.filter(event => event.kind === kind).map(event => event.id)
-    const rows = await loadInBatches(ids, chunk => scopedAttendance.list({ studentId: input.studentId, [field]: { $in: chunk } }))
-    for (const record of rows)
-      byOccurrence.set(`${kind}:${record[field]}`, record)
+  const dailyRecords: AttendanceRecord[] = []
+  // The authorization predicate is expensive to plan. Apply it once for a
+  // typical window, including days with no timetable events.
+  for (let offset = 0; offset < Math.max(1, events.length); offset += 500) {
+    const filters: Filter<AttendanceRecord>[] = []
+    if (offset === 0)
+      filters.push({ attendanceId: { $exists: true }, date: { $gte: new Date(startDate), $lte: new Date(endDate) } })
+    const chunk = events.slice(offset, offset + 500)
+    for (const kind of ['lesson', 'activity', 'assessment'] as const) {
+      const ids = chunk.filter(event => event.kind === kind).map(event => event.id)
+      if (ids.length)
+        filters.push({ [anchorFields[kind]]: { $in: ids } })
+    }
+    const rows = await scopedAttendance.list({ studentId: input.studentId, $or: filters })
+    for (const row of rows) {
+      if (row.attendanceId && !row.lessonSessionId && !row.activitySessionId && !row.assessmentId)
+        dailyRecords.push(row)
+      for (const [kind, field] of Object.entries(anchorFields)) {
+        if (row[field])
+          byOccurrence.set(`${kind}:${row[field]}`, row)
+      }
+    }
   }
-  const [dailyRecords] = await Promise.all([
-    scopedAttendance.list({ studentId: input.studentId, date: { $gte: new Date(startDate), $lte: new Date(endDate) } }),
-    loadOccurrences('lesson'),
-    loadOccurrences('activity'),
-    loadOccurrences('assessment'),
-  ])
   const entries = events.map(event => ({
     ...event,
     attendance: attendanceSummary(byOccurrence.get(`${event.kind}:${event.id}`)),
     attendanceComplete: null,
     logbookComplete: null,
   }))
-  const daily = dailyRecords.filter(r => r.attendanceId && !r.lessonSessionId && !r.activitySessionId && !r.assessmentId).map(r => ({
+  const daily = dailyRecords.map(r => ({
     id: r.id,
     kind: 'daily' as const,
     title: '',
@@ -108,14 +123,24 @@ export async function getTeacherSessionHistory(base: BaseSchoolService, input: S
   const yearGroups = new Set(groups.filter(g => g.academicYearId === input.academicYearId).map(g => g.id))
   const events = timetable.events.filter(e => yearGroups.has(e.classGroupId) && e.status !== 'cancelled' && e.endsAt <= now && context.localDay(e.startsAt) >= startDate && context.localDay(e.startsAt) <= endDate && (!input.classGroupId || e.classGroupId === input.classGroupId) && (!input.classSubjectId || e.classSubjectId === input.classSubjectId))
   const ids = events.filter(e => e.kind === 'lesson').map(e => e.id)
-  const [lessons, records, progress] = await Promise.all([
+  const [lessons, records, progress, states] = await Promise.all([
     loadInBatches(ids, chunk => repositories.lessonSessions.findByIds(chunk)),
     loadInBatches(ids, chunk => base.repositories.attendance.list({ lessonSessionId: { $in: chunk } })),
     loadInBatches(ids, chunk => base.repositories.classSubjectProgress.list({ lessonSessionId: { $in: chunk } })),
+    loadInBatches(ids, chunk => base.repositories.teacherCorrections.attendanceLessonStates(base.actor.schoolId, chunk)),
   ])
-  const entries = await Promise.all(events.map(async (event) => {
-    const state = event.kind === 'lesson' ? await base.repositories.teacherCorrections.state(base.actor.schoolId, 'attendance', `lesson:${event.id}`) : undefined
-    return { ...event, attendance: null, attendanceComplete: event.kind !== 'lesson' ? null : state?.locked ?? records.some(r => r.lessonSessionId === event.id), logbookComplete: event.kind !== 'lesson' ? null : logbookHasContent(lessons.find(l => l.id === event.id)?.sessionNote) || progress.some(p => p.lessonSessionId === event.id && p.completed !== null) }
+  const locks = new Map(states.map(row => [row.lessonId, row.locked]))
+  const recorded = new Set(records.map(row => row.lessonSessionId))
+  const completed = new Set(progress.filter(row => row.completed !== null).map(row => row.lessonSessionId))
+  for (const lesson of lessons) {
+    if (logbookHasContent(lesson.sessionNote))
+      completed.add(lesson.id)
+  }
+  const entries = events.map(event => ({
+    ...event,
+    attendance: null,
+    attendanceComplete: event.kind === 'lesson' ? locks.get(event.id) ?? recorded.has(event.id) : null,
+    logbookComplete: event.kind === 'lesson' ? completed.has(event.id) : null,
   }))
   return { startDate, endDate, timeZone, hasMore, entries: entries.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime() || a.id.localeCompare(b.id)) }
 }

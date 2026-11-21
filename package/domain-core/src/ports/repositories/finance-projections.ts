@@ -1,4 +1,67 @@
 import type { ResourceAccessScope } from './resource-access-scope'
+import { z } from 'zod'
+import { PaymentKind, PaymentMethod, PaymentStatus } from '../../domain/finances/payment'
+
+export const guardianPaymentQuery = z.object({
+  studentId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  paymentId: z.string().min(1),
+})
+export const guardianPaymentDetail = z.object({
+  payment: z.object({
+    id: z.string(),
+    kind: z.nativeEnum(PaymentKind),
+    amount: z.number().int(),
+    currency: z.string(),
+    paymentDate: z.string().datetime(),
+    method: z.nativeEnum(PaymentMethod),
+    status: z.nativeEnum(PaymentStatus),
+    reference: z.string().nullable(),
+    chargeLabels: z.array(z.string()),
+  }).nullable(),
+})
+export type GuardianPaymentInput = z.infer<typeof guardianPaymentQuery>
+
+export const guardianFeesQuery = guardianPaymentQuery.omit({ paymentId: true })
+export const guardianSettlementQuery = guardianFeesQuery.extend({
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  cursor: z.string().min(1).optional(),
+})
+const financeContext = guardianFeesQuery.extend({ accountId: z.string().nullable(), currency: z.string() })
+export const guardianFeesSummary = financeContext.extend({
+  available: z.number().int(),
+  outstanding: z.number().int(),
+  overdue: z.number().int(),
+  expected: z.number().int(),
+  paid: z.number().int(),
+  overdueCount: z.number().int(),
+})
+export const guardianSettlementPage = financeContext.extend({
+  payments: guardianPaymentDetail.shape.payment.unwrap().array(),
+  charges: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    currency: z.string(),
+    status: z.string(),
+    dueDate: z.string().datetime().nullable(),
+    expectedAmount: z.number().int(),
+    allocatedAmount: z.number().int(),
+    adjustmentAmount: z.number().int(),
+    waiverAmount: z.number().int(),
+    settlementCount: z.number().int().nonnegative(),
+  })),
+  nextPaymentCursor: z.string().nullable(),
+  nextChargeCursor: z.string().nullable(),
+})
+export type GuardianFeesInput = z.infer<typeof guardianFeesQuery>
+export type GuardianSettlementInput = z.infer<typeof guardianSettlementQuery>
+export interface SettlementBoundary {
+  section: 'payments' | 'charges'
+  accountId: string | null
+  date: string | null
+  label: string
+  id: string
+}
 
 export interface SchoolFinanceAging {
   schoolId: string
@@ -123,6 +186,9 @@ export interface FinancePaymentRow {
 }
 
 export interface FinanceProjectionPort {
+  guardianFeesSummary: (input: GuardianFeesInput, currency: string, scopes: Pick<FinanceReadScopes, 'accounts' | 'charges'>, at: Date) => Promise<z.infer<typeof guardianFeesSummary>>
+  guardianSettlements: (input: GuardianSettlementInput, currency: string, scopes: FinanceReadScopes, after?: SettlementBoundary) => Promise<z.infer<typeof guardianSettlementPage>>
+  guardianPayment: (input: GuardianPaymentInput, schoolCurrency: string, scopes: FinanceReadScopes) => Promise<z.infer<typeof guardianPaymentDetail>>
   overview: (input: FinanceReadInput, scopes: FinanceReadScopes) => Promise<FinanceOverview>
   billingPage: (input: FinanceReadInput, scopes: FinanceReadScopes) => Promise<{ rows: FinanceBillingRow[], total: number }>
   paymentsPage: (input: FinanceReadInput, scopes: FinanceReadScopes) => Promise<{ rows: FinancePaymentRow[], total: number }>

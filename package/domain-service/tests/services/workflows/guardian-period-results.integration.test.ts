@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentResult, GradeLevel, ReportCardAggregationSource, ReportCardResultStatus, withShortName } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentResult, GradeLevel, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createReportCardContext } from './report-card-workflow-context'
 
@@ -44,6 +44,27 @@ describe('guardian period results', () => {
     expect(after.average).toBe(before.average)
     expect(after.sections).toEqual(before.sections)
     expect(after.marks[0]?.score).toBe(50)
+    const key = { studentId: 'stu1', periodId: 'per1' }
+    const { marks, ...summary } = after
+    expect(await f.guardian.getGuardianPeriodOverview(key)).toEqual(summary)
+    expect((await f.guardian.getGuardianSubjectMarks({ ...key, subjectId: 'subject-math' })).marks).toEqual(marks)
+  }, 60000)
+
+  test('resolves a published section stored with only the historical offering id', async () => {
+    const f = await fixture()
+    const key = { studentId: 'stu1', periodId: 'per1' }
+    const draft = await f.service.assessmentsWorkflow.generateReportCardResult({ id: 'report', ...key })
+    const published = await f.service.assessmentsWorkflow.publishReportCardResult({ id: draft.id, ...key, reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision })
+    const sections = published.data.sectionResults.map(module => ({
+      ...module,
+      subResults: module.subResults.map(leaf => ({ ...leaf, subjectId: undefined })),
+    }))
+    await f.repositories.results.save(new ReportCardResult({ ...published.data, sectionResults: sections }))
+    const { marks, ...expected } = await f.guardian.getGuardianPeriodResults(key)
+    expect(await f.guardian.getGuardianPeriodOverview(key)).toEqual(expected)
+    const page = await f.guardian.getGuardianSubjectMarks({ ...key, subjectId: 'subject-math' })
+    expect(page.section).toMatchObject({ subjectId: 'subject-math', classSubjectId: 'cs1' })
+    expect(page.marks).toEqual(marks)
   }, 60000)
 
   test('retains readable marks and module structure without a completed grading policy', async () => {
@@ -84,12 +105,53 @@ describe('guardian period results', () => {
     expect(response.state).toBe('provisional')
     expect(response.average).toBe(13)
     expect(response.marks).toHaveLength(2)
+    const { marks, ...summary } = response
+    const key = { studentId: 'stu1', periodId: 'annual' }
+    expect(await f.guardian.getGuardianPeriodOverview(key)).toEqual(summary)
+    expect((await f.guardian.getGuardianSubjectMarks({ ...key, subjectId: 'subject-math' })).marks.map(row => row.id).sort()).toEqual(marks.map(row => row.id).sort())
     expect((await f.repositories.results.findById('annual-report'))?.status).toBe(ReportCardResultStatus.Draft)
+  }, 60000)
+
+  test('pages authorized marks by date and ID and resolves a focused mark outside the page', async () => {
+    const f = await fixture()
+    const key = { studentId: 'stu1', periodId: 'per1' }
+    const original = (await f.repositories.assessments.findById('ass1'))!
+    for (const suffix of ['b', 'c', 'd', 'e']) {
+      const assessment = new Assessment({ ...original.data, id: suffix, startsAt: suffix === 'b' ? original.startsAt : undefined, endsAt: suffix === 'b' ? original.endsAt : undefined, lessonSessionId: suffix === 'b' ? undefined : 'session-0', marksStatus: suffix === 'e' ? 'draft' : 'submitted' })
+      await f.repositories.assessments.save(assessment)
+      await f.repositories.assessmentResults.save(new AssessmentResult({ id: suffix, assessmentId: suffix, studentId: 'stu1', score: 0 }))
+    }
+    const legacy = await f.guardian.getGuardianPeriodResults(key)
+    const { marks, ...expected } = legacy
+    expect(await f.guardian.getGuardianPeriodOverview(key)).toEqual(expected)
+    const query = { ...key, subjectId: 'cs1', limit: 1 }
+    const all = []
+    let cursor: string | undefined
+    do {
+      const page = await f.guardian.getGuardianSubjectMarks({ ...query, cursor, focusMarkId: 'd' })
+      expect(page.section).toMatchObject({ subjectId: 'subject-math' })
+      expect(page.marks).toHaveLength(1)
+      expect(page.focusedMark ?? page.marks[0]).toEqual(marks.find(row => row.id === 'd')!)
+      all.push(...page.marks)
+      cursor = page.nextCursor ?? undefined
+    } while (cursor && all.length < 6)
+    expect(all.map(row => row.id)).toEqual(['ar1', 'b', 'c', 'd'])
+    for (const row of all) expect(row).toEqual(marks.find(mark => mark.id === row.id)!)
+    expect((await f.guardian.getGuardianSubjectMarks({ ...query, subjectId: 'missing', focusMarkId: 'ar1' })).marks).toEqual([])
+    expect((await f.guardian.getGuardianSubjectMarks({ ...query, focusMarkId: 'e' })).focusedMark).toBeNull()
+    await expect(f.guardian.getGuardianSubjectMarks({ ...query, cursor: 'invalid' })).rejects.toThrow('cursor')
+    await f.repositories.guardianLinks.delete('link')
+    await expect(f.guardian.getGuardianSubjectMarks(query)).rejects.toThrow()
+    await expect(f.guardian.getGuardianPeriodOverview(key)).rejects.toThrow()
   }, 60000)
 
   test('rejects a different selected year before reading academic values', async () => {
     const f = await fixture()
     const wrongYear = f.forActor(createGuardianActorMetadata({ schoolId: 'sch1', academicYearId: 'ay2', guardianId: 'gua1', subjectId: 'subject-gua1', requestId: 'wrong-year', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
-    await expect(wrongYear.getGuardianPeriodResults({ studentId: 'stu1', periodId: 'per1' })).rejects.toThrow()
+    const key = { studentId: 'stu1', periodId: 'per1' }
+    await expect(wrongYear.getGuardianPeriodResults(key)).rejects.toThrow()
+    await expect(wrongYear.getGuardianPeriodOverview(key)).rejects.toThrow()
+    await expect(wrongYear.getGuardianSubjectMarks({ ...key, subjectId: 'subject-math' })).rejects.toThrow()
+    await expect(f.service.getGuardianSubjectMarks({ ...key, subjectId: 'subject-math' })).rejects.toThrow()
   }, 60000)
 })

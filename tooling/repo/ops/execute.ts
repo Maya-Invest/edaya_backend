@@ -107,6 +107,10 @@ export async function executeCommand(args: string[]): Promise<void> {
         await recordDeployment(target, () => deployRelease(target))
       return
     }
+    if (name === 'scheduler') {
+      const { schedulerOperation } = await import('./scheduler')
+      return schedulerOperation(rest)
+    }
     if (['db', 'seed', 'vars', 'secrets', 'pause', 'resume', 'status', 'smoke'].includes(name)) {
       const { dispatchOperation } = await import('./operation-dispatch')
       const { config } = await import('dotenv')
@@ -197,6 +201,7 @@ export async function executeCommand(args: string[]): Promise<void> {
         throw new Error('Migrations require the fully qualified deployment artifacts')
       await main(['ops', 'db', 'migrate', 'identity', target])
       await main(['ops', 'db', 'migrate', 'school', target])
+      await run(['bun', 'x', 'wrangler', 'd1', 'migrations', 'apply', 'SCHEDULER_DB', '--remote', '--env', target === 'production' ? 'prod' : 'staging'], { cwd: resolve(root, 'apps/api') })
       writeJson(resolve(root, '.ci-evidence/migration.json'), { ...await stageContext(target), status: 'passed' })
       return
     }

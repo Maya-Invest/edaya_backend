@@ -14,6 +14,16 @@ export interface DatabaseHandle {
 
 export interface ApiRuntime {
   getIdentityRuntime?: () => Promise<import("@/identity/runtime").IdentityRuntime>;
+  legacyCronDispatcher?: (app: ApiSchoolApplication) => import("@edaya/service").CronJobDispatcherPort;
+  inlineScheduler?: boolean;
+  runSchedulerTick?: (work: () => Promise<number>) => Promise<number | undefined>;
+  schedulerStarted?: (work: import("@edaya/service").SchedulerWork, at: number) => void;
+  schedulerUsage?: () => { rowsRead: number; rowsWritten: number };
+  scheduler?: import("@edaya/service").SchedulerPort;
+  sendSchedulerMessage?: (message: import("@edaya/service").SchedulerMessage) => Promise<void>;
+  schedulerSignals?: () => Promise<import("@edaya/service").SchoolSchedulingPort>;
+  schoolOpened?: () => boolean;
+  sendNotificationJob?: (id: string) => Promise<void>;
   drainNotifications?: () => Promise<void>;
   readonly env: Environment;
   getSchoolApplication: () => Promise<ApiSchoolApplication>;

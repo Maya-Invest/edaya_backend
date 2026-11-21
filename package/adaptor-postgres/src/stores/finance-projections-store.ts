@@ -1,7 +1,7 @@
 /* eslint-disable dot-notation -- SQL result and filter dictionaries have explicit index signatures. */
-import type { FinanceBillingRow, FinanceOverview, FinancePaymentRow, FinanceProjectionPort, FinanceReadInput, FinanceReadScopes, ResourceAccessScope, SchoolFinanceAging } from '@edaya/core'
+import type { FinanceBillingRow, FinanceOverview, FinancePaymentRow, FinanceProjectionPort, FinanceReadInput, FinanceReadScopes, GuardianFeesInput, GuardianPaymentInput, GuardianSettlementInput, ResourceAccessScope, SchoolFinanceAging, SettlementBoundary } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
-import { BusinessRuleViolationError } from '@edaya/core'
+import { BusinessRuleViolationError, guardianPaymentDetail } from '@edaya/core'
 import { sql } from 'drizzle-orm'
 import { chargeAgingCtes } from '../lib/charge-aging'
 import { compileResourceAccess } from '../lib/resource-access-scope'
@@ -10,9 +10,42 @@ import { studentCharges } from '../postgres-schema'
 
 import { assertFinanceCurrency, financeCurrencyCheck, financeFilters, financeJsonRows, financeOrder, financeReadCtes } from './finance-read-model'
 
+import { guardianCurrencyCheck, guardianSources, readGuardianFeesSummary, readGuardianSettlements } from './guardian-finance-read'
+
 interface Executor { execute: (query: SQL) => Promise<{ rows: Record<string, unknown>[] }> }
 export class PostgresFinanceProjections implements FinanceProjectionPort {
   constructor(private readonly db: Executor) {}
+
+  async guardianPayment(input: GuardianPaymentInput, currency: string, scopes: FinanceReadScopes) {
+    const db = transactionContext.getStore() as Executor | undefined ?? this.db
+    const school = scopes.accounts.schoolId
+    const result = await db.execute(sql`
+      with ${guardianSources(input, scopes)}, selected as (
+        select * from visible_payments where id=${input.paymentId} and academic_year_id=${input.academicYearId}
+      )
+      select ${guardianCurrencyCheck(currency, school, true)},
+      (select jsonb_build_object('id', p.id, 'kind', p.kind, 'amount', p.amount, 'currency', p.currency,
+        'paymentDate', to_char(p.payment_date,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'), 'method', p.method, 'status', p.status,
+        'reference', p.reference, 'chargeLabels', (select coalesce(jsonb_agg(label order by first_id),'[]'::jsonb) from (
+          select c.label, min(a.id) as first_id from allocations a
+          join lateral (select label from visible_charges where id=a.charge_id limit 1) c on true
+          where a.school_id=${school} and a.account_id=p.account_id and a.caused_by_payment_id=p.id
+            and a.kind<>'reverse' and c.label<>'' group by c.label
+        ) labels))
+       from selected p) as payment`)
+    const row = result.rows[0]!
+    assertFinanceCurrency(row)
+    return guardianPaymentDetail.parse(row)
+  }
+
+  guardianFeesSummary(input: GuardianFeesInput, currency: string, scopes: Pick<FinanceReadScopes, 'accounts' | 'charges'>, at: Date) {
+    return readGuardianFeesSummary(transactionContext.getStore() as Executor | undefined ?? this.db, input, currency, scopes, at)
+  }
+
+  guardianSettlements(input: GuardianSettlementInput, currency: string, scopes: FinanceReadScopes, after?: SettlementBoundary) {
+    return readGuardianSettlements(transactionContext.getStore() as Executor | undefined ?? this.db, input, currency, scopes, after)
+  }
+
   async overview(input: FinanceReadInput, scopes: FinanceReadScopes): Promise<FinanceOverview> {
     const db = transactionContext.getStore() as Executor | undefined ?? this.db
     const result = await db.execute(sql`with ${financeReadCtes(input, scopes)}, selected as (select * from balances b where ${financeFilters(input)})

@@ -10,6 +10,18 @@ export class LogbookAccessPolicy {
     return this.access.repositories[resource].forAccess(await this.access.scope(Permission.CLASS_LOGBOOK_READ, resource)) as unknown as BaseRepositoryInterface<CoreEntityMap[K]>
   }
 
+  async teacherOffering(input: { classGroupId: string, classSubjectId: string }) {
+    const actor = this.access.actor
+    if (actor.kind !== 'teacher')
+      return denied()
+    const facts = new AccessFacts(actor, this.access.repositories)
+    await facts.validateActor()
+    const teaching = await facts.teaching(actor.teacherId, input.classSubjectId)
+    if (!teaching.year || !teaching.subjects.some(s => s.classGroupId === input.classGroupId && s.classSubjectId === input.classSubjectId))
+      return denied()
+    return { teacherId: actor.teacherId, year: teaching.year }
+  }
+
   async documentContext(input: { classGroupId: string, academicPeriodId?: string, classSubjectId?: string }) {
     const facts = new AccessFacts(this.access.actor, this.access.repositories)
     const classGroup = await (await this.repository('classGroups')).findById(input.classGroupId) ?? denied()

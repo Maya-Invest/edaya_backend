@@ -1,3 +1,4 @@
+import { tickScheduler } from "@/cron/scheduler/runtime";
 import { resolvePdfRenderer } from "@edaya/adaptor-docs";
 import { dispatchSchoolImports } from "@edaya/service";
 import { serve } from "@hono/node-server";
@@ -71,9 +72,12 @@ async function main(): Promise<void> {
   const stopImportRecovery = startImportRecovery(
     () => operations.background(["PAUSE_SCHEDULER", "PAUSE_JOBS"], async () => {
       const runtime = await getApiRuntime(env);
+      if (env.SCHEDULER_MODE === "active")
+        return tickScheduler(runtime, Date.now());
       await dispatchSchoolImports(await runtime.getSchoolApplication(), { maxPages: 1000, maxDurationMs: 20000 });
     }),
-    () => console.error("Local import recovery failed; it will retry on the next heartbeat"),
+    () => console.error("Local job recovery failed; it will retry on the next heartbeat"),
+    (env.LOCAL_HEARTBEAT_MINUTES ?? (env.SCHEDULER_MODE === "active" ? 5 : 1)) * 60_000,
   );
 
   for (const signal of ["SIGTERM", "SIGINT"] as const) {

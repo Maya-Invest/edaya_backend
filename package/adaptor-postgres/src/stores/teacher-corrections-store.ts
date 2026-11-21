@@ -1,15 +1,43 @@
-import type { CorrectionWorkflow, ResourceAccessScope, TeacherCorrection, TeacherCorrectionsPort, TeacherWorkflowState } from '@edaya/core'
+import type { ActiveReportComment, CorrectionWorkflow, ResourceAccessScope, TeacherCorrection, TeacherCorrectionsPort, TeacherWorkflowState } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
-import { teacherCorrectionSchema } from '@edaya/core'
+import { correctionProposalSchema, teacherCorrectionSchema } from '@edaya/core'
 import { sql } from 'drizzle-orm'
 import { compileResourceAccess } from '../lib/resource-access-scope'
 import { transactionContext } from '../lib/transaction'
 import { classGroups } from '../postgres-schema'
 
-interface Executor { execute: (query: SQL) => Promise<{ rows: Array<{ payload?: unknown, total?: unknown, target_id?: string }> }> }
+interface Executor { execute: (query: SQL) => Promise<{ rows: Array<{ payload?: unknown, total?: unknown, target_id?: string, status?: ActiveReportComment['status'], locked?: boolean, includes_student?: boolean, submitted?: boolean }> }> }
 export class PostgresTeacherCorrections implements TeacherCorrectionsPort {
   constructor(private readonly db: Executor) {}
   private executor() { return (transactionContext.getStore() as Executor | undefined) ?? this.db }
+  async dailyAttendanceSubmitted(schoolId: string, workflowKey: string, attendanceId: string) {
+    const { rows } = await this.executor().execute(sql`
+      select coalesce(
+        (select (payload->>'locked')::boolean from teacher_workflow_states
+         where school_id=${schoolId} and workflow='attendance' and target_id=${workflowKey}),
+        exists(select 1 from attendance_records r join attendances a on a.id=r.attendance_id
+               where a.school_id=${schoolId} and a.id=${attendanceId})
+      ) as submitted`)
+    return rows[0]!.submitted!
+  }
+
+  async attendanceLessonStates(schoolId: string, lessonIds: readonly string[], studentId?: string) {
+    if (!lessonIds.length)
+      return []
+    const keys = sql.join(lessonIds.map(id => sql`${`lesson:${id}`}`), sql`, `)
+    const locked = sql`(payload->>'locked')::boolean`
+    const includesStudent = studentId === undefined
+      ? sql`false`
+      : sql`
+      (payload->'payload'->'entries') @> ${JSON.stringify([{ studentId }])}::jsonb
+      or (${locked} and (payload->'payload'->'rosterStudentIds') @> ${JSON.stringify([studentId])}::jsonb)`
+    const { rows } = await this.executor().execute(sql`
+      select substring(target_id from 8) as target_id, ${locked} as locked,
+        coalesce((${includesStudent}), false) as includes_student
+      from teacher_workflow_states where school_id=${schoolId} and workflow='attendance' and target_id in (${keys})`)
+    return rows.map(row => ({ lessonId: row.target_id!, locked: row.locked!, includesStudent: row.includes_student! }))
+  }
+
   async referencedLessonSessionIds(schoolId: string, sessionIds: readonly string[]) {
     if (sessionIds.length === 0)
       return []
@@ -24,6 +52,29 @@ export class PostgresTeacherCorrections implements TeacherCorrectionsPort {
         and ((payload->>'locked')::boolean or payload->'payload' <> '{}'::jsonb or payload->'history' <> '[]'::jsonb)
     `)
     return rows.map(row => row.target_id!)
+  }
+
+  async visibleReportSnapshots(schoolId: string, reportIds: readonly string[]) {
+    if (!reportIds.length)
+      return []
+    const ids = sql.join(reportIds.map(id => sql`${id}`), sql`, `)
+    const { rows } = await this.executor().execute(sql`
+      select target_id, payload->'payload'->'visibleSnapshot' as payload from teacher_workflow_states
+      where school_id=${schoolId} and workflow='report_comments' and target_id in (${ids})
+        and payload->'payload'->'visibleSnapshot' is not null`)
+    return rows.map(row => ({ reportId: row.target_id!, snapshot: row.payload }))
+  }
+
+  async activeReportComments(schoolId: string, classGroupId: string, authorSubjectId: string, reportIds: readonly string[]): Promise<ActiveReportComment[]> {
+    if (!reportIds.length)
+      return []
+    const ids = sql.join(reportIds.map(id => sql`${id}`), sql`, `)
+    const { rows } = await this.executor().execute(sql`
+      select status, payload->'proposal' as payload from teacher_corrections
+      where school_id=${schoolId} and class_group_id=${classGroupId} and workflow='report_comments' and target_id in (${ids})
+        and status in ('pending','approved_pending_publication') and payload->>'authorSubjectId'=${authorSubjectId}
+        and payload->'proposal'->>'targetId'=target_id order by target_id,created_at,id`)
+    return rows.map(row => ({ status: row.status!, proposal: correctionProposalSchema.options[1].parse(row.payload) }))
   }
 
   async find(schoolId: string, id: string) {

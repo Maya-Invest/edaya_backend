@@ -29,17 +29,15 @@ export async function createPostgresSchoolDatabase(
   options: { max?: number } = {},
 ): Promise<DatabaseHandle> {
   const { drizzle } = await import("drizzle-orm/node-postgres");
-  const { default: pg } = await import("pg");
-
-  const pool = new pg.Pool({
-    connectionString: databaseUrl,
-    max: options.max ?? postgresPoolOptions.max,
+  // Drizzle recognizes its own pg.Pool and leases a connection per transaction.
+  const db = drizzle<Record<string, never>>({
+    connection: { connectionString: databaseUrl, max: options.max ?? postgresPoolOptions.max },
   });
   return {
-    db: drizzle(pool),
-    sqlClient: pool,
+    db,
+    sqlClient: db.$client,
     async dispose() {
-      await pool.end();
+      await db.$client.end();
     },
   };
 }

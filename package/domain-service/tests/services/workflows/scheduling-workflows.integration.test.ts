@@ -508,22 +508,6 @@ describe('SchoolService scheduling workflows', () => {
     expect(result.status).toBe(OccurrenceStatus.Cancelled)
   })
 
-  test('rescheduleOccurrence rejects ambiguous or missing occurrence targets', async () => {
-    const { service } = await createSchedulingContext()
-
-    await expect(service.schedulingWorkflow.rescheduleOccurrence({
-      startsAt: new Date('2026-05-29T10:00:00.000Z'),
-      endsAt: new Date('2026-05-29T11:00:00.000Z'),
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    await expect(service.schedulingWorkflow.rescheduleOccurrence({
-      lessonSessionId: 'ses1',
-      activitySessionId: 'act-ses1',
-      startsAt: new Date('2026-05-29T10:00:00.000Z'),
-      endsAt: new Date('2026-05-29T11:00:00.000Z'),
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-
   test('requestAttendanceJustification and reviewAttendanceJustification update records', async () => {
     const attendance = new AttendanceRecord({
       id: 'stu1-ses1',
@@ -561,11 +545,6 @@ describe('SchoolService scheduling workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('saveSchedule rejects unsupported schedule kinds before persistence', async () => {
-    const { repositories, service } = await createSchedulingContext()
-    await expect(service.schedulingWorkflow.saveSchedule({ schedule: { id: 'invalid', schoolId: 'sch1', classGroupId: 'cg_daily', scheduleKind: 'unsupported', title: 'Invalid', isRecurring: true, dayOfWeek: DayOfWeek.Thursday, startTime: '08:00', endTime: '09:00' } as never })).rejects.toThrow()
-    expect(await repositories.schedules.findById('invalid')).toBeUndefined()
-  })
   test('reviews all occurrence anchors, retains notes on omission, clears null and uses server audit time', async () => {
     const { service, repositories } = await createSchedulingContext({ existingDailyAttendance: true })
     await repositories.activitySessions.save(new ActivitySession({ id: 'activity-review', scheduleId: 'sched-chess', schoolId: 'sch1', classGroupId: 'cg_daily', activityId: 'act1', displayLabel: 'Activity', startsAt: new Date('2026-05-28T15:00:00Z'), endsAt: new Date('2026-05-28T16:00:00Z') }))

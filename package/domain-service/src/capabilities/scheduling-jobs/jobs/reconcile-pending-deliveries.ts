@@ -38,11 +38,9 @@ async function listDeliveriesForReconcile(
   }))
 }
 
-export async function reconcilePendingDeliveries(context: SchoolCronJobContext): Promise<CronJobResult> {
+export async function reconcilePendingDeliveries(context: SchoolCronJobContext, changed?: Array<{ id: string, subjectId: string, status: MessageDeliveryStatus }>): Promise<CronJobResult> {
   const gateway = context.service.baseService.notificationGateway
-  const pending = await listDeliveriesForReconcile(context, MessageDeliveryStatus.Pending)
-  const sent = await listDeliveriesForReconcile(context, MessageDeliveryStatus.Sent)
-  const deliveries = [...pending, ...sent]
+  const deliveries = changed ?? [...await listDeliveriesForReconcile(context, MessageDeliveryStatus.Pending), ...await listDeliveriesForReconcile(context, MessageDeliveryStatus.Sent)]
 
   if (deliveries.length === 0) {
     return { processed: 0, skipped: 0 }
@@ -72,6 +70,9 @@ export async function reconcilePendingDeliveries(context: SchoolCronJobContext):
         continue
       }
 
+      if (lookup.status === 'read' && delivery.status === MessageDeliveryStatus.Pending) {
+        await context.service.communicationsWorkflow.applyDeliveryEvent({ deliveryId: delivery.id, status: MessageDeliveryStatus.Sent, providerMessageId: lookup.providerMessageId, occurredAt: lookup.occurredAt })
+      }
       const updated = await context.service.communicationsWorkflow.applyDeliveryEvent({
         deliveryId: delivery.id,
         status: toDeliveryStatus(lookup.status),

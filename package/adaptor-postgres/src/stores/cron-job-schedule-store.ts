@@ -43,6 +43,11 @@ export class PostgresCronJobScheduleStore implements CronJobSchedulePort {
     return rows[0] ? mapRow(rows[0]) : null
   }
 
+  async hasOccurrence(schoolId: string, scheduleId: string, at: Date) {
+    const result = await this.getClient().execute(sql`SELECT id FROM cron_occurrences WHERE school_id=${schoolId} AND schedule_id=${scheduleId} AND scheduled_for=${at.toISOString()}`)
+    return (Array.isArray(result) ? result : result.rows).length > 0
+  }
+
   async saveOccurrence(item: CronOccurrence): Promise<void> {
     if (!transactionContext.getStore())
       throw new Error('Cron occurrences require a business transaction')

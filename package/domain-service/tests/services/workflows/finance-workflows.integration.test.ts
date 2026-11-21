@@ -1,4 +1,5 @@
-import { AcademicYear, CatalogServiceStatus, PaymentKind, PaymentMethod, PaymentStatus, School, Student, withShortName } from '@edaya/core'
+import { createGuardianActorMetadata } from '@edaya/authorization'
+import { AcademicYear, CatalogServiceStatus, Guardian, GuardianStudentLink, PaymentKind, PaymentMethod, PaymentStatus, School, Student, withShortName } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -39,6 +40,102 @@ async function createFinanceContext() {
 }
 
 describe('SchoolService finance workflows', () => {
+  test('Guardian payment detail scopes the payment, labels and currency checks to the selected pupil and year', async () => {
+    const f = await createFinanceContext()
+    const { repositories, service } = f
+    await repositories.guardians.save(new Guardian({ id: 'guardian', schoolId: 'sch1', subjectId: 'family', firstName: 'G', lastName: 'Parent' }))
+    await repositories.students.save(new Student({ id: 'sibling', schoolId: 'sch1', firstName: 'Z', lastName: 'Sibling' }))
+    for (const studentId of ['stu1', 'sibling'])
+      await repositories.guardianLinks.save(new GuardianStudentLink({ id: studentId, schoolId: 'sch1', guardianId: 'guardian', studentId, receivesAcademicReports: true }))
+    const family = f.forActor(createGuardianActorMetadata({ guardianId: 'guardian', subjectId: 'family', schoolId: 'sch1', requestId: 'detail', authenticatedAt: new Date() }))
+    const input = { studentId: 'stu1', academicYearId: 'ay1', paymentId: 'receipt' }
+    const record = { id: input.paymentId, studentId: input.studentId, academicYearId: 'ay1', amount: 300, method: PaymentMethod.Cash, paymentDate: new Date('2026-05-01T13:15:16.123Z') }
+    expect((await family.getGuardianPaymentDetail(input)).payment).toBeNull()
+    await service.financeWorkflow.recordPayment(record)
+    await service.financeWorkflow.recordPayment({ ...record, id: 'sibling-receipt', studentId: 'sibling' })
+    const initial = await family.getGuardianPaymentDetail(input)
+    expect(initial.payment).toEqual({ id: 'receipt', chargeLabels: [], currency: 'USD', amount: 300, kind: PaymentKind.Receipt, method: PaymentMethod.Cash, reference: null, status: PaymentStatus.Recorded, paymentDate: record.paymentDate.toISOString() })
+    const charges = [['a', 'Books'], ['b', 'Transport'], ['c', 'Books'], ['d', 'Reverse only']] as const
+    for (const [id, name] of charges) {
+      await service.financeWorkflow.createCatalogService({ id: `catalog-${id}`, academicYearId: 'ay1', name, defaultPrice: 10, currency: 'USD', billingTerms: { kind: 'one_time', installments: [] }, status: CatalogServiceStatus.Active })
+      await service.financeWorkflow.enrollStudentInService({ id, studentId: 'stu1', catalogServiceId: `catalog-${id}` })
+    }
+    await f.db.exec(`insert into allocations(id,school_id,account_id,charge_id,amount,currency,kind,caused_by_payment_id,effective_at,recorded_at,created_at)
+      select 'alloc-'||c.id, 'sch1', p.account_id, c.id, 5, 'USD', case when c.id='d' then 'reverse' else 'settle' end,
+        p.id, now(), now(), now() from student_charges c join payments p on p.id='receipt' where c.id in ('a','b','c','d')`)
+    expect((await family.getGuardianPaymentDetail(input)).payment?.chargeLabels).toEqual(['Books', 'Transport'])
+    expect((await family.getGuardianPaymentDetail({ ...input, paymentId: 'missing' })).payment).toBeNull()
+    expect((await family.getGuardianPaymentDetail({ ...input, studentId: 'sibling' })).payment).toBeNull()
+    expect((await family.getGuardianPaymentDetail({ ...input, academicYearId: 'another-year' })).payment).toBeNull()
+    await expect(service.getGuardianPaymentDetail(input)).rejects.toThrow()
+    await f.db.exec('update payments set status=\'reversed\',reversed_at=now(),reversed_by_id=\'user1\' where id=\'receipt\'')
+    expect((await family.getGuardianPaymentDetail(input)).payment?.status).toBe(PaymentStatus.Reversed)
+    await service.financeWorkflow.recordPayment({ ...record, id: 'unrelated' })
+    await f.db.exec('update student_account_entries set currency=\'EUR\' where source_id=\'unrelated\'')
+    await expect(family.getGuardianPaymentDetail(input)).rejects.toMatchObject({ code: 'CURRENCY_MISMATCH' })
+    expect((await family.getGuardianPaymentDetail({ ...input, studentId: 'sibling', paymentId: 'sibling-receipt' })).payment?.currency).toBe('USD')
+    await repositories.guardianLinks.delete('stu1')
+    await expect(family.getGuardianPaymentDetail(input)).rejects.toThrow()
+  })
+
+  test('Guardian settlement pages preserve summary, account checks and independent continuations', async () => {
+    const f = await createFinanceContext()
+    const { service, repositories } = f
+    const scope = { studentId: 'stu1', academicYearId: 'ay1' }
+    await repositories.guardians.save(new Guardian({ id: 'guardian', schoolId: 'sch1', subjectId: 'family', firstName: 'G', lastName: 'Parent' }))
+    await repositories.students.save(new Student({ id: 'sibling', schoolId: 'sch1', firstName: 'Z', lastName: 'Sibling' }))
+    for (const studentId of ['stu1', 'sibling'])
+      await repositories.guardianLinks.save(new GuardianStudentLink({ id: studentId, schoolId: 'sch1', guardianId: 'guardian', studentId, receivesAcademicReports: true }))
+    const family = f.forActor(createGuardianActorMetadata({ guardianId: 'guardian', subjectId: 'family', schoolId: 'sch1', requestId: 'page', authenticatedAt: new Date() }))
+    const initial = await family.getGuardianSettlements({ ...scope, studentId: 'sibling' })
+    expect(initial).toMatchObject({ accountId: null, payments: [], charges: [], nextPaymentCursor: null, nextChargeCursor: null })
+    for (const id of ['p1', 'p2', 'p3']) {
+      await service.financeWorkflow.recordPayment({ ...scope, id, amount: 25, method: PaymentMethod.Cash, paymentDate: new Date('2026-05-01T09:00:00Z') })
+    }
+    for (const [id, name] of [['a', 'Books'], ['b', 'Books'], ['c', 'Transport'], ['d', 'Cancelled']] as const) {
+      await service.financeWorkflow.createCatalogService({ id: `cat-${id}`, academicYearId: 'ay1', name, defaultPrice: 50, currency: 'USD', billingTerms: { kind: 'one_time', installments: [] }, status: CatalogServiceStatus.Active })
+      await service.financeWorkflow.enrollStudentInService({ id, studentId: 'stu1', catalogServiceId: `cat-${id}` })
+    }
+    await service.financeWorkflow.cancelStudentCharge({ requestId: 'cancel-d', chargeId: 'd', reason: 'Duplicate' })
+    await f.db.exec(`update student_charges set due_date=null where id in ('a','b','c','d');
+      update student_charges set due_date='2026-05-01' where id='enr1';
+      update payments set payment_date='2026-05-01 09:00:00.000123' where id='p3';
+      insert into allocations(id,school_id,account_id,charge_id,amount,currency,kind,caused_by_payment_id,effective_at,recorded_at,created_at)
+      select 'extra-'||c.id, 'sch1', p.account_id, c.id, 5, 'USD','settle',p.id,now(),now(),now() from student_charges c join payments p on p.id='p3' where c.id in ('a','b','d');
+      insert into allocations(id,school_id,account_id,charge_id,amount,currency,kind,caused_by_payment_id,effective_at,recorded_at,created_at)
+      select 'reverse-a','sch1',account_id,'a',5,'USD','reverse',id,now(),now(),now() from payments where id='p3'`)
+    const old = await family.getStudentFinanceSummary(scope)
+    const summary = await family.getGuardianFeesSummary(scope)
+    expect(summary).toMatchObject({ accountId: old.accountId, currency: old.currency, available: old.available.amount, outstanding: old.outstanding.amount, overdue: old.overdue.amount, expected: 1150 })
+    const first = await family.getGuardianSettlements({ ...scope, limit: 1 })
+    expect(first.payments[0]).toMatchObject({ id: 'p3', chargeLabels: ['Books'] })
+    expect(first.charges.map(c => c.id)).toEqual(['enr1'])
+    await service.financeWorkflow.recordPayment({ ...scope, id: 'new', amount: 10, method: PaymentMethod.Cash, paymentDate: new Date('2026-06-01') })
+    let pay = first.nextPaymentCursor
+    const paymentIds = []
+    while (pay) {
+      const page = await family.getGuardianSettlements({ ...scope, limit: 1, cursor: pay })
+      expect(page.charges).toEqual([])
+      paymentIds.push(...page.payments.map(p => p.id))
+      pay = page.nextPaymentCursor
+    }
+    expect(paymentIds).toEqual(['p1', 'p2'])
+    expect((await family.getGuardianSettlements({ ...scope, limit: 1 })).payments[0]?.id).toBe('new')
+    const rest = await family.getGuardianSettlements({ ...scope, cursor: first.nextChargeCursor! })
+    expect(rest.charges.map(c => c.id)).toEqual(['a', 'b', 'c'])
+    expect(rest.payments).toEqual([])
+    expect(rest.charges[0]?.settlementCount).toBe(1)
+    expect(rest.nextChargeCursor).toBeNull()
+    await expect(family.getGuardianSettlements({ ...scope, studentId: 'sibling', cursor: first.nextPaymentCursor! })).rejects.toThrow('cursor')
+    await expect(family.getGuardianSettlements({ ...scope, cursor: 'broken' })).rejects.toThrow('cursor')
+    await expect(service.getGuardianSettlements(scope)).rejects.toThrow()
+    await f.db.exec('update student_account_entries set currency=\'EUR\' where source_id=\'p1\'')
+    await expect(family.getGuardianSettlements({ ...scope, limit: 1 })).rejects.toMatchObject({ code: 'CURRENCY_MISMATCH' })
+    expect((await family.getGuardianFeesSummary(scope)).currency).toBe('USD')
+    await repositories.guardianLinks.delete('stu1')
+    await expect(family.getGuardianSettlements({ ...scope, cursor: first.nextChargeCursor! })).rejects.toThrow()
+  })
+
   test('enroll materializes one-time installments', async () => {
     const { repositories, service } = await createFinanceContext()
     const charge = await repositories.studentCharges.findById('enr1')

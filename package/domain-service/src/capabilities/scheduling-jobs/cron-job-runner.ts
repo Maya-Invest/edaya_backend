@@ -38,6 +38,7 @@ export async function runCronJobForSchool(
     schoolId: string
     asOf: Date
     requestId: string
+    changedDeliveries?: Parameters<typeof reconcilePendingDeliveries>[1]
   },
 ): Promise<CronJobSchoolResult> {
   const actor = createSystemActorMetadata({
@@ -52,7 +53,7 @@ export async function runCronJobForSchool(
     actor,
     service,
   }
-  const result = await service.baseService.atomicExecution.execute(() => CRON_JOB_HANDLERS[options.jobKey](context))
+  const result = await service.baseService.atomicExecution.execute(() => options.jobKey === 'reconcilePendingDeliveries' ? reconcilePendingDeliveries(context, options.changedDeliveries) : CRON_JOB_HANDLERS[options.jobKey](context))
 
   return {
     schoolId: options.schoolId,

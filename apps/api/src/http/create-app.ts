@@ -44,7 +44,10 @@ export default function createApp() {
       "X-School-Id",
       "X-Request-Id",
       "Idempotency-Key",
+      "If-None-Match",
     ],
+    exposeHeaders: ["ETag", "X-Request-Id"],
+    maxAge: 600,
     credentials: true,
   }));
   app.use(requestBodyLimit);

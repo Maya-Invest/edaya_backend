@@ -12,8 +12,8 @@ import {
   StudentPhotoSubmissionStatus,
   Teacher,
 } from '@edaya/core'
-import { grantAttachmentDownload, resolveAttachmentReadPolicy, sweepExpiredStudentPortraitAttachments } from '@edaya/service'
-import { beforeEach, describe, expect, test } from 'bun:test'
+import { getStudentPortraitGrants, grantAttachmentDownload, resolveAttachmentReadPolicy, sweepExpiredStudentPortraitAttachments } from '@edaya/service'
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { createTestApp } from '../support/create-test-app'
 
 const jpeg = await Bun.file(new URL('../fixtures/upload-formats/synthetic.jpg', import.meta.url)).bytes()
@@ -84,6 +84,44 @@ describe('student portrait review', () => {
     const access = await resolveAttachmentReadPolicy(actor.baseService, attachmentId)
     return grantAttachmentDownload(actor.baseService, attachmentId, { access, inlineImages: true })
   }
+
+  test('batch grants match published visible portraits and recheck a link revoked while signing', async () => {
+    const photo = await completePortrait({ ownerKind: AttachmentOwnerKind.Student, ownerId: 'stu1', attachmentId: 'published' })
+    await fixture.app.studentWorkflow.publishStudentPhoto({ requestId: 'publish', studentId: 'stu1', attachmentId: photo.id })
+    const pending = await completePortrait({ ownerKind: AttachmentOwnerKind.Student, ownerId: 'stu1', attachmentId: 'pending', actor: guardianService() })
+    await fixture.schoolRepositories.students.save(new Student({ id: 'unlinked', schoolId: 'school', firstName: 'Other', lastName: 'Student' }))
+    const other = await completePortrait({ ownerKind: AttachmentOwnerKind.Student, ownerId: 'unlinked', attachmentId: 'other-portrait' })
+    const otherRef = { studentId: 'unlinked', attachmentId: other.id }
+    await fixture.app.studentWorkflow.publishStudentPhoto({ requestId: 'publish-other', ...otherRef })
+    const guardian = guardianService().baseService
+    const ref = { studentId: 'stu1', attachmentId: photo.id }
+    const requested = [ref, ref, otherRef, { ...ref, attachmentId: pending.id }, { ...ref, studentId: 'foreign' }, { studentId: 'missing', attachmentId: 'missing' }]
+    const original = storage.createPresignedDownload.bind(storage)
+    const sign = spyOn(storage, 'createPresignedDownload')
+    try {
+      const { grants } = await getStudentPortraitGrants(guardian, requested)
+      expect(grants.map(g => [g.studentId, g.attachmentId])).toEqual([['stu1', photo.id]])
+      expect(sign).toHaveBeenCalledTimes(1)
+      expect((await preview(photo.id, guardianService()))?.downloadUrl).toBeDefined()
+      sign.mockImplementation(async (key, options) => {
+        if (key === other.storageKey)
+          throw new Error('test storage failure')
+        return original(key, options)
+      })
+      const partial = await getStudentPortraitGrants(fixture.app.baseService, [ref, otherRef])
+      expect(partial.grants.map(item => item.attachmentId)).toEqual([photo.id])
+      sign.mockImplementationOnce(async (key, options) => {
+        const signed = await original(key, options)
+        await fixture.schoolRepositories.guardianLinks.delete('link-1')
+        return signed
+      })
+      expect((await getStudentPortraitGrants(guardian, [ref])).grants).toEqual([])
+      await expect(getStudentPortraitGrants(guardian, Array.from<typeof ref>({ length: 26 }).fill(ref))).rejects.toThrow()
+    }
+    finally {
+      sign.mockRestore()
+    }
+  })
 
   test('staff publish sets the durable student portrait and generic profile photoUrl is ignored', async () => {
     const attachment = await completePortrait({

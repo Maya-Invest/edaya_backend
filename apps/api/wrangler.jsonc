@@ -33,6 +33,12 @@
   "env": {
     "staging": {
       "name": "edaya-api-staging",
+      "d1_databases": [{
+        "binding": "SCHEDULER_DB",
+        "database_name": "edaya-scheduler-staging",
+        "database_id": "efb2a849-1be6-4cc6-8e13-0b6060f9c43a",
+        "migrations_dir": "scheduler-migrations"
+      }],
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
@@ -87,6 +93,12 @@
     },
     "prod": {
       "name": "edaya-api-prod",
+      "d1_databases": [{
+        "binding": "SCHEDULER_DB",
+        "database_name": "edaya-scheduler-production",
+        "database_id": "3ef7ef4e-e926-468d-b319-3ffe167e7c65",
+        "migrations_dir": "scheduler-migrations"
+      }],
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",

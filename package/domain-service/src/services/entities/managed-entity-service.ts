@@ -1,4 +1,4 @@
-import type { SchoolScopedActorMetadata } from '@edaya/authorization'
+import type { AccessPolicies, SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, QueryOptions, ResourceAccessScope } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode, createAccessPolicies } from '@edaya/authorization'
@@ -78,17 +78,19 @@ export class ManagedEntityService<T> {
       : visible) as T
   }
 
-  private async readRepository(): Promise<BaseRepositoryInterface<T>> {
-    return this.config.repository.forAccess(await this.access.entity(this.config.resource).readScope())
+  private async readRepository(access: AccessPolicies = this.access): Promise<BaseRepositoryInterface<T>> {
+    if (access.actor !== this.actor || access.repositories !== this.repositories)
+      this.deny()
+    return this.config.repository.forAccess(await access.entity(this.config.resource).readScope())
   }
 
-  async findById(id: string): Promise<T | undefined> {
-    const row = await (await this.readRepository()).findById(id)
+  async findById(id: string, access?: AccessPolicies): Promise<T | undefined> {
+    const row = await (await this.readRepository(access)).findById(id)
     return row ? this.projectRead(row) : undefined
   }
 
-  async findByIds(ids: readonly string[]): Promise<T[]> {
-    return Promise.all((await (await this.readRepository()).findByIds(ids)).map(row => this.projectRead(row)))
+  async findByIds(ids: readonly string[], access?: AccessPolicies): Promise<T[]> {
+    return Promise.all((await (await this.readRepository(access)).findByIds(ids)).map(row => this.projectRead(row)))
   }
 
   async findOne(options?: QueryOptions<T>): Promise<T | undefined> {
@@ -97,9 +99,9 @@ export class ManagedEntityService<T> {
     return row ? this.projectRead(row) : undefined
   }
 
-  async list(options?: QueryOptions<T>): Promise<T[]> {
+  async list(options?: QueryOptions<T>, access?: AccessPolicies): Promise<T[]> {
     this.ensureFilterTenant(options)
-    return Promise.all((await (await this.readRepository()).list(options)).map(row => this.projectRead(row)))
+    return Promise.all((await (await this.readRepository(access)).list(options)).map(row => this.projectRead(row)))
   }
 
   async count(filter?: Filter<T>): Promise<number> {

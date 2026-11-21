@@ -3,7 +3,7 @@ import type { z } from 'zod'
 /* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { BaseSchoolService } from '../base-school-service'
 import { AuthorizationError, denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { appendIncidentFollowUpSchema, Attendance, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, ClassSubjectProgress, decideTeacherCorrectionSchema, DocumentIssuanceStatus, editTeacherIncidentSchema, Incident, IncidentInvolvementRole, LessonSession, Permission, rejectTeacherCorrectionSchema, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, requestTeacherCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, StudentIncidentInvolvement, takeOverTeacherIncidentSchema, teacherCorrectionSchema, teacherCorrectionsQuerySchema, validateTeacherLogbookSchema } from '@edaya/core'
+import { appendIncidentFollowUpSchema, Attendance, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, ClassSubjectProgress, dailyAttendanceStatusInput, decideTeacherCorrectionSchema, DocumentIssuanceStatus, editTeacherIncidentSchema, Incident, IncidentInvolvementRole, LessonSession, Permission, rejectTeacherCorrectionSchema, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, requestTeacherCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, StudentIncidentInvolvement, takeOverTeacherIncidentSchema, teacherCorrectionSchema, teacherCorrectionsQuerySchema, validateTeacherLogbookSchema } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { visibleReportRevision } from '../../capabilities/academics/report-comment-revisions'
 import { assembleDocumentSource } from '../../capabilities/documents/assemble-document-source'
@@ -442,14 +442,29 @@ export class TeacherCorrectionsWorkflow {
         denyResourceAccess()
       return { key: `lesson:${lesson.id}`, classGroupId: lesson.classGroupId, startsAt: lesson.startsAt, endsAt: lesson.endsAt, lessonSessionId: lesson.id, classSubjectId: lesson.classSubjectId }
     }
-    const date = new Date(anchor.date)
+    return this.dailyCallContext(anchor.classGroupId, anchor.date)
+  }
+
+  private async dailyCallContext(classGroupId: string, forDate: Date) {
+    const date = new Date(forDate)
     date.setUTCHours(0, 0, 0, 0)
-    const key = `daily:${anchor.classGroupId}:${date.toISOString().slice(0, 10)}`
+    const key = `daily:${classGroupId}:${date.toISOString().slice(0, 10)}`
     const endsAt = new Date(date.getTime() + 86400000)
-    const existing = await this.repositories.attendances.forSchool!(this.actor.schoolId).findOne({ classGroupId: anchor.classGroupId, startsAt: date })
-    const daily = existing ?? new Attendance({ id: key, schoolId: this.actor.schoolId, classGroupId: anchor.classGroupId, startsAt: date, endsAt, displayLabel: date.toISOString().slice(0, 10) })
+    const existing = await this.repositories.attendances.forSchool!(this.actor.schoolId).findOne({ classGroupId, startsAt: date })
+    const daily = existing ?? new Attendance({ id: key, schoolId: this.actor.schoolId, classGroupId, startsAt: date, endsAt, displayLabel: date.toISOString().slice(0, 10) })
     await this.base.access.entity('attendances').assertSave(daily, existing)
-    return { key, classGroupId: anchor.classGroupId, startsAt: date, endsAt, attendanceId: daily.id, daily }
+    return { key, classGroupId, classSubjectId: undefined, startsAt: date, endsAt, attendanceId: daily.id, daily }
+  }
+
+  async getDailyAttendanceStatus(raw: z.input<typeof dailyAttendanceStatusInput>) {
+    if (this.actor.kind !== 'teacher')
+      denyResourceAccess()
+    const input = dailyAttendanceStatusInput.parse(raw)
+    return this.base.atomicExecution.execute(async () => {
+      const { key, attendanceId } = await this.dailyCallContext(input.classGroupId, new Date(input.date))
+      const submitted = await this.repositories.teacherCorrections.dailyAttendanceSubmitted(this.actor.schoolId, key, attendanceId)
+      return { submitted }
+    }, { readSnapshot: true })
   }
 
   private async roster(classGroupId: string, at: Date, classSubjectId?: string) {

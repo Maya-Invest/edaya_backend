@@ -1885,6 +1885,215 @@ export const clientBindings = {
       }
     },
     "queries": {
+      "getUnresolvedConversationCount": {
+        "publicName": "unresolved-conversation-count",
+        "requestSchemaName": "UnresolvedConversationCountQuery",
+        "responseSchemaName": "UnresolvedConversationCount",
+        "getPath": "/core/inbox/unresolved-count"
+      },
+      "getStudentDirectory": {
+        "publicName": "student-directory",
+        "requestSchemaName": "StudentDirectoryQuery",
+        "responseSchemaName": "StudentDirectoryPage",
+        "getPath": "/core/directory/students"
+      },
+      "getClassRosterMemberIds": {
+        "publicName": "class-roster-member-ids",
+        "requestSchemaName": "ClassRosterMembersQuery",
+        "responseSchemaName": "ClassRosterMembers",
+        "getPath": "/core/directory/class-roster/member-ids"
+      },
+      "getTeacherDailyAttendanceStatus": {
+        "publicName": "teacher-daily-attendance-status",
+        "requestSchemaName": "TeacherDailyAttendanceStatusQuery",
+        "responseSchemaName": "TeacherDailyAttendanceStatus",
+        "getPath": "/core/teacher/home/daily-attendance-status"
+      },
+      "getGuardianHighlights": {
+        "publicName": "guardian-highlights",
+        "requestSchemaName": "GuardianHighlightsQuery",
+        "responseSchemaName": "GuardianHighlights",
+        "getPath": "/core/guardian/home/highlights"
+      },
+      "getGuardianChildChoices": {
+        "publicName": "guardian-child-choices",
+        "requestSchemaName": "GuardianChildChoicesQuery",
+        "responseSchemaName": "GuardianChildChoices",
+        "getPath": "/core/guardian/child-choices"
+      },
+      "getTeacherLogbook": {
+        "publicName": "teacher-logbook",
+        "requestSchemaName": "TeacherLogbookQuery",
+        "responseSchemaName": "TeacherLogbookPage",
+        "getPath": "/core/teacher/logbook"
+      },
+      "getTeacherIncidents": {
+        "publicName": "teacher-incidents",
+        "requestSchemaName": "TeacherIncidentsQuery",
+        "responseSchemaName": "TeacherIncidentsPage",
+        "getPath": "/core/teacher/incidents"
+      },
+      "getTeacherIncidentDetail": {
+        "publicName": "teacher-incident-detail",
+        "requestSchemaName": "TeacherIncidentDetailQuery",
+        "responseSchemaName": "TeacherIncidentDetail",
+        "getPath": "/core/teacher/incidents/detail"
+      },
+      "getGuardianOccurrenceDetail": {
+        "publicName": "guardian-occurrence-detail",
+        "requestSchemaName": "GuardianOccurrenceQuery",
+        "responseSchemaName": "GuardianOccurrenceDetail",
+        "getPath": "/core/guardian/calendar/occurrence"
+      },
+      "getGuardianPaymentDetail": {
+        "publicName": "guardian-payment-detail",
+        "requestSchemaName": "GuardianPaymentQuery",
+        "responseSchemaName": "GuardianPaymentDetail",
+        "getPath": "/core/guardian/payment"
+      },
+      "getGuardianFeesSummary": {
+        "publicName": "guardian-fees-summary",
+        "requestSchemaName": "GuardianFeesQuery",
+        "responseSchemaName": "GuardianFeesSummary",
+        "getPath": "/core/guardian/fees/summary"
+      },
+      "getGuardianSettlements": {
+        "publicName": "guardian-settlements",
+        "requestSchemaName": "GuardianSettlementsQuery",
+        "responseSchemaName": "GuardianSettlementPage",
+        "getPath": "/core/guardian/settlements"
+      },
+      "getStudentGradeHistory": {
+        "publicName": "student-grade-history",
+        "requestSchemaName": "StudentGradeHistoryQuery",
+        "responseSchemaName": "StudentGradeHistoryPage",
+        "getPath": "/core/students/history/grades"
+      },
+      "getStudentAttendanceHistory": {
+        "publicName": "student-attendance-history",
+        "requestSchemaName": "StudentAttendanceHistoryQuery",
+        "responseSchemaName": "StudentAttendanceHistoryPage",
+        "getPath": "/core/students/history/attendance"
+      },
+      "getDeliveryInbox": {
+        "publicName": "delivery-inbox",
+        "requestSchemaName": "DeliveryInboxQuery",
+        "responseSchemaName": "DeliveryInboxPage",
+        "getPath": "/core/inbox/deliveries"
+      },
+      "getUnreadConversationCount": {
+        "publicName": "unread-conversation-count",
+        "requestSchemaName": "UnreadConversationCountQuery",
+        "responseSchemaName": "UnreadConversationCount",
+        "getPath": "/core/inbox/unread-conversations"
+      },
+      "getGuardianPeriodOverview": {
+        "publicName": "guardian-period-overview",
+        "requestSchemaName": "GuardianPeriodOverviewQuery",
+        "responseSchemaName": "GuardianPeriodOverview",
+        "getPath": "/core/guardian/results/overview"
+      },
+      "getGuardianSubjectMarks": {
+        "publicName": "guardian-subject-marks",
+        "requestSchemaName": "GuardianSubjectMarksQuery",
+        "responseSchemaName": "GuardianSubjectMarksPage",
+        "getPath": "/core/guardian/results/subject"
+      },
+      "getGuardianFeedbackCampaigns": {
+        "publicName": "guardian-feedback-campaigns",
+        "requestSchemaName": "GuardianFeedbackCampaignsQuery",
+        "responseSchemaName": "GuardianFeedbackCampaignsPage",
+        "getPath": "/core/guardian/feedback/campaigns"
+      },
+      "getStaffFeedbackCampaigns": {
+        "publicName": "staff-feedback-campaigns",
+        "requestSchemaName": "StaffFeedbackCampaignsQuery",
+        "responseSchemaName": "StaffFeedbackCampaigns",
+        "getPath": "/core/staff/feedback/campaigns"
+      },
+      "getStaffFeedbackOptions": {
+        "publicName": "staff-feedback-options",
+        "requestSchemaName": "StaffFeedbackOptionsQuery",
+        "responseSchemaName": "StaffFeedbackOptionsPage",
+        "getPath": "/core/staff/feedback/options"
+      },
+      "getStaffActivityList": {
+        "publicName": "staff-activity-list",
+        "requestSchemaName": "StaffActivityListQuery",
+        "responseSchemaName": "StaffActivityListResponse",
+        "getPath": "/core/staff/activities"
+      },
+      "getStaffActivityListExport": {
+        "publicName": "staff-activity-list-export",
+        "requestSchemaName": "StaffActivityListExportQuery",
+        "responseSchemaName": "StaffActivityListExportResponse",
+        "getPath": "/core/staff/activities/export"
+      },
+      "getStaffActivityProfile": {
+        "publicName": "staff-activity-profile",
+        "requestSchemaName": "StaffActivityProfileQuery",
+        "responseSchemaName": "StaffActivityProfileResponse",
+        "getPath": "/core/staff/activities/profile"
+      },
+      "getGuardianChildPhoto": {
+        "publicName": "guardian-child-photo",
+        "requestSchemaName": "GuardianChildPhotoQuery",
+        "responseSchemaName": "GuardianChildPhotoResponse",
+        "getPath": "/core/guardian/child/photo"
+      },
+      "getGuardianPapers": {
+        "publicName": "guardian-child-papers",
+        "requestSchemaName": "GuardianPapersQuery",
+        "responseSchemaName": "GuardianPapersResponse",
+        "getPath": "/core/guardian/child/papers"
+      },
+      "getClassReportRoster": {
+        "publicName": "class-report-roster",
+        "requestSchemaName": "ClassReportRosterQuery",
+        "responseSchemaName": "ClassReportRosterResponse",
+        "getPath": "/core/reports/class-roster"
+      },
+      "getStaffActivityMembers": {
+        "publicName": "staff-activity-members",
+        "requestSchemaName": "StaffActivityMembersQuery",
+        "responseSchemaName": "StaffActivityMembersResponse",
+        "getPath": "/core/staff/activities/members"
+      },
+      "getStaffActivityPupilOptions": {
+        "publicName": "staff-activity-pupil-options",
+        "requestSchemaName": "StaffActivityPupilOptionsQuery",
+        "responseSchemaName": "StaffActivityPupilOptionsResponse",
+        "getPath": "/core/staff/activities/pupil-options"
+      },
+      "getIncidentLessonOptions": {
+        "publicName": "incident-lesson-options",
+        "requestSchemaName": "IncidentLessonOptionsQuery",
+        "responseSchemaName": "IncidentLessonOptionsResponse",
+        "getPath": "/core/staff/incidents/lesson-options"
+      },
+      "getStaffFeedbackHistory": {
+        "publicName": "staff-feedback-history",
+        "requestSchemaName": "StaffFeedbackHistoryQuery",
+        "responseSchemaName": "StaffFeedbackHistoryResponse",
+        "getPath": "/core/staff/feedback/history"
+      },
+      "getStaffFeedbackHistoryExport": {
+        "publicName": "staff-feedback-history-export",
+        "requestSchemaName": "StaffFeedbackHistoryExportQuery",
+        "responseSchemaName": "StaffFeedbackHistoryExportResponse",
+        "getPath": "/core/staff/feedback/history/export"
+      },
+      "getTeacherFeedbackSummaries": {
+        "publicName": "teacher-feedback-summaries",
+        "requestSchemaName": "TeacherFeedbackSummariesQuery",
+        "responseSchemaName": "TeacherFeedbackSummaries",
+        "getPath": "/core/teacher/feedback/summaries"
+      },
+      "getStudentPortraitGrants": {
+        "publicName": "get-student-portrait-grants",
+        "requestSchemaName": "StudentPortraitGrantsQuery",
+        "responseSchemaName": "StudentPortraitGrants"
+      },
       "getReportConfiguration": {
         "publicName": "get-report-configuration",
         "requestSchemaName": "ReportConfigurationQuery",

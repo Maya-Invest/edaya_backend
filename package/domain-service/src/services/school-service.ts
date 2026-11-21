@@ -1,3 +1,4 @@
+import type { StaffActivityListFilter, StaffActivityListInput, StaffFeedbackHistoryFilter, StaffFeedbackHistoryInput, StaffFeedbackOptionsInput, TeacherIncidentDetailInput, TeacherIncidentsInput, TeacherLogbookInput } from '@edaya/core'
 import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
 import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
 import type { MarksQueueInput } from './queries/marks-review'
@@ -13,11 +14,26 @@ import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { getActivityRoster } from './queries/activity-roster'
 import { getAssessmentEditorContext } from './queries/assessment-editor-context'
-import { getGuardianAssessmentResult, getGuardianPeriodResults } from './queries/guardian-period-results'
+import { readClassReportRoster } from './queries/class-report-roster'
+import { getDeliveryInbox } from './queries/delivery-inbox'
+import { readStaffFeedbackOptions, readTeacherFeedbackSummaries } from './queries/family-feedback-lists'
+import { readGuardianChildPhoto, readGuardianPapers } from './queries/guardian-child-profile'
+import { readGuardianChoices, readGuardianHighlights } from './queries/guardian-home'
+import { getGuardianOccurrenceDetail } from './queries/guardian-occurrence'
+import { getGuardianFeesSummary, getGuardianPaymentDetail, getGuardianSettlements } from './queries/guardian-payment'
+import { getGuardianAssessmentResult, getGuardianPeriodOverview, getGuardianPeriodResults, getGuardianSubjectMarks } from './queries/guardian-period-results'
+import { readIncidentLessonOptions } from './queries/incident-lesson-options'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
 import { getStudentSessionHistory, getTeacherSessionHistory } from './queries/session-history'
+import { exportStaffActivityList, readStaffActivityList, readStaffActivityProfile } from './queries/staff-activity-list'
+import { readStaffActivityMembers, readStaffActivityPupilOptions } from './queries/staff-activity-pupils'
+import { exportStaffFeedbackHistory, readStaffFeedbackHistory } from './queries/staff-feedback-history'
+import { readClassRosterMemberIds, readStudentDirectory, revalidateStudentDirectory } from './queries/student-directory'
+import { getStudentAttendanceHistory, getStudentGradeHistory } from './queries/student-history'
 import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
+import { getTeacherIncidentDetail, getTeacherIncidents } from './queries/teacher-incidents'
+import { getTeacherLogbook } from './queries/teacher-logbook'
 import { getTeacherSubjectPeriodSummary } from './queries/teacher-subject-period-summary'
 
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
@@ -113,20 +129,30 @@ export class SchoolService {
 
   listTeacherGuardianRecipients(input: Parameters<ConversationsWorkflow['guardianRecipients']>[0]) { return this.conversationsWorkflow.guardianRecipients(input) }
   listConversationRecipients(input: Parameters<ConversationsWorkflow['recipients']>[0]) { return this.conversationsWorkflow.recipients(input) }
+  getStudentAttendanceHistory(input: Parameters<typeof getStudentAttendanceHistory>[1]) { return getStudentAttendanceHistory(this.baseService, input) }
+  getStudentGradeHistory(input: Parameters<typeof getStudentGradeHistory>[1]) { return getStudentGradeHistory(this.baseService, input) }
+  getDeliveryInbox(input: Parameters<typeof getDeliveryInbox>[1]) { return getDeliveryInbox(this.baseService, input) }
+  getUnreadConversationCount() { return this.conversationsWorkflow.unreadCount() }
+  getUnresolvedConversationCount() { return this.conversationsWorkflow.unresolvedCount() }
   listConversations(input: Parameters<ConversationsWorkflow['list']>[0]) { return this.conversationsWorkflow.list(input) }
   getConversation(input: Parameters<ConversationsWorkflow['detail']>[0]) { return this.conversationsWorkflow.detail(input) }
 
   async getTeacherAttendanceCall(input: Parameters<TeacherCorrectionsWorkflow['getAttendanceCall']>[0]) { return this.teacherCorrectionsWorkflow.getAttendanceCall(input) }
+  getTeacherDailyAttendanceStatus(input: Parameters<TeacherCorrectionsWorkflow['getDailyAttendanceStatus']>[0]) { return this.teacherCorrectionsWorkflow.getDailyAttendanceStatus(input) }
   async getTeacherWorkflowState(input: Parameters<TeacherCorrectionsWorkflow['getWorkflowState']>[0]) { return this.teacherCorrectionsWorkflow.getWorkflowState(input) }
   async listTeacherCorrections(input: Parameters<TeacherCorrectionsWorkflow['list']>[0]) { return this.teacherCorrectionsWorkflow.list(input) }
   async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
 
-  async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
+  async getActivityRoster(input: { activityId: string, includeMemberships?: boolean }) {
+    return this.baseService.atomicExecution.execute(() => getActivityRoster(this.baseService, input), { readSnapshot: true })
+  }
 
   async getGuardianAssessmentResult(input: { studentId: string, assessmentId: string }) { return getGuardianAssessmentResult(this.baseService, input) }
+  getGuardianPeriodOverview(input: Parameters<typeof getGuardianPeriodOverview>[1]) { return getGuardianPeriodOverview(this.baseService, input) }
+  getGuardianSubjectMarks(input: Parameters<typeof getGuardianSubjectMarks>[1]) { return getGuardianSubjectMarks(this.baseService, input) }
   async getGuardianPeriodResults(input: { studentId: string, periodId: string }) { return getGuardianPeriodResults(this.baseService, input) }
 
-  async getTeacherSubjectPeriodSummary(input: { classSubjectId: string, periodId: string }) { return getTeacherSubjectPeriodSummary(this.baseService, input) }
+  async getTeacherSubjectPeriodSummary(input: { classSubjectId: string, periodId: string }) { return this.baseService.atomicExecution.execute(() => getTeacherSubjectPeriodSummary(this.baseService, input), { readSnapshot: true }) }
 
   async getAssessmentEditorContext(input: { classGroupId: string, periodId: string }) { return getAssessmentEditorContext(this.baseService, input) }
 
@@ -187,6 +213,15 @@ export class SchoolService {
     return this.financeWorkflow.getPaymentSettlementHistory(input)
   }
 
+  getGuardianOccurrenceDetail(input: Parameters<typeof getGuardianOccurrenceDetail>[1]) { return getGuardianOccurrenceDetail(this.baseService, input) }
+
+  getGuardianFeesSummary(input: Parameters<typeof getGuardianFeesSummary>[1]) { return getGuardianFeesSummary(this.baseService, input) }
+  getGuardianSettlements(input: Parameters<typeof getGuardianSettlements>[1]) { return getGuardianSettlements(this.baseService, input) }
+
+  getGuardianPaymentDetail(input: Parameters<typeof getGuardianPaymentDetail>[1]) {
+    return getGuardianPaymentDetail(this.baseService, input)
+  }
+
   listDocumentTemplates() {
     return this.documentsWorkflow.listDocumentTemplates()
   }
@@ -207,6 +242,62 @@ export class SchoolService {
     return this.documentsWorkflow.grantDocumentBundleDownload(input)
   }
 
+  getTeacherIncidents(input: TeacherIncidentsInput) { return getTeacherIncidents(this.baseService, input) }
+  getTeacherIncidentDetail(input: TeacherIncidentDetailInput) { return getTeacherIncidentDetail(this.baseService, this.teacherCorrectionsWorkflow, input) }
+  getTeacherLogbook(input: TeacherLogbookInput) { return getTeacherLogbook(this.baseService, input) }
+
+  getGuardianChildPhoto(input: Parameters<typeof readGuardianChildPhoto>[1]) {
+    return readGuardianChildPhoto(this.baseService, input)
+  }
+
+  getGuardianPapers(input: Parameters<typeof readGuardianPapers>[1]) {
+    return readGuardianPapers(this.baseService, input)
+  }
+
+  getClassReportRoster(input: Parameters<typeof readClassReportRoster>[1]) {
+    return readClassReportRoster(this.baseService, input)
+  }
+
+  getStaffActivityMembers(input: Parameters<typeof readStaffActivityMembers>[1]) {
+    return readStaffActivityMembers(this.baseService, input)
+  }
+
+  getStaffActivityPupilOptions(input: Parameters<typeof readStaffActivityPupilOptions>[1]) {
+    return readStaffActivityPupilOptions(this.baseService, input)
+  }
+
+  getIncidentLessonOptions(input: Parameters<typeof readIncidentLessonOptions>[1]) {
+    return readIncidentLessonOptions(this.baseService, input)
+  }
+
+  getStaffActivityProfile(input: { activityId: string }) {
+    return readStaffActivityProfile(this.baseService, input.activityId)
+  }
+
+  getStaffActivityList(input: StaffActivityListInput) {
+    return readStaffActivityList(this.baseService, input)
+  }
+
+  getStaffActivityListExport(input: StaffActivityListFilter) {
+    return exportStaffActivityList(this.baseService, input)
+  }
+
+  getStaffFeedbackHistory(input: StaffFeedbackHistoryInput) {
+    return readStaffFeedbackHistory(this.baseService, input)
+  }
+
+  getStaffFeedbackHistoryExport(input: StaffFeedbackHistoryFilter) {
+    return exportStaffFeedbackHistory(this.baseService, input)
+  }
+
+  getStaffFeedbackOptions(input: StaffFeedbackOptionsInput) {
+    return readStaffFeedbackOptions(this.baseService, input)
+  }
+
+  getStaffFeedbackCampaigns(input: { academicYearId?: string, campaignId?: string }) {
+    return this.familyFeedbackWorkflow.getStaffFeedbackCampaigns(input)
+  }
+
   listFamilyFeedbackCampaigns() {
     return this.familyFeedbackWorkflow.listFamilyFeedbackCampaigns()
   }
@@ -223,8 +314,8 @@ export class SchoolService {
     return this.familyFeedbackWorkflow.getFamilyFeedbackInstrument(input)
   }
 
-  listGuardianFamilyFeedbackCampaigns() {
-    return this.familyFeedbackWorkflow.listGuardianFamilyFeedbackCampaigns()
+  listGuardianFamilyFeedbackCampaigns(input: { studentId?: string } = {}) {
+    return this.familyFeedbackWorkflow.listGuardianFamilyFeedbackCampaigns(input)
   }
 
   getGuardianFamilyFeedbackQuestionnaire(input: Parameters<FamilyFeedbackServiceWorkflow['getGuardianFamilyFeedbackQuestionnaire']>[0]) {
@@ -262,6 +353,22 @@ export class SchoolService {
     return this.baseService.repositories.results.forAccess(scope).count({ status: ReportCardResultStatus.Published })
   }
 
+  getGuardianHighlights(input: import('@edaya/core').GuardianHighlightsInput) { return readGuardianHighlights(this.baseService, input) }
+  getGuardianChildChoices() { return readGuardianChoices(this.baseService) }
+  getTeacherFeedbackSummaries(input: import('@edaya/core').TeacherFeedbackSelection) { return readTeacherFeedbackSummaries(this.baseService, input) }
+
+  async revalidateStudentDirectory(input: import('@edaya/core').StudentDirectoryInput, ifNoneMatch?: string) {
+    return revalidateStudentDirectory(this.baseService, input, ifNoneMatch)
+  }
+
+  async getClassRosterMemberIds(input: import('@edaya/core').ClassRosterMembersInput) {
+    return readClassRosterMemberIds(this.baseService, input)
+  }
+
+  async getStudentDirectory(input: import('@edaya/core').StudentDirectoryInput) {
+    return readStudentDirectory(this.baseService, input)
+  }
+
   async getSchoolOverview(input: GetSchoolOverviewInput): Promise<SchoolOverview> {
     this.checkActorSchool(input.schoolId)
     await this.baseService.access.overview.assertContext(input)
@@ -280,8 +387,11 @@ export class SchoolService {
 
   async getAppShellCounts(input: GetAppShellCountsInput): Promise<AppShellCounts> {
     this.checkActorSchool(input.schoolId)
-    await this.baseService.access.overview.assertContext(input)
-    return this.baseService.repositories.dashboardProjections.appShell(input, await this.baseService.access.overview.scopes())
+    const base = this.baseService
+    return base.atomicExecution.execute(async () => {
+      const scopes = await base.access.overview.shellScopes(input)
+      return base.repositories.dashboardProjections.appShell(input, scopes)
+    }, { readSnapshot: true })
   }
 
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {

@@ -12,11 +12,11 @@ import {
   grantAccessControlAssign,
   signUpAuthUser,
 } from '../support/api-route-harness'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithStaffSchool } from '../support/seeded-route-test-context'
 
 const UNLINKED_STAFF_ID = 'st9'
 
-describeWithLightSchool('link-actor-subject command route', (getContext) => {
+describeWithStaffSchool('link-actor-subject command route', (getContext) => {
   it('links a staff member to a Better Auth subject through the command route', async () => {
     const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
@@ -83,4 +83,4 @@ describeWithLightSchool('link-actor-subject command route', (getContext) => {
 
     expect(response.status).toBe(401)
   })
-}, { isolate: true })
+})
