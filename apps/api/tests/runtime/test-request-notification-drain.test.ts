@@ -25,13 +25,16 @@ function createContext(options: {
   apiRuntime?: ApiRuntime;
   waitUntil?: (promise: Promise<unknown>) => void;
   loggerErrors?: unknown[];
+  mode?: "active";
+  method?: string;
 }) {
   const values = new Map<string, unknown>([
     ["apiRuntime", options.apiRuntime],
   ]);
   const loggerErrors = options.loggerErrors ?? [];
   const context = {
-    env: { RUNTIME: options.runtime ?? "local" },
+    req: { method: options.method ?? "POST" },
+    env: { RUNTIME: options.runtime ?? "local", SCHEDULER_MODE: options.mode },
     executionCtx: options.waitUntil
       ? { waitUntil: options.waitUntil }
       : undefined,
@@ -56,6 +59,14 @@ function createContext(options: {
 }
 
 describe("closeRequestApiRuntime notification drain", () => {
+  test("active Worker reads finish without opening School or draining notifications", async () => {
+    const drain = mock(async () => undefined);
+    const close = mock(async () => undefined);
+    const { context } = createContext({ mode: "active", runtime: "worker", method: "GET", apiRuntime: createRuntime({ drain, close }) });
+    await closeWorkerRequestApiRuntime(context);
+    expect(drain).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
   test("local runtime drains queued invitations after the request", async () => {
     const drain = mock(async () => undefined);
     const close = mock(async () => undefined);

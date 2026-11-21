@@ -5,6 +5,7 @@ import type { ActorMetadata } from "@edaya/authorization";
 import type { SchoolService } from "@edaya/service";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { AppBindings } from "@/http/bindings";
+import { publishSchoolChanges } from "@/cron/scheduler/runtime";
 import { buildWorkerApiRuntime } from "@/runtime/worker/build-runtime";
 
 type BackgroundTask = (service: SchoolService) => Promise<void>;
@@ -14,13 +15,19 @@ export function scheduleBackgroundTask(
   actor: ActorMetadata,
   task: BackgroundTask,
 ): void {
-  scheduleBackgroundApplicationTask(c, application => task(application.forActor(actor)));
+  runBackgroundApplicationTask(c, application => task(application.forActor(actor)));
 }
 
 export function scheduleBackgroundApplicationTask(
   c: Context<AppBindings>,
   task: (application: ApiSchoolApplication) => Promise<unknown>,
 ): void {
+  if (c.env.SCHEDULER_MODE === "active")
+    return;
+  runBackgroundApplicationTask(c, task);
+}
+
+function runBackgroundApplicationTask(c: Context<AppBindings>, task: (application: ApiSchoolApplication) => Promise<unknown>) {
   const logFailure = (error: unknown) => {
     c.var.logger.error({ err: error }, "background task failed");
   };
@@ -31,6 +38,7 @@ export function scheduleBackgroundApplicationTask(
       try {
         const schoolApp = await runtime.getSchoolApplication();
         await task(schoolApp);
+        await publishSchoolChanges(runtime);
       }
       finally {
         await runtime.close();
@@ -39,6 +47,8 @@ export function scheduleBackgroundApplicationTask(
     }
 
     await task(c.get("schoolApp"));
+    if (c.var.apiRuntime)
+      await publishSchoolChanges(c.var.apiRuntime);
   };
 
   if (c.env.RUNTIME === "worker") {

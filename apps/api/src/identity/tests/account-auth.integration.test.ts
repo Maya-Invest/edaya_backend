@@ -233,3 +233,20 @@ test("a rejected resend invalidates the old and replacement challenges", async (
   for (const id of [start.challenge, replacement!])
     await expect(accounts.verify(id, "000000")).rejects.toMatchObject({ code: "challenge_expired" });
 });
+
+test("an expired session is rejected while its row awaits the daily purge", async () => {
+  const loginResult = await login("scheduler-expiry@example.com");
+  if (loginResult.state !== "complete")
+    throw new Error("Expected complete login");
+  const { session } = await service.getSession(loginResult.credential);
+  const savedTime = now;
+  try {
+    now = session.expiresAt;
+    await expect(service.getSession(loginResult.credential)).rejects.toMatchObject({ status: 401 });
+    const retained = await database.query("SELECT 1 FROM identity.session WHERE digest=$1", [await security.digest(loginResult.credential)]);
+    expect(retained.rows).toHaveLength(1);
+  }
+  finally {
+    now = savedTime;
+  }
+});

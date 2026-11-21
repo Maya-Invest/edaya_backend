@@ -13,6 +13,7 @@
   // "LOCAL_FILES_ROOT": ".data/files",
   // "GOTENBERG_URL": "http://localhost:3000",
   // "CHROME_PATH": "", // blank selects the local stub when Gotenberg is absent
+  // "LOCAL_HEARTBEAT_MINUTES": "5",
   // "CRON_JOB_KEYS": "processDueNotifications,reconcilePendingDeliveries",
   // Africa's Talking sandbox (local capture also sends through configured providers):
   // "AFRICAS_TALKING_USERNAME": "sandbox",
@@ -35,6 +36,7 @@
   "AUTH_TERMS_MODE": "live",
   "PORT": "9999",
   "LOG_LEVEL": "debug",
+  "SCHEDULER_MODE": "active",
   "DATABASE_URL": "pglite:.data/school",
   "RUN_MIGRATIONS_ON_STARTUP": "true",
   "API_ORIGIN": "http://localhost:9999",

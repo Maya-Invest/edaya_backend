@@ -1,6 +1,6 @@
 import type { CronJobDispatchMessage } from "@edaya/service";
 
-export type CronJobDispatchQueueBody = CronJobDispatchMessage;
+export type CronJobDispatchQueueBody = CronJobDispatchMessage | import("@edaya/service").SchedulerMessage;
 
 export function parseCronJobDispatchQueueBody(body: unknown): CronJobDispatchMessage {
   if (!body || typeof body !== "object" || Array.isArray(body))
@@ -13,6 +13,6 @@ export function parseCronJobDispatchQueueBody(body: unknown): CronJobDispatchMes
   return { jobId: value.jobId };
 }
 
-export function toCronJobDispatchQueueBody(message: CronJobDispatchMessage): CronJobDispatchQueueBody {
+export function toCronJobDispatchQueueBody(message: CronJobDispatchMessage): CronJobDispatchMessage {
   return parseCronJobDispatchQueueBody(message);
 }

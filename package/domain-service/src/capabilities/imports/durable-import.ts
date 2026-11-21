@@ -214,7 +214,7 @@ async function processPage(application: Application, work: ClaimedDurableWork, d
     outbox: result => continuation ? [{ id: nextWorkId, kind: SCHOOL_IMPORT_WORK_KIND, version: 1, resourceType: 'schoolImports', resourceId: result.id }] : [],
   })
 }
-async function reconcileExhaustedImports(application: Application) {
+export async function reconcileExhaustedImports(application: Application) {
   const batches = await application.atomicExecution.execute(() => application.importPersistence.exhaustedBatches(100))
   for (const batch of batches) {
     await application.atomicExecution.execute(async () => {

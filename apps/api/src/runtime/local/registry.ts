@@ -23,6 +23,7 @@ const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
   closeRuntime: runtime => runtime.close(),
   cacheKey: env => [
     env.RUNTIME,
+    env.SCHEDULER_MODE,
     env.DATABASE_URL,
     env.AUTH_DATABASE_URL,
     env.API_ORIGIN,

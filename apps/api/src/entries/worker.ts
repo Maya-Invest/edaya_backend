@@ -38,11 +38,28 @@ export default {
     ctx.waitUntil((async () => {
       try {
         const asOf = new Date(controller.scheduledTime);
+        if (env.SCHEDULER_MODE === "active") {
+          const { tickScheduler } = await import("@/cron/scheduler/runtime");
+          const claimed = await tickScheduler(runtime, Math.max(Date.now(), asOf.getTime()));
+          logger.info({ event: "scheduler.tick", claimed, ...runtime.schedulerUsage?.(), scheduledAt: asOf.toISOString() }, "D1 heartbeat completed");
+          return;
+        }
+        let advanceShadow: (() => Promise<void>) | undefined;
+        if (env.SCHEDULER_MODE === "shadow") {
+          try {
+            const { compareShadow } = await import("@/cron/scheduler/shadow");
+            advanceShadow = await compareShadow(runtime, asOf, logger);
+          }
+          catch (error) {
+            logger.error({ event: "scheduler.shadow.failed", err: error }, "shadow comparison failed");
+          }
+        }
         await runHeartbeatJobs(asOf, async () => {
           await runtime.getSchoolApplication();
           await runtime.drainNotifications?.();
           await runCronHeartbeatWithRuntime(runtime, { asOf, requestIdPrefix: `worker-cron:${asOf.toISOString()}` }, logger);
-        }, async () => (await runtime.getIdentityRuntime!()).auth.purgeExpiredCredentials());
+        }, async () => (await runtime.getIdentityRuntime!()).auth.purgeExpiredCredentials(), env.LEGACY_IDENTITY_CLEANUP_CRON);
+        await advanceShadow?.();
       }
       catch (error) {
         logger.error({ event: "cron.tick", err: error, cron: controller.cron }, "cron heartbeat failed");

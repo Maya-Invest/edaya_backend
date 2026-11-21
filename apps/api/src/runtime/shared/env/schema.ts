@@ -1,3 +1,4 @@
+import { validateJobCron } from "@edaya/service";
 import { resolveTermsMode, termsModeSchema } from "@/lib/terms-mode";
 import { smsEnvironmentFields, validateSmsEnvironment } from "@/lib/sms-config";
 import type { BrowserRunBinding } from "@edaya/adaptor-docs";
@@ -21,6 +22,17 @@ export const EnvSchema = z.object({
   TEACHER_QUICK_LOGIN_ENABLED: envBooleanSchema.optional(),
   LOCAL_OTP_CAPTURE: envBooleanSchema.default(false),
   LOCAL_OPERATIONS_ROOT: z.string().optional(),
+  LOCAL_HEARTBEAT_MINUTES: z.coerce.number().int().min(1).max(35791).optional(),
+  LEGACY_IDENTITY_CLEANUP_CRON: z.string().refine((value) => {
+    try {
+      // Older bindings can contain a paused purge. New configuration accepts only cron expressions.
+      return value === "off" || !!validateJobCron(value);
+    }
+    catch {
+      return false;
+    }
+  }, "Expected a five-field UTC cron expression").optional(),
+  SCHEDULER_MODE: z.enum(["legacy", "shadow", "active"]).optional(),
   PAUSE_API: envBooleanSchema.default(false),
   PAUSE_SCHEDULER: envBooleanSchema.default(false),
   PAUSE_JOBS: envBooleanSchema.default(false),
@@ -87,6 +99,7 @@ export const EnvSchema = z.object({
 }));
 
 export type Environment = z.infer<typeof EnvSchema> & {
+  SCHEDULER_DB?: import("@/runtime/shared/adapters/sqlite-scheduler").SchedulerDatabase;
   CRON_JOBS?: CronJobsQueueBinding;
   EMAIL?: CloudflareEmailBinding;
   BROWSER?: BrowserRunBinding;

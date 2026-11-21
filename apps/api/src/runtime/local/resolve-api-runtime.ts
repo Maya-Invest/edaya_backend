@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { publishSchoolChanges } from "@/cron/scheduler/runtime";
 import { getApiRuntime } from "@/runtime/local/registry";
 import { drainRequestNotifications } from "@/runtime/shared/drain-request-notifications";
 import type { AppBindings } from "@/http/bindings";
@@ -16,5 +17,17 @@ export async function resolveApiRuntime(c: Context<AppBindings>): Promise<ApiRun
 }
 
 export async function closeRequestApiRuntime(c: Context<AppBindings>): Promise<void> {
-  await drainRequestNotifications(c.var.apiRuntime, c);
+  const runtime = c.var.apiRuntime;
+  if (!runtime || ["GET", "HEAD", "OPTIONS"].includes(c.req.method))
+    return;
+  if (c.env?.SCHEDULER_MODE !== "active")
+    await drainRequestNotifications(runtime, c);
+  if (c.env?.SCHEDULER_MODE && c.env.SCHEDULER_MODE !== "legacy") {
+    try {
+      await publishSchoolChanges(runtime);
+    }
+    catch (err) {
+      c.var.logger?.error({ err }, "scheduler publication failed after commit");
+    }
+  }
 }

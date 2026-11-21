@@ -111,7 +111,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
     : schoolCandidateChannels(metadata);
 
   for (const subjectId of subjectIds) {
-    let subjectSent = recipientRows.some(row => row.subject_id === subjectId && row.status === "sent");
+    let subjectSent = recipientRows.some(row => row.subject_id === subjectId && (row.status === "sent" || row.status === "read"));
     anySent ||= subjectSent;
     let subjectTerminal = false;
     for (const channel of candidateChannels) {
@@ -123,7 +123,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
         events.push({ deliveryId: job.delivery_id, subjectId, channel, status: "failed", failureReason: reason, occurredAt: new Date() });
         continue;
       }
-      if (recipientRows.some(row => row.subject_id === subjectId && row.channel === channel && row.status === "sent"))
+      if (recipientRows.some(row => row.subject_id === subjectId && row.channel === channel && (row.status === "sent" || row.status === "read")))
         continue;
       const renewed = await deps.sql.query<{ idempotency_key: string }>(`
         UPDATE notify.jobs SET lease_expires_at = clock_timestamp() + INTERVAL '5 minutes'
@@ -190,7 +190,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
             device.provider === "fcm" && device.profile_kind === recipient?.recipient_kind && device.profile_id === recipient?.recipient_id);
           for (const device of devices) {
             const deviceChannel = `push:${encodeURIComponent(device.app_id)}:${encodeURIComponent(device.installation_id)}`;
-            if (recipientRows.some(row => row.subject_id === subjectId && row.channel === deviceChannel && (row.status === "sent" || row.status === "cancelled")))
+            if (recipientRows.some(row => row.subject_id === subjectId && row.channel === deviceChannel && ["sent", "read", "cancelled"].includes(row.status)))
               continue;
             let status = "sent";
             let providerMessageId: string | undefined;

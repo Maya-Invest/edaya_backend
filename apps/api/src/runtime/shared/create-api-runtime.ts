@@ -1,11 +1,12 @@
 import { resolveSmsRouter } from "./adapters/sms-router";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import { resolveInvitationDispatchRecipient, resolveNotificationDispatchRecipient } from "@edaya/service";
-import { transactionContext } from "@edaya/adaptor-postgres";
+import { SchoolSchedulerSignals, transactionContext } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import {
   createNotifyRuntimeFromDrizzle,
   drainPendingSchoolNotifications,
+  sendJob,
 } from "@edaya/adaptor-notify";
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent } from "@edaya/core";
@@ -116,6 +117,18 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
 
   return {
     env: options.env,
+    schoolOpened: () => !!resolvedSchoolHandle,
+    async schedulerSignals() {
+      await getSchoolApplication();
+      return new SchoolSchedulerSignals((await getResolvedSchoolHandle()).db as ConstructorParameters<typeof SchoolSchedulerSignals>[0]);
+    },
+    async sendNotificationJob(id) {
+      await getSchoolApplication();
+      const notify = await getNotifyRuntime();
+      if (!notify)
+        throw new Error("Notification runtime unavailable");
+      await sendJob(id, { ...notify, sql: notify.deliverySql ?? notify.sql });
+    },
     async drainNotifications() {
       if (!options.runBackground && options.env.PAUSE_JOBS)
         return;

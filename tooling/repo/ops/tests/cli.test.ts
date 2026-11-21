@@ -62,6 +62,14 @@ test('leaf help precedes required arguments and confirmation without executing',
   expect(() => parse(['ci', 'deploy', 'staging', '--dry-run', '--dry-run'])).toThrow('Duplicate option')
 })
 
+test('scheduler configuration accepts only the two maintenance jobs', () => {
+  const configure = (job: string) => parse(['ops', 'scheduler', 'configure', 'local', job, '0 */6 * * *'])
+  for (const job of ['school-recovery', 'identity-cleanup'])
+    expect(configure(job).help).toBe(false)
+  for (const job of ['expireAccountInvitations', 'notification.school', 'grading.recalculate'])
+    expect(() => configure(job)).toThrow('Invalid job')
+})
+
 test('removed spellings give replacement guidance and old entry point is absent', () => {
   expect(existsSync(resolve(root, 'tooling/repo/cli/main.ts'))).toBe(false)
   for (const [old, replacement] of Object.entries(removedCommands)) {
