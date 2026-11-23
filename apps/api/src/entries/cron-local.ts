@@ -1,3 +1,4 @@
+import { publishSchoolChanges, tickScheduler } from "@/cron/scheduler/runtime";
 import { localOperations } from "../../configuration/local-operations.ts";
 import { loadLocalProcessEnv } from "@/runtime";
 import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
@@ -15,6 +16,10 @@ async function main(): Promise<void> {
     const runtime = await buildLocalApiRuntime(env);
 
     try {
+      if (env.SCHEDULER_MODE === "active" && !env.CRON_JOB_KEYS?.trim()) {
+        await tickScheduler(runtime, Date.now());
+        return;
+      }
       await runtime.getSchoolApplication();
       await runtime.drainNotifications?.();
       const asOf = new Date();
@@ -27,6 +32,7 @@ async function main(): Promise<void> {
           requestIdPrefix: `local-cron:${asOf.toISOString()}`,
         });
 
+        await publishSchoolChanges(runtime);
         const totalProcessed = summary.results.reduce((sum, r) => sum + r.result.processed, 0);
         const totalSkipped = summary.results.reduce((sum, r) => sum + r.result.skipped, 0);
 

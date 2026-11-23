@@ -8,7 +8,7 @@ import { describe, expect, test } from 'bun:test'
 import { createChromePdfRenderer, createDocumentRenderer, detectChromeExecutable } from '../../../../adaptor-docs/src/index'
 import { createReportCardContext } from './report-card-workflow-context'
 
-async function annualFixture(hook?: (input: DocumentRenderInput) => Promise<void>) {
+async function annualFixture({ secondSemester = true, hook }: { secondSemester?: boolean, hook?: (input: DocumentRenderInput) => Promise<void> } = {}) {
   const rendered: DocumentRenderInput[] = []
   const realPdf = process.env['ANNUAL_REPORT_CARD_REAL_PDF'] === '1'
   const renderer = createDocumentRenderer({ pdfRenderer: realPdf
@@ -22,12 +22,15 @@ async function annualFixture(hook?: (input: DocumentRenderInput) => Promise<void
     await hook?.(input)
     return result
   } } })
-  await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: 'sem2', schoolId: 'sch1', academicYearId: 'ay1', name: 'Second semester', type: AcademicPeriodType.Semester, startDate: new Date('2026-04-01'), endDate: new Date('2026-06-30'), isPublished: true })))
   await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: 'annual', schoolId: 'sch1', academicYearId: 'ay1', name: 'Annual', type: AcademicPeriodType.Other, startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), isPublished: true })))
-  const assessment = (await f.repositories.assessments.findById('ass1'))!
-  await f.repositories.assessments.save(new Assessment({ ...assessment.data, id: 'ass2', periodId: 'sem2', startsAt: new Date('2026-05-01'), endsAt: new Date('2026-05-02') }))
-  await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu1', assessmentId: 'ass2', score: 60 }))
-  for (const periodId of ['per1', 'sem2']) {
+  if (secondSemester) {
+    await f.repositories.academicPeriods.save(new AcademicPeriod(withShortName({ id: 'sem2', schoolId: 'sch1', academicYearId: 'ay1', name: 'Second semester', type: AcademicPeriodType.Semester, startDate: new Date('2026-04-01'), endDate: new Date('2026-06-30'), isPublished: true })))
+    const assessment = (await f.repositories.assessments.findById('ass1'))!
+    await f.repositories.assessments.save(new Assessment({ ...assessment.data, id: 'ass2', periodId: 'sem2', startsAt: new Date('2026-05-01'), endsAt: new Date('2026-05-02') }))
+    await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu1', assessmentId: 'ass2', score: 60 }))
+  }
+  const sourcePeriodIds = secondSemester ? ['sem2', 'per1'] : ['per1']
+  for (const periodId of sourcePeriodIds) {
     const sourceDraft = await f.service.assessmentsWorkflow.generateReportCardResult({ id: `report-${periodId}`, studentId: 'stu1', periodId })
     await f.service.assessmentsWorkflow.publishReportCardResult({ reviewedDraftVersion: sourceDraft.version, reviewedGradingRevision: sourceDraft.gradingPolicyRevision, reviewedReportConfigurationRevision: sourceDraft.reportConfigurationRevision, id: `report-${periodId}`, studentId: 'stu1', periodId })
   }
@@ -36,7 +39,7 @@ async function annualFixture(hook?: (input: DocumentRenderInput) => Promise<void
     studentId: 'stu1',
     periodId: 'annual',
 
-    aggregation: { source: ReportCardAggregationSource.ReportCards, sourcePeriodIds: ['sem2', 'per1'], periodWeightsByPeriodId: { per1: 1, sem2: 3 }, sourceReportVersions: [{ periodId: 'per1', resultId: 'untrusted', version: 0, sourceVersion: 'untrusted' }] },
+    aggregation: { source: ReportCardAggregationSource.ReportCards, sourcePeriodIds, periodWeightsByPeriodId: secondSemester ? { per1: 1, sem2: 3 } : { per1: 1 }, sourceReportVersions: [{ periodId: 'per1', resultId: 'untrusted', version: 0, sourceVersion: 'untrusted' }] },
   })
   const annual = await f.service.assessmentsWorkflow.publishReportCardResult({ reviewedDraftVersion: draft.version, reviewedGradingRevision: draft.gradingPolicyRevision, reviewedReportConfigurationRevision: draft.reportConfigurationRevision, id: draft.id, studentId: 'stu1', periodId: 'annual' })
   const family = f.forActor(createGuardianActorMetadata({ schoolId: 'sch1', guardianId: 'gua1', subjectId: 'subject-gua1', requestId: 'annual-family', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
@@ -129,11 +132,9 @@ describe('official annual report card workflow', () => {
 
   test('changes during rendering cannot bind an obsolete PDF; regeneration permits a replacement', async () => {
     let changeDuringRender: (() => Promise<void>) | undefined
-    const f = await annualFixture(async () => {
-      await changeDuringRender?.()
-    })
+    const f = await annualFixture({ secondSemester: false, hook: async () => changeDuringRender?.() })
     const issued = await f.request()
-    const original = (await f.repositories.results.findById('report-sem2'))!
+    const original = (await f.repositories.results.findById('report-per1'))!
     changeDuringRender = async () => {
       await f.repositories.results.save(new ReportCardResult({ ...original.data, sectionResults: [...original.sectionResults], overallAverage: 14, version: original.version + 1 }))
       changeDuringRender = undefined
@@ -154,10 +155,10 @@ describe('official annual report card workflow', () => {
 
   test('a temporary renderer failure retries the same immutable annual snapshot', async () => {
     let unavailable = true
-    const f = await annualFixture(async (input) => {
+    const f = await annualFixture({ secondSemester: false, hook: async (input) => {
       if (input.templateKey === 'annual-report-card.v1' && unavailable)
         throw new Error('Temporary renderer outage')
-    })
+    } })
     const issued = await f.request()
     await dispatchDocumentRender(f.application)
     expect((await f.repositories.documentIssuances.findById(issued.id))?.failureCode).toBe('DOCUMENT_RENDER_UNAVAILABLE')

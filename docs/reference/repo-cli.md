@@ -18,6 +18,8 @@ bun run repo ci qualify staging
 
 Clients are expected to upgrade with the backend; compatibility with older clients does not block release. Checksum-pinned oasdiff 1.11.7 reports historical contract changes in `.ci-evidence/contract-changes.json`. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment, falling back to the preserved `tooling/repo/fixtures/compatibility/bootstrap.json` snapshot when no successful deployment exists. Comparison/tool errors still fail qualification. The existing `compatibility` evidence key requires the handwritten HTTP, actor-assurance and tenant-scope regression suites to pass; schema changes cannot suppress those tests. Current OpenAPI drift, generated-client and application regression checks also remain mandatory. Qualify matching frontend and mobile clients before rolling out a contract change.
 
+See the [job scheduler runbook](job-scheduler.md) for scheduler storage, replay, cutover and cost verification.
+
 ## Cloudflare and migrations
 
 Configure environment secrets `CLOUDFLARE_API_TOKEN`, `STAGING_DATABASE_URL`, `STAGING_AUTH_DATABASE_URL`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_AUTH_DATABASE_URL` as applicable, and environment variable `CLOUDFLARE_ACCOUNT_ID`. The deployment job explicitly migrates identity and school databases before deploying the verified Worker bundle. Normal deployment never resets or seeds.
@@ -290,6 +292,7 @@ Usage: bun repo ops <command>
 Manage data, configuration and operational state.
 
 Commands:
+  scheduler                Configure schedules and manage scheduler handoffs.
   db                       Manage database schemas and data.
   seed                     Populate demo data while supervising background-work pauses.
   vars                     Manage configuration variables.
@@ -307,6 +310,92 @@ Options:
 
 Examples:
   bun repo ops <command> --help
+
+Usage: bun repo ops scheduler <command>
+
+Configure schedules and manage scheduler handoffs.
+
+Commands:
+  schedules                List the School recovery and Identity cleanup schedules.
+  configure                Set the UTC cron expression for a maintenance job.
+  reconcile                Request School backfill and recovery on the next tick.
+  inspect                  Inspect a scheduler reference or list outstanding work.
+  replay                   Recheck a failed scheduler reference.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler <command> --help
+
+Usage: bun repo ops scheduler schedules <local|staging|production>
+
+List the School recovery and Identity cleanup schedules.
+
+Arguments:
+  target                   Values: local, staging, production.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler schedules local
+
+Usage: bun repo ops scheduler configure <local|staging|production> <school-recovery|identity-cleanup> <schedule>
+
+Set the UTC cron expression for a maintenance job.
+
+Arguments:
+  target                   Values: local, staging, production.
+  job                      Values: school-recovery, identity-cleanup.
+  schedule                 Required value.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler configure local school-recovery '0 */6 * * *'
+
+Usage: bun repo ops scheduler reconcile <local|staging|production>
+
+Request School backfill and recovery on the next tick.
+
+Arguments:
+  target                   Values: local, staging, production.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler reconcile local
+
+Usage: bun repo ops scheduler inspect <local|staging|production> [reference]
+
+Inspect a scheduler reference or list outstanding work.
+
+Arguments:
+  target                   Values: local, staging, production.
+  reference                Required value. Optional.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler inspect local <reference>
+
+Usage: bun repo ops scheduler replay <local|staging|production> <reference>
+
+Recheck a failed scheduler reference.
+
+Arguments:
+  target                   Values: local, staging, production.
+  reference                Required value.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler replay local <reference>
 
 Usage: bun repo ops db <command>
 

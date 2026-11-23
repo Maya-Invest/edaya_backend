@@ -14,4 +14,5 @@ export {
   signInWithBearerThroughApp,
   signUpAuthUser,
   testIdentityProvisioner,
+  withAcademicYearHeaders,
 } from '@api-tests/support/core-route-harness'

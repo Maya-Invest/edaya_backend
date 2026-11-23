@@ -1,8 +1,8 @@
 import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, Schedule, Subject, SubjectMatter, withShortName } from '@edaya/core'
 import { expect, it } from 'bun:test'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithStaffSchool } from '../support/seeded-route-test-context'
 
-describeWithLightSchool('generic class subject deletion', (getContext) => {
+describeWithStaffSchool('generic class subject deletion', (getContext) => {
   it('preserves inherited and used allocations, preflights the entire batch, and prevents direct removal of unused offerings', async () => {
     const { application, app, authHeaders } = getContext()
     const repositories = application.repositories
@@ -43,4 +43,4 @@ describeWithLightSchool('generic class subject deletion', (getContext) => {
     expect(unusedResponse.status).toBe(409)
     expect(await repositories.classSubjects.findById('delete-allocation-unused')).toBeDefined()
   })
-}, { isolate: true })
+})

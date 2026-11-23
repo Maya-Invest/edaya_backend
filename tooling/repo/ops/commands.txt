@@ -249,6 +249,7 @@ Usage: bun repo ops <command>
 Manage data, configuration and operational state.
 
 Commands:
+  scheduler                Configure schedules and manage scheduler handoffs.
   db                       Manage database schemas and data.
   seed                     Populate demo data while supervising background-work pauses.
   vars                     Manage configuration variables.
@@ -266,6 +267,92 @@ Options:
 
 Examples:
   bun repo ops <command> --help
+
+Usage: bun repo ops scheduler <command>
+
+Configure schedules and manage scheduler handoffs.
+
+Commands:
+  schedules                List the School recovery and Identity cleanup schedules.
+  configure                Set the UTC cron expression for a maintenance job.
+  reconcile                Request School backfill and recovery on the next tick.
+  inspect                  Inspect a scheduler reference or list outstanding work.
+  replay                   Recheck a failed scheduler reference.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler <command> --help
+
+Usage: bun repo ops scheduler schedules <local|staging|production>
+
+List the School recovery and Identity cleanup schedules.
+
+Arguments:
+  target                   Values: local, staging, production.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler schedules local
+
+Usage: bun repo ops scheduler configure <local|staging|production> <school-recovery|identity-cleanup> <schedule>
+
+Set the UTC cron expression for a maintenance job.
+
+Arguments:
+  target                   Values: local, staging, production.
+  job                      Values: school-recovery, identity-cleanup.
+  schedule                 Required value.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler configure local school-recovery '0 */6 * * *'
+
+Usage: bun repo ops scheduler reconcile <local|staging|production>
+
+Request School backfill and recovery on the next tick.
+
+Arguments:
+  target                   Values: local, staging, production.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler reconcile local
+
+Usage: bun repo ops scheduler inspect <local|staging|production> [reference]
+
+Inspect a scheduler reference or list outstanding work.
+
+Arguments:
+  target                   Values: local, staging, production.
+  reference                Required value. Optional.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler inspect local <reference>
+
+Usage: bun repo ops scheduler replay <local|staging|production> <reference>
+
+Recheck a failed scheduler reference.
+
+Arguments:
+  target                   Values: local, staging, production.
+  reference                Required value.
+
+Options:
+  -h, --help               Show help for this command.
+
+Examples:
+  bun repo ops scheduler replay local <reference>
 
 Usage: bun repo ops db <command>
 

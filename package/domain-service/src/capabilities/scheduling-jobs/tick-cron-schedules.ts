@@ -43,6 +43,9 @@ export async function tickCronSchedules(
           asOf: options.asOf,
           requestId,
         }
+        // A former D1 owner may already have completed this slot before rollback.
+        if (await schedules.hasOccurrence(schoolId, schedule.id, schedule.nextRunAt))
+          continue
         await application.commandExecution.execute({
           scope: { schoolId, command: 'cron.occurrence', callerId: 'system:cron', requestId },
           input: { scheduleId: schedule.id, jobKey: schedule.jobKey, scheduledFor: schedule.nextRunAt, asOf: options.asOf },

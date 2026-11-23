@@ -15,7 +15,7 @@ import {
   signInWithBearerThroughApp,
   signUpAuthUser,
 } from '../support/api-route-harness'
-import { describeWithLightSchool } from '../support/seeded-route-test-context'
+import { describeWithStaffSchool } from '../support/seeded-route-test-context'
 
 const INVITEE_EMAIL = 'p.martin.invite-e2e@school.edu'
 const UNLINKED_STAFF_ID = 'st-invite-e2e'
@@ -81,7 +81,7 @@ async function previewInvitation(app: Hono<AppBindings>, token: string) {
   }
 }
 
-describeWithLightSchool('account invitation public link flow', (getContext) => {
+describeWithStaffSchool('account invitation public link flow', (getContext) => {
   it('sends an invitation, previews the link, and accepts it end-to-end', async () => {
     const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
@@ -245,4 +245,4 @@ describeWithLightSchool('account invitation public link flow', (getContext) => {
 
     expect(acceptResponse.status).toBe(401)
   })
-}, { isolate: true })
+})

@@ -1,4 +1,5 @@
 import type { Argument, Command, Invocation, Option } from './command-tree'
+import { maintenanceJobKeys } from '../../../package/domain-service/src/ports/platform/job-scheduler'
 
 const env: Argument = { name: 'environment', choices: ['staging', 'production'] }
 const target: Argument = { name: 'target', choices: ['local', 'staging', 'production'] }
@@ -85,6 +86,13 @@ export const commands: Command = group('Backend repository commands. Use <comman
     commands: leaf('generate commands', 'Regenerate the full command reference and saved help.'),
   }),
   ops: group('Manage data, configuration and operational state.', {
+    'scheduler': group('Configure schedules and manage scheduler handoffs.', {
+      schedules: leaf('ops scheduler schedules', 'List the School recovery and Identity cleanup schedules.', { arguments: [target] }),
+      configure: leaf('ops scheduler configure', 'Set the UTC cron expression for a maintenance job.', { arguments: [target, { name: 'job', choices: maintenanceJobKeys }, { name: 'schedule' }], examples: ['bun repo ops scheduler configure local school-recovery \'0 */6 * * *\''] }),
+      reconcile: leaf('ops scheduler reconcile', 'Request School backfill and recovery on the next tick.', { arguments: [target] }),
+      inspect: leaf('ops scheduler inspect', 'Inspect a scheduler reference or list outstanding work.', { arguments: [target, { name: 'reference', optional: true }] }),
+      replay: leaf('ops scheduler replay', 'Recheck a failed scheduler reference.', { arguments: [target, { name: 'reference' }] }),
+    }),
     'db': group('Manage database schemas and data.', {
       migrate: leaf('ops db migrate', 'Apply database migrations.', { arguments: [{ name: 'database', choices: ['school', 'identity'] }, target] }),
       reset: leaf('ops db reset', 'Reset school database schemas.', { arguments: [{ name: 'database', choices: ['school'] }, env], options: { '--yes': yes } }),

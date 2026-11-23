@@ -98,6 +98,20 @@ test("the school heartbeat runs every five minutes and only the hourly tick open
   expect(identity).toEqual([0, 60]);
 });
 
+test("legacy cleanup follows a customized UTC expression", async () => {
+  const ran: number[] = [];
+  for (const minute of [0, 15, 30, 45]) {
+    const at = new Date(Date.UTC(2027, 0, 1, 2, minute));
+    await runHeartbeatJobs(at, async () => {}, async () => {
+      ran.push(minute);
+    }, "15,45 2 * * *");
+    await runHeartbeatJobs(at, async () => {}, async () => {
+      ran.push(-1);
+    }, "off");
+  }
+  expect(ran).toEqual([15, 45]);
+});
+
 test("both scheduled jobs run and either failure is reported after both settle", async () => {
   for (const failed of [0, 1]) {
     const ran: number[] = [];

@@ -1,5 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 import type { Context } from "hono";
+import { publishSchoolChanges } from "@/cron/scheduler/runtime";
 import { buildWorkerApiRuntime } from "@/runtime/worker/build-runtime";
 import { drainRequestNotifications } from "@/runtime/shared/drain-request-notifications";
 import type { AppBindings } from "@/http/bindings";
@@ -30,7 +31,12 @@ export async function closeRequestApiRuntime(c: Context<AppBindings>): Promise<v
 
   const finish = async () => {
     try {
-      await drainRequestNotifications(runtime, c);
+      if (["GET", "HEAD", "OPTIONS"].includes(c.req.method))
+        return;
+      if (c.env.SCHEDULER_MODE !== "active")
+        await drainRequestNotifications(runtime, c);
+      if (c.env.SCHEDULER_MODE && c.env.SCHEDULER_MODE !== "legacy")
+        await publishSchoolChanges(runtime);
     }
     finally {
       await runtime.close();

@@ -112,10 +112,11 @@ export async function lookupSchoolDeliveryStatuses(
     const matches = rows.filter(row =>
       row.idempotency_key === buildNotifyJobId("school", query.schoolId, query.deliveryId) && row.subject_id === query.subjectId && row.channel !== "queued",
     );
+    const read = matches.find(row => row.status === "read");
     const sent = matches.find(row => row.status === "sent");
     const failed = matches.find(row => ["failed", "rejected", "uncertain"].includes(row.status));
     const cancelled = matches.find(row => row.status === "cancelled");
-    const chosen = sent ?? failed ?? cancelled;
+    const chosen = read ?? sent ?? failed ?? cancelled;
     if (!chosen) {
       continue;
     }
